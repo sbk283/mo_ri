@@ -42,3 +42,7 @@ npm install --save \
   @fullcalendar/daygrid
 
 ```
+
+# 작업 진행시
+
+- 꼭! 브랜치 생성후 pr 부탁드립니다.(main 에서 작업 하시면 안되요.)

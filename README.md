@@ -41,6 +41,8 @@ npm install --save \
   @fullcalendar/react \
   @fullcalendar/daygrid
 
+npm i react-router-dom@6.30.1
+npm install axios
 ```
 
 # 작업 진행시

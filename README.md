@@ -36,15 +36,33 @@ npm install antd --save
 npm i -D tailwindcss@3.4.10 postcss@8.4.38 autoprefixer@10.4.20
 npm i swiper
 
-npm install --save \
-  @fullcalendar/core \
-  @fullcalendar/react \
-  @fullcalendar/daygrid
+npm i @fullcalendar/react @fullcalendar/core \
+      @fullcalendar/daygrid @fullcalendar/timegrid \
+      @fullcalendar/interaction @fullcalendar/list
+
 
 npm i react-router-dom@6.30.1
 npm install axios
+
 ```
 
 # 작업 진행시
 
 - 꼭! 브랜치 생성후 pr 부탁드립니다.(main 에서 작업 하시면 안되요.)
+
+# supabase
+
+```bash
+npm install @supabase/supabase-js
+```
+
+- 일단 로그인 제껄로 해뒀어요(유지선)
+
+- `scripts` 에 항목 작성 (`npm run generate-types`)
+
+```json
+ "scripts": {
+     ...
+    "generate-types": "npx supabase gen types typescript --project-id 아이디 --schema public > types_db.ts"
+  },
+```

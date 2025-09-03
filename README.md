@@ -1,10 +1,10 @@
-# project (Join-up🎇)
+# project (Mo:ri🎇)
 
 # README 를 잘 읽으시고 작업 진행 부탁드립니다
 
 계획* ( 2025-08-25 ~ 2025-11-25*최종 발표일)
 
-Join-up 은 자기계발 모임 서비스 앱 입니다.
+Mo:ri 은 자기계발 모임 서비스 앱 입니다.
 이미 시중에는 많은 모임서비스가 활성화 되어있지만, 친목성의 모임이 너무 많고, 스터디 같은 경우의 모임을 참여하고
 기록을 남겨서 후에 자기성장과 더 나아가 취업 이력에 도움이 되도록 하는것이 서비스의 목표입니다.
 
@@ -66,3 +66,5 @@ npm install @supabase/supabase-js
     "generate-types": "npx supabase gen types typescript --project-id 아이디 --schema public > types_db.ts"
   },
 ```
+
+- scripts 추가는 해두었는데 데이터베이스 누구 계정으로 할건지? 얘기해 보고 id 입력하는걸로!

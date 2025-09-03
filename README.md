@@ -44,6 +44,10 @@ npm i @fullcalendar/react @fullcalendar/core \
 npm i react-router-dom@6.30.1
 npm install axios
 
+npm install motion
+npm i framer-motion
+
+
 ```
 
 # 작업 진행시
@@ -68,3 +72,8 @@ npm install @supabase/supabase-js
 ```
 
 - scripts 추가는 해두었는데 데이터베이스 누구 계정으로 할건지? 얘기해 보고 id 입력하는걸로!
+
+# 편하신대로 작업하되, 폴더 분류 확실하게 해주세요.
+
+- 컴포넌트 분리 잘 해주세요.!!!
+- console.log 확인후 삭제 해주세요.

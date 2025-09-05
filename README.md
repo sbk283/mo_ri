@@ -47,6 +47,7 @@ npm install axios
 npm install motion
 npm i framer-motion
 
+npm i react-icons
 
 ```
 

@@ -67,7 +67,6 @@ npm install @supabase/supabase-js
 ```
 
 - 일단 로그인 제껄로 해뒀어요(유지선)
-
 - `scripts` 에 항목 작성 (`npm run generate-types`)
 
 ```json
@@ -82,5 +81,5 @@ npm install @supabase/supabase-js
 # 편하신대로 작업하되, 폴더 분류 확실하게 해주세요.
 
 - 컴포넌트 분리 잘 해주세요.!!!
-- console.log 확인후 삭제 해주세요.
+- console.log(방어코드 제외) 확인후 삭제 해주세요.
 - 작업 순서는 기획 → 피그마 → DB 테이블 → UI 구현 → 기능 구현 순서로 진행 할 예정입니다..

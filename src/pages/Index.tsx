@@ -5,6 +5,7 @@ import CategorySection from '../components/main/CategorySection';
 import IntroSection from '../components/main/IntroSection';
 import PopularGroupsSection from '../components/main/PopularGroupsSection';
 import ReviewsSection from '../components/main/ReviewsSection';
+// 메인 홈 페이지 입니다.
 
 function Index() {
   return (

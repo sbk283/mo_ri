@@ -53,6 +53,7 @@ npm i react-quill
 npm i quill
 
 npm i dompurify
+npm i react-infinite-scroll-component
 ```
 
 # 작업 진행시

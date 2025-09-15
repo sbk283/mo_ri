@@ -69,6 +69,8 @@ npm install @supabase/supabase-js
 - 일단 로그인 제껄로 해뒀어요(유지선)
 - `scripts` 에 항목 작성 (`npm run generate-types`)
 
+- package.json
+
 ```json
  "scripts": {
      ...

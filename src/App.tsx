@@ -15,6 +15,7 @@ import LocationServicePage from './pages/policies/LocationServicePage';
 import YouthPolicyPage from './pages/policies/YouthPolicyPage';
 import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
 import RefundPolicypage from './pages/policies/RefundPolicypage';
+import ServiceIntroducePage from './pages/ServiceIntroducePage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -59,6 +60,8 @@ function App() {
           <Route path="/review-policy" element={<ReviewPolicyPage />} />
           {/* 제휴/환불 */}
           <Route path="/refund-policy" element={<RefundPolicypage />} />
+          {/* 서비스소개*/}
+          <Route path="/serviceint" element={<ServiceIntroducePage />} />
         </Routes>
       </Router>
     </div>

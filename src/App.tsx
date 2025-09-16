@@ -16,6 +16,8 @@ import YouthPolicyPage from './pages/policies/YouthPolicyPage';
 import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
 import RefundPolicypage from './pages/policies/RefundPolicypage';
 import ServiceIntroducePage from './pages/ServiceIntroducePage';
+import GroupReviewsPage from './pages/GroupReviewsPage';
+import GroupManagerPage from './pages/GroupManagerPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -30,6 +32,10 @@ function App() {
         <Routes>
           {/*메인 홈 */}
           <Route path="/" element={<Index />} />
+          {/* 모임관리 */}
+          <Route path="/groupmanager" element={<GroupManagerPage />} />
+          {/* 후기리뷰 */}
+          <Route path="/groupreviews" element={<GroupReviewsPage />} />
           {/* 모임리스트 */}
           <Route path="/grouplist" element={<GroupListPage />} />
           {/* 로그인 */}

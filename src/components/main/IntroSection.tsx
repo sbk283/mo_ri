@@ -1,5 +1,117 @@
+import { Link } from 'react-router-dom';
+
 function IntroSection() {
-  return <div>최상단 프로필 보이는 영역입니다.</div>;
+  return (
+    <div>
+      <div className="relative">
+        <div className="relative w-full h-[500px] overflow-hidden rounded-bl-[80px] rounded-br-[80px]">
+          <div className="absolute inset-0 bg-[url('./bgimg.jpg')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-black/50 " />
+        </div>
+
+        <div className="absolute top-[135px] left-1/2 transform -translate-x-1/2  text-xxl font-bold text-gray-50">
+          당신의 모임을 검색하세요!
+        </div>
+
+        <div className="absolute flex justify-center left-1/2 -translate-x-1/2 top-[214px] ">
+          <input
+            type="text"
+            placeholder="모임명이나 카테고리를 입력해 주세요."
+            className="w-[550px] p-[15px] rounded-[40px] placeholder:text-md placeholder:text-gray-200 px-8"
+          />
+          <button className="absolute right-6 top-1/2 transform -translate-y-1/2">
+            <img src="./search.png" alt="검색" className="w-[30px] h-[30px] transform scale-75" />
+          </button>
+        </div>
+
+        <div>
+          <div className="absolute  top-[380px] left-1/2  transform -translate-x-1/2 bg-white w-[1024px] h-[216px] flex rounded-[5px] shadow-card gap-[18px]  items-start">
+            <Link
+              to={'/'}
+              className="bg-brand-light w-[207px] h-[227px]  transform -translate-y-[30px] -translate-x-[-42px] rounded-[5px]  rounded-tr-[50px] px-[26px] py-[37px]"
+            >
+              <div className=" text-md font-bold text-white">관리자</div>
+              <div className="flex justify-between items-center">
+                <div className=" text-[25px] font-semibold text-white">모임 생성</div>
+                <img src="./direction.svg" alt="바로가기" />
+              </div>
+              <div className=" text-sm font-sans text-white">모임을 만들어 보세요!</div>
+              <img
+                src="./meetingsicon.svg"
+                alt="그림아이콘"
+                className="transform -translate-y-[-12px]"
+              />
+            </Link>
+            <Link
+              to={'/'}
+              className="bg-brand-red w-[207px] h-[227px]  transform -translate-y-[30px] -translate-x-[-42px] rounded-[5px]  rounded-tr-[50px]  px-[26px] py-[37px] "
+            >
+              <div className=" text-md font-bold text-white">참가자</div>
+              <div className="flex justify-between items-center">
+                <div className=" text-[25px] font-semibold text-white">모임 리스트</div>
+                <img src="./direction.png" alt="바로가기" />
+              </div>
+              <div className=" text-sm font-sans text-white">모임에 참여해 보세요!</div>
+              <img
+                src="./Onlinemeetingicon.svg"
+                alt="그림아이콘"
+                className="transform -translate-y-[-14px]"
+              />
+            </Link>
+            <div className="flex transform -translate-x-[-65px] pt-[22px]">
+              <div>
+                <img
+                  src="./ham.png"
+                  alt=""
+                  className="w-[140px] h-[175px] rounded-[5px] object-cover "
+                />
+              </div>
+            </div>
+            <div className="flex transform -translate-x-[-40px] pt-[19px]">
+              <div className="pl-[35px]">
+                <div className="font-bold text-lg">
+                  /홍길동/님(/용산동 불주먹/){' '}
+                  <span className="font-medium text-sm text-gray-200">환영합니다.</span>
+                </div>
+                <div className=" flex justify-between mt-[9px] items-center gap-[8px] mb-[6px]">
+                  <div className="font-bold text-md text-brand">참여중인모임</div>
+                  <div className="border-[0.5px] w-[160px] border-[#dadada]" />
+                  <div className="font-normal text-sm">더보기</div>
+                </div>
+                <div className="space-y-[4px]  text-sm">
+                  <div>· [장기]이러쿵저러쿵 스터디</div>
+                  <div>· [원데이]이러쿵저러쿵 스터디</div>
+                  <div>· [원데이]이러쿵저러쿵 스터디</div>
+                </div>
+                <div className=" flex justify-between mt-[9px] items-center gap-[8px]">
+                  <div className="font-bold text-md text-brand">바로가기</div>
+                  <div className="border-[0.5px] w-[231px] border-[#dadada]" />
+                </div>
+                <div className="flex gap-[17px] text-sm">
+                  <div className="flex items-center gap-[6px] justify-center">
+                    <img src="./reviewicon.png" alt="리뷰 아이콘" />
+                    <Link to={'/'}>리뷰</Link>
+                  </div>
+                  <div className="flex items-center gap-[6px] justify-center">
+                    <img src="./star.png" alt="찜리스트 아이콘" />
+                    <Link to={'/'}>찜리스트</Link>
+                  </div>
+                  <div className="flex items-center gap-[6px] justify-center">
+                    <img src="./headseticon.png" alt="고객센터 아이콘" />
+                    <Link to={'/'}>고객센터</Link>
+                  </div>
+                  <div className="flex items-center gap-[6px] justify-center">
+                    <img src="./settingicon.png" alt="회원설정 아이콘" />
+                    <Link to={'/mypagesetting'}>회원설정</Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default IntroSection;

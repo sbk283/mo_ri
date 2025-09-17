@@ -18,6 +18,8 @@ import TermsPage from './pages/policies/TermsPage';
 import YouthPolicyPage from './pages/policies/YouthPolicyPage';
 import ServiceIntroducePage from './pages/ServiceIntroducePage';
 import SignUpPage from './pages/SignUpPage';
+import Header from './components/Header';
+import Footer from './components/Footer';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -29,6 +31,7 @@ function App() {
   return (
     <div>
       <Router>
+        <Header isLoggedIn={true} />
         <Routes>
           {/*메인 홈 */}
           <Route path="/" element={<Index />} />
@@ -69,6 +72,7 @@ function App() {
           {/* 서비스소개*/}
           <Route path="/serviceint" element={<ServiceIntroducePage />} />
         </Routes>
+        <Footer />
       </Router>
     </div>
   );

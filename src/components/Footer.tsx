@@ -1,7 +1,6 @@
-// src/components/layout/Footer.tsx
 export default function Footer() {
   return (
-    <footer className="bg-gray-[#CFD0D0] text-sm text-gray-200 pb-[30px]">
+    <footer className="bottom-0 left-0 w-full border-t border-solid border-[#DBDBDB] bg-[rgba(207,208,208,0.2)] text-sm text-gray-200 pb-[30px]">
       <div className="mx-auto w-[1024px]">
         <div className="flex flex-wrap justify-between gap-4 py-[19px] font-bold text-xs sm:gap-7">
           <a href="/terms" className="text-gray-200 hover:text-gray-900">

@@ -2,38 +2,41 @@
 function TermsPage() {
   return (
     <div className=" mt-[147px]">
-      <div className="flex">
-        <div className="w-[255px] mx-auto">
-          <h3 className="text-xl font-bold text-gray-400 mb-[11px]">이용약관</h3>
+      <div className="flex relative">
+        {/* 이용약관 카테고리 */}
+        <div className="absolute left-[160px]">
+          <div className="w-[255px]">
+            <h3 className="text-xl font-bold text-gray-400 mb-[11px]">이용약관</h3>
 
-          <ul className="mb-6">
-            <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
-              <span className=" text-lg font-bold ">1. 목적과 정의</span>
-            </li>
-            <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
-              <span className=" text-lg font-bold ">2. 서비스 이용 및 약관</span>
-            </li>
-            <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
-              <span className=" text-lg font-bold ">3. 개인 정보 보호</span>
-            </li>
-            <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
-              <span className=" text-lg font-bold ">4. 권리와 의무</span>
-            </li>
-            <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
-              <span className=" text-lg font-bold ">5. 서비스 제한</span>
-            </li>
-          </ul>
+            <ul className="mb-6">
+              <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
+                <span className=" text-lg font-bold ">1. 목적과 정의</span>
+              </li>
+              <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
+                <span className=" text-lg font-bold ">2. 서비스 이용 및 약관</span>
+              </li>
+              <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
+                <span className=" text-lg font-bold ">3. 개인 정보 보호</span>
+              </li>
+              <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
+                <span className=" text-lg font-bold ">4. 권리와 의무</span>
+              </li>
+              <li className="flex items-center py-[19px] w-[251px] h-[51px] pl-[19px] hover:bg-blue-50 text-[#4e4e4e] hover:text-brand cursor-pointer border border-[#F2F4F8]">
+                <span className=" text-lg font-bold ">5. 서비스 제한</span>
+              </li>
+            </ul>
 
-          <div className="space-y-[7px]">
-            <button className="w-[255px] bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
-              PDF로 저장 / 인쇄
-            </button>
-            <button className="w-[255px] bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
-              고객센터 문의
-            </button>
+            <div className="space-y-[7px]">
+              <button className="w-[255px] bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
+                PDF로 저장 / 인쇄
+              </button>
+              <button className="w-[255px] bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
+                고객센터 문의
+              </button>
+            </div>
           </div>
         </div>
-
+        {/* 약관 내용 페이지 */}
         <div className="w-[1024px] h-[100%] pt-[54px] px-[77px] pb-[65px] mb-[309px] border-gray-300 border-[1px] rounded-[5px] mx-auto">
           <h2 className="text-brand font-bold text-xl"> 제 1장 총칙</h2>
           <br />

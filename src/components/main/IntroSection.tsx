@@ -130,7 +130,7 @@ function IntroSection() {
                   to={'/login'}
                   className="absolute transform -translate-x-[-570px] -translate-y-[-95px] "
                 >
-                  <p className="text-[28px] font-bold text-white  bg-brand w-[385px] text-center py-[6px] rounded-[5px]">
+                  <p className="text-xxl font-bold text-white  bg-brand w-[385px] text-center py-[6px] rounded-[5px]">
                     로그인
                   </p>
                 </Link>

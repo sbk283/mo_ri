@@ -52,6 +52,8 @@ npm i react-icons
 npm i react-quill
 npm i quill
 npm i dompurify
+
+# 사용시에 꼭 추가해주세요
  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(칼럼) }}
 
 

@@ -51,9 +51,13 @@ npm i react-icons
 
 npm i react-quill
 npm i quill
-
 npm i dompurify
+ dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(칼럼) }}
+
+
 npm i react-infinite-scroll-component
+
+
 ```
 
 # 작업 진행시

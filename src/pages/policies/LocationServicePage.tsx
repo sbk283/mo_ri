@@ -1,3 +1,4 @@
+import Footer from '../../components/Footer';
 import Header from '../../components/Header';
 
 // 위치기반 서비스 관련 약관 페이지
@@ -5,7 +6,7 @@ function LocationServicePage() {
   return (
     <>
       <Header isLoggedIn={false} />
-      <div className=" mt-[57px]">
+      <div className=" mt-[120px]">
         <div className="flex relative">
           {/* 이용약관 카테고리 */}
           <div className="absolute left-[160px]">
@@ -102,6 +103,7 @@ function LocationServicePage() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }

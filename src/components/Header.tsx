@@ -8,7 +8,7 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-card">
       <div className="mx-auto flex w-[1024px] justify-between items-center py-3">
         {/* 좌측 로고 */}
         <Link to="/" className="font-bold text-gray-800">

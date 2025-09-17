@@ -8,10 +8,10 @@ type HeaderProps = {
 
 const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
   return (
-    <header className="flex justify-between items-center px-96 py-3 shadow-md bg-white">
+    <header className="mx-auto w-[1024px] flex justify-between items-center py-3 shadow-md bg-white">
       {/* 좌측 */}
       <Link to="/" className="font-bold text-gray-800">
-        <img src="/images/mori_logo.svg" className="h-4 w-auto" alt="mori_logo" />
+        <img src="/images/mori_logo.svg" className="h-[24px] w-[75px]" alt="mori_logo" />
       </Link>
 
       {/* 오른쪽 */}

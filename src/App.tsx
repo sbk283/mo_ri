@@ -1,23 +1,23 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import Index from './pages/Index';
-import GroupListPage from './pages/GroupListPage';
-import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignUpPage';
-import MyPage from './pages/MyPage';
 import CreateGroupPage from './pages/CreateGroupPage';
-import MyPageSettingPage from './pages/MyPageSettingPage';
-import MyPagePaymentsPage from './pages/MyPagePaymentsPage';
 import FindIdPage from './pages/FindIdPage';
 import FindPwPage from './pages/FindPwPage';
-import TermsPage from './pages/policies/TermsPage';
-import PrivacyPage from './pages/policies/PrivacyPage';
-import LocationServicePage from './pages/policies/LocationServicePage';
-import YouthPolicyPage from './pages/policies/YouthPolicyPage';
-import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
-import RefundPolicypage from './pages/policies/RefundPolicypage';
-import ServiceIntroducePage from './pages/ServiceIntroducePage';
-import GroupReviewsPage from './pages/GroupReviewsPage';
+import GroupListPage from './pages/GroupListPage';
 import GroupManagerPage from './pages/GroupManagerPage';
+import GroupReviewsPage from './pages/GroupReviewsPage';
+import Index from './pages/Index';
+import LoginPage from './pages/LoginPage';
+import MyPage from './pages/MyPage';
+import MyPagePaymentsPage from './pages/MyPagePaymentsPage';
+import MyPageSettingPage from './pages/MyPageSettingPage';
+import LocationServicePage from './pages/policies/LocationServicePage';
+import PrivacyPage from './pages/policies/PrivacyPage';
+import RefundPolicypage from './pages/policies/RefundPolicypage';
+import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
+import TermsPage from './pages/policies/TermsPage';
+import YouthPolicyPage from './pages/policies/YouthPolicyPage';
+import ServiceIntroducePage from './pages/ServiceIntroducePage';
+import SignUpPage from './pages/SignUpPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)

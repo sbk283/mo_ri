@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
               placeholder="모임명이나 카테고리를 입력해 주세요."
               className="w-full rounded-[40px] border-2 border-brand px-8 py-[10px] placeholder:text-sm placeholder:text-gray-400"
             />
-            <button className="absolute right-3 top-1/2 -translate-y-1/2">
+            <button className="absolute right-4 top-1/2 -translate-y-1/2">
               <img src="/images/search.svg" alt="검색" className="w-[24px] h-[24px]" />
             </button>
           </div>

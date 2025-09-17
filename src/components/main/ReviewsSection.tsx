@@ -3,7 +3,7 @@ import Plus from '../../../public/images/plus.svg';
 
 function ReviewsSection() {
   return (
-    <div className="bg-[#F9FBFF] border border-solid border-[#DBDBDB]">
+    <div className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB]">
       <div className="mx-auto w-[1024px]">
         {/* 후기 */}
         <div>

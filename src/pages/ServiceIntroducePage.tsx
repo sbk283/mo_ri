@@ -1,8 +1,16 @@
+import { Link } from 'react-router-dom';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Pagination } from 'swiper/modules';
+import 'swiper/swiper-bundle.css';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
+
 function ServiceIntroducePage() {
   return (
     <div>
+      <Header isLoggedIn={false} />
       {/* 상단배너 */}
-      <div className="h-[560px] overflow-hidden relative ">
+      <div className="h-[560px] overflow-hidden relative mb-12 ">
         <img
           className="absolute w-full h-full object-cover inset-0"
           src="./service_bg.svg"
@@ -18,28 +26,123 @@ function ServiceIntroducePage() {
       </div>
       {/* 내용 */}
       <div>
-        <div className="w-[1024px] mx-auto bg-slate-400">
+        <div className="w-[1024px] mx-auto">
           {/* 메인홈가기 */}
-          <div>
-            <div>
-              <img src="" alt="" />
+          <div className="flex items-center justify-center mb-[170px]">
+            <div className="w-[345px] h-[287px]">
+              <img className="w-full h-full" src="./serviceimg1.svg" alt="모임" />
             </div>
-            <div>
-              <p>"취미부터 자기개발까지,</p>
-              <p>
-                <span>원하는 모임을 한 곳에서 해결</span>하세요.”
-              </p>
-              <p>취미, 자기계발, 봉사까지, 원하는 모임을 쉽고 빠르게 찾을 수 있습니다.</p>
+            <div className="ml-[65px]">
+              <div>
+                <p className="text-xxl font-bold">"취미부터 자기개발까지,</p>
+                <p className="text-xxl font-bold">
+                  <span className="text-brand">원하는 모임을 한 곳에서 해결</span>하세요.”
+                </p>
+                <p className="text-md pt-3">
+                  취미, 자기계발, 봉사까지, 원하는 모임을 쉽고 빠르게 찾을 수 있습니다.
+                </p>
+              </div>
+              <div className="pt-10 pl-20">
+                <Link
+                  to={'/'}
+                  className="border border-brand px-[65px] py-[12px] rounded-[5px] bg-white text-brand text-xl font-bold"
+                >
+                  메인 홈으로 가기
+                </Link>
+              </div>
             </div>
           </div>
           {/*  배너2개*/}
-          <div></div>
+          <div className="pb-[100px]">
+            <div>
+              <Swiper
+                slidesPerView={2}
+                spaceBetween={30}
+                pagination={{
+                  clickable: true,
+                }}
+                modules={[Pagination]}
+                className="mySwiper"
+              >
+                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
+                  <img
+                    className="w-full h-full overflow-hidden object-cover rounded-[5px]"
+                    src="./bruce.jpg"
+                    alt="설명1"
+                  />
+                </SwiperSlide>
+                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
+                  <img
+                    className="w-full h-full object-cover rounded-[5px]"
+                    src="./bruce.jpg"
+                    alt="설명1"
+                  />
+                </SwiperSlide>
+                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
+                  <img
+                    className="w-full h-full object-cover rounded-[5px]"
+                    src="./bruce.jpg"
+                    alt="설명1"
+                  />
+                </SwiperSlide>
+                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
+                  <img
+                    className="w-full h-full object-cover rounded-[5px]"
+                    src="./bruce.jpg"
+                    alt="설명1"
+                  />
+                </SwiperSlide>
+              </Swiper>
+            </div>
+          </div>
           {/* 믿고사용할수있는 최적환경제공 */}
-          <div></div>
+          <div className="flex items-center justify-center mb-[100px]">
+            <div className="mr-12">
+              <div>
+                <p className="text-xxl font-bold">"믿고 사용할 수 있는</p>
+                <p className="text-xxl font-bold">최적의 환경을 제공합니다."</p>
+                <p className="text-lg font-bold pt-3">
+                  <span className="text-brand">안전한 약속, 투명한 운영,</span>개인정보 보호까지!”
+                </p>
+                <p className="pt-1">
+                  위치 기반 서비스와 청소년 보호 정책을 통해 누구나 안심하고 이용할 수 있습니다.
+                </p>
+              </div>
+            </div>
+            <div className="w-[345px] h-[287px]">
+              <img className="w-full h-full" src="./serviceimg2.svg" alt="모임" />
+            </div>
+          </div>
           {/* 버튼2개 */}
-          <div></div>
+          <div className="relative w-[1024px] h-[454px] mx-auto mb-11">
+            <img className="absolute w-full h-full" src="./Rectangle.svg" alt="회원가입" />
+            <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+            <div className="absolute z-50 top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]">
+              <p className="text-white text-lg text-center mb-2">
+                무료 가입으로 첫 모임을 경험해 보세요!
+              </p>
+              <p className="text-white font-bold text-xl text-center">
+                새로운 경험, 당신의 하루를 채워줄 모임이 기다리고 있어요.
+              </p>
+              <div className="flex gap-4 pt-6">
+                <Link
+                  to={'/signup'}
+                  className="border border-brand px-[60px] py-[10px] rounded-[5px] bg-brand text-white text-lg font-bold"
+                >
+                  회원 가입 하기
+                </Link>
+                <Link
+                  to={'/grouplist'}
+                  className="border border-brand px-[60px] py-[10px] rounded-[5px] bg-white text-brand text-lg font-bold"
+                >
+                  모임 둘러보기
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

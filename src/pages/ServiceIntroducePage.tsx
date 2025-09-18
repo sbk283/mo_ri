@@ -1,14 +1,11 @@
 import { Link } from 'react-router-dom';
-import { Swiper, SwiperSlide } from 'swiper/react';
 import { Pagination } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
-import Header from '../components/Header';
-import Footer from '../components/Footer';
 
 function ServiceIntroducePage() {
   return (
     <div>
-      <Header isLoggedIn={false} />
       {/* 상단배너 */}
       <div className="h-[560px] overflow-hidden relative mb-12 ">
         <img
@@ -142,7 +139,6 @@ function ServiceIntroducePage() {
           </div>
         </div>
       </div>
-      <Footer />
     </div>
   );
 }

@@ -1,11 +1,7 @@
-import Footer from '../../components/Footer';
-import Header from '../../components/Header';
-
 // 개인정보 처리방침 페이지
 function PrivacyPage() {
   return (
     <>
-      <Header isLoggedIn={false} />
       <div className=" mt-[120px]">
         <div className="flex relative">
           {/* 이용약관 카테고리 */}
@@ -157,7 +153,6 @@ function PrivacyPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }

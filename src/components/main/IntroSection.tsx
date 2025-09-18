@@ -83,7 +83,9 @@ function IntroSection() {
                     <div className=" flex justify-between mt-[9px] items-center gap-[8px] mb-[6px]">
                       <div className="font-bold text-md text-brand">참여중인모임</div>
                       <div className="border-[0.5px] w-[160px] border-[#dadada]" />
-                      <div className="font-normal text-sm">더보기</div>
+                      <Link to={'/'} className="font-normal text-sm">
+                        더보기
+                      </Link>
                     </div>
                     <div className="space-y-[4px]  text-sm">
                       <div>· [장기]이러쿵저러쿵 스터디</div>
@@ -97,7 +99,7 @@ function IntroSection() {
                     <div className="flex gap-[17px] text-sm">
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./reviewicon.png" alt="리뷰 아이콘" />
-                        <Link to={'/'}>리뷰</Link>
+                        <Link to={'/groupreviews'}>리뷰</Link>
                       </div>
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./star.png" alt="찜리스트 아이콘" />
@@ -105,7 +107,7 @@ function IntroSection() {
                       </div>
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./headseticon.png" alt="고객센터 아이콘" />
-                        <Link to={'/'}>고객센터</Link>
+                        <Link to={'/faq'}>고객센터</Link>
                       </div>
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./settingicon.png" alt="회원설정 아이콘" />

@@ -11,7 +11,7 @@ export default function Footer() {
             개인정보 처리 방침
           </a>
           <span>|</span>
-          <a href="#" className="text-gray-200 hover:text-gray-900">
+          <a href="/faq" className="text-gray-200 hover:text-gray-900">
             고객센터
           </a>
           <span>|</span>

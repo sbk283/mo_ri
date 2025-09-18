@@ -21,7 +21,8 @@ import SignUpPage from './pages/SignUpPage';
 import MyPageFAQPage from './pages/MyPageFAQPage';
 import Header from './components/Header';
 import Footer from './components/Footer';
-
+import MyInquiriesPage from './pages/MyInquiriesPage';
+import InquiryPage from './pages/InquiryPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -51,9 +52,9 @@ function App() {
           <Route path="/mypage" element={<MyPage />} />
           {/* 모임생성 */}
           <Route path="/creategroup" element={<CreateGroupPage />} />
-          {/* 회원설정 */}
+          {/* 마이페이지 회원설정 */}
           <Route path="/mypagesetting" element={<MyPageSettingPage />} />
-          {/* 결제수단 */}
+          {/* 마이페이지 결제수단 */}
           <Route path="/payments" element={<MyPagePaymentsPage />} />
           {/* 아이디 찾기 */}
           <Route path="/findid" element={<FindIdPage />} />
@@ -75,6 +76,10 @@ function App() {
           <Route path="/serviceint" element={<ServiceIntroducePage />} />
           {/* 마이페이지 고객센터*/}
           <Route path="/faq" element={<MyPageFAQPage />} />
+          {/* 마이페이지 1:1 문의 하기*/}
+          <Route path="/inquiry" element={<InquiryPage />} />
+          {/* 마이페이지 1:1 문의 내역*/}
+          <Route path="/inquiry/history" element={<MyInquiriesPage />} />
         </Routes>
         <Footer />
       </Router>

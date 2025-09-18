@@ -139,7 +139,7 @@ function ReviewsSection() {
             </div>
             {/* 배너노출 */}
             <div className="flex gap-[31px] absolute right-[35px]">
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
                 <a
                   href="https://greenart.co.kr/?ACE_REF=adwords_g&ACE_KW=%EA%B7%B8%EB%A6%B0%EC%BB%B4%ED%93%A8%ED%84%B0%EC%95%84%ED%8A%B8%ED%95%99%EC%9B%90&gad_source=1&gad_campaignid=16820849449&gbraid=0AAAAADsHW8xXw-LjNJLTj-a4cz89UEwrZ&gclid=CjwKCAjwlaTGBhANEiwAoRgXBSJt5jhL98x5f0HeijEpTTFfMbSh92Ajsj93QWomKrWQLhbmuKCJEhoCmZ8QAvD_BwE"
                   target="_blank"
@@ -151,7 +151,7 @@ function ReviewsSection() {
                   />
                 </a>
               </div>
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSfArAWTcEHht9c693B3wVQWWl-15gaT9seoM6JsCWUnpBqCTA/viewform?pli=1"
                   target="_blank"
@@ -163,7 +163,7 @@ function ReviewsSection() {
                   />
                 </a>
               </div>
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSfArAWTcEHht9c693B3wVQWWl-15gaT9seoM6JsCWUnpBqCTA/viewform?pli=1"
                   target="_blank"

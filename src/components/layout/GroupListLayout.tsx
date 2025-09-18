@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import SortDropdown from '../common/ArrayDropdown';
+import BannerCardSwiper from '../common/BannerCardSwiper';
 
 function GroupListLayout() {
   const [sort, setSort] = useState('최신순');
@@ -35,7 +37,8 @@ function GroupListLayout() {
           </div>
 
           {/* Swiper 자리 (임시 grid) map돌림. */}
-          <div className="grid grid-cols-4 gap-4">
+          <BannerCardSwiper />
+          {/* <div className="grid grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <div
                 key={i}
@@ -53,7 +56,7 @@ function GroupListLayout() {
                 <p className="text-xs text-gray-600">건강한 바디프로필 도전!</p>
               </div>
             ))}
-          </div>
+          </div> */}
         </section>
 
         {/* 리스트 */}
@@ -61,46 +64,8 @@ function GroupListLayout() {
           <div className="flex items-center justify-between mb-4 relative">
             <h2 className="text-lg font-bold">봉사/사회참여 &gt; 캠페인 모임</h2>
 
-            {/* 정렬 - 요거 따로 나중에 컴포넌트 빼것슴다 */}
-            <div className="relative">
-              <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="border border-[#D9D9D9] rounded px-3 py-1 text-sm bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand flex items-center gap-1"
-              >
-                {sort}
-                <motion.span animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
-                  <img src="/images/arrow_down.svg" alt="정렬" />
-                </motion.span>
-              </button>
-
-              <AnimatePresence>
-                {isOpen && (
-                  <motion.ul
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow-md z-10"
-                  >
-                    {sortOptions.map(option => (
-                      <li key={option}>
-                        <button
-                          onClick={() => {
-                            setSort(option);
-                            setIsOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-100 ${
-                            sort === option ? 'text-brand font-semibold' : 'text-gray-700'
-                          }`}
-                        >
-                          {option}
-                        </button>
-                      </li>
-                    ))}
-                  </motion.ul>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* 정렬 (최신순 등) 공용 컴포넌트로 분리 */}
+            <SortDropdown options={sortOptions} value={sort} onChange={setSort} />
           </div>
 
           {/* 리스트 카드 */}

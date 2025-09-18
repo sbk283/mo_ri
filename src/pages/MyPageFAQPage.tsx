@@ -1,9 +1,9 @@
-import MyPageSidebar from '../components/MyPageSidebar';
+import MyPageLayout from '../components/layout/MyPageLayout';
 
 function MyPageFAQPage() {
   return (
     <div>
-      <MyPageSidebar />
+      <MyPageLayout />
     </div>
   );
 }

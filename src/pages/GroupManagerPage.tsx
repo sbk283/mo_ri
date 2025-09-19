@@ -1,7 +1,9 @@
-// 모임관리 페이지 입니다
+// 모임관리 - 생성한 모임리스트 페이지 입니다
+
+import GroupManagerLayout from '../components/layout/GroupManagerLayout';
 
 function GroupManagerPage() {
-  return <div>GroupManagerPage</div>;
+  return <GroupManagerLayout>GroupManagerPage</GroupManagerLayout>;
 }
 
 export default GroupManagerPage;

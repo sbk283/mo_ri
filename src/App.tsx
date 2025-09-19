@@ -23,6 +23,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import MyInquiriesPage from './pages/MyInquiriesPage';
 import InquiryPage from './pages/InquiryPage';
+import GroupWishListPage from './pages/GroupWishListPage';
+import JoinedGroupsPage from './pages/JoinedGroupsPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -38,8 +40,12 @@ function App() {
         <Routes>
           {/*메인 홈 */}
           <Route path="/" element={<Index />} />
-          {/* 모임관리 */}
+          {/* 모임관리 - 생성한 모임 페이지 */}
           <Route path="/groupmanager" element={<GroupManagerPage />} />
+          {/* 모임관리 - 참여한 모임 페이지 */}
+          <Route path="/joingroups" element={<JoinedGroupsPage />} />
+          {/* 모임관리 - 찜리스트 */}
+          <Route path="/groupwish" element={<GroupWishListPage />} />
           {/* 후기리뷰 */}
           <Route path="/groupreviews" element={<GroupReviewsPage />} />
           {/* 모임리스트 */}

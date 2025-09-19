@@ -26,6 +26,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: false,
     },
     {
       id: 2,
@@ -39,6 +40,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: true,
     },
     {
       id: 3,
@@ -52,6 +54,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: false,
     },
     {
       id: 4,
@@ -65,6 +68,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: true,
     },
 
     // ===== 단기 (4) =====
@@ -80,6 +84,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: true,
     },
     {
       id: 6,
@@ -93,6 +98,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: false,
     },
     {
       id: 7,
@@ -106,6 +112,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: true,
     },
     {
       id: 8,
@@ -119,6 +126,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: false,
     },
 
     // ===== 장기 (4) =====
@@ -134,6 +142,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: true,
     },
     {
       id: 10,
@@ -147,6 +156,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: false,
     },
     {
       id: 11,
@@ -160,6 +170,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: true,
     },
     {
       id: 12,
@@ -173,6 +184,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: false,
     },
     {
       id: 13,
@@ -186,6 +198,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: true,
     },
     {
       id: 14,
@@ -199,6 +212,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: false,
     },
     {
       id: 15,
@@ -212,6 +226,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: true,
     },
     {
       id: 16,
@@ -225,6 +240,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
+      favorite: false,
     },
 
     // ===== 단기 (4) =====
@@ -240,6 +256,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: true,
     },
     {
       id: 18,
@@ -253,6 +270,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: false,
     },
     {
       id: 19,
@@ -266,6 +284,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: true,
     },
     {
       id: 20,
@@ -279,6 +298,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
+      favorite: false,
     },
 
     // ===== 장기 (4) =====
@@ -294,6 +314,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: true,
     },
     {
       id: 22,
@@ -307,6 +328,7 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: false,
     },
     {
       id: 23,
@@ -320,6 +342,7 @@ export default function AiGroupsSection() {
       ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: true,
     },
     {
       id: 24,
@@ -333,15 +356,16 @@ export default function AiGroupsSection() {
       ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
+      favorite: false,
     },
   ];
 
   const filtered = useMemo(() => data.filter(d => d.duration === active), [active, data]);
 
   return (
-    <section className="mx-auto max-w-[1024px] w-[1024px]" aria-labelledby="ai-groups-heading">
-      <div className="mx-auto max-w-[1024px] px-4">
-        <header className="pt-[80px] pb-[36px]">
+    <section className="mx-auto w-[1024px]" aria-labelledby="ai-groups-heading">
+      <div className="mx-auto">
+        <header className="pt-[40px] pb-[18px]">
           <h2 id="ai-groups-heading" className="font-semibold text-lg mb-2">
             AI가 선별한
           </h2>
@@ -365,7 +389,7 @@ export default function AiGroupsSection() {
                     aria-pressed={isActive}
                     onClick={() => setActive(f.key)}
                     className={[
-                      'px-3 py-1 rounded-full text-sm border',
+                      'py-1 rounded-[5px] text-[16px] border w-[128px]',
                       isActive
                         ? 'bg-blue-500 text-white border-blue-500'
                         : 'bg-white text-blue-600 border-blue-400 hover:bg-blue-50',

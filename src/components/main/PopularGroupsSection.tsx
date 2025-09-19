@@ -15,6 +15,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: true,
     },
     {
       id: 2,
@@ -27,6 +28,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: true,
     },
     {
       id: 3,
@@ -39,6 +41,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: false,
     },
     {
       id: 4,
@@ -51,6 +54,7 @@ export default function PopularGroupsSection() {
       dday: 'D+999',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: true,
     },
     {
       id: 5,
@@ -63,6 +67,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: false,
     },
     {
       id: 6,
@@ -75,6 +80,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: true,
     },
     {
       id: 7,
@@ -87,6 +93,7 @@ export default function PopularGroupsSection() {
       dday: 'D-3',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: false,
     },
     {
       id: 8,
@@ -99,22 +106,26 @@ export default function PopularGroupsSection() {
       dday: 'D+999',
       ad: true,
       thumbnail: '/images/group_img.png',
+      favorite: true,
     },
   ];
 
   return (
-    <section className="mx-auto max-w-[1024px] w-[1024px]" aria-labelledby="popular-groups-heading">
-      <div className="mx-auto max-w-[1024px] px-4">
-        <header className="pt-[80px] pb-[36px]">
+    <section
+      className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB]"
+      aria-labelledby="popular-groups-heading"
+    >
+      <div className="mx-auto w-[1024px]">
+        <header className="pt-[40px] pb-[18px]">
           <h2 id="popular-groups-heading" className="font-semibold text-lg">
             Mo:ri 가 엄선한 인기모임!
           </h2>
           <div className="mr-4">
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">지금 바로 확인하세요!</p>
-              <Link to="/grouplist" className="flex items-center text-sm gap-1 pb-1">
+              <Link to="/grouplist" className="flex text-sm gap-1 pb-auto">
                 <img src={Plus} alt="" aria-hidden="true" />
-                더보기
+                <span className="items-center">더보기</span>
               </Link>
             </div>
           </div>

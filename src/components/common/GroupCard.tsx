@@ -10,12 +10,13 @@ export type GroupItem = {
   ad?: boolean;
   thumbnail: string;
   duration?: Duration;
+  favorite: boolean;
 };
 
 export type Duration = 'oneday' | 'short' | 'long';
 
 const STATUS_BG: Record<GroupItem['statusColor'], string> = {
-  red: 'bg-red-500',
+  red: 'bg-[#FF5252]',
   blue: 'bg-blue-500',
   black: 'bg-black',
 };
@@ -44,7 +45,7 @@ function StatusBadge({
 
 export function GroupCard({ item }: { item: GroupItem }) {
   return (
-    <li className="h-[350px] rounded-[5px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
+    <li className="h-[350px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
       <article className="rounded-md flex flex-col h-full">
         {/* 상태 배지: 좌상단 */}
         <span className="absolute left-2 z-10">
@@ -58,22 +59,30 @@ export function GroupCard({ item }: { item: GroupItem }) {
             className="w-full h-full object-cover rounded-t-[10px]"
           />
           <button type="button" aria-label="즐겨찾기" className="absolute top-2 right-2 size-6">
-            <img src="/images/unfill_star.png" alt="" aria-hidden="true" />
+            {item.favorite ? (
+              <img src="/images/fill_star.png" alt="" aria-hidden="true" />
+            ) : (
+              <img src="/images/unfill_star.png" alt="" aria-hidden="true" />
+            )}
           </button>
         </div>
-        <div className="relative p-3 border border-[#eee] flex flex-col flex-1 pb-12">
+        <div className="relative p-3 border border-[#A3A3A3] rounded-b-md flex flex-col flex-1 pb-12">
           <header className="flex justify-between text-sm mb-2">
-            <span className="text-red-500">{item.category}</span>
-            <span className="text-gray-400">{item.region}</span>
+            <span className="text-red-500 font-semibold">{item.category}</span>
+            <span className="text-[#767676]">{item.region}</span>
           </header>
-
-          <h3 className="text-lg font-bold hover:underline line-clamp-1">{item.title}</h3>
-          <p className="text-sm text-[#979797] line-clamp-2">{item.desc}</p>
-          <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-2xl px-2 py-1">
+          <h3 className="flex items-center gap-1 text-lg font-bold hover:underline line-clamp-1">
+            <span className="truncate mb-1">{item.title}</span>
+            {item.ad && (
+              <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4 flex-shrink-0" />
+            )}
+          </h3>
+          <p className="text-[15px] text-[#979797] line-clamp-2">{item.desc}</p>
+          <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-2xl px-2 text-[12px]">
             {item.dday}
           </time>
           {item.ad && (
-            <span className="absolute right-3 bottom-3 bg-[#c5c5c5] text-white rounded-2xl px-2 py-1">
+            <span className="absolute right-3 bottom-3 bg-[#c5c5c5] text-white rounded-xl px-2 text-[9px] ">
               AD
             </span>
           )}
@@ -82,3 +91,5 @@ export function GroupCard({ item }: { item: GroupItem }) {
     </li>
   );
 }
+
+export default GroupCard;

@@ -1,96 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Plus from '../../../public/images/plus.svg';
-
-type Duration = 'oneday' | 'short' | 'long';
-
-type GroupItem = {
-  id: number;
-  status: '모집중' | '모집예정' | '서비스종료';
-  statusColor: 'red' | 'blue' | 'black';
-  category: string;
-  region: string;
-  title: string;
-  desc: string;
-  dday: string;
-  ad?: boolean;
-  thumbnail: string;
-  duration: Duration;
-};
-
-const STATUS_BG = {
-  red: 'bg-red-500',
-  blue: 'bg-blue-500',
-  black: 'bg-black',
-} as const;
-
-function StatusBadge({
-  text,
-  color,
-}: {
-  text: GroupItem['status'];
-  color: GroupItem['statusColor'];
-}) {
-  return (
-    <span
-      className={[
-        'text-sm font-bold text-white px-2 py-1',
-        'rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]',
-        'relative z-[1] inline-block',
-        'translate-x-[20%] translate-y-[20%]',
-        STATUS_BG[color],
-      ].join(' ')}
-    >
-      {text}
-    </span>
-  );
-}
-
-function GroupCard({ item }: { item: GroupItem }) {
-  return (
-    <li className="w-[240px] h-[350px] rounded-[5px] overflow-hidden relative cursor-pointer flex flex-col">
-      <article className="rounded-md flex flex-col h-full">
-        {/* 썸네일 */}
-        <div className="relative h-[150px] overflow-hidden">
-          {/* 상태 배지: 좌상단 */}
-          <span className="absolute top-2 left-2 z-10">
-            <StatusBadge text={item.status} color={item.statusColor} />
-          </span>
-
-          <img
-            src={item.thumbnail}
-            alt={`${item.title} 썸네일`}
-            className="w-full h-full object-cover rounded-t-[10px]"
-          />
-          <button type="button" aria-label="즐겨찾기" className="absolute top-2 right-2 size-6">
-            <img src="/images/unfill_star.png" alt="" aria-hidden="true" />
-          </button>
-        </div>
-
-        {/* 본문: 절대배치 기준이 되는 영역 */}
-        <div className="relative p-3 border border-[#eee] flex flex-col flex-1 pb-12">
-          <header className="flex justify-between text-sm mb-2">
-            <span className="text-red-500">{item.category}</span>
-            <span className="text-gray-400">{item.region}</span>
-          </header>
-
-          <h3 className="text-lg font-bold hover:underline line-clamp-1">{item.title}</h3>
-          <p className="text-sm text-[#979797] line-clamp-2">{item.desc}</p>
-
-          {/* ↓↓↓ 여기서 고정: 좌하단/우하단 */}
-          <time className="absolute left-3 bottom-3 bg-gray-400/70 text-white rounded-2xl px-2 py-1">
-            {item.dday}
-          </time>
-          {item.ad && (
-            <span className="absolute right-3 bottom-3 bg-gray-200 rounded-2xl px-2 py-1 text-gray-500">
-              AD
-            </span>
-          )}
-        </div>
-      </article>
-    </li>
-  );
-}
+import { GroupCard, type Duration, type GroupItem } from '../common/GroupCard';
 
 const FILTERS: { key: Duration; label: string }[] = [
   { key: 'oneday', label: '원데이 모임' },
@@ -432,13 +343,13 @@ export default function AiGroupsSection() {
       <div className="mx-auto max-w-[1024px] px-4">
         <header className="pt-[80px] pb-[36px]">
           <h2 id="ai-groups-heading" className="font-semibold text-lg mb-2">
-            Mo:ri 가 엄선한 인기모임!
+            AI가 선별한
           </h2>
 
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <p className="font-semibold text-xxl">지금 바로 확인하세요!</p>
-              <Link to="/" className="flex items-center text-sm gap-1 pb-1">
+              <p className="font-semibold text-xxl">나만의 취향 맞춤 모임!</p>
+              <Link to="/grouplist" className="flex items-center text-sm gap-1 pb-1">
                 <img src={Plus} alt="" aria-hidden="true" />
                 더보기
               </Link>

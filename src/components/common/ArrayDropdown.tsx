@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-interface SortDropdownProps {
+interface ArrayDropdownProps {
   options: string[];
   value: string;
   onChange: (value: string) => void;
 }
 
-function SortDropdown({ options, value, onChange }: SortDropdownProps) {
+function ArrayDropdown({ options, value, onChange }: ArrayDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -55,4 +55,4 @@ function SortDropdown({ options, value, onChange }: SortDropdownProps) {
   );
 }
 
-export default SortDropdown;
+export default ArrayDropdown;

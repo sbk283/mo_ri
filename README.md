@@ -60,6 +60,8 @@ npm i dompurify
 npm i react-infinite-scroll-component
 npm install swiper
 
+npm install react-hook-form --force
+
 ```
 
 # 작업 진행시

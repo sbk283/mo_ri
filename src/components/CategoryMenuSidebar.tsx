@@ -1,4 +1,6 @@
-import { useState } from 'react';
+// 카테고리 메뉴 사이드바88888888
+
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -22,6 +24,21 @@ function CategoryMenuSidebar() {
     },
     { name: '봉사/사회참여', icon: '/images/volunteer_dark.svg', sub: ['복지/나눔', '캠페인'] },
   ];
+
+  // 카테고리 useEffect
+  useEffect(() => {
+    if (!activeMain && categories.length > 0) {
+      const first = categories[0];
+      setActiveMain(first.name);
+      if (first.sub?.length) {
+        setOpenCategory(first.name);
+        setActiveSub(first.sub[0]);
+      } else {
+        setOpenCategory('');
+        setActiveSub('');
+      }
+    }
+  }, [activeMain, categories]);
 
   return (
     <motion.aside
@@ -72,11 +89,12 @@ function CategoryMenuSidebar() {
                 <button
                   onClick={() => {
                     setActiveMain(cat.name);
-                    setActiveSub('');
-                    if (cat.sub) {
-                      setOpenCategory(openCategory === cat.name ? '' : cat.name);
+                    if (cat.sub?.length) {
+                      setOpenCategory(cat.name);
+                      setActiveSub(cat.sub[0]);
                     } else {
                       setOpenCategory('');
+                      setActiveSub('');
                     }
                   }}
                   className={`flex w-full items-center gap-2 rounded px-3 py-2 text-[17px] font-bold hover:bg-gray-100 ${

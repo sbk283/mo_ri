@@ -228,3 +228,30 @@ body,
   box-shadow: none !important;
   outline: none !important;
 }
+
+/* 스와이퍼 next,prev 버튼 */
+.swiper-button-next,
+.swiper-button-prev {
+  width: 37px;
+  height: 37px;
+  border-radius: 50%;
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  box-shadow: 0 2px 8.8px 0 rgba(0, 0, 0, 0.25);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
+  background: #f5f5f5;
+}
+
+/** Swiper에서 기본 제공하는 화살표 아이콘 없애고 
+/images/arrow_down 써서 각도 조절하심 될 듯 함다 */
+.swiper-button-next::after,
+.swiper-button-prev::after {
+  content: '';
+}

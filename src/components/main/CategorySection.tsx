@@ -3,7 +3,7 @@ function CategorySection() {
     <div className="pt-[156px] pb-[77px] border-b border-[#DBDBDB]">
       <div className="mx-auto w-[1024px]">
         {/* flex로 가로 정렬, 가운데 정렬 */}
-        <div className="flex justify-center gap-8">
+        <div className="flex justify-center gap-[83px]">
           {/* 운동/건강 */}
           <div
             className="flex flex-col items-center justify-center w-[125px] h-[125px] 

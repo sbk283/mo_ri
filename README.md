@@ -58,7 +58,7 @@ npm i dompurify
 
 
 npm i react-infinite-scroll-component
-
+npm install swiper
 
 ```
 

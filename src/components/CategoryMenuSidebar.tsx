@@ -39,7 +39,7 @@ function CategoryMenuSidebar() {
           <img
             src="/images/ic_baseline-arrow-circle.svg"
             alt="바로가기"
-            className="w-[33px] h-[33px] aspect-square -rotate-90"
+            className="w-[33px] h-[33px] aspect-square"
           />
         </div>
         <p className="mt-1 text-white text-center font-normal text-[10px] leading-normal">
@@ -61,7 +61,7 @@ function CategoryMenuSidebar() {
 
       {/* 카테고리 */}
       <nav className="mt-5">
-        <h3 className="mb-2 mt-3 text-sm font-bold text-gray-700">카테고리</h3>
+        <h3 className="mb-2 mt-3 text-[20px] font-bold text-gray-700">카테고리</h3>
         <ul className="space-y-1">
           {categories.map(cat => {
             const isActiveMain =
@@ -79,7 +79,7 @@ function CategoryMenuSidebar() {
                       setOpenCategory('');
                     }
                   }}
-                  className={`flex w-full items-center gap-2 rounded px-3 py-2 text-sm hover:bg-gray-100 ${
+                  className={`flex w-full items-center gap-2 rounded px-3 py-2 text-[17px] font-bold hover:bg-gray-100 ${
                     isActiveMain ? 'text-[#0689E8]' : 'text-[#4E4E4E]'
                   }`}
                 >

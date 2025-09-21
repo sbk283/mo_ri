@@ -62,6 +62,9 @@ npm install swiper
 
 npm install react-hook-form --force
 
+npm install react-markdown remark-gfm rehype-highlight
+npm install @uiw/react-md-editor @uiw/react-markdown-preview
+
 ```
 
 # 작업 진행시

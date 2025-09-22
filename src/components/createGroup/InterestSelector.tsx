@@ -22,7 +22,7 @@ function InterestSelector({ major, sub, onChange }: Props) {
             type="button"
             onClick={() => setMajorOpen(prev => !prev)}
             className={[
-              'border border-brand h-10 w-full rounded-sm px-3 py-2 pr-3 flex justify-between items-center',
+              'border border-gray-300 h-10 w-full rounded-sm px-3 py-2 pr-3 flex justify-between items-center',
               major ? 'text-black' : 'text-[#A6A6A6]',
             ].join(' ')}
           >
@@ -43,7 +43,7 @@ function InterestSelector({ major, sub, onChange }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute left-0 w-full border border-brand bg-white rounded-sm shadow-md z-10"
+                className="absolute left-0 w-full border border-gray-300 bg-white rounded-sm shadow-md z-10"
               >
                 {Object.keys(interestOptions).map(m => (
                   <li
@@ -70,7 +70,7 @@ function InterestSelector({ major, sub, onChange }: Props) {
             onClick={() => setSubOpen(prev => !prev)}
             disabled={!major}
             className={[
-              'border border-brand h-10 w-full rounded-sm px-3 py-2 pr-3 flex justify-between items-center',
+              'border border-gray-300 h-10 w-full rounded-sm px-3 py-2 pr-3 flex justify-between items-center',
               !major
                 ? 'bg-gray-100 text-[#A6A6A6] cursor-not-allowed'
                 : sub
@@ -95,7 +95,7 @@ function InterestSelector({ major, sub, onChange }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.2 }}
-                className="absolute left-0 w-full border border-brand bg-white rounded-sm shadow-md z-10"
+                className="absolute left-0 w-full border border-gray-300 bg-white rounded-sm shadow-md z-10"
               >
                 {(interestOptions[major] ?? []).map(s => (
                   <li

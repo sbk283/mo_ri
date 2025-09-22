@@ -49,7 +49,7 @@ function ImageUploader({ images, onChange }: Props) {
 
       <div className="flex pl-[40px] gap-4">
         {/* 대표 이미지 */}
-        <div className="relative w-[310px] h-[200px] border-2 border-brand border-dashed rounded-md flex items-center justify-center text-gray-400 overflow-hidden">
+        <div className="relative w-[310px] h-[200px] border border-gray-300 rounded-md flex items-center justify-center text-gray-400 overflow-hidden">
           {previews[0] ? (
             <>
               <img src={previews[0]} alt="대표" className="w-full h-full object-cover" />
@@ -86,8 +86,8 @@ function ImageUploader({ images, onChange }: Props) {
                 key={i}
                 className={`relative w-[103px] h-[95px] ${
                   !hasImage && isLastSlot
-                    ? 'border-2 border-dashed border-brand'
-                    : 'border border-brand'
+                    ? 'border border-dashed border-brand'
+                    : 'border border-gray-300'
                 } rounded flex items-center justify-center text-gray-400 overflow-hidden`}
               >
                 {/* 여기서 아이콘 분기 */}

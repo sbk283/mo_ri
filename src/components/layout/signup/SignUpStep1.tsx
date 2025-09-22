@@ -2,6 +2,8 @@ import { Button, DatePicker, Form, Input } from 'antd';
 import type { BasicInfo } from '../../../pages/SignUpPage';
 import type { FieldData } from '../../../pages/LoginPage';
 import { useState } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
+import type dayjs from 'dayjs';
 
 type SignUpStep1Props = {
   onNext: (data: BasicInfo) => void;
@@ -10,18 +12,40 @@ type SignUpStep1Props = {
 interface ValueInterface {
   name: string;
   nickname: string;
-  birth: string;
+  birth: dayjs.Dayjs;
   email: string;
   password: string;
+  passwordConfirm: string;
 }
 
 const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
+  const { signUp } = useAuth();
+  const [email, setEmail] = useState<string>('');
+  const [pw, setPw] = useState<string>('');
+  const [msg, setMsg] = useState<string>('');
+  const [match, setMetch] = useState(true);
+  const [form] = Form.useForm();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    // 웹 브라우저 갱신 막기
+    e.preventDefault();
+
+    // 회원가입 하기
+    const { error } = await signUp(email, pw);
+    if (error) {
+      setMsg(`회원가입 오류 : ${error}`);
+    } else {
+      setMsg(`회원가입이 성공됐습니다. 이메일 인증 링크를 확인해주세요.`);
+    }
+  };
+
   const initialValue = {
     name: '',
     nickname: '',
     birth: '',
     email: '',
     password: '',
+    passwordConfirm: '',
   };
 
   const onFiledsChange = (field: FieldData[], allFields: FieldData[]) => {
@@ -33,14 +57,8 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
     onNext(values);
   };
 
-  const [match, setMetch] = useState(true);
-  // 2. Ant Design 에서 Form 요소를 저장해 두고 참조하기
-  const [form] = Form.useForm();
-  // 3. 비밀번호가 바뀔 때 마다 체크함.
   const handleChangePassword = () => {
-    // name 이 password 인 필드의 값, 즉 value 읽기
     const pw = form.getFieldValue('password');
-    // name 이 passwordConfirm 인 필드의 값, 즉 value 읽기
     const pwConfirm = form.getFieldValue('passwordConfirm');
     if (pwConfirm) {
       setMetch(pw === pwConfirm);

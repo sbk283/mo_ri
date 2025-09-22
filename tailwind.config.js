@@ -42,4 +42,14 @@ export default {
     },
   },
   plugins: [],
+
+  // 이미지 첨부 영역
+  extend: {
+    spacing: {
+      103: '103px',
+      95: '95px',
+      310: '310px',
+      200: '200px',
+    },
+  },
 };

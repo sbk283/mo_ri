@@ -1,11 +1,3 @@
-/**
- * 주요기능
- * - 사용자 세션관리
- * - 로그인/회원가입/로그아웃
- * - 사용자 인증 정보 상태 변경 감시
- * - 전역 인증 상태를 컴포넌트에 반영
- */
-
 import type { Session, User } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
 import { supabase } from '../lib/supabase';

@@ -1,19 +1,24 @@
 import { useState } from 'react';
-import SignUpStep1 from '../components/layout/signup/SignUpStep1';
+import SignUpBanner from '../components/layout/signup/SignUpBanner';
 import SignUpEmail from '../components/layout/signup/SignUpEmail';
+import SignUpStep1 from '../components/layout/signup/SignUpStep1';
 import SignUpStep2 from '../components/layout/signup/SignUpStep2';
 import SignUpStep3 from '../components/layout/signup/SignUpStep3';
-import SignUpBanner from '../components/layout/signup/SignUpBanner';
+import { useLocation } from 'react-router-dom';
 
 export type BasicInfo = {
   name: string;
+  nickname: string;
   birth: string;
   email: string;
   password: string;
 };
-
 const SignUpPage: React.FC = () => {
-  const [step, setStep] = useState(1);
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const stepParam = parseInt(params.get('step') ?? '1', 10);
+
+  const [step, setStep] = useState(stepParam);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
 
   // 1. 기본 정보 완료 → step 2로, 이메일 정보 저장

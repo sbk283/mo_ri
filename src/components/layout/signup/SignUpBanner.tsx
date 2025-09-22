@@ -2,7 +2,7 @@ function SignUpBanner() {
   return (
     <div className="w-[50%] y-full">
       <div className="my-[150px]">
-        <img className="mx-auto mb-[42px] " src="./loginimage.svg" alt="로그인" />
+        <img className="mx-auto mb-[42px] " src="/loginimage.svg" alt="로그인" />
         <div className="flex justify-center items-center">
           <img src="/images/footerLogo.svg" alt="Mo:ri" />
           <div className="ml-6">

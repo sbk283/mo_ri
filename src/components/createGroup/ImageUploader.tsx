@@ -44,12 +44,12 @@ function ImageUploader({ images, onChange }: Props) {
   const subSlots = useMemo(() => Array.from({ length: MAX_SUB }), []);
 
   return (
-    <section>
-      <label className="block font-semibold mb-2">이미지 첨부</label>
+    <section className="flex">
+      <label className="font-semibold mb-2 text-lg">이미지 첨부</label>
 
-      <div className="flex gap-6">
+      <div className="flex pl-[40px] gap-4">
         {/* 대표 이미지 */}
-        <div className="relative w-40 h-40 border-2 border-dashed rounded-md flex items-center justify-center text-gray-400 overflow-hidden">
+        <div className="relative w-[310px] h-[200px] border-2 border-brand border-dashed rounded-md flex items-center justify-center text-gray-400 overflow-hidden">
           {previews[0] ? (
             <>
               <img src={previews[0]} alt="대표" className="w-full h-full object-cover" />
@@ -63,7 +63,7 @@ function ImageUploader({ images, onChange }: Props) {
             </>
           ) : (
             <>
-              대표 이미지
+              <img src="/images/picture_dark.svg" />
               <button
                 type="button"
                 onClick={handlePick}
@@ -74,18 +74,38 @@ function ImageUploader({ images, onChange }: Props) {
           )}
         </div>
 
-        {/* 서브 이미지 8개 + 마지막 점선 업로드 */}
+        {/* 서브 이미지 8개, 마지막 점선! */}
         <div className="grid grid-cols-4 gap-3">
           {subSlots.map((_, i) => {
-            const idx = i + 1; // 1~8
+            const idx = i + 1;
             const isLastSlot = i === MAX_SUB - 1;
             const hasImage = !!previews[idx];
 
             return (
               <div
                 key={i}
-                className={`relative w-20 h-20 ${!hasImage && isLastSlot ? 'border-2 border-dashed' : 'border'} rounded flex items-center justify-center text-gray-400 overflow-hidden`}
+                className={`relative w-[103px] h-[95px] ${
+                  !hasImage && isLastSlot
+                    ? 'border-2 border-dashed border-brand'
+                    : 'border border-brand'
+                } rounded flex items-center justify-center text-gray-400 overflow-hidden`}
               >
+                {/* 여기서 아이콘 분기 */}
+                {!hasImage && (
+                  <div className="flex flex-col items-center justify-center">
+                    <img
+                      src={isLastSlot ? '/images/camera.svg' : '/images/picture_dark.svg'}
+                      alt="placeholder"
+                      className="w-5 h-5"
+                    />
+                    {isLastSlot && (
+                      <span className="mt-1 text-[10px] font-semibold text-[#4294CF] leading-normal">
+                        사진 추가
+                      </span>
+                    )}
+                  </div>
+                )}
+
                 {hasImage ? (
                   <>
                     <img
@@ -104,7 +124,6 @@ function ImageUploader({ images, onChange }: Props) {
                 ) : (
                   <>
                     {/* 마지막 빈 슬롯만 업로드 트리거 */}
-                    {isLastSlot && canAdd ? '+' : ''}
                     {isLastSlot && canAdd && (
                       <button
                         type="button"

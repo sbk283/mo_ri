@@ -28,7 +28,7 @@ function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
   return (
     <div className="p-8 bg-white rounded shadow space-y-6">
       <h2 className="text-2xl font-bold mb-2">기본 모임 설정</h2>
-      <hr className="mb-6" />
+      <hr className="mb-6 pb-[51px] border-brand" />
 
       <InterestSelector
         major={formData.interestMajor}

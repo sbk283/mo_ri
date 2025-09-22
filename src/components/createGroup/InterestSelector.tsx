@@ -1,3 +1,5 @@
+// 관심사 설정
+
 import interestOptions from '../../constants/interestOptions';
 
 type Props = {
@@ -8,16 +10,16 @@ type Props = {
 
 function InterestSelector({ major, sub, onChange }: Props) {
   return (
-    <section>
-      <label className="block font-semibold mb-2">관심사 설정</label>
-      <div className="flex gap-4">
+    <section className="flex gap-11">
+      <label className="flex font-semibold mb-2 text-lg">관심사 설정</label>
+      <div className="flex  gap-4">
         <select
           value={major}
           onChange={e => {
             onChange('interestMajor', e.target.value);
             onChange('interestSub', ''); // 대분류 바뀌면 중분류 초기화
           }}
-          className="border rounded px-4 py-2 w-1/2"
+          className="border h-10 w-[214px] rounded-sm px-4 py-2 "
         >
           <option value="">대분류 선택</option>
           {Object.keys(interestOptions).map(m => (
@@ -31,7 +33,7 @@ function InterestSelector({ major, sub, onChange }: Props) {
           value={sub}
           onChange={e => onChange('interestSub', e.target.value)}
           disabled={!major}
-          className="border rounded px-4 py-2 w-1/2"
+          className="border h-10 w-[214px] rounded-sm px-4 py-2"
         >
           <option value="">중분류 선택</option>
           {(interestOptions[major] ?? []).map(s => (

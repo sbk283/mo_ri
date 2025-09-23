@@ -1,18 +1,17 @@
 import { Button, DatePicker, Form, Input } from 'antd';
-import type { BasicInfo } from '../../../pages/SignUpPage';
-import type { FieldData } from '../../../pages/LoginPage';
 import { useState } from 'react';
 import { useAuth } from '../../../contexts/AuthContext';
-import type dayjs from 'dayjs';
+import { Dayjs } from 'dayjs';
 
 type SignUpStep1Props = {
-  onNext: (data: BasicInfo) => void;
-  initialData?: BasicInfo | null;
+  onNext: (data: any) => void; // 실제 타입에 맞게 수정
+  initialData?: any;
 };
+
 interface ValueInterface {
   name: string;
   nickname: string;
-  birth: dayjs.Dayjs;
+  birth: Dayjs;
   email: string;
   password: string;
   passwordConfirm: string;
@@ -20,53 +19,41 @@ interface ValueInterface {
 
 const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
   const { signUp } = useAuth();
-  const [email, setEmail] = useState<string>('');
-  const [pw, setPw] = useState<string>('');
   const [msg, setMsg] = useState<string>('');
-  const [match, setMetch] = useState(true);
+  const [match, setMatch] = useState(true);
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    // 웹 브라우저 갱신 막기
-    e.preventDefault();
-
-    // 회원가입 하기
-    const { error } = await signUp(email, pw);
-    if (error) {
-      setMsg(`회원가입 오류 : ${error}`);
-    } else {
-      setMsg(`회원가입이 성공됐습니다. 이메일 인증 링크를 확인해주세요.`);
-    }
-  };
-
-  const initialValue = {
-    name: '',
-    nickname: '',
-    birth: '',
-    email: '',
-    password: '',
-    passwordConfirm: '',
-  };
-
-  const onFiledsChange = (field: FieldData[], allFields: FieldData[]) => {
-    console.log(field[0].value);
-  };
-  // 7. 확인 버튼 클릭시 최종 입력값
-  const onFinish = (values: ValueInterface) => {
-    console.log(values);
-    onNext(values);
-  };
-
+  // 비밀번호 확인
   const handleChangePassword = () => {
     const pw = form.getFieldValue('password');
     const pwConfirm = form.getFieldValue('passwordConfirm');
-    if (pwConfirm) {
-      setMetch(pw === pwConfirm);
+    setMatch(pw === pwConfirm || pwConfirm === undefined);
+  };
+
+  // 폼 제출 시
+  const onFinish = async (values: ValueInterface) => {
+    if (!match) {
+      setMsg('비밀번호가 서로 다릅니다.');
+      return;
     }
+    setLoading(true);
+    const { error } = await signUp(values.email, values.password);
+    setLoading(false);
+    if (error) {
+      setMsg(`회원가입 오류 : ${error}`);
+      return;
+    }
+    setMsg('회원가입이 성공됐습니다. 이메일 인증 링크를 확인해주세요.');
+
+    onNext({
+      ...values,
+      birth: values.birth ? values.birth.format('YYYY-MM-DD') : '',
+    });
   };
 
   return (
-    <div className=" y-full py-[40px] px-[107px]">
+    <div className="y-full py-[40px] px-[107px]">
       <div className="flex items-center gap-4 mb-5">
         <div className="text-xxl font-bold text-brand whitespace-nowrap">회원가입</div>
         <div className="flex items-center gap-3 whitespace-nowrap">
@@ -76,17 +63,17 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
         </div>
       </div>
       <Form
+        form={form}
         layout="vertical"
-        initialValues={initialValue}
-        onFieldsChange={(field, allFields) => onFiledsChange(field, allFields)}
+        onFieldsChange={() => handleChangePassword()}
         onFinish={onFinish}
+        initialValues={initialData}
       >
         <div className="mb-[50px]">
           <div className="flex gap-3">
             <Form.Item
               label={<p className="font-bold text-gray-600">이름</p>}
-              name={'name'}
-              required={false}
+              name="name"
               rules={[{ required: true, message: '이름을 입력해 주세요.' }]}
               colon={false}
             >
@@ -97,8 +84,7 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
             </Form.Item>
             <Form.Item
               label={<p className="font-bold text-gray-600">닉네임</p>}
-              name={'nickname'}
-              required={false}
+              name="nickname"
               rules={[{ required: true, message: '닉네임을 입력해 주세요.' }]}
               colon={false}
             >
@@ -110,8 +96,7 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
           </div>
           <Form.Item
             label={<p className="font-bold text-gray-600">생년월일</p>}
-            name={'birth'}
-            required={false}
+            name="birth"
             rules={[{ required: true, message: '생년월일을 선택해주세요.' }]}
             colon={false}
           >
@@ -122,8 +107,7 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
           </Form.Item>
           <Form.Item
             label={<p className="font-bold text-gray-600">이메일 (아이디)</p>}
-            name={'email'}
-            required={false}
+            name="email"
             rules={[
               { required: true, message: '아이디를 입력해 주세요.' },
               { type: 'email', message: '아이디 형식에 맞지 않습니다.' },
@@ -137,8 +121,7 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
           </Form.Item>
           <Form.Item
             label={<p className="font-bold text-gray-600">비밀번호</p>}
-            name={'password'}
-            required={false}
+            name="password"
             rules={[
               { required: true, message: '비밀번호를 입력해 주세요.' },
               {
@@ -151,13 +134,11 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
             <Input.Password
               className="w-[450px] border-t-0 border-l-0 border-r-0 rounded-none border-[#A3A3A3] !focus:shadow-none "
               placeholder="비밀번호를 입력하세요."
-              onChange={handleChangePassword}
             />
           </Form.Item>
           <Form.Item
             label={<p className="font-bold text-gray-600">비밀번호 확인</p>}
-            name={'passwordConfirm'}
-            required={false}
+            name="passwordConfirm"
             rules={[
               { required: true, message: '비밀번호를 입력해 주세요.' },
               {
@@ -170,7 +151,6 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
             <Input.Password
               className="w-[450px] border-t-0 border-l-0 border-r-0 rounded-none border-[#A3A3A3] !focus:shadow-none "
               placeholder="비밀번호를 다시 입력해 주세요."
-              onChange={handleChangePassword}
             />
           </Form.Item>
           {!match && <div style={{ color: 'red' }}>비밀번호가 다릅니다.</div>}
@@ -179,11 +159,12 @@ const SignUpStep1: React.FC<SignUpStep1Props> = ({ onNext, initialData }) => {
           <Button
             htmlType="submit"
             className="w-[450px] h-[48px] bg-brand text-white text-xl font-bold rounded-[5px]"
-            disabled={!match}
+            disabled={!match || loading}
           >
-            다음단계
+            {loading ? '확인중...' : '다음단계'}
           </Button>
         </Form.Item>
+        {msg && <div style={{ color: msg.includes('성공') ? 'green' : 'red' }}>{msg}</div>}
       </Form>
     </div>
   );

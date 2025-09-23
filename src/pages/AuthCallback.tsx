@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import SignUpBanner from '../components/layout/signup/SignUpBanner';
+import { Button } from 'antd';
 
 /**
  * - 인증 콜백 URL 처리
@@ -38,12 +39,13 @@ function AuthCallback() {
             <p className="font-bold mb-3 text-xl ">인증이 완료되었습니다.</p>
             <p className="text-lg text-gray-600 font-bold">회원가입을 계속 진행 해 주세요!</p>
           </div>
-          <button
+          <Button
+            htmlType="submit"
             onClick={handleClink}
-            className="rounded-[5px] bg-brand text-white font-bold text-xxl w-[450px] h-[48px]"
+            className="w-[450px] h-[48px] bg-brand text-white text-xl font-bold rounded-[5px]"
           >
-            다음 단계
-          </button>
+            다음단계
+          </Button>
         </div>
       </div>
     </div>

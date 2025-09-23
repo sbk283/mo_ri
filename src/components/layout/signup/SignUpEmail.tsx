@@ -1,4 +1,9 @@
-function SignUpEmail() {
+interface SignUpEmailProps {
+  email: any;
+  onVerified: any;
+}
+
+function SignUpEmail({ email, onVerified }: SignUpEmailProps) {
   return (
     <div className=" y-full py-[40px] px-[107px]">
       <div className="flex items-center gap-4 mb-[180px]">

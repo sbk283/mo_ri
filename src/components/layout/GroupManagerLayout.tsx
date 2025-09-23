@@ -1,7 +1,7 @@
 import GroupManagerSidebar from '../GroupManagerSidebar';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 function GroupManagerLayout({ children }: LayoutProps) {

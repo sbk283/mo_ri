@@ -20,6 +20,7 @@ const SignUpPage: React.FC = () => {
 
   const [step, setStep] = useState(stepParam);
   const [basicInfo, setBasicInfo] = useState<BasicInfo | null>(null);
+  // 회원가입 정보
 
   // 1. 기본 정보 완료 → step 2로, 이메일 정보 저장
   const handleBasicSubmit = (data: BasicInfo) => {

@@ -1,13 +1,13 @@
+import { useState } from 'react';
 import { GroupCard, type GroupItem } from '../components/common/GroupCard';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
 
 // 찜리스트 페이지
 function GroupWishListPage() {
-  const mockGroup: GroupItem[] = [
+  const [groups, setGroups] = useState<GroupItem[]>([
     {
       id: 1,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 던전 공파 모집',
@@ -20,7 +20,6 @@ function GroupWishListPage() {
     {
       id: 2,
       status: '모집예정',
-      statusColor: 'blue',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 모바일 던전 공파 모집',
@@ -33,7 +32,6 @@ function GroupWishListPage() {
     {
       id: 3,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 영웅전 던전 공파 모집',
@@ -45,13 +43,12 @@ function GroupWishListPage() {
     },
     {
       id: 4,
-      status: '서비스종료',
-      statusColor: 'black',
+      status: '모집예정',
       category: '취미/여가',
       region: '지역무관',
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D+999',
+      dday: 'D-7',
       ad: false,
       thumbnail: '/images/group_img.png',
       favorite: true,
@@ -59,56 +56,57 @@ function GroupWishListPage() {
     {
       id: 5,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: false,
+      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: false,
+      favorite: true,
     },
     {
       id: 6,
       status: '모집예정',
-      statusColor: 'blue',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 모바일 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
+      ad: false,
       thumbnail: '/images/group_img.png',
-      favorite: false,
+      favorite: true,
     },
     {
       id: 7,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 영웅전 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: false,
+      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: false,
+      favorite: true,
     },
     {
       id: 8,
-      status: '서비스종료',
-      statusColor: 'black',
+      status: '모집예정',
       category: '취미/여가',
       region: '지역무관',
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D+999',
-      ad: true,
+      dday: 'D-7',
+      ad: false,
       thumbnail: '/images/group_img.png',
-      favorite: false,
+      favorite: true,
     },
-  ];
+  ]);
+
+  const toggleFavorite = (id: number, next: boolean) => {
+    setGroups(prev => prev.map(g => (g.id === id ? { ...g, favorite: next } : g)));
+  };
+  const favoriteGroups = groups.filter(item => item.favorite);
   return (
     <GroupManagerLayout>
       {' '}
@@ -127,19 +125,26 @@ function GroupWishListPage() {
       </div>
       {/* 찜리스트 부분 */}
       <div className="mt-[40px]">
-        {/* <div className="text-lg font-semibold mb-[20px]">찜리스트</div> */}
-        <ul
-          className="grid gap-[21px] mb-[80px]
-            grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
-            place-items-stretch overflow-x-auto pb-2 w-[1024px]"
-        >
-          {mockGroup.map(item => (
-            <GroupCard key={item.id} item={item} />
-          ))}
-        </ul>
+        {favoriteGroups.length === 0 ? (
+          <div className="text-center text-gray-400 text-lg py-20 mb-20">
+            <div>찜한 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
+            <a href="#" className="text-[#0689E8] font-[15px] mt-[19px] inline-block">
+              모임 참여하러 가기 {`>`}
+            </a>
+          </div>
+        ) : (
+          <ul
+            className="grid gap-[21px] mb-[80px]
+              grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
+              place-items-stretch overflow-x-auto pb-2 w-[1024px]"
+          >
+            {favoriteGroups.map(item => (
+              <GroupCard key={item.id} item={item} onToggleFavorite={toggleFavorite} />
+            ))}
+          </ul>
+        )}
       </div>
     </GroupManagerLayout>
   );
 }
-
 export default GroupWishListPage;

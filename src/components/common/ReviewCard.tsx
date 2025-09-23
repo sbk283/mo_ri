@@ -50,7 +50,7 @@ const Star = ({ filled }: { filled: boolean }) => (
 );
 
 const Rating = ({ value }: { value: number }) => (
-  <div className="flex items-center gap-2 pr-20">
+  <div className="flex items-center gap-2 pr-[100px]">
     <span className="text-sm text-gray-600">별점</span>
     <div className="flex gap-1" aria-label={`별점 ${value}점 / 5점`}>
       {[1, 2, 3, 4, 5].map(n => (
@@ -64,7 +64,7 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <li className="rounded-[5px] overflow-hidden relative flex flex-col">
+    <li className="rounded-[5px] overflow-hidden relative flex flex-col w-[1000px]">
       <article className="rounded-md flex flex-col border border-[#eee] bg-white">
         {/* 상단 요약 */}
         <div className="p-5">

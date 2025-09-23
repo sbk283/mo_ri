@@ -7,20 +7,18 @@ export default function PopularGroupsSection() {
     {
       id: 1,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
+      ad: false,
       thumbnail: '/images/group_img.png',
-      favorite: true,
+      favorite: false,
     },
     {
       id: 2,
       status: '모집예정',
-      statusColor: 'blue',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 모바일 던전 공파 모집',
@@ -33,7 +31,6 @@ export default function PopularGroupsSection() {
     {
       id: 3,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 영웅전 던전 공파 모집',
@@ -45,13 +42,12 @@ export default function PopularGroupsSection() {
     },
     {
       id: 4,
-      status: '서비스종료',
-      statusColor: 'black',
+      status: '모집예정',
       category: '취미/여가',
       region: '지역무관',
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D+999',
+      dday: 'D-7',
       ad: true,
       thumbnail: '/images/group_img.png',
       favorite: true,
@@ -59,7 +55,6 @@ export default function PopularGroupsSection() {
     {
       id: 5,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 던전 공파 모집',
@@ -72,7 +67,6 @@ export default function PopularGroupsSection() {
     {
       id: 6,
       status: '모집예정',
-      statusColor: 'blue',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 모바일 던전 공파 모집',
@@ -85,7 +79,6 @@ export default function PopularGroupsSection() {
     {
       id: 7,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 영웅전 던전 공파 모집',
@@ -97,13 +90,12 @@ export default function PopularGroupsSection() {
     },
     {
       id: 8,
-      status: '서비스종료',
-      statusColor: 'black',
+      status: '모집예정',
       category: '취미/여가',
       region: '지역무관',
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D+999',
+      dday: 'D-7',
       ad: true,
       thumbnail: '/images/group_img.png',
       favorite: true,
@@ -132,7 +124,7 @@ export default function PopularGroupsSection() {
         </header>
 
         <ul
-          className="grid gap-[21px] mb-[80px]
+          className="grid gap-3 mb-[80px]
             grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
             place-items-stretch overflow-x-auto pb-2 w-[1024px]"
         >

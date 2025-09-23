@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 export type GroupItem = {
   id: number;
   status: '모집중' | '모집예정';
@@ -14,13 +16,11 @@ export type GroupItem = {
 
 export type Duration = 'oneday' | 'short' | 'long';
 
-// status 별 색상 매핑
 const STATUS_BG: Record<GroupItem['status'], string> = {
   모집중: 'bg-[#FF5252]',
   모집예정: 'bg-[#2A91E5]',
 };
 
-// StatusBadge 컴포넌트
 function StatusBadge({ text }: { text: GroupItem['status'] }) {
   return (
     <span
@@ -38,15 +38,49 @@ function StatusBadge({ text }: { text: GroupItem['status'] }) {
   );
 }
 
-export function GroupCard({ item }: { item: GroupItem }) {
+type GroupCardProps = {
+  item: GroupItem;
+  onToggleFavorite?: (id: number, next: boolean) => void; // 있으면 부모가 상태 소유(컨트롤)
+  confirmBeforeChange?: boolean; // 기본 true
+};
+
+export function GroupCard({ item, onToggleFavorite, confirmBeforeChange = true }: GroupCardProps) {
+  const controlled = typeof onToggleFavorite === 'function';
+
+  // 로컬 모드용 상태
+  const [localFav, setLocalFav] = useState<boolean>(item.favorite);
+
+  // 부모가 item.favorite을 바꿨을 때 로컬 모드에서도 동기화되도록(안전)
+  useEffect(() => {
+    if (!controlled) setLocalFav(item.favorite);
+  }, [item.favorite, controlled]);
+
+  const currentFav = controlled ? item.favorite : localFav;
+
+  const handleClickFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+
+    if (confirmBeforeChange) {
+      const msg = currentFav ? '즐겨찾기를 해제할까요?' : '이 모임을 즐겨찾기에 추가할까요?';
+      if (!window.confirm(msg)) return;
+    }
+
+    const next = !currentFav;
+
+    if (controlled) {
+      onToggleFavorite!(item.id, next);
+    } else {
+      setLocalFav(next);
+    }
+  };
+
   return (
     <li className="h-[290px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
       <article className="rounded-md flex flex-col h-full">
-        {/* 상태 배지: 좌상단 */}
         <span className="absolute left-2 z-10">
           <StatusBadge text={item.status} />
         </span>
-        {/* 썸네일 */}
+
         <div className="relative overflow-hidden">
           <img
             src={item.thumbnail}
@@ -56,15 +90,18 @@ export function GroupCard({ item }: { item: GroupItem }) {
           <button
             type="button"
             aria-label="즐겨찾기"
-            className="absolute top-2 right-2 size-6 w-[15px] h-[15px]"
+            aria-pressed={currentFav}
+            onClick={handleClickFavorite}
+            className="absolute top-2 right-2 w-[15px] h-[15px]"
           >
-            {item.favorite ? (
-              <img src="/images/fill_star.png" alt="" aria-hidden="true" />
+            {currentFav ? (
+              <img src="/images/fill_star.png" alt="즐겨찾기됨" />
             ) : (
-              <img src="/images/unfill_star.png" alt="" aria-hidden="true" />
+              <img src="/images/unfill_star.png" alt="즐겨찾기 안됨" />
             )}
           </button>
         </div>
+
         <div className="relative p-[15px] border border-[#A3A3A3] rounded-b-md flex flex-col flex-1 pb-12">
           <header className="flex justify-between text-[12px] mb-2">
             <span className="text-[#D83737] font-semibold">{item.category}</span>

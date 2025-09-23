@@ -65,7 +65,7 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
 
   return (
     <li className="rounded-[5px] overflow-hidden relative flex flex-col w-[1000px]">
-      <article className="rounded-md flex flex-col border border-[#eee] bg-white">
+      <article className="rounded-md flex flex-col border border-[#A3A3A3] bg-white">
         {/* 상단 요약 */}
         <div className="p-5">
           <header className="flex items-center justify-start gap-3">

@@ -1,29 +1,5 @@
-// 커리큘럼 훅 - 코드 너무 길어져서 로직 분리 했어요 (CreateGroupStepTwo)
+// 커리큘럼 훅 - 코드 너무 길어져서 로직 분리 했어요 (CreateGroupStep2, 3 다 쓰는 형태라)
 import { useState } from 'react';
-import type { GroupFormData } from '../types/group';
-
-// Step1 p프랍스
-export interface StepOneProps {
-  formData: GroupFormData;
-  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
-
-// Step2 프랍스
-export interface StepTwoProps {
-  formData: GroupFormData;
-  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
-
-// Step3 프랍스
-export interface StepThreeProps {
-  formData: GroupFormData;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
 
 // CurriculumCard Props 타입
 export interface CurriculumCardProps {

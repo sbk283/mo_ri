@@ -2,10 +2,10 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import CreateGroupStepOne from '../components/createGroup/CreateGroupStepOne';
-import CreateGroupStepThree from '../components/createGroup/CreateGroupStepThree';
-import CreateGroupStepTwo from '../components/createGroup/CreateGroupStepTwo';
-import StepIndicator from '../components/createGroup/StepIndicator';
+import CreateGroupStepOne from '../components/creategroup/CreateGroupStepOne';
+import CreateGroupStepThree from '../components/creategroup/CreateGroupStepThree';
+import CreateGroupStepTwo from '../components/creategroup/CreateGroupStepTwo';
+import StepIndicator from '../components/creategroup/StepIndicator';
 
 const variants = {
   enter: (direction: number) => ({ x: direction > 0 ? '100%' : '-100%', opacity: 0 }),

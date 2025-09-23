@@ -13,6 +13,14 @@ function MyPageFAQPage() {
     setOpenQuestionId(prev => (prev === qId ? null : qId));
   };
 
+  // from 태그 (추후 검색입력 기록 삭제도 하기!)
+  const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const query = formData.get('search') as string;
+    console.log('검색 실행:', query);
+  };
+
   return (
     <MyPageLayout>
       {/* 상단 텍스트 부분 */}
@@ -37,13 +45,16 @@ function MyPageFAQPage() {
             고객님, 무엇을 도와드릴까요?
           </div>
           {/*  검색창 */}
-          <div>
+          <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
               placeholder="자주 묻는 질문을 검색해 보세요!"
-              className="w-[707px] border border-gray-300 shadow-cardInset py-[8px] px-[40px] rounded-[21px] placeholder:text-lg placeholder:font-normal placeholder:text-gray-300"
+              className=" w-[707px] border border-gray-300 shadow-cardInset py-[8px] px-[40px] rounded-[21px] placeholder:text-lg placeholder:font-normal placeholder:text-gray-300"
             />
-          </div>
+            <button type="submit" className="absolute right-[30px] top-[5px]">
+              <img src="./search.png" alt="검색" className="w-[30px] h-[30px] transform scale-75" />
+            </button>
+          </form>
           {/* 토글 버튼 */}
           <div className="flex justify-between mt-[41px] mb-[48px]">
             {Faq.map(cat => (

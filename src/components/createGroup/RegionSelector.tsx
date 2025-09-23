@@ -14,7 +14,7 @@ function RegionSelector({ region, regionFree, onChange }: Props) {
           placeholder="지역을 입력하세요"
           value={region}
           onChange={e => onChange('region', e.target.value)}
-          className="border border-brand rounded-sm placeholder:text-[#A6A6A6] px-4 py-2 flex-1"
+          className="border border-gray-300 rounded-sm placeholder:text-[#A6A6A6] px-4 py-2 flex-1"
           disabled={regionFree}
         />
       </div>

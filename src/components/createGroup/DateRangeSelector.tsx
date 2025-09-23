@@ -28,7 +28,7 @@ function DateRangeSelector({ startDate, endDate, groupType, onChange }: Props) {
             value={startDate}
             onChange={e => onChange('startDate', e.target.value)}
             className={[
-              'border border-brand rounded-sm px-4 py-2 w-1/2',
+              'border border-gray-300 rounded-sm px-4 py-2 w-1/2',
               startDate ? 'text-black' : 'text-[#A6A6A6]',
             ].join(' ')}
           />
@@ -37,7 +37,7 @@ function DateRangeSelector({ startDate, endDate, groupType, onChange }: Props) {
             value={endDate}
             onChange={e => onChange('endDate', e.target.value)}
             className={[
-              'border border-brand rounded-sm px-4 py-2 w-1/2',
+              'border border-gray-300 rounded-sm px-4 py-2 w-1/2',
               endDate ? 'text-black' : 'text-[#A6A6A6]',
             ].join(' ')}
           />
@@ -52,7 +52,7 @@ function DateRangeSelector({ startDate, endDate, groupType, onChange }: Props) {
             type="text"
             value={groupType}
             readOnly
-            className="flex items-center w-64 h-10 border border-brand rounded px-4 py-2 placeholder:text-[#A6A6A6] bg-gray-100"
+            className="flex items-center w-64 h-10 border border-gray-300 rounded px-4 py-2 placeholder:text-[#A6A6A6] bg-gray-100"
           />
         </div>
       </div>

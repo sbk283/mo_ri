@@ -6,25 +6,29 @@ const steps = [
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <div className="flex justify-center gap-10 mb-8">
-      {steps.map(step => (
-        <div
-          key={step.id}
-          className={`flex items-center gap-2 font-bold text-[20px] ${
-            currentStep === step.id ? 'text-brand' : 'text-brand-light'
-          }`}
-        >
-          {step.id !== 1 && <div className="w-[72px] h-px flex-shrink-0 bg-brand" />}
-          <span
-            className={`flex items-center justify-center w-[62px] h-[39px] rounded-sm ${
-              currentStep === step.id
-                ? 'bg-brand text-white'
-                : 'border-brand-light border-[1px] text-brand-light'
+    <div className="flex justify-center items-center gap-2 mb-8">
+      {steps.map((step, index) => (
+        <div key={step.id} className="flex items-center gap-2">
+          {/* 왼쪽 선 */}
+          {index > 0 && <div className="w-[72px] mr-3 ml-3 h-px bg-brand" />}
+
+          {/* 번호 + 라벨 */}
+          <div
+            className={`flex items-center gap-2 font-bold text-[20px] ${
+              currentStep === step.id ? 'text-brand' : 'text-brand-light'
             }`}
           >
-            {String(step.id).padStart(2, '0')}_
-          </span>
-          <span>{step.label}</span>
+            <span
+              className={`flex items-center justify-center w-[62px] h-[39px] rounded-sm ${
+                currentStep === step.id
+                  ? 'bg-brand text-white'
+                  : 'border-brand-light border text-brand-light'
+              }`}
+            >
+              {String(step.id).padStart(2, '0')}_
+            </span>
+            <span>{step.label}</span>
+          </div>
         </div>
       ))}
     </div>

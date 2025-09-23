@@ -1,3 +1,5 @@
+// 모임 생성 출력 페이지 (스텝원투쓰리 다모음)
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import CreateGroupStepOne from '../components/createGroup/CreateGroupStepOne';
@@ -18,7 +20,6 @@ const variants = {
 function CreateGroupPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
-
   const [formData, setFormData] = useState({
     interestMajor: '',
     interestSub: '',
@@ -28,14 +29,23 @@ function CreateGroupPage() {
     region: '',
     regionFree: false,
     title: '',
+    summary: '',
     memberCount: 0,
     images: [] as File[],
     description: '',
-    curriculum: [''],
+    // 이거 지우ㅁㄴ 안대!!
+    curriculum: [
+      { title: '', detail: '' },
+      { title: '', detail: '' },
+    ],
   });
 
-  const handleChange = (field: string, value: any) =>
+  const handleChange = <Field extends keyof typeof formData>(
+    field: Field,
+    value: (typeof formData)[Field],
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const next = () => {
     if (step < 3) {
@@ -53,7 +63,7 @@ function CreateGroupPage() {
   return (
     <div className="mx-auto w-[1024px] pt-28 pb-20">
       {/* 카드(폼) 내부에 모든 것을 넣음 */}
-      <motion.div layout className="bg-white rounded-lg shadow p-8">
+      <motion.div layout className="bg-white rounded-lg shadow-card p-8">
         <h1 className="text-2xl font-bold mb-6">모임 생성하기</h1>
 
         {/* StepIndicator도 카드 내부로 이동 */}

@@ -17,7 +17,7 @@ function BasicInfoInputs({ title, memberCount, onChange }: Props) {
           placeholder="모임명을 입력하세요"
           value={title}
           onChange={e => onChange('title', e.target.value)}
-          className="border border-brand rounded-sm px-4 py-2 w-[485px] placeholder:text-[#A6A6A6]"
+          className="border border-gray-300 rounded-sm px-4 py-2 w-[485px] placeholder:text-[#A6A6A6]"
         />
       </div>
 
@@ -29,7 +29,7 @@ function BasicInfoInputs({ title, memberCount, onChange }: Props) {
             min={1}
             value={memberCount}
             onChange={e => onChange('memberCount', Number(e.target.value))}
-            className="border border-brand rounded-sm  px-4 py-2 w-32"
+            className="border border-gray-300 rounded-sm  px-4 py-2 w-32"
           />
           <span className="font-medium text-md">명</span>
         </div>
@@ -38,4 +38,5 @@ function BasicInfoInputs({ title, memberCount, onChange }: Props) {
   );
 }
 
-export default BasicInfoInputs;``
+export default BasicInfoInputs;
+``;

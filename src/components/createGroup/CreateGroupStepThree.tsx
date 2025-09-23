@@ -4,7 +4,7 @@ import MarkdownPreview from '@uiw/react-markdown-preview';
 import Modal from '../common/modal/Modal';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import { useNavigate } from 'react-router-dom';
-import type { StepTwoProps } from '../../hooks/useCurriculum';
+import type { StepTwoProps } from '../../types/group';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 

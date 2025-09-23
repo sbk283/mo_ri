@@ -1,9 +1,10 @@
 // 모임 생성 - 02_ 상세 커리큘럼 작성
 import MDEditor from '@uiw/react-md-editor';
 import CreateGroupNavigation from './CreateGroupNavigation';
-import { useCurriculum, type StepTwoProps } from '../../hooks/useCurriculum';
+import { useCurriculum } from '../../hooks/useCurriculum';
 import CurriculumCard from './CurriculumCard';
 import CreateGroupExample from './CreateGroupExample';
+import type { StepTwoProps } from '../../types/group';
 
 function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps) {
   const { files, setFiles, addCurriculum, updateCurriculum, removeCurriculum } = useCurriculum(
@@ -14,7 +15,6 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
     <div className="p-8 bg-white rounded shadow space-y-6" data-color-mode="light">
       <h2 className="text-2xl font-bold mb-6">상세 커리큘럼 작성</h2>
       <hr className="mb-6 pb-[51px] border-brand" />
-
       {/* 모임 간략 소개 */}
       <div className="flex">
         <label className="flex font-semibold text-lg pr-11">모임 간략 소개</label>
@@ -26,7 +26,6 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
           className="w-[732px] h-10 border placeholder:text-[#A6A6A6] border-brand rounded px-4 py-2"
         />
       </div>
-
       {/* 모임 소개 */}
       <div className="flex">
         <div className="flex items-start gap-1 pr-[53px]">
@@ -39,10 +38,9 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
           value={formData.description}
           onChange={val => onChange('description', val || '')}
           height={300}
-          className="w-[720px] h-[265px]"
+          className="w-[732px] h-[265px]"
         />
       </div>
-
       {/* 커리큘럼 */}
       <div className="space-y-6">
         {formData.curriculum.map((item, i) => (
@@ -56,9 +54,9 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
               )
             }
             // 어차피 이거는 뒤에서부터 삭제할거니까 있을 필욘 없긴한데 일단 주석처리해놂. (props도 옵셔널로 일단은 둿음), 개별로 삭제 처리 구현 하시나용?
-            // onRemove={index =>
-            //   removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next))
-            // }
+            onRemove={index =>
+              removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next))
+            }
             onFileChange={(index, file) => {
               const newFiles = [...files];
               newFiles[index] = file;
@@ -66,7 +64,6 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
             }}
           />
         ))}
-
         {/* 추가/삭제 버튼 */}
         <div className="mt-4 flex justify-end">
           <div className="flex gap-2">
@@ -94,7 +91,6 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
           </div>
         </div>
       </div>
-
       {/* 네비게이션 */}
       <CreateGroupNavigation
         step={2}

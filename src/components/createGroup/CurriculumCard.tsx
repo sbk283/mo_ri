@@ -1,7 +1,15 @@
 // 커리큘럼 (스텝투)
-import type { CurriculumCardProps } from '../../hooks/useCurriculum';
+import type { CurriculumItem } from '../../hooks/useCurriculum';
 
-function CurriculumCard({ index, item, onChange, onFileChange }: CurriculumCardProps) {
+interface CurriculumCardProps {
+  index: number;
+  item: CurriculumItem;
+  onChange: (index: number, field: keyof CurriculumItem, value: string) => void;
+  onRemove: (index: number) => void;
+  onFileChange: (index: number, file: File | null) => void;
+}
+
+function CurriculumCard({ index, item, onChange, onRemove, onFileChange }: CurriculumCardProps) {
   return (
     <div className="rounded p-4 space-y-3 relative">
       <div className="flex gap-2 items-center">
@@ -27,6 +35,15 @@ function CurriculumCard({ index, item, onChange, onFileChange }: CurriculumCardP
             onChange={e => onFileChange(index, e.target.files?.[0] || null)}
           />
         </label>
+        {/* {index >= 2 && (
+          <button
+            type="button"
+            onClick={() => onRemove(index)}
+            className="w-[84px] h-6 bg-brand text-white rounded-sm text-md font-semibold"
+          >
+            삭제
+          </button>
+        )} */}
       </div>
       <div className="flex justify-end">
         <textarea

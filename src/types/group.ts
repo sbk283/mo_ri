@@ -20,3 +20,26 @@ export interface GroupFormData {
   summary: string;
   curriculum: CurriculumItem[];
 }
+
+// Step1 p프랍스
+export interface StepOneProps {
+  formData: GroupFormData;
+  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+}
+
+// Step2 프랍스
+export interface StepTwoProps {
+  formData: GroupFormData;
+  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
+  onPrev?: () => void;
+  onNext?: () => void;
+}
+
+// Step3 프랍스
+export interface StepThreeProps {
+  formData: GroupFormData;
+  onPrev?: () => void;
+  onNext?: () => void;
+}

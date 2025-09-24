@@ -1,5 +1,7 @@
 // 모임관리 - 생성한 모임리스트 페이지 입니다
 
+import WeekCalendar from '../components/calendar/WeekCalendar';
+import GroupMenu from '../components/GroupMenu';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
 
 function GroupManagerPage() {
@@ -18,13 +20,12 @@ function GroupManagerPage() {
       </header>
       <main>
         {/* 풀캘린더 */}
-        <div></div>
+        <div className="mb-[62px]">
+          <WeekCalendar />
+        </div>
         {/* 모임리스트 */}
         <div>
-          {/* 카테고리 */}
-          <div></div>
-          {/* 목록 */}
-          <div></div>
+          <GroupMenu />
         </div>
       </main>
     </GroupManagerLayout>

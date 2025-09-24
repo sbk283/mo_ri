@@ -25,6 +25,18 @@ type Props = {
 };
 
 function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
+  // 필수 입력값 체크
+  const isValid =
+    formData.interestMajor &&
+    formData.interestSub &&
+    formData.startDate &&
+    formData.endDate &&
+    formData.groupType &&
+    (formData.region || formData.regionFree) &&
+    formData.title.trim().length > 0 &&
+    formData.memberCount > 0 &&
+    formData.images.length > 0;
+
   return (
     <div className="p-8 bg-white rounded shadow space-y-6">
       <h2 className="text-2xl font-bold mb-2">기본 모임 설정</h2>
@@ -56,7 +68,15 @@ function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
         memberCount={formData.memberCount}
         onChange={(field, value) => onChange(field, value)}
       />
-      <CreateGroupNavigation step={1} totalSteps={3} onPrev={onPrev!} onNext={onNext!} />
+
+      {/* 네비게이션 */}
+      <CreateGroupNavigation
+        step={1}
+        totalSteps={3}
+        onPrev={onPrev!}
+        onNext={onNext!}
+        // disableNext={!isValid}
+      />
     </div>
   );
 }

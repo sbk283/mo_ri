@@ -45,12 +45,14 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
   // 2025-09-24 업데이트: RichTextEditor 메모이제이션 - 완전히 안정적인 의존성으로 리렌더링 방지
   const richTextEditor = useMemo(
     () => (
-      <RichTextEditor
-        value={formData.description}
-        onChange={handleDescriptionChange}
-        onImagesChange={handleImagesChange}
-        placeholder="모임을 자세히 소개해 주세요"
-      />
+      <div>
+        <RichTextEditor
+          value={formData.description}
+          onChange={handleDescriptionChange}
+          onImagesChange={handleImagesChange}
+          placeholder="모임을 자세히 소개해 주세요"
+        />
+      </div>
     ),
     [handleDescriptionChange, handleImagesChange], // 2025-09-24 업데이트: formData.description과 editorKey 제거
   );
@@ -78,13 +80,13 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
 
       {/* 모임 소개 (RichTextEditor 적용) */}
       <div className="flex">
-        <div className="flex items-start gap-1 pr-[53px]">
+        <div className="flex items-start gap-1 pr-[51px]">
           <label className="pt-0.5 font-semibold text-lg leading-none">모임 소개</label>
           <div className="leading-none">
             <CreateGroupExample />
           </div>
         </div>
-        <div className="w-[732px] h-[265px]">{richTextEditor}</div>
+        <div className="w-[732px] h-[274px] overflow-y-auto custom-scrollbar">{richTextEditor}</div>
       </div>
 
       {/* 커리큘럼 */}
@@ -102,40 +104,16 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
             onRemove={index =>
               removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next))
             }
-            onFileChange={(index, file) => {
+            onFileChange={(index, fileList) => {
               const newFiles = [...files];
-              newFiles[index] = file;
+              newFiles[index] = fileList;
               setFiles(newFiles);
             }}
+            onAdd={index =>
+              addCurriculum(formData.curriculum, next => onChange('curriculum', next))
+            }
           />
         ))}
-
-        {/* 추가/삭제 버튼 */}
-        <div className="mt-4 flex justify-end">
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() =>
-                addCurriculum(formData.curriculum, next => onChange('curriculum', next))
-              }
-              className="w-[84px] h-6 border border-brand text-brand rounded-sm text-md font-semibold"
-            >
-              추가
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                removeCurriculum(formData.curriculum.length - 1, formData.curriculum, next =>
-                  onChange('curriculum', next),
-                )
-              }
-              className="w-[84px] h-6 bg-brand text-white rounded-sm text-md font-semibold"
-              disabled={formData.curriculum.length <= 2}
-            >
-              삭제
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* 네비게이션 */}

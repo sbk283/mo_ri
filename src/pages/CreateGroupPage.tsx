@@ -3,10 +3,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 // 2025-09-24 업데이트: RichTextEditor 안정성을 위한 useCallback 추가
 import { useState, useCallback } from 'react';
-import CreateGroupStepOne from '../components/creategroup/CreateGroupStepOne';
-import CreateGroupStepThree from '../components/creategroup/CreateGroupStepThree';
-import CreateGroupStepTwo from '../components/creategroup/CreateGroupStepTwo';
-import StepIndicator from '../components/creategroup/StepIndicator';
+import StepIndicator from '../components/createGroup/StepIndicator';
+import CreateGroupStepOne from '../components/createGroup/CreateGroupStepOne';
+import CreateGroupStepTwo from '../components/createGroup/CreateGroupStepTwo';
+import CreateGroupStepThree from '../components/createGroup/CreateGroupStepThree';
+
 
 const variants = {
   enter: (direction: number) => ({ x: direction > 0 ? '100%' : '-100%', opacity: 0 }),

@@ -232,13 +232,9 @@ body,
 /* 스와이퍼 next,prev 버튼 */
 .swiper-button-next,
 .swiper-button-prev {
-  width: 37px;
-  height: 37px;
-  border-radius: 50%;
   border: 1px solid #e5e5e5;
   background: #fff;
   box-shadow: 0 2px 8.8px 0 rgba(0, 0, 0, 0.25);
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,7 +249,7 @@ body,
 /images/arrow_down 써서 각도 조절하심 될 듯 함다 */
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  content: '';
+  content: '' !important;
 }
 
 /* input 에 잘못 넣을 시 흔들리는 모션 */
@@ -275,16 +271,44 @@ body,
   animation: shake 0.4s;
 }
 
-
 /* 리엑트 퀼 */
 .ql-toolbar {
+  display: flex;
+  justify-content: flex-start;
   border-radius: 5px 5px 0px 0px;
   border: 1px solid #a6a6a6 !important;
 }
+
 .ql-container {
   border-radius: 0px 0px 5px 5px;
   border: 1px solid #a6a6a6 !important;
   border-top: 0px !important;
+  min-height: 231px;
+  .ql-editor {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+}
+
+/* 스크롤바 스타일 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* 스크롤바 두께 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* 트랙은 투명 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: rgba(66, 148, 207, 0.5);
+  min-height: 110px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(66, 148, 207, 0.7);
+}
 
 /* 풀캘린더 */
 .fc {
@@ -329,5 +353,5 @@ body,
 
 .fc-day-today {
   background-color: #f0f9ff !important;
-
 }
+

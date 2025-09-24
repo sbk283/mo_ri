@@ -1,6 +1,7 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
+import '../../App.css';
 import { GroupCard, type GroupItem } from './GroupCard';
 
 function BannerCardSwiper() {
@@ -8,7 +9,6 @@ function BannerCardSwiper() {
     {
       id: 1,
       status: '모집중',
-      statusColor: 'red',
       category: '취미/여가',
       region: '지역무관',
       title: '마비노기 던전 공파 모집',
@@ -16,11 +16,11 @@ function BannerCardSwiper() {
       dday: 'D-3',
       ad: true,
       thumbnail: 'https://picsum.photos/seed/1/300/160',
+      favorite: true,
     },
     {
       id: 2,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -28,11 +28,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 3,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -40,11 +40,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 4,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -52,11 +52,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 5,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -64,11 +64,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 6,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -76,11 +76,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 7,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -88,11 +88,11 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
     {
       id: 8,
       status: '모집예정',
-      statusColor: 'blue',
       category: '스포츠',
       region: '서울',
       title: '강남 클라이밍 모임',
@@ -100,6 +100,7 @@ function BannerCardSwiper() {
       dday: 'D-5',
       ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
+      favorite: true,
     },
   ];
 
@@ -121,8 +122,8 @@ function BannerCardSwiper() {
         ))}
       </Swiper>
       {/* 화살표 버튼 */}
-      <button className="swiper-button-next absolute top-1/2 -right-6 z-10">
-        <img src="/images/arrow_down.svg" className="-rotate-90 w-4 h-4" />
+      <button className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-1/2 !-right-4 z-50">
+        <img src="/images/swiper_next.svg" />
       </button>
     </div>
   );

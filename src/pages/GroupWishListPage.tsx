@@ -128,7 +128,7 @@ function GroupWishListPage() {
         {favoriteGroups.length === 0 ? (
           <div className="text-center text-gray-400 text-lg py-20 mb-20">
             <div>찜한 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
-            <a href="#" className="text-[#0689E8] font-[15px] mt-[19px] inline-block">
+            <a href="/grouplist" className="text-[#0689E8] font-[15px] mt-[19px] inline-block">
               모임 참여하러 가기 {`>`}
             </a>
           </div>

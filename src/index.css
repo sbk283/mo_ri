@@ -275,6 +275,17 @@ body,
   animation: shake 0.4s;
 }
 
+
+/* 리엑트 퀼 */
+.ql-toolbar {
+  border-radius: 5px 5px 0px 0px;
+  border: 1px solid #a6a6a6 !important;
+}
+.ql-container {
+  border-radius: 0px 0px 5px 5px;
+  border: 1px solid #a6a6a6 !important;
+  border-top: 0px !important;
+
 /* 풀캘린더 */
 .fc {
   border: 1px solid #a3a3a3;
@@ -318,4 +329,5 @@ body,
 
 .fc-day-today {
   background-color: #f0f9ff !important;
+
 }

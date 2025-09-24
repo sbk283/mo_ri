@@ -1,7 +1,8 @@
 // 모임 생성 출력 페이지 (스텝원투쓰리 다모음)
 
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+// 2025-09-24 업데이트: RichTextEditor 안정성을 위한 useCallback 추가
+import { useState, useCallback } from 'react';
 import CreateGroupStepOne from '../components/creategroup/CreateGroupStepOne';
 import CreateGroupStepThree from '../components/creategroup/CreateGroupStepThree';
 import CreateGroupStepTwo from '../components/creategroup/CreateGroupStepTwo';
@@ -16,23 +17,46 @@ const variants = {
     transition: { duration: 0.35 },
   }),
 };
-
+const dummyData = {
+  interestMajor: '운동/건강',
+  interestSub: '힐링/건강관리',
+  startDate: '2025-09-30',
+  endDate: '2025-10-02',
+  groupType: '단기',
+  region: '',
+  regionFree: true,
+  title: '111',
+  summary: '',
+  memberCount: 1,
+  images: [{}],
+  description: '',
+  curriculum: [
+    {
+      title: '',
+      detail: '',
+    },
+    {
+      title: '',
+      detail: '',
+    },
+  ],
+};
 function CreateGroupPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState({
-    interestMajor: '',
-    interestSub: '',
-    startDate: '',
-    endDate: '',
-    groupType: '',
-    region: '',
-    regionFree: false,
-    title: '',
-    summary: '',
-    memberCount: 0,
+    interestMajor: dummyData.interestMajor,
+    interestSub: dummyData.interestSub,
+    startDate: dummyData.startDate,
+    endDate: dummyData.endDate,
+    groupType: dummyData.groupType,
+    region: dummyData.region,
+    regionFree: dummyData.regionFree,
+    title: dummyData.title,
+    summary: dummyData.summary,
+    memberCount: dummyData.memberCount,
     images: [] as File[],
-    description: '',
+    description: dummyData.description,
     // 이거 지우ㅁㄴ 안대!!
     curriculum: [
       { title: '', detail: '' },
@@ -40,25 +64,28 @@ function CreateGroupPage() {
     ],
   });
 
-  const handleChange = <Field extends keyof typeof formData>(
-    field: Field,
-    value: (typeof formData)[Field],
-  ) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  // 2025-01-24 업데이트: handleChange 함수 메모이제이션으로 RichTextEditor 리렌더링 방지
+  const handleChange = useCallback(
+    <Field extends keyof typeof formData>(field: Field, value: (typeof formData)[Field]) => {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    },
+    [],
+  );
 
-  const next = () => {
+  // 2025-01-24 업데이트: next, prev 함수 메모이제이션으로 안정성 향상
+  const next = useCallback(() => {
     if (step < 3) {
       setDirection(1);
       setStep(s => s + 1);
     }
-  };
-  const prev = () => {
+  }, [step]);
+
+  const prev = useCallback(() => {
     if (step > 1) {
       setDirection(-1);
       setStep(s => s - 1);
     }
-  };
+  }, [step]);
 
   return (
     <div className="mx-auto w-[1024px] pt-28 pb-20">

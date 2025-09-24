@@ -20,7 +20,7 @@ function MyPagePaymentsPage() {
         </div>
       </div>
       {/* 하단 내용 부분(없을 때) */}
-      <div className="mt-[68px]">
+      <div className="mt-[43px]">
         <div>
           <div className="text-xl font-bold text-brand">기본 결제 수단</div>
           <div className="mt-[18px] border-[1px] border-gray-300 rounded-[5px] w-[1024px] py-[65px]">
@@ -37,7 +37,7 @@ function MyPagePaymentsPage() {
             </div>
           </div>
         </div>
-        <div className="mb-[232px] mt-[36px] flex justify-end">
+        <div className="mt-[36px] flex justify-end">
           <button className="text-white text-xl font-medium bg-brand py-[8px] px-[28px] rounded-[5px]">
             결제 수단 추가하기
           </button>

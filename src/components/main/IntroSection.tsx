@@ -7,7 +7,7 @@ function IntroSection() {
 
   return (
     <div>
-      <div className="relative">
+      <div className="relative  mt-[70px]">
         <div className="relative w-full h-[500px] overflow-hidden rounded-bl-[80px] rounded-br-[80px]">
           <div className="absolute inset-0 bg-[url('./bgimg.jpg')] bg-cover bg-center" />
           <div className="absolute inset-0 bg-black/50 " />

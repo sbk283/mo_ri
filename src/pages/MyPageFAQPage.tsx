@@ -29,7 +29,7 @@ function MyPageFAQPage() {
           마이페이지 {'>'} 고객센터 {'>'} FAQ
         </div>
       </div>
-      <div className="flex gap-[12px]">
+      <div className="flex gap-[12px] mb-[45px]">
         <div className=" border-r border-brand border-[3px]"></div>
         <div className="text-gray-400">
           <div className="text-lg font-semibold">
@@ -39,7 +39,7 @@ function MyPageFAQPage() {
         </div>
       </div>
       {/* 하단 내용 부분 */}
-      <div className="mt-[45px] mb-[160px] py-[76px] flex flex-col items-center bg-white border border-card border-gray-300 rounded-[5px] shadow-card  w-[1024px] h-[100%]">
+      <div className="pt-[76px] pb-[100px] flex flex-col items-center bg-white border border-card border-gray-300 rounded-[5px] shadow-card  w-[1024px]">
         <div className="text-center">
           <div className="text-gray-400  font-semibold text-xxl mb-[40px]">
             고객님, 무엇을 도와드릴까요?
@@ -108,7 +108,7 @@ function MyPageFAQPage() {
           {/*  1:1문의 버튼 고고씽 */}
           <Link
             to={'/inquiry'}
-            className=" bg-brand px-[41px] py-[8px] rounded-[5px] block w-[195px] mx-auto mt-[20px] text-white font-medium text-xl"
+            className=" bg-brand  px-[41px] py-[8px] rounded-[5px] block w-[195px] mx-auto mt-[50px] text-white font-medium text-xl "
           >
             1:1 문의 하기
           </Link>

@@ -275,6 +275,7 @@ body,
   animation: shake 0.4s;
 }
 
+
 /* 리엑트 퀼 */
 .ql-toolbar {
   border-radius: 5px 5px 0px 0px;
@@ -284,4 +285,49 @@ body,
   border-radius: 0px 0px 5px 5px;
   border: 1px solid #a6a6a6 !important;
   border-top: 0px !important;
+
+/* 풀캘린더 */
+.fc {
+  border: 1px solid #a3a3a3;
+}
+/* 헤더 */
+.fc .fc-col-header-cell {
+  border: 1px solid #a3a3a3;
+  height: 35px;
+  border-bottom: 1px solid #0689e8 !important;
+  background-color: #ffffff !important;
+}
+.fc .fc-col-header-cell-cushion {
+  color: #0689e8;
+  font-size: 13px;
+  padding-top: 7px;
+}
+
+/* 날짜 테두리 */
+.fc .fc-day {
+  border: 1px solid #a3a3a3;
+  border-top: 1px solid #0689e8;
+}
+
+/* 일요일 */
+.fc .fc-col-header-cell:first-child .fc-col-header-cell-cushion {
+  color: #ea5656 !important;
+  font-weight: bold;
+}
+.fc .fc-col-header-cell:first-child {
+  border-bottom: 1px solid #ea5656 !important;
+}
+
+/* 토요일*/
+.fc .fc-col-header-cell:last-child .fc-col-header-cell-cushion {
+  color: #ea5656 !important;
+  font-weight: bold;
+}
+.fc .fc-col-header-cell:last-child {
+  border-bottom: 1px solid #ea5656 !important;
+}
+
+.fc-day-today {
+  background-color: #f0f9ff !important;
+
 }

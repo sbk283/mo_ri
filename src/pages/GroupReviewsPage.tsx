@@ -1,5 +1,7 @@
+import { motion } from 'framer-motion';
+import { useState } from 'react';
+import ReviewBar, { type GroupReview } from '../components/common/ReviewBar';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
-import ReviewCard, { type GroupReview } from '../components/common/ReviewCard';
 
 const mockReviews: GroupReview[] = [
   {
@@ -36,15 +38,21 @@ const mockReviews: GroupReview[] = [
 ];
 
 function GroupReviewsPage() {
+  // 상태를 mockReviews로 초기화
+  const [items, setItems] = useState<GroupReview[]>(mockReviews);
+
   const handleEdit = (id: number) => {
     // TODO: 편집 모달 열기 or 라우팅
     console.log('edit', id);
   };
 
   const handleDelete = (id: number) => {
-    // TODO: 삭제 확인 후 API 호출
-    console.log('delete', id);
+    // 삭제 시 상태에서 제거 → 렌더에도 즉시 반영
+    setItems(prev => prev.filter(it => it.id !== id));
   };
+
+  // 애니 ease 프리셋
+  const ease: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
 
   return (
     <GroupManagerLayout>
@@ -54,18 +62,40 @@ function GroupReviewsPage() {
       <div className="flex gap-[12px] mb-6">
         <div className="border-r border-brand border-[3px]" />
         <div className="text-gray-400">
-          <div className="text-lg font-semibold">관심 있는 모임을 한곳에서 모아볼 수 있습니다.</div>
-          <div className="text-md">
-            찜한 모임의 일정과 정보를 확인하며 원하는 모임에 쉽게 참여해보세요.
+          <div className="text-lg font-semibold">
+            내가 남긴 모든 후기와 리뷰를 한눈에 모아볼 수 있습니다.
           </div>
+          <div className="text-md">작성한 후기들을 확인하며 소중한 경험을 관리해보세요.</div>
         </div>
       </div>
 
       {/* 리뷰 리스트 */}
       <section className="space-y-4 mb-10">
-        {mockReviews.map(item => (
-          <ReviewCard key={item.id} review={item} onEdit={handleEdit} onDelete={handleDelete} />
-        ))}
+        {items.length === 0 ? (
+          // 빈 상태
+          <div className="text-center text-gray-400 text-lg py-20 mb-20">
+            <div>리뷰할 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
+            <a href="/grouplist" className="text-[#0689E8] font-[15px] mt-[19px] inline-block">
+              모임 참여하러 가기 {`>`}
+            </a>
+          </div>
+        ) : (
+          <ul className="flex flex-col gap-4">
+            {/* items로 렌더 */}
+            {items.map(item => (
+              <motion.li
+                key={item.id}
+                layout // 레이아웃 자연스럽게
+                initial={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+                transition={{ duration: 0.22, ease }}
+                className="overflow-hidden" // 높이 접힘 시 튀는 것 방지
+              >
+                <ReviewBar review={item} onEdit={handleEdit} onDelete={handleDelete} />
+              </motion.li>
+            ))}
+          </ul>
+        )}
       </section>
     </GroupManagerLayout>
   );

@@ -27,6 +27,7 @@ import GroupWishListPage from './pages/GroupWishListPage';
 import JoinedGroupsPage from './pages/JoinedGroupsPage';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthCallback from './pages/AuthCallback';
+import ReviewsListPage from './pages/ReviewsListPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -49,6 +50,8 @@ function App() {
             <Route path="/joingroups" element={<JoinedGroupsPage />} />
             {/* 모임관리 - 찜리스트 */}
             <Route path="/groupwish" element={<GroupWishListPage />} />
+            {/* 리뷰 더보기 리스트 페이지 */}
+            <Route path="/reviews" element={<ReviewsListPage />} />
             {/* 후기리뷰 */}
             <Route path="/groupreviews" element={<GroupReviewsPage />} />
             {/* 모임리스트 */}

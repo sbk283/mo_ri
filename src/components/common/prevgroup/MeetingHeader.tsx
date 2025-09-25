@@ -3,54 +3,54 @@ import { useState } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
+import type { GroupFormData } from '../../../types/group';
 
 interface MeetingHeaderProps {
-  title: string;
-  description: string; // 모임 한줄 설명
-  images: string[];
+  formData: GroupFormData;
   dday: string;
-  period: string; // 모집 기간 : 모임이 진행되는 전체 기간을 문자열로 표현
-  participants: string; // 현재 참가한 인원 수 / 최대 정원
   isFavorite: boolean;
-  mode: 'detail' | 'preview'; // 현재 화면 모드 ('detail' → 실제 모임 상세보기 페이지, 'preview' → Step3 미리보기 페이지)
+  mode: 'detail' | 'preview';
   onFavoriteToggle: () => void;
-  onApply: () => void; // 참가하기 버튼 눌렀을 때 실행되는 함수 (모드 = preview일 땐 실행 xxxx)
+  onApply: () => void;
 }
 
 function MeetingHeader({
-  title,
-  description,
-  images,
+  formData,
   dday,
-  period,
-  participants,
   isFavorite,
   mode,
   onFavoriteToggle,
   onApply,
 }: MeetingHeaderProps) {
-  // 선택된 이미지 state
-  const [selectedImage, setSelectedImage] = useState<string>(images[0] || '');
+  // 대표 이미지
+  const [selectedImage, setSelectedImage] = useState<string>(
+    formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : '/images/no_image.png',
+  );
+
+  // 이미지 URL 배열 변환
+  const imageUrls = formData.images.map(file => URL.createObjectURL(file));
 
   return (
-    <div className="flex gap-4">
-      {/* 메인 이미지 */}
+    <div className="flex">
+      {/* 메인 이미지 + 썸네일 */}
       <div className="overflow-hidden rounded-md w-[350px] relative">
-        <img src={selectedImage} alt="대표 이미지" className="w-[320px] h-[290px] object-cover" />
+        <img
+          src={selectedImage}
+          alt="대표 이미지"
+          className="w-[320px] h-[290px] object-cover rounded"
+        />
 
-        {/* 하단 썸네일 미리보기 (스와이퍼 자리) */}
-        <div className="mt-2 relative ml-[-29px]">
+        {/* 썸네일 Swiper */}
+        <div className="mt-2 relative w-[320px] h-[72px]">
           <Swiper
             modules={[Navigation]}
             navigation={{ nextEl: '.swiper-button-next' }}
             spaceBetween={10}
             slidesPerView={4}
-            className="w-[320px]"
+            className="w-full h-full"
           >
-            {images.map((img, idx) => (
-              <SwiperSlide key={idx} className="!w-[72px]">
-                {' '}
-                {/* 슬라이드 폭 고정 */}
+            {imageUrls.map((img, idx) => (
+              <SwiperSlide key={idx} className="!w-[72px] !h-[72px] relative">
                 <div
                   className="w-[72px] h-[72px] rounded overflow-hidden cursor-pointer"
                   onClick={() => setSelectedImage(img)}
@@ -61,32 +61,61 @@ function MeetingHeader({
                     className="w-full h-full object-cover hover:opacity-80"
                   />
                 </div>
+
+                {/* 마지막 썸네일에 화살표 버튼 */}
+                {idx === imageUrls.length - 1 && (
+                  <button className="swiper-button-next rounded-full !w-[23px] !h-[23px] absolute top-1/2 -translate-y-1/2 -right-6 z-50">
+                    <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
+                  </button>
+                )}
               </SwiperSlide>
             ))}
           </Swiper>
-
-          {/* 화살표 버튼 */}
-          <button className="swiper-button-next rounded-full !w-[23px] !h-[23px] absolute top-1/2 -translate-y-[-8px] z-50">
-            <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
-          </button>
         </div>
       </div>
 
       {/* 오른쪽 정보 */}
-      <div className="flex-1">
-        <h2 className="font-bold text-lg flex items-center gap-2">
-          {title}
-          <span className="text-sm text-red-500">{dday}</span>
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">{description}</p>
+      <div className="border rounded-sm p-5 border-gray-300 h-[159px] w-[572px] pl-[18px]">
+        <div className="flex-1 flex flex-col justify-between">
+          {/* 상태 + D-day */}
+          <div className="flex items-center gap-2">
+            <span className="px-2 py-1 text-xs font-semibold text-white bg-red-500 rounded">
+              모집중
+            </span>
+            <span className="text-sm text-gray-400">{dday}</span>
+          </div>
 
-        <div className="flex items-center gap-4 text-sm text-gray-500 mt-2">
-          <span>참여인원: {participants}</span>
-          <span>{period}</span>
+          {/* 모임 이름 */}
+          <h2 className="mt-1 font-bold text-lg text-gray-900">{formData.title}</h2>
+
+          {/* 간략 소개 */}
+          <p className="text-sm text-gray-600 mt-1">
+            {formData.summary || '간략 소개가 없습니다.'}
+          </p>
+
+          {/* 참여 인원 / 기간 / 카테고리 */}
+          <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-gray-500">
+            {/* 참여 인원 */}
+            <span className="flex items-center gap-1">
+              <img src="/people_dark.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
+              0/{formData.memberCount}
+            </span>
+
+            {/* 기간 */}
+            <span>
+              {formData.startDate || '시작일 미정'} ~ {formData.endDate || '종료일 미정'}
+            </span>
+
+            {/* 카테고리 */}
+            <span className="text-brand font-semibold">{formData.interestMajor}</span>
+            {formData.interestSub && (
+              <span className="text-gray-400">/ {formData.interestSub}</span>
+            )}
+          </div>
         </div>
 
         {/* 액션 버튼 */}
-        <div className="flex items-center gap-4 mt-4">
+        <div className="flex items-center gap-4 mt-10">
           {/* 공유 */}
           <button type="button">
             <img src="/images/share_dark.svg" alt="공유" className="w-6 h-6" />
@@ -105,7 +134,7 @@ function MeetingHeader({
           <button
             type="button"
             onClick={mode === 'detail' ? onApply : undefined}
-            className={`px-6 py-2 rounded text-white font-semibold ${
+            className={`ml-auto px-6 py-2 rounded text-white font-semibold ${
               mode === 'detail'
                 ? 'bg-brand hover:bg-brand-dark cursor-pointer'
                 : 'bg-gray-300 cursor-default'
@@ -118,4 +147,5 @@ function MeetingHeader({
     </div>
   );
 }
+
 export default MeetingHeader;

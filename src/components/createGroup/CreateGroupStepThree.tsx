@@ -25,7 +25,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   };
 
   // 이미지 URL 변환 (최대 9장)
-  const imageUrls = formData.images.slice(0, 9).map(file => URL.createObjectURL(file));
+  // const imageUrls = formData.images.slice(0, 9).map(file => URL.createObjectURL(file));
 
   // D-Day 계산
   const dday = calcDday(formData.startDate);
@@ -37,12 +37,8 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
       <div className="p-8 bg-white rounded shadow space-y-8">
         {/* 상단 MeetingHeader */}
         <MeetingHeader
-          title={formData.title}
-          description={formData.summary}
-          images={imageUrls}
+          formData={formData}
           dday={dday}
-          period={`${formData.startDate || '시작일 미정'} ~ ${formData.endDate || '종료일 미정'}`}
-          participants={`0/${formData.memberCount}`}
           isFavorite={false}
           mode="preview"
           onFavoriteToggle={() => {}}
@@ -50,7 +46,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         />
 
         {/* 기본 정보 */}
-        <div className="flex-1 space-y-2">
+        {/* <div className="flex-1 space-y-2">
           <h3 className="text-xl font-bold">{formData.title}</h3>
           <p className="text-gray-600">{formData.summary || '간략 소개 없음'}</p>
           <p className="text-gray-500 text-sm">
@@ -61,7 +57,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           <button className="mt-2 px-4 py-1 bg-brand text-white rounded cursor-default">
             참가하기
           </button>
-        </div>
+        </div> */}
 
         {/* 모임 소개 */}
         <div>

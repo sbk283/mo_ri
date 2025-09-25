@@ -7,7 +7,7 @@ export interface CurriculumCardProps {
   index: number;
   item: CurriculumItem;
   onChange: (index: number, field: keyof CurriculumItem, value: string) => void;
-  onFileChange: (index: number, file: File | null) => void;
+  onFileChange: (index: number, files: File[]) => void; // 여러 장 파일을 배열로 받도록 변경함!
   onRemove?: (index: number) => void;
 }
 
@@ -19,14 +19,17 @@ export interface CurriculumItem {
 
 // 커리큘럼 관리용 훅 - initial: 초기 커리큘럼 배열 (길이에 맞춰 files 초기화)
 export function useCurriculum(initial: CurriculumItem[]) {
-  const [files, setFiles] = useState<(File | null)[]>(Array(initial.length).fill(null));
+  // ✅ 각 단계별 파일을 여러 장 보관할 수 있도록 2차원 배열로 변경
+  const [files, setFiles] = useState<File[][]>(
+    Array(initial.length).fill([]), // 초기화: 각 단계는 빈 배열
+  );
 
   // 2025-09-24 업데이트: 새로운 커리큘럼 단계 추가 - useCallback으로 메모이제이션
   const addCurriculum = useCallback(
     (curriculum: CurriculumItem[], onChange: (next: CurriculumItem[]) => void) => {
       const next = [...curriculum, { title: '', detail: '' }];
       onChange(next);
-      setFiles(prev => [...prev, null]); // 2025-09-24 업데이트: 함수형 업데이트 사용
+      setFiles(prev => [...prev, []]); // 새 단계에 파일 배열 추가!!!
     },
     [],
   );
@@ -53,7 +56,7 @@ export function useCurriculum(initial: CurriculumItem[]) {
       if (curriculum.length <= 2) return;
       const next = curriculum.filter((_, i) => i !== index);
       onChange(next);
-      setFiles(prev => prev.filter((_, i) => i !== index)); // 2025-09-24 업데이트: 함수형 업데이트 사용
+      setFiles(prev => prev.filter((_, i) => i !== index)); // 파일 배열도 같은 인덱스 제거함
     },
     [],
   );

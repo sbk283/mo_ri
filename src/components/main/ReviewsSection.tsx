@@ -8,7 +8,7 @@ export const defaultMock: ReviewItem[] = [
     id: 1,
     title: '마비노기 던전 공파 모집',
     category: '취미/여가',
-    avatarSrc: '../../../public/bruce.jpg',
+    avatarSrc: '/public/bruce.jpg',
     quote:
       '파티장이 정말 좋습니다. 체계적으로 하고 파티도 여러 직업들로 잘 배분되어 있어서 좋네요. 어떤 아이템을 먹고 시작해야하는지도 잘 알려주고 클리어 팁도 잘 알려주고 너무 좋았어요. 완전 버스탄 기분이네요!',
     authorMasked: 'zipgago*** 님의 후기',
@@ -17,7 +17,7 @@ export const defaultMock: ReviewItem[] = [
     id: 2,
     title: '주 2회 실무형 피그마',
     category: '스터디/학습',
-    avatarSrc: '../../../public/bruce.jpg',
+    avatarSrc: '/public/bruce.jpg',
     quote:
       '체계적인 커리큘럼과 피드백 덕분에 실무 감이 많이 늘었어요. 과제도 구체적이고, 팀프로젝트도 재미있었습니다.',
     authorMasked: 'design*** 님의 후기',
@@ -26,7 +26,7 @@ export const defaultMock: ReviewItem[] = [
     id: 3,
     title: '주말 러닝 메이트 구해요',
     category: '운동/건강',
-    avatarSrc: '../../../public/bruce.jpg',
+    avatarSrc: '/public/bruce.jpg',
     quote:
       '초보도 환영 분위기라서 부담 없이 함께 달릴 수 있었어요. 코스도 안전하고 예뻐서 힐링됩니다.',
     authorMasked: 'runwith*** 님의 후기',
@@ -35,7 +35,7 @@ export const defaultMock: ReviewItem[] = [
     id: 4,
     title: '한 달 완성 포토샵',
     category: '스터디/학습',
-    avatarSrc: '../../../public/bruce.jpg',
+    avatarSrc: '/public/bruce.jpg',
     quote: '툴 기초부터 실전 포스터 제작까지 탄탄하게 배웠어요. 과제 피드백이 빨라서 실력이 쑥쑥!',
     authorMasked: 'photo*** 님의 후기',
   },
@@ -95,7 +95,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="../../../public/pro_banner2.jpg"
+                    src="/public/pro_banner2.jpg.jpg"
                     alt="그린컴퓨터아트학원"
                   />
                 </a>
@@ -108,7 +108,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="../../../public/pro_banner1.jpg"
+                    src="/public/pro_banner1.jpg.jpg"
                     alt="제휴배너이름"
                   />
                 </a>
@@ -121,7 +121,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="../../../public/pro_banner1.jpg"
+                    src="/public/pro_banner1.jpg"
                     alt="제휴배너이름"
                   />
                 </a>

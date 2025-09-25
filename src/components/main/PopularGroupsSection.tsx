@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Plus from '../../../public/images/plus.svg';
-import { GroupCard, type GroupItem } from '../common/GroupCard';
+import type { GroupItem } from '../common/GroupCard';
+import SwiperGroupCard from '../common/SwiperGroupCard';
 
 export default function PopularGroupsSection() {
   const data: GroupItem[] = [
@@ -123,15 +124,9 @@ export default function PopularGroupsSection() {
           </div>
         </header>
 
-        <ul
-          className="grid gap-3 mb-[80px]
-            grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
-            place-items-stretch overflow-x-auto pb-2 w-[1024px]"
-        >
-          {data.slice(0, 4).map(item => (
-            <GroupCard key={item.id} item={item} />
-          ))}
-        </ul>
+        <div className="mb-[80px]">
+          <SwiperGroupCard items={data} confirmMode="unfav" loop={false} spaceBetween={16} />
+        </div>
       </div>
     </section>
   );

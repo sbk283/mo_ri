@@ -1,8 +1,8 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
-import '../../App.css';
 import { GroupCard, type GroupItem } from './GroupCard';
+
 
 function BannerCardSwiper() {
   const groupList: GroupItem[] = [

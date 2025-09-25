@@ -59,7 +59,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
 
   return (
     <div className="p-8 bg-white rounded shadow space-y-6">
-      <h2 className="text-2xl font-bold mb-6">상세 커리큘럼 작성</h2>
+      <h2 className="flex justify-start text-2xl font-bold mb-6">상세 커리큘럼 작성</h2>
       <hr className="mb-6 pb-[51px] border-brand" />
 
       {/* 모임 간략 소개 */}

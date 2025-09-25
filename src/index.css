@@ -228,6 +228,45 @@ body,
   box-shadow: none !important;
   outline: none !important;
 }
+/* 리엑트 퀼 */
+.ql-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  border-radius: 5px 5px 0px 0px;
+  border: 1px solid #a6a6a6 !important;
+}
+
+.ql-container {
+  border-radius: 0px 0px 5px 5px;
+  border: 1px solid #a6a6a6 !important;
+  border-top: 0px !important;
+  min-height: 231px;
+  .ql-editor {
+    height: 100%;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+}
+
+/* 스크롤바 스타일 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px; /* 스크롤바 두께 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* 트랙은 투명 */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: rgba(66, 148, 207, 0.5);
+  min-height: 110px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(66, 148, 207, 0.7);
+}
+
 
 /* 스와이퍼 next,prev 버튼 */
 .swiper-button-next,
@@ -269,45 +308,6 @@ body,
 }
 .animate-shake {
   animation: shake 0.4s;
-}
-
-/* 리엑트 퀼 */
-.ql-toolbar {
-  display: flex;
-  justify-content: flex-start;
-  border-radius: 5px 5px 0px 0px;
-  border: 1px solid #a6a6a6 !important;
-}
-
-.ql-container {
-  border-radius: 0px 0px 5px 5px;
-  border: 1px solid #a6a6a6 !important;
-  border-top: 0px !important;
-  min-height: 231px;
-  .ql-editor {
-    height: 100%;
-    overflow-y: auto;
-    padding-right: 8px;
-  }
-}
-
-/* 스크롤바 스타일 */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px; /* 스크롤바 두께 */
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* 트랙은 투명 */
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  border-radius: 5px;
-  background: rgba(66, 148, 207, 0.5);
-  min-height: 110px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(66, 148, 207, 0.7);
 }
 
 /* 풀캘린더 */

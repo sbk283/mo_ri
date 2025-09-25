@@ -1,5 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 export type ConfirmModalProps = {
   open: boolean;
@@ -9,8 +10,8 @@ export type ConfirmModalProps = {
   cancelText?: string;
   onConfirm: () => void;
   onClose: () => void;
-  /** 바깥(배경) 클릭해도 닫히지 않게 하기 */
   preventBackdropClose?: boolean;
+  portalTarget?: Element | null;
 };
 
 export default function ConfirmModal({
@@ -22,10 +23,13 @@ export default function ConfirmModal({
   onConfirm,
   onClose,
   preventBackdropClose = false,
+  portalTarget,
 }: ConfirmModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // ESC로 닫기
+  // ESC 닫기
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -35,19 +39,60 @@ export default function ConfirmModal({
     return () => window.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
-  // 백드롭 클릭 시 닫기
+  // 배경 클릭 닫기
   const handleBackdropClick = () => {
     if (!preventBackdropClose) onClose();
   };
 
-  // 애니메이션 프리셋
-  const ease = [0.22, 0.61, 0.36, 1] as const;
+  // ✅ 스크롤 잠금 (스크롤 위치 보존)
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (!open) return;
 
-  return (
+    const { body, documentElement } = document;
+    const prevOverflow = body.style.overflow;
+    const prevPosition = body.style.position;
+    const prevTop = body.style.top;
+    const prevWidth = body.style.width;
+    const prevLeft = body.style.left;
+    const prevRight = body.style.right;
+    const prevScrollBehavior = documentElement.style.scrollBehavior;
+
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+
+    documentElement.style.scrollBehavior = 'auto';
+    body.style.overflow = 'hidden';
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.left = '0';
+    body.style.right = '0';
+    body.style.width = '100%';
+
+    return () => {
+      body.style.overflow = prevOverflow;
+      body.style.position = prevPosition;
+      body.style.top = prevTop;
+      body.style.left = prevLeft;
+      body.style.right = prevRight;
+      body.style.width = prevWidth;
+
+      const y = Math.abs(parseInt(prevTop || `-${scrollY}`, 10)) || scrollY;
+      window.scrollTo(0, y);
+
+      documentElement.style.scrollBehavior = prevScrollBehavior;
+    };
+  }, [open]);
+
+  const ease = [0.22, 0.61, 0.36, 1] as const;
+  const portalEl =
+    portalTarget ??
+    (typeof document !== 'undefined' ? document.body : (null as unknown as Element));
+
+  const modalNode = (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[1000] flex items-center justify-center"
+          className="fixed inset-0 z-[1001] flex items-center justify-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-title"
@@ -57,8 +102,8 @@ export default function ConfirmModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* 배경 */}
-          <div className="absolute inset-0 bg-black/50" />
+          {/* 오버레이 */}
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-[1000]" />
 
           {/* 카드 */}
           <motion.div
@@ -69,13 +114,13 @@ export default function ConfirmModal({
               w-[430px] h-[280px]
               pt-[44px] pb-[70px] px-[20px]
               flex flex-col items-center gap-[33px]
+              z-[1001]
             "
             initial={{ scale: 0.96, y: 8, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}
             exit={{ scale: 0.98, y: 6, opacity: 0 }}
             transition={{ duration: 0.18, ease }}
           >
-            {/* 제목 */}
             <h2
               id="confirm-title"
               className="text-center font-bold text-[28px] leading-[37px] text-[#0762E5]"
@@ -83,7 +128,6 @@ export default function ConfirmModal({
               {title}
             </h2>
 
-            {/* 본문 */}
             <p
               id="confirm-desc"
               className="text-center font-medium text-[17px] leading-[25px] text-black whitespace-pre-line"
@@ -91,7 +135,6 @@ export default function ConfirmModal({
               {message}
             </p>
 
-            {/* 버튼 영역 (디자인 고정) */}
             <div className="absolute bottom-[43px] left-0 right-0 flex items-center justify-center gap-6">
               <button
                 type="button"
@@ -125,4 +168,7 @@ export default function ConfirmModal({
       )}
     </AnimatePresence>
   );
+
+  if (!mounted || !portalEl) return null;
+  return createPortal(modalNode, portalEl);
 }

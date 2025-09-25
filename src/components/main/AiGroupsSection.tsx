@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Plus from '../../../public/images/plus.svg';
-import { GroupCard, type Duration, type GroupItem } from '../common/GroupCard';
+import GroupCard, { type Duration, type GroupItem } from '../common/GroupCard';
 
 const FILTERS: { key: Duration; label: string }[] = [
   { key: 'oneday', label: '원데이 모임' },

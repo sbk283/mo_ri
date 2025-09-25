@@ -66,7 +66,10 @@ function MeetingHeader({
           </Swiper>
 
           {/* 화살표 버튼 */}
-          <button className="swiper-button-next rounded-full !w-[23px] !h-[23px] absolute top-1/2 -translate-y-[-8px] z-50">
+          <button
+            className="swiper-button-next rounded-full !w-[23px] !h-[23px] absolute top-1/2 -translate-y-[-8px] z-50"
+            style={{ transform: 'translateX(-50%) !important' }}
+          >
             <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
           </button>
         </div>

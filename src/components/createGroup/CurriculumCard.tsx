@@ -55,7 +55,7 @@ function CurriculumCard({
             placeholder="단계 제목을 정해주세요."
             value={item.title}
             onChange={e => onChange(index, 'title', e.target.value)}
-            className="flex-1 border border-gray-300 rounded-md px-3 py-2"
+            className="flex-1 border border-gray-300 rounded-md px-3 py-2 placeholder:text-[#A6A6A6]"
           />
         </div>
 
@@ -82,39 +82,58 @@ function CurriculumCard({
       </div>
 
       {/* 파일 미리보기 - 항상 3칸 보여줌 */}
-      <div className="flex gap-2 mt-2">
-        {[0, 1, 2].map(i => (
-          <div
-            key={i}
-            className="w-[45px] h-[45px] border border-[#D9D9D9] rounded-[5px] overflow-hidden flex items-center justify-center bg-white"
-          >
-            {previews[i] ? (
-              <img src={previews[i]} alt={`preview-${i}`} className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-gray-300 text-xs">+</span>
-            )}
-          </div>
-        ))}
-      </div>
+      <div className="flex mt-2 gap-[467px]">
+        <div className="flex gap-2  pl-[150px]">
+          {[0, 1, 2].map(i => (
+            <div
+              key={i}
+              className="w-[45px] h-[45px] border border-[#D9D9D9] rounded-[5px] overflow-hidden flex items-center justify-center bg-white"
+            >
+              {previews[i] ? (
+                <img
+                  src={previews[i]}
+                  alt={`preview-${i}`}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-gray-300 text-xs">+</span>
+              )}
+            </div>
+          ))}
+        </div>
 
-      {/* 개별 추가/삭제 버튼 */}
-      <div className="flex justify-end gap-2 mt-2 mr-4">
-        <button
-          type="button"
-          onClick={() => onAdd(index)}
-          className="w-[84px] h-6 border border-brand text-brand rounded-sm text-md font-semibold"
-        >
-          추가
-        </button>
-        {index >= 2 && (
-          <button
-            type="button"
-            onClick={() => onRemove(index)}
-            className="w-[84px] h-6 bg-brand text-white rounded-sm text-md font-semibold"
-          >
-            삭제
-          </button>
-        )}
+        {/* 개별 추가/삭제 버튼 */}
+        <div className="flex justify-end gap-2 mr-4 pl-2">
+          {index >= 2 ? (
+            <>
+              <button
+                type="button"
+                onClick={() => onAdd(index)}
+                className="w-12 h-7 border border-brand text-brand rounded-sm text-md font-semibold"
+              >
+                추가
+              </button>
+              <button
+                type="button"
+                onClick={() => onRemove(index)}
+                className="w-12 h-7 bg-brand text-white rounded-sm text-md font-semibold"
+              >
+                삭제
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="w-12 h-7"></div>
+              <button
+                type="button"
+                onClick={() => onAdd(index)}
+                className="w-12 h-7 border border-brand text-brand rounded-sm text-md font-semibold"
+              >
+                추가
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

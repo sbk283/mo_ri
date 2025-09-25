@@ -1,4 +1,6 @@
 // 모임 생성 - 01_ 기본 모임 설정
+// 테스트 과정에선 disableNext={!isValid} 기능 적용 x (disableNext={!isValid} 주석 해제하시면 다음단계 버튼 활성화 on)
+
 import BasicInfoInputs from './BasicInfoInputs';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import DateRangeSelector from './DateRangeSelector';

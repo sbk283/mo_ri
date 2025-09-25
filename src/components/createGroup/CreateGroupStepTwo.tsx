@@ -1,11 +1,14 @@
+// 모임 생성 - 02_ 상세 커리큘럼 작성
+// 테스트 과정에선 disableNext={!isValid} 기능 적용 x (disableNext={!isValid} 주석 해제하시면 다음단계 버튼 활성화 on)
+
 // 2025-09-24 업데이트: ReactQuill 안정성을 위한 useCallback, useMemo 추가
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import CreateGroupNavigation from './CreateGroupNavigation';
 import { useCurriculum } from '../../hooks/useCurriculum';
-import CurriculumCard from './CurriculumCard';
-import CreateGroupExample from './CreateGroupExample';
 import type { StepTwoProps } from '../../types/group';
 import RichTextEditor from './RichTextEditor';
+import CreateGroupExample from './CreateGroupExample';
+import CurriculumCard from './CurriculumCard';
+import CreateGroupNavigation from './CreateGroupNavigation';
 
 function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps) {
   const { files, setFiles, addCurriculum, updateCurriculum, removeCurriculum } = useCurriculum(
@@ -122,7 +125,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         totalSteps={3}
         onPrev={onPrev || (() => {})}
         onNext={onNext || (() => {})}
-        disableNext={!isValid}
+        // disableNext={!isValid}
       />
     </div>
   );

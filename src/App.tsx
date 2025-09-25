@@ -66,6 +66,7 @@ function App() {
             <Route path="/mypage" element={<MyPage />} />
             {/* 모임생성 */}
             <Route path="/creategroup" element={<CreateGroupPage />} />
+            
             {/* 마이페이지 회원설정 */}
             <Route path="/mypagesetting" element={<MyPageSettingPage />} />
             {/* 마이페이지 결제수단 */}

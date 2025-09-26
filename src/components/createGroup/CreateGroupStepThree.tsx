@@ -4,17 +4,10 @@ import type { StepTwoProps } from '../../types/group';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import Modal from '../common/modal/Modal';
+import { calcDday } from '../../utils/date';
+import MeetingCurriculum from '../common/prevgroup/MeetingCurriculum';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
-
-// 유틸 함수 (날짜 계산 함수)
-function calcDday(startDate: string): string {
-  if (!startDate) return 'D-?';
-  const today = new Date();
-  const start = new Date(startDate);
-  const diff = Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return diff >= 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
-}
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const [open, setOpen] = useState(false);
@@ -45,20 +38,6 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           onApply={() => {}}
         />
 
-        {/* 기본 정보 */}
-        {/* <div className="flex-1 space-y-2">
-          <h3 className="text-xl font-bold">{formData.title}</h3>
-          <p className="text-gray-600">{formData.summary || '간략 소개 없음'}</p>
-          <p className="text-gray-500 text-sm">
-            지역: {formData.regionFree ? '지역 무관' : formData.region || '미정'} / 인원:{' '}
-            {formData.memberCount}명 / 기간: {formData.startDate || '시작일 미정'} ~{' '}
-            {formData.endDate || '종료일 미정'}
-          </p>
-          <button className="mt-2 px-4 py-1 bg-brand text-white rounded cursor-default">
-            참가하기
-          </button>
-        </div> */}
-
         {/* 모임 소개 */}
         <div>
           <h4 className="font-semibold mb-2">모임 소개</h4>
@@ -71,18 +50,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         </div>
 
         {/* 커리큘럼 */}
-        <div>
-          <h4 className="font-semibold mb-2">커리큘럼</h4>
-          <div className="space-y-4">
-            {formData.curriculum.map((item, i) => (
-              <div key={i} className="border rounded p-3">
-                <p className="font-bold text-brand">{String(i + 1).padStart(2, '0')} 단계</p>
-                <p className="text-lg font-semibold">{item.title || '제목 없음'}</p>
-                <p className="text-gray-600">{item.detail || '내용 없음'}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        <MeetingCurriculum formData={formData} />
 
         {/* 상세 정보 테이블 */}
         <div>

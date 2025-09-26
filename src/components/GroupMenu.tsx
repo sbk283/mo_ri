@@ -3,9 +3,9 @@ import { AnimatePresence, motion } from 'motion/react';
 
 function GroupMenu() {
   const tabs = [
-    { icon: '🍅', label: '모집중' },
-    { icon: '🥬', label: '진행중' },
-    { icon: '🧀', label: '종료' },
+    { label: '모집중', content: <div></div> },
+    { label: '진행중', content: <div></div> },
+    { label: '종료', content: <div></div> },
   ];
 
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
@@ -76,7 +76,7 @@ function GroupMenu() {
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            {selectedTab.icon}
+            {selectedTab.content}
           </motion.div>
         </AnimatePresence>
       </main>

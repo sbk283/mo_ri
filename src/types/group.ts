@@ -19,6 +19,7 @@ export interface GroupFormData {
   description: string;
   summary: string;
   curriculum: CurriculumItem[];
+  files: File[][];
 }
 
 // Step1 p프랍스

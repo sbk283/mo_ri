@@ -30,7 +30,10 @@ function MyPageSidebar() {
     {
       name: '설정',
       icon: '/mpsetting_dark.svg',
-      sub: [{ name: '회원 정보 관리', path: '/mypagesetting' }],
+      sub: [
+        { name: '회원 정보 관리', path: '/mypagesetting' },
+        { name: '회원 탈퇴', path: '/deleteaccount' },
+      ],
     },
   ];
 

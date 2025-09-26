@@ -5,6 +5,7 @@ import PasswordEdit from '../components/users/PasswordEdit';
 
 // 마이페이지 설정 페이지입니다.
 function MyPageSettingPage() {
+  // 하단영역 스테이트 변경할거임
   const [isPasswordConfirmed, setPasswordConfirmed] = useState(false);
 
   return (
@@ -28,6 +29,7 @@ function MyPageSettingPage() {
       </div>
       {/* 하단 영역부분 비밀번호 확인이 되면 PasswordEdit 창 보여주고, 아닐시에는 기본 화면 PasswordCheck 화면*/}
       <PasswordCheck />
+
       <PasswordEdit />
     </MyPageLayout>
   );

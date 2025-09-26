@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { Link } from 'react-router-dom';
 import InterestModal from '../common/modal/InterestModal';
+import CareerModal, { type CareerItem } from '../common/modal/CareerModal';
 
 function PasswordEdit() {
   const [checked, setChecked] = useState(false);
@@ -16,6 +17,8 @@ function PasswordEdit() {
 
   const [selected, setSelected] = useState(['구기활동', 'IT']);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
+  const [careerList, setCareerList] = useState<CareerItem[]>([]);
 
   const toggleInterest = (item: string) => {
     if (selected.includes(item)) {
@@ -196,10 +199,35 @@ function PasswordEdit() {
         <div className="border-b border-gray-300 opacity-30 my-[27px]" />
         <div className="flex items-center">
           <div className="text-lg text-gray-400  font-semibold mr-[60px]">경령사항</div>
-          <div>경력사항 부분 내용 없거나 늘어나거나 </div>
-          <button className="ml-auto ext-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px] font-semibold mr-[4px]">
+
+          {/* 추가된 경력 표시 */}
+          <div className="flex flex-col gap-1">
+            {careerList.length === 0 ? (
+              <p className="text-gray-300">등록된 경력이 없습니다. 경력사항을 추가해주세요.</p>
+            ) : (
+              careerList.map(item => (
+                <p key={item.id} className="text-gray-700 text-sm">
+                  <b>
+                    기간 : {item.period} 경력 : {item.career} 첨부파일 :{' '}
+                    {item.file && `(${item.file.name})`}
+                  </b>
+                </p>
+              ))
+            )}
+          </div>
+
+          <button
+            onClick={() => setIsCareerModalOpen(true)}
+            className="ml-auto ext-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px] font-semibold mr-[4px]"
+          >
             경력사항 추가하기
           </button>
+          <CareerModal
+            open={isCareerModalOpen}
+            onClose={() => setIsCareerModalOpen(false)}
+            careerList={careerList}
+            setCareerList={setCareerList}
+          />
         </div>
         <div className="border-b border-gray-300 opacity-30 my-[27px]" />
         <div>
@@ -233,7 +261,10 @@ function PasswordEdit() {
         </div>
       </div>
       {/* 탈퇴하기 */}
-      <Link to={'/'} className="flex justify-end font-normal text-[12px] text-gray-200 mr-[39px]">
+      <Link
+        to={'/deleteaccount'}
+        className="flex justify-end font-normal text-[12px] text-gray-200 mr-[39px]"
+      >
         회원 탈퇴 하기
       </Link>
     </div>

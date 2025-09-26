@@ -1,3 +1,4 @@
+// src/components/common/prevgroup/MeetingCurriculum.tsx
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { GroupFormData } from '../../../types/group';
@@ -8,10 +9,7 @@ interface MeetingCurriculumProps {
 
 function MeetingCurriculum({ formData }: MeetingCurriculumProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-
-  const toggleIndex = (idx: number) => {
-    setOpenIndex(openIndex === idx ? null : idx);
-  };
+  const toggleIndex = (idx: number) => setOpenIndex(openIndex === idx ? null : idx);
 
   return (
     <div>
@@ -19,55 +17,69 @@ function MeetingCurriculum({ formData }: MeetingCurriculumProps) {
       <div className="space-y-3">
         {formData.curriculum.map((item, i) => {
           const isOpen = openIndex === i;
+          const stepFiles = formData.files?.[i] ?? []; // Step2에서 넘어온 파일만 사용
+
           return (
             <motion.div
               key={i}
               initial={false}
-              animate={{
-                borderColor: isOpen ? '#4294CF' : '#e5e7eb',
-              }}
-              transition={{ duration: 0.3 }}
+              animate={{ borderColor: isOpen ? '#4294CF' : '#e5e7eb' }}
+              transition={{ duration: 0.25 }}
               className="border rounded-md overflow-hidden"
             >
               {/* 헤더 */}
               <button
                 onClick={() => toggleIndex(i)}
-                className={`flex w-full justify-between items-center px-4 py-3 text-left ${
+                className={`flex w-full h-auto justify-between items-center px-4 py-3 text-left ${
                   isOpen ? 'bg-brand/10' : 'bg-gray-50'
                 }`}
               >
-                <div>
-                  <p className="text-sm text-gray-400">
-                    {String(i + 1).padStart(2, '0')} 단계 소개
-                  </p>
-                  <p className="text-lg font-semibold text-gray-800">{item.title || '제목 없음'}</p>
+                <div className="flex items-start gap-3">
+                  {/* (선택) 대표 썸네일 */}
+                  {stepFiles[0] && (
+                    <img
+                      src={URL.createObjectURL(stepFiles[0])}
+                      alt="thumb"
+                      className="w-[46px] h-[46px] rounded object-cover"
+                    />
+                  )}
+                  <div>
+                    <p className="text-sm text-gray-400">
+                      {String(i + 1).padStart(2, '0')} 모임 소개
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {item.title || '제목 없음'}
+                    </p>
+                  </div>
                 </div>
+
                 <motion.img
                   src="/images/arrow_down.svg"
-                  alt="화살표"
+                  alt="토글"
                   animate={{ rotate: isOpen ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.2 }}
                   className="w-4 h-4"
                 />
               </button>
 
               {/* 본문 */}
-              <AnimatePresence>
+              <AnimatePresence initial={false}>
                 {isOpen && (
                   <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.35, ease: 'easeInOut' }}
-                    className="px-4 pb-4 space-y-2"
+                    layout
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    className="px-4 pb-4 space-y-3 overflow-hidden"
                   >
-                    {/* Step2에서 넘어온 파일 미리보기 */}
-                    {formData.files && formData.files[i] && formData.files[i].length > 0 && (
+                    {/* 썸네일 리스트 (최대 3장) */}
+                    {stepFiles.length > 0 && (
                       <div className="flex gap-2">
-                        {formData.files[i].map((file: File, idx: number) => (
+                        {stepFiles.slice(0, 3).map((file, idx) => (
                           <div
                             key={idx}
-                            className="w-[80px] h-[80px] border rounded overflow-hidden"
+                            className="w-[120px] h-[120px] border rounded overflow-hidden"
                           >
                             <img
                               src={URL.createObjectURL(file)}

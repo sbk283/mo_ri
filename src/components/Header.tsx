@@ -9,7 +9,7 @@ type HeaderProps = {
 const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-card">
-      <div className="mx-auto flex w-[1024px] justify-between items-center py-4">
+      <div className="mx-auto flex w-[1024px] h-[70px] justify-between items-center py-4">
         {/* 왼쪽 */}
         <div className="flex items-center gap-6">
           {/* 로고 */}
@@ -20,18 +20,6 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
               alt="mori_logo"
             />
           </Link>
-
-          {/* 검색창 */}
-          <div className="relative w-[384px] h-[45px]">
-            <input
-              type="text"
-              placeholder="모임명이나 카테고리를 입력해 주세요."
-              className="w-full rounded-[40px] border-2 border-brand px-8 py-[10px] placeholder:text-sm placeholder:text-gray-400"
-            />
-            <button className="absolute right-4 top-1/2 -translate-y-1/2">
-              <img src="/images/search.svg" alt="검색" className="w-[24px] h-[24px]" />
-            </button>
-          </div>
         </div>
 
         {/* 오른쪽 */}

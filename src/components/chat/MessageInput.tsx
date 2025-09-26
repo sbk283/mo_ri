@@ -29,7 +29,7 @@ function MessageInput({ onSend }: MessageInputProps) {
         onClick={handleSend}
         whileTap={{ scale: 0.96 }}
         whileHover={{ scale: 1.02 }}
-        className="ml-2 px-6 py-[9px] border border-gray-300 bg-brand text-white rounded-lg shadow hover:bg-brand"
+        className="ml-2 px-6 py-[9px] bg-brand text-white rounded-lg shadow hover:bg-brand"
       >
         보내기
       </motion.button>

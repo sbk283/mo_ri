@@ -222,7 +222,7 @@ function PasswordEdit() {
           </div>
           <div className="flex gap-[27px] text-md text-gray-200">
             <div>개인정보 수집 및 이용동의</div>
-            <Link to={'/'} className="text-brand">
+            <Link to={'/privacy'} className="text-brand">
               전체보기
             </Link>
             <div className=" flex gap-[10px] ml-auto">

@@ -1,11 +1,34 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import GroupContentBox from './GroupContentBox';
+import GroupContentNon from './GroupContentNon';
 
 function GroupMenu() {
   const tabs = [
-    { label: '모집중', content: <div></div> },
-    { label: '진행중', content: <div></div> },
-    { label: '종료', content: <div></div> },
+    {
+      label: '모집중',
+      content: (
+        <div>
+          <GroupContentBox />
+        </div>
+      ),
+    },
+    {
+      label: '진행중',
+      content: (
+        <div>
+          <GroupContentBox />
+        </div>
+      ),
+    },
+    {
+      label: '종료',
+      content: (
+        <div>
+          <GroupContentNon />
+        </div>
+      ),
+    },
   ];
 
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
@@ -35,13 +58,13 @@ function GroupMenu() {
   return (
     <div className="w-full min-h-[500px]">
       {/* 네비게이션 */}
-      <nav className="h-[40px] border-b-2 border-[#3c3c3c]">
-        <ul ref={listRef} className="relative flex pb-1">
+      <nav className="h-[40px] border-b border-gray-300">
+        <ul ref={listRef} className="relative flex pb-[5px]">
           {tabs.map((item, i) => (
             <li
               key={item.label}
               ref={el => (tabRefs.current[i] = el)}
-              className="relative w-[130px] text-center pt-1 cursor-pointer"
+              className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
               onClick={() => setSelectedTab(item)}
             >
               <p

@@ -30,7 +30,12 @@ import AuthCallback from './pages/AuthCallback';
 import ReviewsListPage from './pages/ReviewsListPage';
 import DirectChatPage from './pages/DirectChatPage';
 import ScrollToTop from './components/ScrollToTop';
+import GroupDashBoardPage from './pages/GroupDashBoardPage';
+import GroupMemberPage from './pages/GroupMemberPage';
+import GroupSchedulePage from './pages/GroupSchedulePage';
+import GroupContentPage from './pages/GroupContentPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
+
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -70,10 +75,16 @@ function App() {
             <Route path="/mypage" element={<MyPage />} />
             {/* 모임생성 */}
             <Route path="/creategroup" element={<CreateGroupPage />} />
-
             {/* 채팅 */}
             <Route path="/chat" element={<DirectChatPage />} />
-
+            {/* 모임 상세대시보드 */}
+            <Route path="/groupdashboard/:id" element={<GroupDashBoardPage />} />
+            {/* 모임 멤버 */}
+            <Route path="/groupmember/:id" element={<GroupMemberPage />} />
+            {/* 모임 일정 */}
+            <Route path="/groupschedule/:id" element={<GroupSchedulePage />} />
+            {/* 모임 게시판 */}
+            <Route path="/groupcontent/:id" element={<GroupContentPage />} />
             {/* 마이페이지 회원설정 */}
             <Route path="/mypagesetting" element={<MyPageSettingPage />} />
             {/* 마이페이지 결제수단 */}

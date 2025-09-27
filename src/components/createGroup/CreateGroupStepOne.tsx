@@ -77,7 +77,7 @@ function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
         totalSteps={3}
         onPrev={onPrev!}
         onNext={onNext!}
-        // disableNext={!isValid}
+        disableNext={!isValid}
       />
     </div>
   );

@@ -100,8 +100,12 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
             index={i}
             item={item}
             onChange={(index, field, value) =>
-              updateCurriculum(index, field, value, formData.curriculum, next =>
-                onChange('curriculum', next), // 동기화 (step3에도쓸수잇게끔)
+              updateCurriculum(
+                index,
+                field,
+                value,
+                formData.curriculum,
+                next => onChange('curriculum', next), // 동기화 (step3에도쓸수잇게끔)
               )
             }
             onRemove={index => {
@@ -114,7 +118,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
               const newFiles = [...files];
               newFiles[index] = fileList;
               setFiles(newFiles); // 로컬 유지
-              onChange('files', newFiles); // 동기화 (step3에도쓸수잇게끔)
+              onChange('files', newFiles);
             }}
             onAdd={index =>
               addCurriculum(formData.curriculum, next => onChange('curriculum', next))
@@ -129,7 +133,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         totalSteps={3}
         onPrev={onPrev || (() => {})}
         onNext={onNext || (() => {})}
-        // disableNext={!isValid}
+        disableNext={!isValid}
       />
     </div>
   );

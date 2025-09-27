@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { StepTwoProps } from '../../types/group';
-import CreateGroupNavigation from './CreateGroupNavigation';
-import MeetingHeader from '../common/prevgroup/MeetingHeader';
-import Modal from '../common/modal/Modal';
 import { calcDday } from '../../utils/date';
-import MeetingCurriculum from '../common/prevgroup/MeetingCurriculum';
+import Modal from '../common/modal/Modal';
+import MeetingHeader from '../common/prevgroup/MeetingHeader';
+import MeetingTabs from '../common/prevgroup/Meetingtabs';
+import CreateGroupNavigation from './CreateGroupNavigation';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
@@ -38,42 +38,8 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           onApply={() => {}}
         />
 
-        {/* 모임 소개 */}
-        <div>
-          <h4 className="font-semibold mb-2">모임 소개</h4>
-          <div
-            className="prose max-w-none border p-4 rounded"
-            dangerouslySetInnerHTML={{
-              __html: formData.description || '<p>소개 내용이 없습니다.</p>',
-            }}
-          />
-        </div>
-
-        {/* 커리큘럼 */}
-        <MeetingCurriculum formData={formData} />
-
-        {/* 상세 정보 테이블 */}
-        <div>
-          <h4 className="font-semibold mb-2">모임 상세 정보</h4>
-          <table className="w-full border text-sm">
-            <tbody>
-              <tr className="border-b">
-                <td className="bg-gray-50 px-4 py-2 w-32 font-medium">이름</td>
-                <td className="px-4 py-2">{formData.title}</td>
-              </tr>
-              <tr className="border-b">
-                <td className="bg-gray-50 px-4 py-2 font-medium">위치</td>
-                <td className="px-4 py-2">
-                  {formData.regionFree ? '지역 무관' : formData.region || '미정'}
-                </td>
-              </tr>
-              <tr>
-                <td className="bg-gray-50 px-4 py-2 font-medium">회차</td>
-                <td className="px-4 py-2">총 {formData.curriculum.length}회</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        {/* 모임 소개 - 이 안에 모임장, 커리큘럼 다모아놈 */}
+        <MeetingTabs formData={formData} />
       </div>
 
       {/* 생성 신청 버튼 */}

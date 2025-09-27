@@ -30,11 +30,13 @@ function CurriculumCard({
 
     // 미리보기 URL 생성
     const urls = selectedFiles.map(file => URL.createObjectURL(file));
-    // 기존 previews + 새로 추가된 previews (최대 3장)
     const nextPreviews = [...previews, ...urls].slice(0, MAX_PICK);
     setPreviews(nextPreviews);
 
-    onFileChange(index, selectedFiles);
+    const prevFiles = item.files ?? [];
+    const nextFiles = [...prevFiles, ...selectedFiles].slice(0, MAX_PICK);
+
+    onFileChange(index, nextFiles);
   };
 
   // 이미지 미리보기 파일 삭제

@@ -1,11 +1,10 @@
-// 모임장 정보들 (추후 DB 연결 후 다시 코드 리팩토링해야함)
-import type { GroupFormData } from '../../../types/group';
-
 interface MeetingLeaderInfoProps {
-  formData: GroupFormData;
+  leaderName: string;
+  leaderLocation?: string;
+  leaderCareer?: string;
 }
 
-function MeetingLeaderInfo({ formData }: MeetingLeaderInfoProps) {
+function MeetingLeaderInfo({ leaderName, leaderLocation, leaderCareer }: MeetingLeaderInfoProps) {
   return (
     <div>
       <h4 className="font-semibold mb-2">모임장에 관한 정보</h4>
@@ -16,7 +15,7 @@ function MeetingLeaderInfo({ formData }: MeetingLeaderInfoProps) {
               이름
             </td>
             <td className="border border-[#c0c0c0] px-4 py-3 align-middle text-black font-medium text-[17px]">
-              {formData.leaderName || '이름 정보 없음'}
+              {leaderName || '이름 정보 없음'}
             </td>
           </tr>
           <tr>
@@ -24,7 +23,7 @@ function MeetingLeaderInfo({ formData }: MeetingLeaderInfoProps) {
               위치
             </td>
             <td className="border border-[#c0c0c0] px-4 py-3 align-middle text-black font-medium text-[17px]">
-              {formData.leaderLocation || '위치 정보 없음'}
+              {leaderLocation || '위치 정보 없음'}
             </td>
           </tr>
           <tr>
@@ -32,7 +31,7 @@ function MeetingLeaderInfo({ formData }: MeetingLeaderInfoProps) {
               경력
             </td>
             <td className="border border-[#c0c0c0] px-4 py-3 align-middle text-black font-medium text-[17px]">
-              {formData.leaderCareer || '경력 정보 없음'}
+              {leaderCareer || '경력 정보 없음'}
             </td>
           </tr>
         </tbody>

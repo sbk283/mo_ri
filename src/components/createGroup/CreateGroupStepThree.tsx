@@ -4,8 +4,8 @@ import type { StepTwoProps } from '../../types/group';
 import { calcDday } from '../../utils/date';
 import Modal from '../common/modal/Modal';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
-import MeetingTabs from '../common/prevgroup/Meetingtabs';
 import CreateGroupNavigation from './CreateGroupNavigation';
+import MeetingTabs from '../common/prevgroup/MeetingTabs';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
@@ -30,8 +30,15 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
       <div className="p-8 bg-white rounded shadow space-y-8">
         {/* 상단 MeetingHeader */}
         <MeetingHeader
-          formData={formData}
+          title={formData.title}
+          status="모집중"
+          category={formData.interestMajor}
+          subCategory={formData.interestSub}
+          summary={formData.summary}
           dday={dday}
+          duration={`${formData.startDate} ~ ${formData.endDate}`}
+          participants={`0/${formData.memberCount}`}
+          images={formData.images.map(file => URL.createObjectURL(file))}
           isFavorite={false}
           mode="preview"
           onFavoriteToggle={() => {}}
@@ -39,7 +46,19 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         />
 
         {/* 모임 소개 - 이 안에 모임장, 커리큘럼 다모아놈 */}
-        <MeetingTabs formData={formData} />
+        <MeetingTabs
+          intro={formData.description}
+          curriculum={formData.curriculum.map((c, i) => ({
+            title: c.title,
+            detail: c.detail,
+            files: formData.files?.[i]?.map(f => URL.createObjectURL(f)) ?? [],
+          }))}
+          leader={{
+            name: formData.leaderName,
+            location: formData.leaderLocation,
+            career: formData.leaderCareer,
+          }}
+        />
       </div>
 
       {/* 생성 신청 버튼 */}

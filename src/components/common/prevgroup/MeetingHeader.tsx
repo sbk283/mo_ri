@@ -1,13 +1,20 @@
-// JoinedGroupsPage 와 CreateStepThree 공용 컴포넌트
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import type { Swiper as SwiperClass } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation } from 'swiper/modules';
 import 'swiper/swiper-bundle.css';
-import type { GroupFormData } from '../../../types/group';
+import JoinGroupModal from '../modal/JoinGroupModal';
+import ShareModal from '../modal/ShareModal';
 
-interface MeetingHeaderProps {
-  formData: GroupFormData;
+export interface MeetingHeaderProps {
+  title: string;
+  status: '모집중' | '모집예정' | '서비스종료';
+  category: string;
+  subCategory: string;
+  summary?: string;
   dday: string;
+  duration: string;
+  participants: string; // "2/10"
+  images: string[];
   isFavorite: boolean;
   mode: 'detail' | 'preview';
   onFavoriteToggle: () => void;
@@ -15,8 +22,15 @@ interface MeetingHeaderProps {
 }
 
 function MeetingHeader({
-  formData,
+  title,
+  status,
+  category,
+  subCategory,
+  summary,
   dday,
+  duration,
+  participants,
+  images,
   isFavorite,
   mode,
   onFavoriteToggle,
@@ -24,110 +38,134 @@ function MeetingHeader({
 }: MeetingHeaderProps) {
   // 대표 이미지
   const [selectedImage, setSelectedImage] = useState<string>(
-    formData.images.length > 0 ? URL.createObjectURL(formData.images[0]) : '/images/no_image.png',
+    images.length > 0 ? images[0] : '/images/no_image.png',
   );
 
-  // 이미지 URL 배열 변환
-  const imageUrls = formData.images.map(file => URL.createObjectURL(file));
+  // 공유 모달
+  const [shareOpen, setShareOpen] = useState(false);
+  const shareUrl = window.location.href;
+
+  // 참가 모달
+  const [open, setOpen] = useState(false);
+
+  // 더미 데이터 (실제에선 props로 넘기거나 API 연동)
+  const dummyGroup = {
+    title,
+    status,
+    category,
+    subCategory,
+    memberCount: Number(participants.split('/')[0]),
+    memberLimit: Number(participants.split('/')[1]),
+    startDate: '2025.02.12',
+    endDate: '2025.05.12',
+  };
+
+  // 스와이퍼
+  const swiperRef = useRef<SwiperClass | null>(null);
+  const nextRef = useRef<HTMLButtonElement | null>(null);
 
   return (
-    <div className="flex">
-      {/* 메인 이미지 + 썸네일 */}
-      <div className="overflow-hidden rounded-md w-[350px] relative">
+    <div className="grid gap-6 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
+      {/* 좌측 이미지 */}
+      <div className="relative w-full">
         <img
           src={selectedImage}
           alt="대표 이미지"
-          className="w-[320px] h-[290px] object-cover rounded"
+          className="w-full aspect-[32/29] object-cover rounded"
         />
 
-        {/* 썸네일 Swiper */}
-        <div className="mt-2 relative w-[320px] h-[72px]">
-          <Swiper
-            modules={[Navigation]}
-            navigation={{ nextEl: '.swiper-button-next' }}
-            spaceBetween={10}
-            slidesPerView={4}
-            className="w-full h-full"
-          >
-            {imageUrls.map((img, idx) => (
-              <SwiperSlide key={idx} className="!w-[72px] !h-[72px] relative">
-                <div
-                  className="w-[72px] h-[72px] rounded overflow-hidden cursor-pointer"
-                  onClick={() => setSelectedImage(img)}
-                >
-                  <img
-                    src={img}
-                    alt={`썸네일 ${idx + 1}`}
-                    className="w-full h-full object-cover hover:opacity-80"
-                  />
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+        {/* 썸네일 */}
+        {images.length > 1 && (
+          <div className="mt-2 w-full relative">
+            <Swiper
+              key={images.join('|')}
+              breakpoints={{
+                0: { slidesPerView: 3, spaceBetween: 8 },
+                640: { slidesPerView: 4, spaceBetween: 10 },
+                1024: { slidesPerView: 5, spaceBetween: 12 },
+              }}
+              className="w-full"
+              onSwiper={sw => (swiperRef.current = sw)}
+            >
+              {images.map((img, idx) => (
+                <SwiperSlide key={idx} className="!w-auto">
+                  <div
+                    className="w-[72px] h-[72px] rounded overflow-hidden cursor-pointer"
+                    onClick={() => setSelectedImage(img)}
+                  >
+                    <img
+                      src={img}
+                      alt={`썸네일 ${idx + 1}`}
+                      className="w-full h-full object-cover hover:opacity-80"
+                    />
+                  </div>
+                </SwiperSlide>
+              ))}
+            </Swiper>
 
-          {/* 화살표 버튼 */}
-          <button
-            className="swiper-button-next rounded-full !w-[23px] !h-[23px] absolute top-1/2 -translate-y-[-8px] !translate-x-[70%] z-50"
-            style={{ transform: 'translateX(-50%) !important' }}
-          >
-            <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
-          </button>
-        </div>
+            {/* 스와이퍼 버튼 */}
+            <button
+              ref={nextRef}
+              onClick={() => swiperRef.current?.slideNext()}
+              className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-[60%] !-right-5 z-50"
+            >
+              <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* 상단 영역: 모집중, 제목, D-day */}
-      <div>
-        <div className="w-[480px] border border-gray-[#c6c6c6] rounded-sm shadow p-4">
-          <div className="flex items-center justify-between">
-            {/* 모집중 뱃지 */}
+      {/* 우측 정보 */}
+      <div className="min-w-0">
+        <div className="w-full border border-[#c6c6c6] rounded-sm shadow p-4">
+          <div className="flex items-center justify-between gap-2 pb-5">
             <span className="flex px-2 py-1 rounded-full bg-[#E06251] text-white text-[13px] font-semibold">
-              모집중
+              {status}
             </span>
 
-            {/* 제목 */}
-            <h2 className="flex-1 mx-3 text-[17px] font-semibold text-black truncate">
-              {formData.title}
-            </h2>
+            <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">{title}</h2>
 
-            {/* D-day */}
             <span className="text-white text-[15px] font-semibold bg-gray-700 rounded px-2">
               {dday}
             </span>
           </div>
 
-          {/* 간략 소개 */}
-          <p className="mt-2 text-[15px] text-gray-800 leading-snug line-clamp-2">
-            {formData.summary || '간략 소개가 없습니다.'}
+          <p className="mt-1 text-[15px] text-gray-800 leading-snug line-clamp-2">
+            {summary || '간략 소개가 없습니다.'}
           </p>
 
-          {/* 카테고리 / 참여인원 / 기간 */}
-          <div className="mt-3 flex items-center justify-between text-[15px]">
-            {/* 카테고리 */}
-            <span className="text-[#D83737] font-semibold">{formData.interestMajor}</span>
+          {/* 대분류 중분류 */}
+          <div className="flex items-center justify-between mt-7">
+            <div className="flex items-center justify-between text-[15px] gap-2">
+              <span className="text-[#D83737] font-semibold">
+                {category} &gt; {subCategory}
+              </span>
 
-            {/* 참여 인원 */}
-            <span className="flex items-center gap-1 text-gray-600">
-              <img src="/people_dark.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
-              0/{formData.memberCount}
-            </span>
+              {/* 참여 인원 */}
+              <span className="flex items-center gap-1 text-gray-600">
+                <img src="/people_dark.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
+                {participants}
+              </span>
+            </div>
 
             {/* 날짜 */}
-            <span className="text-gray-500 font-medium">
-              {formData.startDate || '시작일 미정'} ~ {formData.endDate || '종료일 미정'}
-            </span>
+            <span className="text-gray-500 font-medium">{duration}</span>
           </div>
         </div>
 
-        {/* 하단 액션 영역 */}
+        {/* 액션 버튼 */}
         <div className="flex gap-4 mt-4 justify-end">
           {/* 공유 */}
-          <button type="button" className="flex flex-col items-center justify-center gap-1">
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="flex flex-col items-center justify-center gap-1"
+          >
             <img src="/images/share_dark.svg" alt="공유" className="w-6 h-6" />
             <span className="text-md font-medium text-[#777]">공유하기</span>
           </button>
 
           {/* 즐겨찾기 */}
-
           <button
             type="button"
             onClick={onFavoriteToggle}
@@ -141,20 +179,29 @@ function MeetingHeader({
             <span className="text-md font-medium text-[#777]">즐겨찾기</span>
           </button>
 
-          {/* 신청하기 버튼 */}
+          {/* 참가하기 */}
           <button
-            type="button"
-            onClick={mode === 'detail' ? onApply : undefined}
-            className={`flex w-[211px] h-[46px] px-4 justify-center items-center rounded-md text-white text-[17px] font-bold tracking-[0.4px] ${
-              mode === 'detail'
-                ? 'bg-[#0689E8] hover:bg-blue-600 cursor-pointer'
-                : 'bg-gray-300 cursor-default'
-            }`}
+            onClick={() => setOpen(true)}
+            className="w-[210px] h-[50px] px-4 py-2 bg-brand text-white rounded-md"
           >
-            신청하기
+            참가하기
           </button>
         </div>
       </div>
+
+      {/* 공유 모달 */}
+      <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
+
+      {/* 참가 모달 */}
+      <JoinGroupModal
+        isOpen={open}
+        onClose={() => setOpen(false)}
+        onSubmit={intro => {
+          console.log('참가신청 완료:', intro); // 참가 싲청 누르면 나오는 콘솔이라 메인에는 안뜸다 신경쓰이시면 지우겠슴다..
+          setOpen(false);
+        }}
+        group={dummyGroup} // 얘는.... 기능엔 문제없는데 추후 DB 연결 이후에 다시 손보겠슴다.
+      />
     </div>
   );
 }

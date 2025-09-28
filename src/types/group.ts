@@ -13,7 +13,7 @@ export interface GroupFormData {
   // 일정
   startDate: string; // 시작일
   endDate: string; // 종료일
-  groupType: 'oneday' | 'short' | 'long'; // 모임 유형
+  groupType: 'oneday' | 'short' | 'long' | ''; // 모임 유형
 
   // 지역
   region: string; // 지역명

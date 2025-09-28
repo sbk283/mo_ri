@@ -1,7 +1,8 @@
 // 그룹리스트 카드 컴포넌트. 위에서 말고
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
-type GroupListCardProps = {
+export type GroupListCardProps = {
   id: number;
   title: string;
   status: '모집중' | '모집예정' | '서비스종료';
@@ -16,6 +17,7 @@ type GroupListCardProps = {
 };
 
 function GroupListCard({
+  id,
   title,
   status,
   category,
@@ -27,14 +29,16 @@ function GroupListCard({
   memberLimit,
   duration,
 }: GroupListCardProps) {
+  const navigate = useNavigate();
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: -20 }} // 위에서 올라옴
       animate={{ opacity: 1, y: 0 }} // 자연스럽게 보임
       exit={{ opacity: 0, y: 20 }} // 위로 사라짐
+      onClick={() => navigate(`/groupdetail/${id}`)}
       transition={{ duration: 0.3 }}
-      className="h-[175px] w-[1024px] flex items-start gap-4 rounded-lg border border-[#D9D9D9] bg-white shadow-sm hover:shadow-md transition"
+      className="h-[175px] w-[1024px] flex items-start gap-4 rounded-lg border border-[#D9D9D9] bg-white shadow-sm hover:shadow-md transition cursor-pointer"
     >
       {/* 썸네일 */}
       <img
@@ -47,7 +51,7 @@ function GroupListCard({
       <div className="flex-1 pt-[21px] pl-[22px]">
         {/* 모집상태 + 제목 */}
         <div className="flex items-center gap-2">
-          <span className="flex w-[54px] h-[23px] items-center justify-center rounded-sm bg-[#FF5252] text-xs font-semibold text-white">
+          <span className="flex w-[60px] h-[23px] items-center justify-center rounded-sm bg-[#FF5252] text-xs font-semibold text-white whitespace-nowrap">
             {status}
           </span>
           <h3 className="font-semibold text-sm flex items-center gap-[13px]">
@@ -68,16 +72,21 @@ function GroupListCard({
         <p className="mt-[26px] text-sm text-[#818181]">{desc}</p>
 
         {/* 하단 메타 */}
-        <div className="mt-[42px] flex items-center gap-2 text-xs text-gray-500">
-          <p className="font-semibold text-[#FF5252] text-md">
-            {category} &gt;{' '}
-            <span className="font-semibold text-gray-200 text-md mr-11">{subCategory}</span>
-          </p>
-          <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
-          <span className="text-[#767676] mr-[241px]">
-            {memberCount}/{memberLimit}
-          </span>
-          <span className="text-md text-[#777]">{duration}</span>
+        <div className="mt-[42px] flex items-center justify-between text-xs text-gray-500">
+          {/* 좌측: 카테고리 + 멤버 */}
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-[#FF5252] text-md">
+              {category} &gt;{' '}
+              <span className="font-semibold text-gray-200 text-md mr-11">{subCategory}</span>
+            </p>
+            <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
+            <span className="text-[#767676]">
+              {memberCount}/{memberLimit}
+            </span>
+          </div>
+
+          {/* 우측: 기간 */}
+          <span className="text-md text-[#777] mr-6">{duration}</span>
         </div>
       </div>
     </motion.div>

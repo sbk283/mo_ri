@@ -1,13 +1,17 @@
-// src/components/common/prevgroup/MeetingCurriculum.tsx
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { GroupFormData } from '../../../types/group';
 
-interface MeetingLeaderInfoProps {
-  formData: GroupFormData;
+interface CurriculumItem {
+  title: string;
+  detail: string;
+  files?: string[];
 }
 
-function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
+interface MeetingCurriculumProps {
+  curriculum: CurriculumItem[];
+}
+
+function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const toggleIndex = (idx: number) => setOpenIndex(openIndex === idx ? null : idx);
 
@@ -15,9 +19,9 @@ function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
     <div>
       <h4 className="font-semibold mb-3">커리큘럼</h4>
       <div className="space-y-3">
-        {formData.curriculum.map((item, i) => {
+        {curriculum.map((item, i) => {
           const isOpen = openIndex === i;
-          const stepFiles = formData.files?.[i] ?? []; // Step2에서 넘어온 파일만 사용
+          const stepFiles = item.files ?? [];
 
           return (
             <motion.div
@@ -35,22 +39,20 @@ function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  {/* (선택) 대표 썸네일 */}
                   {stepFiles[0] && (
                     <img
-                      src={URL.createObjectURL(stepFiles[0])}
+                      src={stepFiles[0]}
                       alt="thumb"
                       className="w-[101px] h-[70px] rounded object-cover"
                     />
                   )}
-                  <div className="">
+                  <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[20px] text-brand font-bold">
                         {String(i + 1).padStart(2, '0')}
                       </span>
                       <span className="text-[12px] text-gray-600">모임 소개</span>
                     </div>
-
                     <p className="text-lg font-semibold text-gray-800">
                       {item.title || '제목 없음'}
                     </p>
@@ -77,7 +79,6 @@ function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
                     transition={{ duration: 0.25, ease: 'easeInOut' }}
                     className="px-4 pb-4 space-y-3 overflow-hidden pt-4"
                   >
-                    {/* 썸네일 리스트 (최대 3장) */}
                     {stepFiles.length > 0 && (
                       <div className="flex gap-2">
                         {stepFiles.slice(0, 3).map((file, idx) => (
@@ -86,7 +87,7 @@ function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
                             className="w-[120px] h-[120px] border border-[#D9D9D9] rounded overflow-hidden"
                           >
                             <img
-                              src={URL.createObjectURL(file)}
+                              src={file}
                               alt={`step-${i}-file-${idx}`}
                               className="w-[132px] h-[125px] object-cover"
                             />
@@ -94,7 +95,6 @@ function MeetingCurriculum({ formData }: MeetingLeaderInfoProps) {
                         ))}
                       </div>
                     )}
-
                     <p className="text-gray-900 text-md font-normal whitespace-pre-line">
                       {item.detail || '내용 없음'}
                     </p>

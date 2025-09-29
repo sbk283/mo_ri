@@ -1,6 +1,5 @@
-// 풀캘린더 사용함! 근데 UI 출력이 너무 어려워요.. 도와줭...............
-
-import { useState } from 'react';
+// GroupSchedulePage.tsx
+import { useMemo, useState, useRef, useEffect } from 'react';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -10,7 +9,15 @@ import listPlugin from '@fullcalendar/list';
 
 import { Modal, DatePicker, TimePicker, Input, Checkbox, Button } from 'antd';
 import { IoLocationSharp } from 'react-icons/io5';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+
+type EventItem = {
+  id: string;
+  title: string;
+  start: string; // ISO
+  end: string; // ISO
+  location?: string;
+};
 
 function GroupSchedulePage() {
   // 권한 체크 (참여자면 false)
@@ -19,44 +26,61 @@ function GroupSchedulePage() {
   // 모달 상태
   const [open, setOpen] = useState(false);
 
+  // ---- 모킹 데이터 대량 생성 ----
+  const initialEvents: EventItem[] = useMemo(() => {
+    const baseDates = [5, 8, 12, 20, 22, 24, 26, 28]; // 9월 여러 날짜
+    const arr: EventItem[] = [];
+    let id = 1;
+
+    // 날짜마다 2~4개씩 넣어서 스크롤 테스트
+    baseDates.forEach(d => {
+      const count = 3; // 고정 3개(원하면 Math.floor(Math.random()*3)+2)
+      for (let i = 0; i < count; i++) {
+        const start = dayjs(`2025-09-${String(d).padStart(2, '0')}T20:00:00`);
+        const end = start.add(2, 'hour');
+        arr.push({
+          id: String(id++),
+          title: `[정기모임] 일정있수다람쥐돌이 #${i + 1}`,
+          start: start.toISOString(),
+          end: end.toISOString(),
+          location: i % 2 === 0 ? '대구 중구 무슨피시방' : '야외',
+        });
+      }
+    });
+
+    // 주중 일정도 조금 추가
+    for (let i = 1; i <= 10; i++) {
+      const start = dayjs(`2025-09-${String(9 + i).padStart(2, '0')}T19:30:00`);
+      const end = start.add(90, 'minute');
+      arr.push({
+        id: String(arr.length + 1),
+        title: `[번개모임] 평일 저녁 러닝 ${i}`,
+        start: start.toISOString(),
+        end: end.toISOString(),
+        location: '대구 수성구 범어공원',
+      });
+    }
+
+    return arr.sort((a, b) => +new Date(a.start) - +new Date(b.start));
+  }, []);
+
   // 일정 데이터 (FullCalendar용 events)
-  const [events, setEvents] = useState([
-    {
-      id: '1',
-      title: '[정기모임] 일일청소다람쥐돌이',
-      start: '2025-09-05T20:00:00',
-      end: '2025-09-05T22:00:00',
-      location: '대구 중구 무슨피시방',
-    },
-    {
-      id: '2',
-      title: '[정기모임] 일일청소다람쥐돌이',
-      start: '2025-09-08T20:00:00',
-      end: '2025-09-08T22:00:00',
-      location: '대구 중구 무슨피시방',
-    },
-    {
-      id: '3',
-      title: '[정기모임] 일일청소다람쥐돌이',
-      start: '2025-09-12T20:00:00',
-      end: '2025-09-12T22:00:00',
-      location: '대구 중구 무슨피시방',
-    },
-    {
-      id: '4',
-      title: '[정기모임] 일일청소다람쥐돌이',
-      start: '2025-09-20T20:00:00',
-      end: '2025-09-20T22:00:00',
-      location: '야외',
-    },
-  ]);
+  const [events, setEvents] = useState<EventItem[]>(initialEvents);
 
   // 모달 입력값 (간단히만 처리)
-  const [form, setForm] = useState({
-    startDate: null as any,
-    endDate: null as any,
-    startTime: null as any,
-    endTime: null as any,
+  const [form, setForm] = useState<{
+    startDate: Dayjs | null;
+    endDate: Dayjs | null;
+    startTime: Dayjs | null;
+    endTime: Dayjs | null;
+    title: string;
+    location: string;
+    noRegion: boolean;
+  }>({
+    startDate: null,
+    endDate: null,
+    startTime: null,
+    endTime: null,
     title: '',
     location: '',
     noRegion: false,
@@ -65,23 +89,46 @@ function GroupSchedulePage() {
   const handleAddEvent = () => {
     if (!form.startDate || !form.startTime) return;
 
-    const start = dayjs(form.startDate).hour(form.startTime.hour()).minute(form.startTime.minute());
+    const start = dayjs(form.startDate)
+      .hour(form.startTime.hour())
+      .minute(form.startTime.minute())
+      .second(0);
+
     const end =
       form.endDate && form.endTime
-        ? dayjs(form.endDate).hour(form.endTime.hour()).minute(form.endTime.minute())
+        ? dayjs(form.endDate).hour(form.endTime.hour()).minute(form.endTime.minute()).second(0)
         : start.add(2, 'hour');
 
-    const newEvent = {
+    const newEvent: EventItem = {
       id: String(events.length + 1),
       title: form.title || '새 일정',
       start: start.toISOString(),
       end: end.toISOString(),
-      location: form.noRegion ? '지역 무관' : form.location,
+      location: form.noRegion ? '지역 무관' : form.location || '미정',
     };
 
-    setEvents([...events, newEvent]);
+    setEvents(prev => [...prev, newEvent].sort((a, b) => +new Date(a.start) - +new Date(b.start)));
     setOpen(false);
+    // 폼 리셋
+    setForm({
+      startDate: null,
+      endDate: null,
+      startTime: null,
+      endTime: null,
+      title: '',
+      location: '',
+      noRegion: false,
+    });
   };
+
+  // 좌측 리스트: 한 div(단일 스크롤 영역) 안에 전부 렌더
+  // 날짜 라벨과 카드가 같은 컨테이너 안에서 이어지도록
+  const leftScrollRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    // 일정 추가 시 스크롤 아래로 (원하면 제거)
+    const el = leftScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [events.length]);
 
   return (
     <GroupDashboardLayout>
@@ -99,33 +146,51 @@ function GroupSchedulePage() {
           )}
         </div>
 
-        <div className="flex gap-6 flex-1">
-          {/* 좌측 타임라인 */}
-          <div className="flex flex-col">
-            <span className='flex'>09월 일정</span>
-            <div className="w-[300px] border-r pr-4 space-y-4 overflow-y-auto custom-scrollbar">
-              {events.map(s => (
-                <div key={s.id} className="relative pl-6">
-                  <span className="absolute left-0 top-0 h-full w-[2px] bg-gray-300"></span>
+        <div className="flex gap-6 flex-1 min-h-0">
+          {/* 좌측 타임라인 - 한 div 스크롤 */}
+          <div className="w-[320px] flex flex-col">
+            <div className="flex items-center px-1 pb-2 text-lg font-semibold text-brand">
+              09월 <p className="font-semibold text-md"> 일정</p>
+            </div>
 
-                  <p className="text-brand font-bold mb-1">{dayjs(s.start).format('DD일')}</p>
-                  <div className="border rounded-md p-3 shadow-sm">
-                    <p className="text-xs text-gray-500">
-                      {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
-                    </p>
-                    <p className="font-medium">{s.title}</p>
-                    <p className="flex items-center text-sm text-gray-500 mt-1">
-                      <IoLocationSharp className="text-brand mr-1" />
-                      {s.location}
-                    </p>
+            {/* 단일 스크롤 컨테이너 */}
+            <div
+              ref={leftScrollRef}
+              className="flex-1 overflow-y-auto custom-scrollbar pr-2 pl-1 py-1 space-y-4 rounded-md bg-[#F8FAFD]"
+            >
+              {events.map(s => {
+                const d = dayjs(s.start);
+                return (
+                  <div key={s.id} className="flex items-start gap-3">
+                    {/* 날짜 라벨 (세로축 정렬용) */}
+                    <div className="w-[48px] shrink-0 text-right leading-5 pt-1">
+                      <div className="text-[11px] text-gray-400">{d.format('dd')}</div>
+                      <div className="text-brand font-bold">{d.format('DD일')}</div>
+                    </div>
+
+                    {/* 카드 */}
+                    <div className="flex-1">
+                      <div className="border rounded-lg bg-white p-3 shadow-sm hover:shadow transition">
+                        <p className="text-xs text-gray-500">
+                          {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
+                        </p>
+                        <p className="font-medium mt-0.5">{s.title}</p>
+                        {s.location && (
+                          <p className="flex items-center text-sm text-gray-500 mt-1">
+                            <IoLocationSharp className="text-brand mr-1" />
+                            {s.location}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* 우측 FullCalendar */}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
               initialView="dayGridMonth"
@@ -137,6 +202,8 @@ function GroupSchedulePage() {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,listWeek',
               }}
+              dayMaxEventRows={2}
+              eventTimeFormat={{ hour: '2-digit', minute: '2-digit', meridiem: false }}
             />
           </div>
         </div>
@@ -154,12 +221,12 @@ function GroupSchedulePage() {
               <DatePicker
                 placeholder="시작 날짜 선택"
                 className="w-full"
-                onChange={v => setForm({ ...form, startDate: v })}
+                onChange={v => setForm(f => ({ ...f, startDate: v }))}
               />
               <DatePicker
                 placeholder="종료 날짜 선택"
                 className="w-full"
-                onChange={v => setForm({ ...form, endDate: v })}
+                onChange={v => setForm(f => ({ ...f, endDate: v }))}
               />
             </div>
 
@@ -169,13 +236,15 @@ function GroupSchedulePage() {
                 placeholder="시작 시간 선택"
                 className="w-full"
                 format="HH:mm"
-                onChange={v => setForm({ ...form, startTime: v })}
+                minuteStep={5}
+                onChange={v => setForm(f => ({ ...f, startTime: v }))}
               />
               <TimePicker
                 placeholder="종료 시간 선택"
                 className="w-full"
                 format="HH:mm"
-                onChange={v => setForm({ ...form, endTime: v })}
+                minuteStep={5}
+                onChange={v => setForm(f => ({ ...f, endTime: v }))}
               />
             </div>
 
@@ -183,7 +252,7 @@ function GroupSchedulePage() {
             <Input
               placeholder="제목을 입력하세요."
               value={form.title}
-              onChange={e => setForm({ ...form, title: e.target.value })}
+              onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
             />
 
             {/* 장소 */}
@@ -192,12 +261,12 @@ function GroupSchedulePage() {
                 placeholder="지역검색"
                 className="flex-1"
                 value={form.location}
-                onChange={e => setForm({ ...form, location: e.target.value })}
+                onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
                 disabled={form.noRegion}
               />
               <Checkbox
                 checked={form.noRegion}
-                onChange={e => setForm({ ...form, noRegion: e.target.checked })}
+                onChange={e => setForm(f => ({ ...f, noRegion: e.target.checked }))}
               >
                 지역 무관
               </Checkbox>

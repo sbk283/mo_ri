@@ -2,7 +2,8 @@
 
 function DirectChatList() {
   return (
-    <aside className="w-72 bg-white shadow-md rounded-lg p-6 flex flex-col items-center">
+    <aside className="w-72 bg-white shadow-md rounded-tl-sm rounded-bl-sm pt-6 pb-6 pl-5 flex flex-col items-center">
+      <div className="self-start font-semibold text-[28px] pb-[14px] pl-1">채팅/문의</div>
       {/* 프로필 이미지 */}
       <img src="/ham.png" alt="프로필" className="w-32 h-32 rounded-full object-cover" />
 

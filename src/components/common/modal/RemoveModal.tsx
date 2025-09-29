@@ -58,7 +58,7 @@ export default function ConfirmModal({
           exit={{ opacity: 0 }}
         >
           {/* 배경 */}
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/50 z-[1000]" />
 
           {/* 카드 */}
           <motion.div
@@ -68,7 +68,7 @@ export default function ConfirmModal({
               relative bg-white rounded-sm shadow-xl
               w-[430px] h-[280px]
               pt-[44px] pb-[70px] px-[20px]
-              flex flex-col items-center gap-[33px]
+              flex flex-col items-center gap-[33px] z-[1001]
             "
             initial={{ scale: 0.96, y: 8, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}

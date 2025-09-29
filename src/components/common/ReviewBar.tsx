@@ -2,24 +2,8 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 import RemoveModal from './modal/RemoveModal';
-
-export type GroupReview = {
-  id: number;
-  title: string;
-  category: string; // 예: 스터디/학습
-  status: '진행중' | '종료';
-  rating: 1 | 2 | 3 | 4 | 5;
-  period: string; // "YYYY.MM.DD ~ YYYY.MM.DD"
-  content: string;
-  tags: string[];
-};
-
-type Props = {
-  review: GroupReview;
-  onEdit?: (id: number) => void;
-  onDelete?: (id: number) => void;
-  defaultOpen?: boolean;
-};
+import SuccessModal from './modal/SuccessMadal';
+import EditReview, { type GroupReview } from './modal/EditReview';
 
 const Pill = ({
   tone = 'gray',
@@ -61,17 +45,43 @@ const Rating = ({ value }: { value: number }) => (
   </div>
 );
 
-export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen = false }: Props) {
+type Props = {
+  review: GroupReview;
+  onEdit?: (id: number, updated: Partial<GroupReview>) => void;
+  onDelete?: (id: number) => void;
+  defaultOpen?: boolean;
+};
+
+export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [removed, setRemoved] = useState(false); // ✅ 임시 로컬 삭제용
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [removed, setRemoved] = useState(false);
+  const [currentReview, setCurrentReview] = useState(review);
 
   const handleDeleteClick = () => setConfirmOpen(true);
 
   const handleConfirmDelete = () => {
     setConfirmOpen(false);
-    onDelete?.(review.id); // 부모 콜백도 호출
-    setRemoved(true); // ✅ 로컬에서도 카드 숨김 처리
+    onDelete?.(review.id);
+    setRemoved(true);
+  };
+
+  const handleEditClick = () => {
+    setEditModalOpen(true);
+  };
+
+  const handleEditConfirm = (updated: Partial<GroupReview>) => {
+    setEditModalOpen(false);
+    setCurrentReview(prev => ({ ...prev, ...updated }));
+    onEdit?.(review.id, updated);
+
+    // 성공 모달 표시
+    setSuccessModalOpen(true);
+    setTimeout(() => {
+      setSuccessModalOpen(false);
+    }, 2000);
   };
 
   return (
@@ -85,23 +95,24 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
           className="rounded-[5px] overflow-hidden relative flex flex-col w-[1000px]"
         >
           <article className="rounded-md flex flex-col border border-[#A3A3A3] bg-white">
-            {/* 상단 요약 */}
             <div className="py-6 pl-9 pr-6">
               <header className="flex items-center justify-start gap-3">
                 <div className="flex flex-col">
-                  <h3 className="text-xl font-bold leading-tight line-clamp-1">{review.title}</h3>
-                  <p className="mt-1 text-xs text-gray-500">모임 기간 : {review.period}</p>
+                  <h3 className="text-xl font-bold leading-tight line-clamp-1">
+                    {currentReview.title}
+                  </h3>
+                  <p className="mt-1 text-xs text-gray-500">모임 기간 : {currentReview.period}</p>
                 </div>
                 <div className="flex gap-5 ml-10">
                   <div className="flex items-center justify-end">
-                    <Pill tone="blue">{review.category}</Pill>
+                    <Pill tone="blue">{currentReview.category}</Pill>
                   </div>
                   <div>
-                    <Pill tone="gray">{review.status}</Pill>
+                    <Pill tone="gray">{currentReview.status}</Pill>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-auto">
-                  <Rating value={review.rating} />
+                  <Rating value={currentReview.rating} />
                   <button
                     type="button"
                     className="flex items-center justify-center gap-2 px-3 py-1 text-[15px] hover:bg-gray-50 rounded"
@@ -115,7 +126,6 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
               </header>
             </div>
 
-            {/* 상세보기 영역 */}
             <AnimatePresence initial={false}>
               {open && (
                 <motion.div
@@ -131,12 +141,12 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
                   <div className="relative p-3 flex flex-col flex-1 pb-12 m-4">
                     <div className="mb-2 mt-5 flex items-center gap-8 border-b border-[#6C6C6C] pb-2">
                       <h3 className="text-xl font-bold leading-tight line-clamp-1">
-                        {review.title}
+                        {currentReview.title}
                       </h3>
-                      <Pill tone="blue">{review.category}</Pill>
-                      <Rating value={review.rating} />
+                      <Pill tone="blue">{currentReview.category}</Pill>
+                      <Rating value={currentReview.rating} />
                       <p className="mt-1 text-xs text-gray-500 ml-auto">
-                        모임 기간 : {review.period}
+                        모임 기간 : {currentReview.period}
                       </p>
                     </div>
 
@@ -146,7 +156,7 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18, delay: 0.05 }}
                     >
-                      {review.content}
+                      {currentReview.content}
                     </motion.p>
 
                     <motion.div
@@ -155,24 +165,22 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.18, delay: 0.1 }}
                     >
-                      {review.tags.map(t => (
+                      {currentReview.tags.map(t => (
                         <Pill key={t} tone="amber">
                           #{t}
                         </Pill>
                       ))}
                     </motion.div>
 
-                    {/* 하단 고정 버튼 */}
                     <div className="absolute right-3 bottom-3 flex gap-6 px-[13px] py-1">
                       <button
                         type="button"
                         className="w-[56px] h-[30px] rounded-md border border-[#6C6C6C] text-[16px] text-[#6C6C6C]"
-                        onClick={() => onEdit?.(review.id)}
+                        onClick={handleEditClick}
                       >
                         수정
                       </button>
 
-                      {/* 삭제 → 모달 오픈 */}
                       <button
                         type="button"
                         className="w-[56px] h-[30px] rounded-md bg-[#6C6C6C] text-[16px] text-white"
@@ -187,7 +195,7 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
             </AnimatePresence>
           </article>
 
-          {/* 확인 모달 */}
+          {/* 삭제 확인 모달 */}
           <RemoveModal
             open={confirmOpen}
             onClose={() => setConfirmOpen(false)}
@@ -198,8 +206,25 @@ export default function GroupReviewCard({ review, onEdit, onDelete, defaultOpen 
             cancelText="취소"
             preventBackdropClose={true}
           />
+
+          {/* 수정 모달 */}
+          <EditReview
+            open={editModalOpen}
+            onClose={() => setEditModalOpen(false)}
+            onConfirm={handleEditConfirm}
+            review={currentReview}
+          />
+
+          {/* 성공 모달 */}
+          <SuccessModal
+            isOpen={successModalOpen}
+            message="수정이 완료되었습니다!"
+            onClose={() => setSuccessModalOpen(false)}
+          />
         </motion.li>
       )}
     </AnimatePresence>
   );
 }
+
+export default ReviewBar;

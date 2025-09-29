@@ -14,8 +14,7 @@ export function ReviewCard({ item, className = '' }: { item: ReviewItem; classNa
   return (
     <div
       className={[
-        'w-[240px] h-[280px] shrink-0 rounded-[5px] border border-[#A3A3A3] bg-white',
-        'overflow-hidden relative cursor-pointer',
+        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-[5px] border border-[#A3A3A3] bg-white',
         className,
       ].join(' ')}
       role="article"
@@ -37,10 +36,13 @@ export function ReviewCard({ item, className = '' }: { item: ReviewItem; classNa
       </div>
 
       {/* 본문 영역 */}
-      <div className="px-[27px] py-[17px]">
+      <div className="px-[27px] py-[17px] relative h-[calc(280px-72px)]">
         <img className="mb-1" src={Colon} alt="따옴표" />
-        <p className="line-clamp-6 text-sm text-[#8c8c8c] mb-4">{item.quote}</p>
-        <p className="text-[#B8641B] text-sm">{item.authorMasked}</p>
+        <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.quote}</p>
+        {/* 작성자 하단 고정 */}
+        <p className="absolute bottom-[27px] left-[27px] text-[#B8641B] text-sm">
+          {item.authorMasked}
+        </p>
       </div>
     </div>
   );

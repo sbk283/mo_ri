@@ -95,7 +95,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="/public/pro_banner2.jpg.jpg"
+                    src="/pro_banner2.jpg"
                     alt="그린컴퓨터아트학원"
                   />
                 </a>
@@ -108,7 +108,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="/public/pro_banner1.jpg.jpg"
+                    src="/pro_banner1.jpg"
                     alt="제휴배너이름"
                   />
                 </a>
@@ -121,7 +121,7 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
                 >
                   <img
                     className="w-full h-full object-cover"
-                    src="/public/pro_banner1.jpg"
+                    src="/pro_banner1.jpg"
                     alt="제휴배너이름"
                   />
                 </a>

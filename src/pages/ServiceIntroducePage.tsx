@@ -13,7 +13,7 @@ function ServiceIntroducePage() {
           src="./service_bg.svg"
           alt="mo:ri 배경"
         />
-        <div className="relative z-50 w-[1024px] h-full mx-auto flex justify-center items-center pr-[600px]">
+        <div className="relative z-2 w-[1024px] h-full mx-auto flex justify-center items-center pr-[600px]">
           <div className="whitespace-nowrap">
             <img className="mb-3" src="./logo_white.svg" alt="Mo:ri" />
             <p className="text-white">당신의 일상에 가치를 더하는 모임</p>

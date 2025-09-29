@@ -16,20 +16,25 @@ function MessageInput({ onSend }: MessageInputProps) {
   };
 
   return (
-    <div className="border-t border-brand p-4 flex items-center">
-      <input
-        type="text"
-        placeholder="메시지를 입력해 주세요."
+    <div className="border border-gray-300 rounded-bl-sm rounded-br-sm p-4 flex items-center">
+      <textarea
+        placeholder="메시지를 입력해 주세요. (Shift+Enter 줄바꿈)"
         value={input}
         onChange={e => setInput(e.target.value)}
-        onKeyDown={e => e.key === 'Enter' && handleSend()}
-        className="flex-1 px-4 py-2 border rounded-lg placeholder:text-gray-300"
+        onKeyDown={e => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+          }
+        }}
+        className="flex-1 px-2 py-2 border-none rounded-sm placeholder:text-gray-300 resize-none overflow-y-auto"
+        rows={1}
       />
       <motion.button
         onClick={handleSend}
         whileTap={{ scale: 0.96 }}
         whileHover={{ scale: 1.02 }}
-        className="ml-2 px-6 py-[9px] bg-brand text-white rounded-lg shadow hover:bg-brand"
+        className="ml-2 px-6 border-t-gray-300 py-[9px] bg-brand text-white rounded-lg shadow hover:bg-brand"
       >
         보내기
       </motion.button>

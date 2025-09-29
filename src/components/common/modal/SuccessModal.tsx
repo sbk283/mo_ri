@@ -28,15 +28,16 @@ function SuccessModal({ isOpen, message = '완료되었습니다!' }: SuccessMod
             <motion.svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 52 52"
-              className="w-20 h-20 text-green-500"
+              className="w-24 h-24 text-green-500"
             >
               <motion.circle
                 cx="26"
                 cy="26"
-                r="25"
-                fill="none"
+                r="24"
                 stroke="currentColor"
                 strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
                 initial={{ pathLength: 0 }}
                 animate={{ pathLength: 1 }}
                 transition={{ duration: 0.5 }}

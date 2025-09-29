@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import Modal from '../components/common/modal/Modal';
-import SuccessModal from '../components/common/modal/SuccessMadal';
+import SuccessModal from '../components/common/modal/SuccessModal';
 
 const members = Array.from({ length: 23 }, (_, i) => ({
   id: i + 1,
@@ -18,7 +18,7 @@ function GroupMemberPage() {
   const [page, setPage] = useState(1);
   const [openId, setOpenId] = useState<number | null>(null);
 
-  // ✅ 추방 관련 상태
+  // 추방 관련 상태
   const [kickModalOpen, setKickModalOpen] = useState(false);
   const [targetMember, setTargetMember] = useState<{ id: number; name: string } | null>(null);
   const [kickSuccess, setKickSuccess] = useState(false);
@@ -28,10 +28,10 @@ function GroupMemberPage() {
   const end = start + ITEMS_PER_PAGE;
   const current = members.slice(start, end);
 
-  // ✅ 성공 애니메이션 자동 닫힘
+  // 성공 애니메이션 자동 닫힘
   useEffect(() => {
     if (kickSuccess) {
-      const timer = setTimeout(() => setKickSuccess(false), 2000);
+      const timer = setTimeout(() => setKickSuccess(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [kickSuccess]);
@@ -39,7 +39,7 @@ function GroupMemberPage() {
   return (
     <GroupDashboardLayout>
       <div className="p-6 bg-white shadow-md rounded-lg">
-        <h2 className="text-black text-3xl font-semibold pt-1 pb-8">모임 멤버</h2>
+        <h2 className="text-black text-[28px] font-semibold pb-8">모임 멤버</h2>
 
         {/* 멤버 그리드 */}
         <div className="grid grid-cols-2 gap-4">
@@ -156,7 +156,7 @@ function GroupMemberPage() {
       <SuccessModal
         isOpen={kickSuccess}
         onClose={() => setKickSuccess(false)}
-        message="추방 완료!"
+        message="추방이 완료 되었습니다."
       />
     </GroupDashboardLayout>
   );

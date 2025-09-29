@@ -14,6 +14,7 @@ export type JoinGroupData = {
   dday?: string;
   thumbnail?: string;
   desc?: string;
+  
 };
 
 interface JoinGroupModalProps {

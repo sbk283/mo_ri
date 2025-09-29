@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Swiper as SwiperClass } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
 import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';
+import SuccessModal from '../modal/SuccessModal';
 
 export interface MeetingHeaderProps {
   title: string;
@@ -32,9 +33,9 @@ function MeetingHeader({
   participants,
   images,
   isFavorite,
-  mode,
+  // mode,
   onFavoriteToggle,
-  onApply,
+  // onApply,
 }: MeetingHeaderProps) {
   // 대표 이미지
   const [selectedImage, setSelectedImage] = useState<string>(
@@ -48,6 +49,17 @@ function MeetingHeader({
   // 참가 모달
   const [open, setOpen] = useState(false);
 
+  // 참가 성공 모달
+  const [joinSuccess, setJoinSuccess] = useState(false);
+
+  // 성공 애니메이션 자동 닫힘
+  useEffect(() => {
+    if (joinSuccess) {
+      const timer = setTimeout(() => setJoinSuccess(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [joinSuccess]);
+
   // 더미 데이터 (실제에선 props로 넘기거나 API 연동)
   const dummyGroup = {
     title,
@@ -58,6 +70,7 @@ function MeetingHeader({
     memberLimit: Number(participants.split('/')[1]),
     startDate: '2025.02.12',
     endDate: '2025.05.12',
+    duration,
   };
 
   // 스와이퍼
@@ -199,8 +212,14 @@ function MeetingHeader({
         onSubmit={intro => {
           console.log('참가신청 완료:', intro); // 참가 싲청 누르면 나오는 콘솔이라 메인에는 안뜸다 신경쓰이시면 지우겠슴다..
           setOpen(false);
+          setJoinSuccess(true);
         }}
-        group={dummyGroup} // 얘는.... 기능엔 문제없는데 추후 DB 연결 이후에 다시 손보겠슴다.
+        group={dummyGroup} // 오류 수정 완료^^
+      />
+      <SuccessModal
+        isOpen={joinSuccess}
+        onClose={() => setJoinSuccess(false)}
+        message="참가 신청 완료!"
       />
     </div>
   );

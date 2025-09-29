@@ -33,12 +33,12 @@ function DirectChatRoom() {
   }, [messages]);
 
   return (
-    <main className="w-full max-w-full h-[833px] p-5 bg-white shadow-md rounded-tr-sm rounded-tb-sm flex flex-col">
-      {/* 채팅 기록 - 항상 border + 배경 유지 */}
+    <main className="w-[700px] p-6 flex flex-col">
+      {/* 채팅 기록 */}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto space-y-3 custom-scrollbar overscroll-contain p-4 
-                   border border-gray-300 bg-[#ECEEF4] rounded-tl-sm rounded-tr-sm"
+                   border border-gray-300 border-b-0 bg-[#ECEEF4] rounded-tl-sm rounded-tr-sm"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">

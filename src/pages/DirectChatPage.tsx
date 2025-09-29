@@ -7,7 +7,7 @@ import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 function DirectChatPage() {
   return (
     <GroupDashboardLayout>
-      <div className="flex h-[calc(100vh-120px)] w-full max-w-[1024px]">
+      <div className="bg-white shadow-card h-[770px] flex">
         {/* 채팅 리스트 영역 */}
         <DirectChatList />
         {/* 채팅방 영역 */}

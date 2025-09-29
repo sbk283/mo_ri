@@ -1,3 +1,5 @@
+// 공유하기 모달
+
 import { useState } from 'react';
 
 interface ShareModalProps {
@@ -14,7 +16,7 @@ function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setCopied(true); // ✅ 유지 (타임아웃/초기화 없음)
+      setCopied(true);
     } catch (err) {
       console.error('링크 복사 실패:', err);
     }

@@ -1,30 +1,40 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
+import Modal from '../components/common/modal/Modal';
+import SuccessModal from '../components/common/modal/SuccessMadal';
 
-// 더미 데이터
 const members = Array.from({ length: 23 }, (_, i) => ({
   id: i + 1,
   name: '춤추는 낙타',
   message: '안녕하세요~ 잘 부탁 드려요~',
   avatar: '/ham.png',
-  isNew: i === 22, // 마지막만 NEW 표시
+  isNew: i === 22,
 }));
 
 const ITEMS_PER_PAGE = 10;
 
 function GroupMemberPage() {
   const [page, setPage] = useState(1);
-  const [openId, setOpenId] = useState<number | null>(null); // 현재 열려 있는 멤버 id
+  const [openId, setOpenId] = useState<number | null>(null);
+
+  // ✅ 추방 관련 상태
+  const [kickModalOpen, setKickModalOpen] = useState(false);
+  const [targetMember, setTargetMember] = useState<{ id: number; name: string } | null>(null);
+  const [kickSuccess, setKickSuccess] = useState(false);
 
   const totalPages = Math.ceil(members.length / ITEMS_PER_PAGE);
   const start = (page - 1) * ITEMS_PER_PAGE;
   const end = start + ITEMS_PER_PAGE;
   const current = members.slice(start, end);
 
-  const toggleMenu = (id: number) => {
-    setOpenId(prev => (prev === id ? null : id));
-  };
+  // ✅ 성공 애니메이션 자동 닫힘
+  useEffect(() => {
+    if (kickSuccess) {
+      const timer = setTimeout(() => setKickSuccess(false), 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [kickSuccess]);
 
   return (
     <GroupDashboardLayout>
@@ -38,10 +48,7 @@ function GroupMemberPage() {
               key={m.id}
               className="relative flex items-center gap-3 w-full h-24 bg-white border border-neutral-400 rounded-sm px-4 py-3 hover:shadow"
             >
-              {/* 아바타 */}
               <img src={m.avatar} alt={m.name} className="w-12 h-12 rounded-full object-cover" />
-
-              {/* 이름 + 메시지 */}
               <div className="flex-1 flex flex-col">
                 <p className="font-semibold text-xl text-brand">
                   {m.name}
@@ -53,12 +60,12 @@ function GroupMemberPage() {
               {/* … 버튼 */}
               <div
                 className="text-neutral-400 text-3xl font-semibold pr-[2px] cursor-pointer select-none"
-                onClick={() => toggleMenu(m.id)}
+                onClick={() => setOpenId(prev => (prev === m.id ? null : m.id))}
               >
                 …
               </div>
 
-              {/* 드롭다운 메뉴 */}
+              {/* 드롭다운 */}
               <AnimatePresence>
                 {openId === m.id && (
                   <motion.div
@@ -68,7 +75,14 @@ function GroupMemberPage() {
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                     className="absolute top-16 right-[-60px] w-30 bg-white rounded-md shadow-lg border border-neutral-300 overflow-hidden z-50"
                   >
-                    <button className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100">
+                    <button
+                      onClick={() => {
+                        setTargetMember({ id: m.id, name: m.name });
+                        setKickModalOpen(true);
+                        setOpenId(null);
+                      }}
+                      className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
+                    >
                       모임 추방하기
                     </button>
                     <div className="h-px bg-neutral-200" />
@@ -91,7 +105,6 @@ function GroupMemberPage() {
           >
             &lt;
           </button>
-
           {Array.from({ length: totalPages }, (_, i) => (
             <button
               key={i}
@@ -105,7 +118,6 @@ function GroupMemberPage() {
               {i + 1}
             </button>
           ))}
-
           <button
             onClick={() => setPage(p => Math.min(p + 1, totalPages))}
             disabled={page === totalPages}
@@ -115,6 +127,37 @@ function GroupMemberPage() {
           </button>
         </div>
       </div>
+
+      {/* 추방 확인 모달 */}
+      <Modal
+        isOpen={kickModalOpen}
+        onClose={() => setKickModalOpen(false)}
+        title={`정말 ${targetMember?.name} 님을 추방하시겠습니까?`}
+        message="추방 시 해당 멤버는 다시 재가입이 불가능 합니다."
+        actions={[
+          {
+            label: '취소',
+            onClick: () => setKickModalOpen(false),
+            variant: 'secondary',
+          },
+          {
+            label: '추방하기',
+            onClick: () => {
+              console.log(`${targetMember?.id}번 멤버 추방 실행`);
+              setKickModalOpen(false);
+              setKickSuccess(true);
+            },
+            variant: 'primary',
+          },
+        ]}
+      />
+
+      {/* 추방 완료 모달 */}
+      <SuccessModal
+        isOpen={kickSuccess}
+        onClose={() => setKickSuccess(false)}
+        message="추방 완료!"
+      />
     </GroupDashboardLayout>
   );
 }

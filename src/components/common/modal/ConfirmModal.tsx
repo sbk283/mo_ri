@@ -103,7 +103,7 @@ export default function ConfirmModal({
           exit={{ opacity: 0 }}
         >
           {/* 오버레이 */}
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-sm z-[1000]" />
+          <div className="absolute inset-0 bg-black/50 z-[1000]" />
 
           {/* 카드 */}
           <motion.div

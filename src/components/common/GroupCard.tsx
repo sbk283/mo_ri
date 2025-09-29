@@ -109,7 +109,7 @@ export function GroupCard({
   return (
     <>
       <Wrapper className="h-[290px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
-        <article className="rounded-md flex flex-col h-full">
+        <article className="rounded-[11px] flex flex-col h-full border border-[#A3A3A3]">
           <span className="absolute left-2 z-10">
             <StatusBadge text={item.status} />
           </span>
@@ -135,7 +135,7 @@ export function GroupCard({
             </button>
           </div>
 
-          <div className="relative p-[15px] border border-t-0 border-b-[#DBDBDB] border-x-[#DBDBDB] rounded-b-md flex flex-col flex-1 pb-12 bg-white">
+          <div className="relative p-[15px] rounded-b-[10px] flex flex-col flex-1 pb-12 bg-white">
             <header className="flex justify-between text-[12px] mb-2">
               <span className="text-[#D83737] font-semibold">{item.category}</span>
               <span className="text-[#767676]">{item.region}</span>

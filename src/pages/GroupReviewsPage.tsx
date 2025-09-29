@@ -1,7 +1,8 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import ReviewBar, { type GroupReview } from '../components/common/ReviewBar';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
+import type { GroupReview } from '../components/common/modal/EditReview';
+import ReviewBar from '../components/common/ReviewBar';
 
 const mockReviews: GroupReview[] = [
   {
@@ -23,7 +24,7 @@ const mockReviews: GroupReview[] = [
     rating: 4,
     period: '2025.03.01 ~ 2025.03.21',
     content: '짧고 굵게 배우기 좋아. 과제 피드백이 특히 도움 됨.',
-    tags: ['다양한 활동', '초보자 추천'],
+    tags: ['알찬커리큘럼', '초보자추천'],
   },
   {
     id: 3,
@@ -33,7 +34,7 @@ const mockReviews: GroupReview[] = [
     rating: 5,
     period: '2025.04.06',
     content: '실전 예제가 많아서 바로 적용 가능!',
-    tags: ['재참여하고싶어요', '전문적인 운영'],
+    tags: ['재참여하고싶어요', '전문적인운영'],
   },
 ];
 
@@ -83,7 +84,7 @@ function GroupReviewsPage() {
           <ul className="flex flex-col gap-4">
             {/* items로 렌더 */}
             {items.map(item => (
-              <motion.li
+              <motion.ul
                 key={item.id}
                 layout // 레이아웃 자연스럽게
                 initial={{ opacity: 1, height: 'auto' }}
@@ -92,7 +93,7 @@ function GroupReviewsPage() {
                 className="overflow-hidden" // 높이 접힘 시 튀는 것 방지
               >
                 <ReviewBar review={item} onEdit={handleEdit} onDelete={handleDelete} />
-              </motion.li>
+              </motion.ul>
             ))}
           </ul>
         )}

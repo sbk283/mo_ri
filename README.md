@@ -96,3 +96,4 @@ npm install @supabase/supabase-js
 - 컴포넌트 분리 잘 해주세요.!!!
 - console.log(방어코드 제외) 확인후 삭제 해주세요.
 - 작업 순서는 기획 → 피그마 → DB 테이블 → UI 구현 → 기능 구현 순서로 진행 할 예정입니다..
+  . env 파일 수정 테스트

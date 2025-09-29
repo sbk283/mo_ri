@@ -1,6 +1,7 @@
 // 모임 생성 - 01_ 기본 모임 설정
 // 테스트 과정에선 disableNext={!isValid} 기능 적용 x (disableNext={!isValid} 주석 해제하시면 다음단계 버튼 활성화 on)
 
+import type { GroupFormData } from '../../types/group';
 import BasicInfoInputs from './BasicInfoInputs';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import DateRangeSelector from './DateRangeSelector';
@@ -9,19 +10,8 @@ import InterestSelector from './InterestSelector';
 import RegionSelector from './RegionSelector';
 
 type Props = {
-  formData: {
-    interestMajor: string;
-    interestSub: string;
-    startDate: string;
-    endDate: string;
-    groupType: string;
-    region: string;
-    regionFree: boolean;
-    title: string;
-    memberCount: number;
-    images: File[];
-  };
-  onChange: (field: keyof Props['formData'], value: any) => void;
+  formData: GroupFormData;
+  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
   onPrev?: () => void;
   onNext?: () => void;
 };
@@ -77,7 +67,7 @@ function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
         totalSteps={3}
         onPrev={onPrev!}
         onNext={onNext!}
-        // disableNext={!isValid}
+        disableNext={!isValid}
       />
     </div>
   );

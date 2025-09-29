@@ -1,13 +1,14 @@
-// 카테고리 메뉴 사이드바88888888
-
+//  카테고리 메뉴 사이드바
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { categorySlugMap } from '../constants/categorySlugs';
 
 function CategoryMenuSidebar() {
   const [activeMain, setActiveMain] = useState('');
   const [activeSub, setActiveSub] = useState('');
   const [openCategory, setOpenCategory] = useState('');
+  const location = useLocation(); // 현재 경로
 
   const categories = [
     { name: '전체보기', icon: '/images/list_all_dark.svg' },
@@ -25,20 +26,34 @@ function CategoryMenuSidebar() {
     { name: '봉사/사회참여', icon: '/images/volunteer_dark.svg', sub: ['복지/나눔', '캠페인'] },
   ];
 
-  // 카테고리 useEffect
+  // URL slug 홛ㄱ인 후 activeMain인지 activeSub인지 결정
   useEffect(() => {
-    if (!activeMain && categories.length > 0) {
-      const first = categories[0];
-      setActiveMain(first.name);
-      if (first.sub?.length) {
-        setOpenCategory(first.name);
-        setActiveSub(first.sub[0]);
-      } else {
-        setOpenCategory('');
-        setActiveSub('');
+    const pathParts = location.pathname.split('/');
+    const slug = pathParts[pathParts.length - 1]; // /grouplist/:slug
+
+    if (!slug) return;
+
+    const entry = Object.entries(categorySlugMap).find(([, value]) => value === slug);
+    if (!entry) return;
+
+    const [korName] = entry;
+
+    // 메인 카테고리인지, 서브 카테고리인지 확인
+    const main = categories.find(cat => cat.name === korName);
+    if (main) {
+      setActiveMain(main.name);
+      if (main.sub?.length) setOpenCategory(main.name);
+      setActiveSub('');
+    } else {
+      // 서브 카테고리일 경우
+      const parent = categories.find(cat => cat.sub?.includes(korName));
+      if (parent) {
+        setActiveMain(parent.name);
+        setOpenCategory(parent.name);
+        setActiveSub(korName);
       }
     }
-  }, [activeMain, categories]);
+  }, [location.pathname]);
 
   return (
     <motion.aside
@@ -47,6 +62,7 @@ function CategoryMenuSidebar() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
     >
+      {/* 모임 생성 버튼 */}
       <Link
         to="/creategroup"
         className="flex w-full h-[113px] flex-col items-center justify-center rounded-sm bg-brand shadow hover:bg-blue-600"
@@ -86,7 +102,9 @@ function CategoryMenuSidebar() {
 
             return (
               <li key={cat.name}>
-                <button
+                {/* 메인 카테고리 → 슬러그 적용 (Link 사용) */}
+                <Link
+                  to={`/grouplist/${categorySlugMap[cat.name]}`} // slug 적용
                   onClick={() => {
                     setActiveMain(cat.name);
                     if (cat.sub?.length) {
@@ -101,16 +119,15 @@ function CategoryMenuSidebar() {
                     isActiveMain ? 'text-[#0689E8]' : 'text-[#4E4E4E]'
                   }`}
                 >
-                  {/* 아이콘 (_dark 제거하여 활성화 시 일반 아이콘 표시) */}
                   <img
                     src={isActiveMain ? cat.icon.replace('_dark', '') : cat.icon}
                     alt={cat.name}
                     className="w-4 h-4"
                   />
                   <span className="font-medium">{cat.name}</span>
-                </button>
+                </Link>
 
-                {/* sub 카테고리 (framer-motion) */}
+                {/* 서브 카테고리 */}
                 <AnimatePresence>
                   {cat.sub && openCategory === cat.name && (
                     <motion.ul
@@ -122,7 +139,8 @@ function CategoryMenuSidebar() {
                     >
                       {cat.sub.map(sub => (
                         <li key={sub}>
-                          <button
+                          <Link
+                            to={`/grouplist/${categorySlugMap[sub]}`} // slug 적용
                             onClick={() => {
                               setActiveMain(cat.name);
                               setActiveSub(sub);
@@ -132,7 +150,7 @@ function CategoryMenuSidebar() {
                             }`}
                           >
                             {sub}
-                          </button>
+                          </Link>
                         </li>
                       ))}
                     </motion.ul>

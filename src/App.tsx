@@ -35,7 +35,8 @@ import GroupMemberPage from './pages/GroupMemberPage';
 import GroupSchedulePage from './pages/GroupSchedulePage';
 import GroupContentPage from './pages/GroupContentPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
-
+import NotFoundPage from './pages/NotFoundPage';
+import GroupDetailPage from './pages/GroupDetailPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -65,6 +66,7 @@ function App() {
             <Route path="/groupreviews" element={<GroupReviewsPage />} />
             {/* 모임리스트 */}
             <Route path="/grouplist" element={<GroupListPage />} />
+            <Route path="/grouplist/:slug" element={<GroupListPage />} />
             {/* 로그인 */}
             <Route path="/login" element={<LoginPage />} />
             {/* 회원가입 */}
@@ -75,6 +77,8 @@ function App() {
             <Route path="/mypage" element={<MyPage />} />
             {/* 모임생성 */}
             <Route path="/creategroup" element={<CreateGroupPage />} />
+            {/* 모임 상세보기 */}
+            <Route path="/groupdetail/:id" element={<GroupDetailPage />} />
             {/* 채팅 */}
             <Route path="/chat" element={<DirectChatPage />} />
             {/* 모임 상세대시보드 */}
@@ -115,6 +119,8 @@ function App() {
             <Route path="/inquiry/history" element={<MyInquiriesPage />} />
             {/* 회원 탈퇴 */}
             <Route path="/deleteaccount" element={<DeleteAccountPage />} />
+            {/* 404 */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           <Footer />
         </Router>

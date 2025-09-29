@@ -15,11 +15,12 @@ export interface CurriculumCardProps {
 export interface CurriculumItem {
   title: string;
   detail: string;
+  files?: File[];
 }
 
 // 커리큘럼 관리용 훅 - initial: 초기 커리큘럼 배열 (길이에 맞춰 files 초기화)
 export function useCurriculum(initial: CurriculumItem[]) {
-  // ✅ 각 단계별 파일을 여러 장 보관할 수 있도록 2차원 배열로 변경
+  // 각 단계별 파일을 여러 장 보관할 수 있도록 2차원 배열로 변경
   const [files, setFiles] = useState<File[][]>(
     Array(initial.length).fill([]), // 초기화: 각 단계는 빈 배열
   );

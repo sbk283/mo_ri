@@ -30,9 +30,19 @@ function CurriculumCard({
 
     // 미리보기 URL 생성
     const urls = selectedFiles.map(file => URL.createObjectURL(file));
-    setPreviews(urls);
+    const nextPreviews = [...previews, ...urls].slice(0, MAX_PICK);
+    setPreviews(nextPreviews);
 
-    onFileChange(index, selectedFiles);
+    const prevFiles = item.files ?? [];
+    const nextFiles = [...prevFiles, ...selectedFiles].slice(0, MAX_PICK);
+
+    onFileChange(index, nextFiles);
+  };
+
+  // 이미지 미리보기 파일 삭제
+  const handleRemove = (removeIndex: number) => {
+    const nextImages = previews.filter((_, i) => i !== removeIndex);
+    setPreviews(nextImages);
   };
 
   return (
@@ -82,19 +92,29 @@ function CurriculumCard({
       </div>
 
       {/* 파일 미리보기 - 항상 3칸 보여줌 */}
-      <div className="flex mt-2 gap-[467px]">
-        <div className="flex gap-2  pl-[150px]">
+      <div className="flex mt-2 gap-[362px]">
+        <div className="flex gap-2 pl-[150px]">
           {[0, 1, 2].map(i => (
             <div
               key={i}
-              className="w-[45px] h-[45px] border border-[#D9D9D9] rounded-[5px] overflow-hidden flex items-center justify-center bg-white"
+              className="relative w-20 h-20 border border-[#D9D9D9] rounded-[5px] overflow-hidden flex items-center justify-center bg-white"
             >
               {previews[i] ? (
-                <img
-                  src={previews[i]}
-                  alt={`preview-${i}`}
-                  className="w-full h-full object-cover"
-                />
+                <>
+                  <img
+                    src={previews[i]}
+                    alt={`preview-${i}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {/* ========== X 버튼!!! ========== */}
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(i)}
+                    className="absolute top-1 right-1"
+                  >
+                    <img src="/images/close_dark.svg" alt="x버튼" className="w-4 h-4" />
+                  </button>
+                </>
               ) : (
                 <span className="text-gray-300 text-xs">+</span>
               )}

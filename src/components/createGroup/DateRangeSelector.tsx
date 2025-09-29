@@ -1,34 +1,44 @@
-// 모임 생성 - StepOne 기간 설정, 모임 유형 (모임 유형 : 자동으로 날짜 계산 함수 넣음)
-// 오늘 이전 날짜는 선택 불가능하게끔 만들고, 에러는 border + 메시지로 표시
+// 모임 생성 - StepOne 기간 설정, 모임 유형 (자동 계산)
+// 오늘 이전 날짜는 선택 불가능, 에러는 border + 메시지 표시
 import { useEffect, useMemo, useState } from 'react';
 import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
+import type { GroupFormData } from '../../types/group';
 
 type DateRangeSelectorProps = {
   startDate: string;
   endDate: string;
-  groupType: string;
-  onChange: (field: 'startDate' | 'endDate' | 'groupType', value: string) => void;
+  groupType: GroupFormData['groupType'];
+  onChange: <K extends 'startDate' | 'endDate' | 'groupType'>(
+    field: K,
+    value: GroupFormData[K],
+  ) => void;
 };
 
 function DateRangeSelector({ startDate, endDate, groupType, onChange }: DateRangeSelectorProps) {
+  // 선택한 기간 일수 계산
   const days = useMemo(() => diffDaysInclusive(startDate, endDate), [startDate, endDate]);
+
+  // 기간에 따라 자동 모임 유형 계산
   const computedType = useMemo(() => toGroupTypeByRange(days), [days]);
 
   useEffect(() => {
-    if (computedType !== groupType) onChange('groupType', computedType);
+    if (computedType !== groupType) {
+      onChange('groupType', computedType);
+    }
   }, [computedType, groupType, onChange]);
 
-  // 오늘 날짜를 YYYY-MM-DD 형식으로 변환 (로컬 기준)
+  // 오늘 날짜 (YYYY-MM-DD, 로컬 기준)
   const today = new Date();
   const timezoneOffset = today.getTimezoneOffset();
   const localTime = new Date(today.getTime() - timezoneOffset * 60000);
   const todayDate = localTime.toISOString().split('T')[0];
 
-  // 에러 메시지 상태
+  // 에러 상태
   const [error, setError] = useState('');
 
   const handleDateChange = (field: 'startDate' | 'endDate', value: string) => {
     onChange(field, value);
+
     if (value.length === 10) {
       if (value < todayDate) {
         setError('오늘 이전 날짜는 선택할 수 없습니다.');
@@ -42,8 +52,20 @@ function DateRangeSelector({ startDate, endDate, groupType, onChange }: DateRang
     }
   };
 
+  // groupType 라벨 매핑 (한글 표시용) - useMemo로 최적화
+  const groupTypeLabel = useMemo(
+    () => ({
+      '': '',
+      oneday: '원데이',
+      short: '단기',
+      long: '장기',
+    }),
+    [],
+  );
+
   return (
     <section className="flex flex-col">
+      {/* 기간 설정 */}
       <div className="flex gap-[56px]">
         <label className="flex items-center font-semibold mb-2 text-lg">기간 설정</label>
         <div className="flex text-[#A6A6A6] items-center gap-4">
@@ -87,7 +109,7 @@ function DateRangeSelector({ startDate, endDate, groupType, onChange }: DateRang
           <input
             placeholder="모임 기간 선택 시 자동 설정됩니다."
             type="text"
-            value={groupType}
+            value={groupTypeLabel[groupType]} // 한글 라벨 표시함. 원래는 영어로 나왔는데 그룹타입라벨 매핑하여 한글로 적용.
             readOnly
             className="flex items-center w-64 h-10 border border-gray-300 rounded px-4 py-2 placeholder:text-[#A6A6A6] bg-gray-100"
           />

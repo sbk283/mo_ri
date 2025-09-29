@@ -5,10 +5,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useCurriculum } from '../../hooks/useCurriculum';
 import type { StepTwoProps } from '../../types/group';
-import RichTextEditor from './RichTextEditor';
+import CreateGroupNavigation from './CreateGroupNavigation';
 import CreateGroupExample from './CreateGroupExample';
 import CurriculumCard from './CurriculumCard';
-import CreateGroupNavigation from './CreateGroupNavigation';
+import RichTextEditor from './RichTextEditor';
 
 function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps) {
   const { files, setFiles, addCurriculum, updateCurriculum, removeCurriculum } = useCurriculum(
@@ -16,7 +16,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
   );
 
   // 2025-09-24 업데이트: RichTextEditor에서 업로드된 이미지 파일들 보관 (실제 서버 업로드용)
-  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [_imageFiles, setImageFiles] = useState<File[]>([]);
   const handleImagesChange = useCallback((images: File[]) => {
     setImageFiles(prev => [...prev, ...images]); // 2025-09-24 업데이트: 기존 파일들에 새 파일들 추가
   }, []);
@@ -100,17 +100,25 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
             index={i}
             item={item}
             onChange={(index, field, value) =>
-              updateCurriculum(index, field, value, formData.curriculum, next =>
-                onChange('curriculum', next),
+              updateCurriculum(
+                index,
+                field,
+                value,
+                formData.curriculum,
+                next => onChange('curriculum', next), // 동기화 (step3에도쓸수잇게끔)
               )
             }
-            onRemove={index =>
-              removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next))
-            }
+            onRemove={index => {
+              removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next));
+              const filtered = files.filter((_, i) => i !== index);
+              setFiles(filtered);
+              onChange('files', filtered); // 동기화 (step3에도쓸수잇게끔)
+            }}
             onFileChange={(index, fileList) => {
               const newFiles = [...files];
               newFiles[index] = fileList;
-              setFiles(newFiles);
+              setFiles(newFiles); // 로컬 유지
+              onChange('files', newFiles);
             }}
             onAdd={index =>
               addCurriculum(formData.curriculum, next => onChange('curriculum', next))
@@ -125,7 +133,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         totalSteps={3}
         onPrev={onPrev || (() => {})}
         onNext={onNext || (() => {})}
-        // disableNext={!isValid}
+        disableNext={!isValid}
       />
     </div>
   );

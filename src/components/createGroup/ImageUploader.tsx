@@ -55,9 +55,9 @@ function ImageUploader({ images, onChange }: ImageUploaderProps) {
               <button
                 type="button"
                 onClick={() => handleRemove(0)}
-                className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded"
+                className="absolute top-1 right-1"
               >
-                제거
+                <img src="/images/close_dark.svg" alt="x버튼" className="w-5 h-5" />
               </button>
             </>
           ) : (
@@ -90,9 +90,9 @@ function ImageUploader({ images, onChange }: ImageUploaderProps) {
                 <button
                   type="button"
                   onClick={() => handleRemove(imageIndex)}
-                  className="absolute top-1 right-1 bg-black/60 text-white text-[10px] px-1 py-0.5 rounded"
+                  className="absolute top-1 right-1"
                 >
-                  X
+                  <img src="/images/close_dark.svg" alt="x버튼" />
                 </button>
               </div>
             );

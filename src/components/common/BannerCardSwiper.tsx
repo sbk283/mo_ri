@@ -121,7 +121,7 @@ function BannerCardSwiper() {
         ))}
       </Swiper>
       {/* 화살표 버튼 */}
-      <button className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-1/2 !-right-4 z-50">
+      <button className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute !top-[54%] !-right-5 z-50">
         <img src="/images/swiper_next.svg" />
       </button>
     </div>

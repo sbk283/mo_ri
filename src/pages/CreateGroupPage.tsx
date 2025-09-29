@@ -7,6 +7,7 @@ import StepIndicator from '../components/creategroup/StepIndicator';
 import CreateGroupStepOne from '../components/creategroup/CreateGroupStepOne';
 import CreateGroupStepTwo from '../components/creategroup/CreateGroupStepTwo';
 import CreateGroupStepThree from '../components/creategroup/CreateGroupStepThree';
+import type { GroupFormData } from '../types/group';
 
 const variants = {
   enter: (direction: number) => ({ x: direction > 0 ? '100%' : '-100%', opacity: 0 }),
@@ -17,51 +18,33 @@ const variants = {
     transition: { duration: 0.35 },
   }),
 };
-const dummyData = {
-  interestMajor: '운동/건강',
-  interestSub: '힐링/건강관리',
-  startDate: '2025-09-30',
-  endDate: '2025-10-02',
-  groupType: '단기',
-  region: '',
-  regionFree: true,
-  title: '111',
-  summary: '',
-  memberCount: 1,
-  images: [{}],
-  description: '',
-  curriculum: [
-    {
-      title: '',
-      detail: '',
-    },
-    {
-      title: '',
-      detail: '',
-    },
-  ],
-};
+
 function CreateGroupPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
+
   const [formData, setFormData] = useState({
-    interestMajor: dummyData.interestMajor,
-    interestSub: dummyData.interestSub,
-    startDate: dummyData.startDate,
-    endDate: dummyData.endDate,
-    groupType: dummyData.groupType,
-    region: dummyData.region,
-    regionFree: dummyData.regionFree,
-    title: dummyData.title,
-    summary: dummyData.summary,
-    memberCount: dummyData.memberCount,
+    interestMajor: '',
+    interestSub: '',
+    startDate: '',
+    endDate: '',
+    groupType: '' as GroupFormData['groupType'],
+    region: '',
+    regionFree: false,
+    title: '',
+    summary: '',
+    memberCount: 0,
     images: [] as File[],
-    description: dummyData.description,
+    description: '',
     // 이거 지우ㅁㄴ 안대!!
     curriculum: [
       { title: '', detail: '' },
       { title: '', detail: '' },
     ],
+    files: [] as File[][],
+    leaderName: '',
+    leaderLocation: '',
+    leaderCareer: '',
   });
 
   // 2025-01-24 업데이트: handleChange 함수 메모이제이션으로 RichTextEditor 리렌더링 방지

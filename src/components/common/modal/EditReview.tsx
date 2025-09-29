@@ -103,7 +103,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 해시태그 선택 */}
               <div className="my-6">
-                <label className="block text-[15px] font-semibold mb-3">해시태그 선택</label>
+                <label className="block text-sm font-semibold mb-3">해시태그 선택</label>
                 <div className="flex flex-wrap gap-3">
                   {availableTags.map(tag => (
                     <button

@@ -41,12 +41,10 @@ export const defaultMock: ReviewItem[] = [
   },
 ];
 
-// 섹션 컴포넌트 (배너 포함)
 export default function ReviewsSection({ items = defaultMock }: { items?: ReviewItem[] }) {
   return (
     <div className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB]">
       <div className="mx-auto w-[1024px]">
-        {/* 섹션 헤더 */}
         <div className="flex items-end pt-[80px] pb-[36px]">
           <div className="mr-4">
             <p className="font-semibold text-lg">믿고 참여하는</p>
@@ -60,68 +58,63 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
           </div>
         </div>
 
-        {/* 후기 카드 리스트 */}
         <div className="flex gap-[21px]">
           {items.map(item => (
             <ReviewCard key={item.id} item={item} />
           ))}
         </div>
 
-        {/* 서비스소개 + 배너 (여기 보관) */}
-        <div className="pt-[135px] pb-[74px]">
+        {/* 서비스소개및 배너 */}
+        <div className="pt-[135px] pb-[74px] ">
           <div className="mx-auto bg-white shadow-card w-[1024px] h-[233px] flex py-[23px] relative">
-            {/* 서비스소개 카드 */}
+            {/* 서비스소개 */}
             <div className="pl-[24px]">
-              <Link to="/serviceint" aria-label="서비스 소개 이동">
+              <Link to={'/serviceint'}>
                 <div className="bg-brand w-[230px] h-[246px] rounded-[5px] rounded-tr-[50px] py-[36px] px-[32px] absolute bottom-[23px]">
                   <span className="text-white font-bold text-sm">어려운 분들께</span>
                   <p className="text-white text-xxl font-bold flex gap-2 items-center">
-                    서비스소개 <img src="../../../public/linkarrow.svg" alt="이동" />
+                    서비스소개 <img src="./linkarrow.svg" alt="이동" />
                   </p>
-                  <p className="text-white pt-2 text-sm w-[129px]">
+                  <p className="text-white pt-2 text-sm w-[129px] ">
                     모임생성부터 참가까지 사이트를 이용할 수 있는 방법을 알려드립니다.
                   </p>
                 </div>
               </Link>
             </div>
-
-            {/* 배너 3종 */}
-            <div className="flex gap-[31px] absolute right-[35px]" aria-label="프로모션 배너">
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
+            {/* 배너노출 */}
+            <div className="flex gap-[31px] absolute right-[35px]">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
                 <a
                   href="https://greenart.co.kr/?ACE_REF=adwords_g&ACE_KW=%EA%B7%B8%EB%A6%B0%EC%BB%B4%ED%93%A8%ED%84%B0%EC%95%84%ED%8A%B8%ED%95%99%EC%9B%90&gad_source=1&gad_campaignid=16820849449&gbraid=0AAAAADsHW8xXw-LjNJLTj-a4cz89UEwrZ&gclid=CjwKCAjwlaTGBhANEiwAoRgXBSJt5jhL98x5f0HeijEpTTFfMbSh92Ajsj93QWomKrWQLhbmuKCJEhoCmZ8QAvD_BwE"
                   target="_blank"
-                  rel="noreferrer noopener"
                 >
                   <img
-                    className="w-full h-full object-cover"
-                    src="/pro_banner2.jpg"
+                    className="w-[100%] y-[100%] object-cover"
+                    src="./pro_banner2.jpg"
                     alt="그린컴퓨터아트학원"
                   />
                 </a>
               </div>
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSfArAWTcEHht9c693B3wVQWWl-15gaT9seoM6JsCWUnpBqCTA/viewform?pli=1"
                   target="_blank"
-                  rel="noreferrer noopener"
                 >
                   <img
-                    className="w-full h-full object-cover"
-                    src="/pro_banner1.jpg"
+                    className="w-[100%] y-[100%] object-cover"
+                    src="./pro_banner1.jpg"
                     alt="제휴배너이름"
                   />
                 </a>
               </div>
-              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden hover:shadow-card">
+              <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSfArAWTcEHht9c693B3wVQWWl-15gaT9seoM6JsCWUnpBqCTA/viewform?pli=1"
                   target="_blank"
-                  rel="noreferrer noopener"
                 >
                   <img
-                    className="w-full h-full object-cover"
-                    src="/pro_banner1.jpg"
+                    className="w-[100%] y-[100%] object-cover"
+                    src="./pro_banner1.jpg"
                     alt="제휴배너이름"
                   />
                 </a>
@@ -129,7 +122,6 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
             </div>
           </div>
         </div>
-        {/* // 배너 끝 */}
       </div>
     </div>
   );

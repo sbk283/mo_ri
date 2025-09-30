@@ -1,46 +1,57 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
-import type { GroupReview } from '../components/common/modal/EditReview';
 import ReviewBar from '../components/common/ReviewBar';
+import type { ReviewItem } from '../components/common/ReviewCard';
 
-const mockReviews: GroupReview[] = [
+const mockReviews: ReviewItem[] = [
   {
     id: 1,
     title: '단기 속성 피그마 스터디하기',
     category: '스터디/학습',
     status: '종료',
+    src: '/public/bruce.jpg',
     rating: 5,
     period: '2025.02.12 ~ 2025.02.20',
     content:
-      '파티장이 정말 좋습니다. 체계적으로 하고 파티도 여러 직업들로 잘 배분되어 있어요. 어떤 아이템을 먹고 시작해야하는지도 잘 알려주고 클리어 팁도 잘 알려주고 너무 좋았어요. 완전 버스탄 기분이네요!',
-    tags: ['강력추천', '친절한모임장'],
+      '짧은 기간인데도 화면 설계 → 컴포넌트화 → 프로토타입까지 흐름이 딱 잡혔어요. 실습 비중이 높아서 손에 바로 익고, 과제 피드백이 구체적이라 어디를 고쳐야 하는지 바로 알 수 있었음.',
+    tags: ['강력추천', '알찬커리큘럼', '친절한모임장'],
+    authorMasked: 'zipgago*** 님의 후기',
+    ad: false,
   },
   {
     id: 2,
     title: '주 2회 실무형 피그마',
     category: '스터디/학습',
     status: '종료',
+    src: '/public/bruce.jpg',
     rating: 4,
     period: '2025.03.01 ~ 2025.03.21',
-    content: '짧고 굵게 배우기 좋아. 과제 피드백이 특히 도움 됨.',
-    tags: ['알찬커리큘럼', '초보자추천'],
+    content:
+      '디자인 시스템과 오토 레이아웃을 실무 예제로 다뤄서 바로 프로젝트에 써먹기 좋았어요. 과제 제출 후 코멘트가 세세해서 성장 포인트가 명확했는데, 난이도가 살짝 높아서 초반엔 적응이 필요함.',
+    tags: ['알찬커리큘럼', '전문적인운영', '초보자추천'],
+    authorMasked: 'design*** 님의 후기',
+    ad: true,
   },
   {
     id: 3,
     title: 'UX 라이팅 원데이',
     category: '스터디/학습',
     status: '종료',
+    src: '/public/bruce.jpg',
     rating: 5,
     period: '2025.04.06',
-    content: '실전 예제가 많아서 바로 적용 가능!',
-    tags: ['재참여하고싶어요', '전문적인운영'],
+    content:
+      '버튼 라벨, 알림 문구, 에러 메시지처럼 바로 적용 가능한 사례를 중심으로 배우니까 효과가 확 느껴졌어요. 톤앤매너 가이드 만드는 방법이 특히 유익했고, 실제 서비스 문구를 고쳐보는 실습이 재미있었음.',
+    tags: ['재참여하고싶어요', '좋은분위기', '전문적인운영'],
+    authorMasked: 'uxwriter*** 님의 후기',
+    ad: false,
   },
 ];
 
 function GroupReviewsPage() {
   // 상태를 mockReviews로 초기화
-  const [items, setItems] = useState<GroupReview[]>(mockReviews);
+  const [items, setItems] = useState<ReviewItem[]>(mockReviews);
 
   const handleEdit = (id: number) => {
     // TODO: 편집 모달 열기 or 라우팅

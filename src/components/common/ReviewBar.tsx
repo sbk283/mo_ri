@@ -3,7 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 import RemoveModal from './modal/RemoveModal';
 import SuccessModal from './modal/SuccessModal';
-import EditReview, { type GroupReview } from './modal/EditReview';
+import type { ReviewItem } from './ReviewCard';
+import EditReview from './modal/EditReview';
 
 const Pill = ({
   tone = 'gray',
@@ -46,8 +47,8 @@ const Rating = ({ value }: { value: number }) => (
 );
 
 type Props = {
-  review: GroupReview;
-  onEdit?: (id: number, updated: Partial<GroupReview>) => void;
+  review: ReviewItem;
+  onEdit?: (id: number, updated: Partial<ReviewItem>) => void;
   onDelete?: (id: number) => void;
   defaultOpen?: boolean;
 };
@@ -72,7 +73,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
     setEditModalOpen(true);
   };
 
-  const handleEditConfirm = (updated: Partial<GroupReview>) => {
+  const handleEditConfirm = (updated: Partial<ReviewItem>) => {
     setEditModalOpen(false);
     setCurrentReview(prev => ({ ...prev, ...updated }));
     onEdit?.(review.id, updated);

@@ -1,22 +1,12 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-
-export type GroupReview = {
-  id: number;
-  title: string;
-  category: string;
-  status: '진행중' | '종료';
-  rating: 1 | 2 | 3 | 4 | 5;
-  period: string;
-  content: string;
-  tags: string[];
-};
+import type { ReviewItem } from '../ReviewCard';
 
 interface EditModalProps {
   open: boolean;
   onClose: () => void;
-  onConfirm: (updatedReview: Partial<GroupReview>) => void;
-  review: GroupReview;
+  onConfirm: (updatedReview: Partial<ReviewItem>) => void;
+  review: ReviewItem;
 }
 
 function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
@@ -110,7 +100,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`px-[11px] py-[7px] rounded-[5px] border transition-colors font-[600] ${
+                      className={`px-[11px] py-[7px] rounded-[5px] border transition-colors font-semibold leading-none ${
                         selectedTags.includes(tag)
                           ? 'bg-white text-[#0689E8] border-[#0689E8]'
                           : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'

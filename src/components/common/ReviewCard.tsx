@@ -5,19 +5,35 @@ export type ReviewItem = {
   id: number;
   title: string;
   category: string;
-  avatarSrc: string;
-  quote: string;
+  status: '진행중' | '종료';
+  src: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  period: string;
+  content: string;
+  tags: string[];
   authorMasked: string;
+  created_at?: string;
+  ad?: boolean;
 };
 
-export function ReviewCard({ item, className = '' }: { item: ReviewItem; className?: string }) {
+export function ReviewCard({
+  item,
+  className = '',
+  onClick,
+}: {
+  item: ReviewItem;
+  className?: string;
+  onClick?: (id: number) => void;
+}) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={() => onClick?.(item.id)}
       className={[
-        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-[5px] border border-[#A3A3A3] bg-white',
+        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-[5px] border border-[#A3A3A3] bg-white text-left',
+        'focus:outline-none focus:ring-2 focus:ring-[#2A91E5]',
         className,
       ].join(' ')}
-      role="article"
       aria-label={`후기 카드: ${item.title}`}
     >
       {/* 상단 헤더 영역 */}
@@ -30,7 +46,7 @@ export function ReviewCard({ item, className = '' }: { item: ReviewItem; classNa
         </span>
         <img
           className="absolute top-8 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
-          src={item.avatarSrc}
+          src={item.src}
           alt="모임사진"
         />
       </div>
@@ -38,12 +54,12 @@ export function ReviewCard({ item, className = '' }: { item: ReviewItem; classNa
       {/* 본문 영역 */}
       <div className="px-[27px] py-[17px] relative h-[calc(280px-72px)]">
         <img className="mb-1" src={Colon} alt="따옴표" />
-        <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.quote}</p>
+        <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.content}</p>
         {/* 작성자 하단 고정 */}
         <p className="absolute bottom-[27px] left-[27px] text-[#B8641B] text-sm">
           {item.authorMasked}
         </p>
       </div>
-    </div>
+    </button>
   );
 }

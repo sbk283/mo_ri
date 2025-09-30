@@ -2,7 +2,7 @@ import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
 import RemoveModal from './modal/RemoveModal';
-import SuccessModal from './modal/SuccessMadal';
+import SuccessModal from './modal/SuccessModal';
 import EditReview, { type GroupReview } from './modal/EditReview';
 
 const Pill = ({

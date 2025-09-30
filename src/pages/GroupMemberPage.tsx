@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import Modal from '../components/common/modal/Modal';
 import SuccessModal from '../components/common/modal/SuccessModal';
+import { Link } from 'react-router-dom';
 
 const members = Array.from({ length: 23 }, (_, i) => ({
   id: i + 1,
@@ -38,7 +39,7 @@ function GroupMemberPage() {
 
   return (
     <GroupDashboardLayout>
-      <div className="p-6 bg-white shadow-md rounded-lg">
+      <div className="bg-white shadow-card h-[770px] p-6 rounded-lg">
         <h2 className="text-black text-[28px] font-semibold pb-8">모임 멤버</h2>
 
         {/* 멤버 그리드 */}
@@ -86,9 +87,12 @@ function GroupMemberPage() {
                       모임 추방하기
                     </button>
                     <div className="h-px bg-neutral-200" />
-                    <button className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100">
+                    <Link
+                      to="/chat"
+                      className="block w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
+                    >
                       채팅 대화하기
-                    </button>
+                    </Link>
                   </motion.div>
                 )}
               </AnimatePresence>

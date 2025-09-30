@@ -16,7 +16,7 @@ function CategorySection() {
   };
 
   return (
-    <div className="pt-[156px] pb-[77px] border-b border-[#DBDBDB]">
+    <div className="pt-[156px] pb-[77px]">
       <div className="mx-auto w-[1024px]">
         <div className="flex justify-center gap-[83px]">
           {categories.map(({ label, icon, iconClass }) => (

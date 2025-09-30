@@ -5,6 +5,7 @@ import 'swiper/swiper-bundle.css';
 import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';
 import SuccessModal from '../modal/SuccessModal';
+import ConfirmModal from '../modal/ConfirmModal';
 
 export interface MeetingHeaderProps {
   title: string;
@@ -46,9 +47,11 @@ function MeetingHeader({
   const [shareOpen, setShareOpen] = useState(false);
   const shareUrl = window.location.href;
 
+  // 찜 모달
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
   // 참가 모달
   const [open, setOpen] = useState(false);
-
   // 참가 성공 모달
   const [joinSuccess, setJoinSuccess] = useState(false);
 
@@ -76,6 +79,15 @@ function MeetingHeader({
   // 스와이퍼
   const swiperRef = useRef<SwiperClass | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
+
+  // 찜하기 핸들러
+  const handleConfirmModal = () => {
+    onFavoriteToggle();
+    setConfirmOpen(false);
+  };
+  const handleCloseModal = () => {
+    setConfirmOpen(false);
+  };
 
   return (
     <div className="grid gap-6 grid-cols-1 md:grid-cols-[minmax(260px,320px)_1fr]">
@@ -178,16 +190,16 @@ function MeetingHeader({
             <span className="text-md font-medium text-[#777]">공유하기</span>
           </button>
 
-          {/* 즐겨찾기 */}
+          {/* 찜하기 */}
           <button
             type="button"
-            onClick={onFavoriteToggle}
+            onClick={() => setConfirmOpen(true)}
             className="flex flex-col items-center justify-center gap-1"
           >
             {isFavorite ? (
-              <img src="/images/fill_star.png" alt="즐겨찾기" className="w-6 h-6" />
+              <img src="/images/star_gold.svg" alt="찜하기" className="w-6 h-6" />
             ) : (
-              <img src="/images/unfill_star.png" alt="즐겨찾기 해제" className="w-6 h-6" />
+              <img src="/images/star_dark.svg" alt="찜 해제" className="w-6 h-6" />
             )}
             <span className="text-md font-medium text-[#777]">즐겨찾기</span>
           </button>
@@ -220,6 +232,15 @@ function MeetingHeader({
         isOpen={joinSuccess}
         onClose={() => setJoinSuccess(false)}
         message="참가 신청 완료!"
+      />
+
+      {/* 찜 모달 */}
+      <ConfirmModal
+        open={confirmOpen}
+        title={'찜을 해제하시겠습니까?'}
+        message={'해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?'}
+        onConfirm={handleConfirmModal}
+        onClose={handleCloseModal}
       />
     </div>
   );

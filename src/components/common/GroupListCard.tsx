@@ -38,7 +38,7 @@ function GroupListCard({
       exit={{ opacity: 0, y: 20 }} // 위로 사라짐
       onClick={() => navigate(`/groupdetail/${id}`)}
       transition={{ duration: 0.3 }}
-      className="h-[175px] w-[1024px] flex items-start gap-4 rounded-lg border border-[#D9D9D9] bg-white shadow-sm hover:shadow-md transition cursor-pointer"
+      className="h-[175px] w-[1024px] flex items-start gap-2 rounded-sm border border-[#D9D9D9] bg-white shadow-sm hover:shadow-md transition cursor-pointer"
     >
       {/* 썸네일 */}
       <img

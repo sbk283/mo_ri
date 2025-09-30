@@ -88,7 +88,9 @@ function GroupSchedulePage() {
       <div className="bg-white shadow-card h-[770px] p-6 rounded-sm flex flex-col">
         {/* 헤더 */}
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">일정관리</h2>
+          <h2 className="text-xl font-bold">
+            일정<span>관리</span>
+          </h2>
           {isLeader && (
             <button
               onClick={() => setOpen(true)}
@@ -102,7 +104,7 @@ function GroupSchedulePage() {
         <div className="flex gap-6 flex-1">
           {/* 좌측 타임라인 */}
           <div className="flex flex-col">
-            <span className='flex'>09월 일정</span>
+            <span className="flex">09월 일정</span>
             <div className="w-[300px] border-r pr-4 space-y-4 overflow-y-auto custom-scrollbar">
               {events.map(s => (
                 <div key={s.id} className="relative pl-6">

@@ -2,24 +2,51 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MessageInput from './MessageInput';
 
+interface DirectChatRoomProps {
+  chatId: string | null;
+}
+
 interface ChatMessage {
   sender: 'me' | 'other';
   text: string;
 }
 
-function DirectChatRoom() {
+function DirectChatRoom({ chatId }: DirectChatRoomProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSend = (text: string) => {
-    if (!text.trim()) return;
-    // 테스트용: 내 메시지 보내면 상대방 메시지도 하나 따라오게끔해봄 일단 추후 DB연결 후 삭제하든 수정하든 할게욥..
+  const handleSend = async ({ content }: { chat_id: string; content: string }) => {
+    if (!content.trim()) return false;
     setMessages(prev => [
       ...prev,
-      { sender: 'me', text },
-      { sender: 'other', text: '상대방 응답: ' + text },
+      { sender: 'me', text: content },
+      { sender: 'other', text: '상대방 응답: ' + content },
     ]);
+
+    return true;
   };
+  
+  // 추후 DB 연결 하면 보강하겠삼..^^
+  //   const handleSend = async (text: string) => {
+  //   if (!text.trim() || !chatId) return;
+
+  //   const newMessage = {
+  //     chat_id: chatId,
+  //     sender: 'me',
+  //     text,
+  //     created_at: new Date().toISOString(),
+  //   };
+
+  //   // 1. 로컬 UI에 먼저 반영 (optimistic update)
+  //   setMessages(prev => [...prev, newMessage]);
+
+  //   // 2. DB에 저장
+  //   const { error } = await supabase.from('chat_messages').insert(newMessage);
+  //   if (error) {
+  //     console.error('메시지 전송 실패:', error);
+  //     // 실패 시 롤백하거나 에러 표시 가능
+  //   }
+  // };
 
   /** 내부 스크롤 컨테이너만 맨 아래로 이동 */
   const scrollToBottom = () => {
@@ -31,6 +58,48 @@ function DirectChatRoom() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 채팅방 변경 시 메시지 초기화 or 불러오기
+  useEffect(() => {
+    if (chatId) {
+      // TODO: DB에서 chatId 메시지 불러오기
+      setMessages([]);
+    }
+  }, [chatId]);
+
+  // 추후 supabase 연동 시 쓸 로직인데, 수정해야하긴 함..
+  // useEffect(() => {
+  //   if (!chatId) return;
+
+  //   // 1. 초기 메시지 불러오기
+  //   const loadMessages = async () => {
+  //     const { data } = await supabase
+  //       .from('chat_messages')
+  //       .select('*')
+  //       .eq('chat_id', chatId)
+  //       .order('created_at', { ascending: true });
+
+  //     setMessages(data ?? []);
+  //   };
+  //   loadMessages();
+
+  //   // 2. 실시간 구독
+  //   const channel = supabase
+  //     .channel('chat-room')
+  //     .on(
+  //       'postgres_changes',
+  //       { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${chatId}` },
+  //       payload => {
+  //         setMessages(prev => [...prev, payload.new as ChatMessage]);
+  //       }
+  //     )
+  //     .subscribe();
+
+  //   // cleanup
+  //   return () => {
+  //     supabase.removeChannel(channel);
+  //   };
+  // }, [chatId]);
 
   return (
     <main className="w-[700px] p-6 flex flex-col">
@@ -64,7 +133,7 @@ function DirectChatRoom() {
                       className={`px-4 py-2 rounded-full max-w-[70%] break-words shadow-sm text-sm leading-relaxed ${
                         isMe
                           ? 'bg-blue-500 text-white rounded-br-none'
-                          : 'bg-gray-200 text-gray-900 rounded-bl-none'
+                          : 'bg-gray-300 text-gray-900 rounded-bl-none'
                       }`}
                     >
                       {msg.text}
@@ -78,7 +147,7 @@ function DirectChatRoom() {
       </div>
 
       {/* 입력창 */}
-      <MessageInput onSend={handleSend} />
+      <MessageInput chatId={chatId ?? ''} onSend={handleSend} />
     </main>
   );
 }

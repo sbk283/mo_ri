@@ -1,5 +1,5 @@
 // 좌측 그룹/모임장 (모임장이 받는 사이드바? 아머라해야대노.. 모임장에게 보여지는 좌측 사이드바.)
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 type ChatItem = {
   groupId: string;

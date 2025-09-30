@@ -2,7 +2,10 @@ import { Link } from 'react-router-dom';
 
 function GroupContentBox() {
   return (
-    <div className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex">
+    <Link
+      to={'/groupdashboard/:id'}
+      className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
+    >
       {/* 3항연산자로 바꾸기 모집예정, 모집중으로 */}
       <div className="absolute rounded-[5px] bg-gray-300 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
         모임 오픈까지 nn일
@@ -33,9 +36,9 @@ function GroupContentBox() {
       </div>
       <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
         {/* 3항 연산자 모임자랑 참여자 먼저 3항연산한 후 모집종료 유무 화살표화 후기작성 */}
-        <Link to={'/groupdashboard/:id'}>
+        <div>
           <img src="/images/swiper_next.svg" alt="상세보기" />
-        </Link>
+        </div>
         {/* 후기작성 유무로 3항연산자 후기작성과 후기작성완료 */}
         {/* <button className="text-brand border border-brand rounded-[5px] px-[10px] py-[4px]">
           후기작성
@@ -44,7 +47,7 @@ function GroupContentBox() {
           후기작성완료
         </button> */}
       </div>
-    </div>
+    </Link>
   );
 }
 

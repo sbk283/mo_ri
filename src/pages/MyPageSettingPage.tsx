@@ -28,7 +28,7 @@ function MyPageSettingPage() {
         </div>
       </div>
       {/* 하단 영역부분 비밀번호 확인이 되면 PasswordEdit 창 보여주고, 아닐시에는 기본 화면 PasswordCheck 화면*/}
-      <PasswordCheck />
+      {/* <PasswordCheck /> */}
 
       <PasswordEdit />
     </MyPageLayout>

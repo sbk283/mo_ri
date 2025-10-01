@@ -201,7 +201,7 @@ function MeetingHeader({
             ) : (
               <img src="/images/star_dark.svg" alt="찜 해제" className="w-6 h-6" />
             )}
-            <span className="text-md font-medium text-[#777]">즐겨찾기</span>
+            <span className="text-md font-medium text-[#777]">찜하기</span>
           </button>
 
           {/* 참가하기 */}

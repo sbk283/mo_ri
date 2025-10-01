@@ -1,3 +1,4 @@
+import DashboardMiniCalendar from '../components/dashboard/DashboardMiniCalendar';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 
 const GroupDashBoardPage = () => {
@@ -12,26 +13,35 @@ const GroupDashBoardPage = () => {
               <div className="w-[285px] h-[135px] absolute top-[-80px] left-[50%] translate-x-[-50%] overflow-hidden rounded-[5px]">
                 <img className="w-full h-full object-cover" src="/bruce.jpg" alt="모임사진" />
               </div>
-              <div className="pt-[60px]">
-                <div>
-                  <p>마비노기 던전 레이드 파티 모집</p>
+              <div className="pt-[65px] pl-[25px] flex-col">
+                <div className="mb-2">
+                  <p className="text-lg font-bold">마비노기 던전 레이드 파티 모집</p>
                 </div>
                 <div className="flex gap-[10px]">
-                  <span>취미/여가{'>'}게임/오락</span>
-                  <div className="flex">
-                    <img src="/humen.svg" alt="인원" />
-                    2/10
+                  <p className="text-md text-[#FF5252] font-bold">
+                    취미/여가
+                    <span className="text-gray-600"> {'>'} 게임/오락</span>
+                  </p>
+                  <div className="flex text-sm text-gray-600 items-center gap-1 mb-2">
+                    <img className=" h-[12px] w-[12px]" src="/humen.svg" alt="인원" />
+                    <p>2/10</p>
                   </div>
                 </div>
-                <div className="flex">
-                  <p>2025.10.25 ~ 2025.12.12</p>
-                  <span>장기</span>
+                <div className="flex gap-2 items-center mb-2">
+                  <p className="text-sm text-[#878787]">
+                    모임기간 : <span className="font-bold">2025.10.25 ~ 2025.12.12</span>
+                  </p>
+                  <span className=" bg-[#FBAB17] rounded-[5px] text-white font-bold px-[7px] py-[2px] text-sm">
+                    장기
+                  </span>
                 </div>
-                <p>지역무관</p>
+                <p className="text-[#878787] text-sm">지역무관</p>
               </div>
             </div>
             {/* 아래 */}
-            <div className="bg-white shadow-card h-[544px] w-[330px]"></div>
+            <div className="bg-white shadow-card h-[544px] w-[330px]">
+              <DashboardMiniCalendar />
+            </div>
           </div>
           {/* 오른쪽 */}
           <div>

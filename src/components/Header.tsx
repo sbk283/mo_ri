@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ isLoggedIn, userName }) => {
             <Link to="/groupmanager" className="font-bold hover:text-brand">
               모임관리
             </Link>
-            <Link to="/groupreviews" className="font-bold hover:text-brand">
+            <Link to="/reviews" className="font-bold hover:text-brand">
               후기리뷰
             </Link>
             <Link to="/grouplist" className="font-bold hover:text-brand">

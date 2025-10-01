@@ -87,7 +87,7 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
           <div className="flex items-center justify-between mb-4 relative">
             {/* 현재 카테고리 표시 */}
             <h2 className="text-lg font-bold">
-              {mainCategory} ▶ {activeCategory}
+              {mainCategory} &gt; {activeCategory}
             </h2>
             <ArrayDropdown
               options={['최신순', '원데이', '장기', '단기']}

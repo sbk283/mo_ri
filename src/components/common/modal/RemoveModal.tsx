@@ -13,7 +13,7 @@ export type ConfirmModalProps = {
   preventBackdropClose?: boolean;
 };
 
-export default function ConfirmModal({
+export default function RemoveModal({
   open,
   title = '리뷰를 삭제하시겠습니까?',
   message = '삭제하면 다시 작성할 수 없으니\n신중하게 선택해 주세요.',

@@ -9,15 +9,17 @@ function IntroSection() {
     <div>
       <div className="relative  mt-[70px]">
         <div className="relative w-full h-[500px] overflow-hidden rounded-bl-[80px] rounded-br-[80px]">
+
           <img src="/bgimg.jpg" alt="" className="absolute inset-0 bg-cover bg-center " />
           <div className="absolute inset-0 bg-black/50 " />
+
         </div>
 
         <div className="absolute top-[135px] left-1/2 transform -translate-x-1/2  text-xxl font-bold text-gray-50">
           당신의 모임을 검색하세요!
         </div>
         {/* 검색창 */}
-        <div className="absolute flex justify-center left-1/2 -translate-x-1/2 top-[214px] ">
+        <div className="absolute flex justify-center left-1/2 -translate-x-1/2 top-[214px]">
           <input
             type="text"
             placeholder="모임명이나 카테고리를 입력해 주세요."

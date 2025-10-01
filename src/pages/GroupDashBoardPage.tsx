@@ -1,4 +1,7 @@
+import DashboardChat from '../components/dashboard/DashboardChat';
+import DashboardMember from '../components/dashboard/DashboardMember';
 import DashboardMiniCalendar from '../components/dashboard/DashboardMiniCalendar';
+import DashboardNotice from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 
 const GroupDashBoardPage = () => {
@@ -15,7 +18,7 @@ const GroupDashBoardPage = () => {
               </div>
               <div className="pt-[65px] pl-[25px] flex-col">
                 <div className="mb-2">
-                  <p className="text-lg font-bold">마비노기 던전 레이드 파티 모집</p>
+                  <p className="text-lg font-bold truncates">마비노기 던전 레이드 파티 모집</p>
                 </div>
                 <div className="flex gap-[10px]">
                   <p className="text-md text-[#FF5252] font-bold">
@@ -46,15 +49,24 @@ const GroupDashBoardPage = () => {
           {/* 오른쪽 */}
           <div>
             {/* 위 */}
-            <div className="bg-white shadow-card h-[349px] w-[665px] mb-[11px]"></div>
+            <div className="bg-white shadow-card h-[349px] w-[680px] mb-[11px]">
+              <DashboardNotice />
+            </div>
             {/* 아래 */}
             <div className="flex gap-[11px]">
               {/* 왼 */}
-              <div className="bg-white shadow-card h-[388px] w-[409px]"></div>
+              <div className="bg-white shadow-card h-[388px] w-[419px]">
+                <DashboardChat />
+              </div>
               {/* 오 */}
-              <div className="bg-white shadow-card h-[388px] w-[245px]"></div>
+              <div className="bg-white shadow-card h-[388px] w-[250px] relative">
+                <DashboardMember />
+              </div>
             </div>
           </div>
+        </div>
+        <div className="flex justify-end">
+          <p className="text-sm text-gray-300 cursor-pointer pt-8">모임나가기</p>
         </div>
       </GroupDashboardLayout>
     </div>

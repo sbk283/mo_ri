@@ -9,7 +9,7 @@ function IntroSection() {
     <div>
       <div className="relative  mt-[70px]">
         <div className="relative w-full h-[500px] overflow-hidden rounded-bl-[80px] rounded-br-[80px]">
-          <div className="absolute inset-0 bg-[url('./bgimg.jpg')] bg-cover bg-center" />
+          <img src="/bgimg.jpg" alt="" className="absolute inset-0 bg-cover bg-center " />
           <div className="absolute inset-0 bg-black/50 " />
         </div>
 
@@ -62,7 +62,8 @@ function IntroSection() {
                 className="transform -translate-y-[-14px]"
               />
             </Link>
-            {/* 로그인 / 비회원 일때 보여지는 화면 전환 */}
+
+            {/* 로그인 / 비회원 일때 보여지는 화면 전환 (날리지 말것!!) */}
             {isLoggedIn ? (
               <>
                 <div className="flex transform -translate-x-[-65px] pt-[22px]">
@@ -76,14 +77,19 @@ function IntroSection() {
                 </div>
                 <div className="flex transform -translate-x-[-40px] pt-[19px]">
                   <div className="pl-[35px]">
-                    <div className="font-bold text-lg">
-                      /홍길동/님(/용산동 불주먹/){' '}
-                      <span className="font-medium text-sm text-gray-200">환영합니다.</span>
+                    <div className="flex justify-between font-bold text-lg">
+                      <div>
+                        홍길동님(용산동 불주먹)
+                        <span className="font-medium text-sm text-gray-200">환영합니다.</span>
+                      </div>
+                      <button>
+                        <img src="/logout.svg" alt="로그아웃" className="w-[18px]" />
+                      </button>
                     </div>
                     <div className=" flex justify-between mt-[9px] items-center gap-[8px] mb-[6px]">
                       <div className="font-bold text-md text-brand">참여중인모임</div>
                       <div className="border-[0.5px] w-[160px] border-[#dadada]" />
-                      <Link to={'/'} className="font-normal text-sm">
+                      <Link to={'/joingroups'} className="font-normal text-sm">
                         더보기
                       </Link>
                     </div>
@@ -103,7 +109,7 @@ function IntroSection() {
                       </div>
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./star.png" alt="찜리스트 아이콘" />
-                        <Link to={'/'}>찜리스트</Link>
+                        <Link to={'/groupwish'}>찜리스트</Link>
                       </div>
                       <div className="flex items-center gap-[6px] justify-center">
                         <img src="./headseticon.png" alt="고객센터 아이콘" />

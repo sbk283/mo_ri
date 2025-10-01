@@ -1,9 +1,13 @@
 // 회원탈퇴 페이지
 
 import { Checkbox } from 'antd';
+import DeleteAccountselector from '../components/DeleteAccountselector';
 import MyPageLayout from '../components/layout/MyPageLayout';
+import { useState } from 'react';
 
 function DeleteAccountPage() {
+  const [reason, setReason] = useState('');
+
   return (
     <MyPageLayout>
       {/* 상단 텍스트 부분 */}
@@ -65,12 +69,10 @@ function DeleteAccountPage() {
       <div className=" text-brand font-semibold mb-[21px] text-xl">설문조사</div>
       <div className="border border-gray-300 rounded-[5px] py-[57px] px-[107px] mb-[24px]">
         <div className="mb-[13px] text-lg font-bold text-gray-400">탈퇴 사유를 선택해주세요.</div>
-        <input
-          type="text"
-          placeholder="탈퇴 사유를 선택해주세요."
-          className="w-full border border-gray-300 rounded-[5px] p-1 mb-[24px] placeholder:p-1 placeholder:text-[#8c8c8c]"
-        />
-        <div className="mb-[13px] text-lg font-bold text-gray-400">
+        <DeleteAccountselector reasons={reason} onChange={setReason} />
+        {/* {reason && <div className="mt-4 text-sm text-brand">선택한 탈퇴 사유: {reason}</div>} */}
+
+        <div className="mb-[13px] mt-[19px] text-lg font-bold text-gray-400">
           탈퇴하고 싶은 사유나 건의사항을 적어주세요.
           <span className="text-[#8c8c8c] font-normal text-[13px] pl-[10px]">(선택사항)</span>
         </div>

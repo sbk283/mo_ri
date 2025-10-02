@@ -146,9 +146,9 @@ export default function ReviewsSection({ items = defaultMock }: { items?: Review
 
       {/* 서비스소개및 배너 */}
       <div className="pt-[135px] pb-[74px] ">
-        <div className="mx-auto bg-white shadow-card w-[1024px] h-[233px] flex py-[23px] relative">
+        <div className="mx-auto bg-white shadow-card w-[1024px] h-[233px] flex py-6 relative">
           {/* 서비스소개 */}
-          <div className="pl-[24px]">
+          <div className="pl-6">
             <Link to={'/serviceint'}>
               <div className="bg-brand w-[230px] h-[246px] rounded-[5px] rounded-tr-[50px] py-[36px] px-[32px] absolute bottom-[23px]">
                 <span className="text-white font-bold text-sm">어려운 분들께</span>

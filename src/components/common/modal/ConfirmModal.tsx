@@ -44,7 +44,7 @@ export default function ConfirmModal({
     if (!preventBackdropClose) onClose();
   };
 
-  // ✅ 스크롤 잠금 (스크롤 위치 보존)
+  // 스크롤 락
   useEffect(() => {
     if (typeof document === 'undefined') return;
     if (!open) return;
@@ -123,14 +123,14 @@ export default function ConfirmModal({
           >
             <h2
               id="confirm-title"
-              className="text-center font-bold text-[28px] leading-[37px] text-[#0762E5]"
+              className="text-center font-bold text-xxl leading-[37px] text-[#0762E5]"
             >
               {title}
             </h2>
 
             <p
               id="confirm-desc"
-              className="text-center font-medium text-[17px] leading-[25px] text-black whitespace-pre-line"
+              className="text-center font-medium text-lg leading-[25px] text-black whitespace-pre-line"
             >
               {message}
             </p>
@@ -141,7 +141,7 @@ export default function ConfirmModal({
                 className="
                   w-[78px] h-[40px] px-[13px] py-[7px]
                   inline-flex items-center justify-center
-                  rounded-md border border-[#0762E5]
+                  rounded-sm border border-[#0762E5]
                   text-[#0762E5] font-semibold
                   hover:bg-[#0762E5]/5 active:scale-[0.98] transition
                 "
@@ -155,7 +155,7 @@ export default function ConfirmModal({
                 className="
                   w-[78px] h-[40px] px-[13px] py-[7px]
                   inline-flex items-center justify-center
-                  rounded-md bg-[#0762E5] text-white font-semibold
+                  rounded-sm bg-[#0762E5] text-white font-semibold
                   shadow-sm hover:brightness-105 active:scale-[0.98] transition
                 "
                 onClick={onConfirm}

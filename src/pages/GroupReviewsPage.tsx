@@ -55,7 +55,7 @@ function GroupReviewsPage() {
 
   const handleEdit = (id: number) => {
     // TODO: 편집 모달 열기 or 라우팅
-    console.log('edit', id);
+    // console.log('edit', id);
   };
 
   const handleDelete = (id: number) => {
@@ -87,7 +87,7 @@ function GroupReviewsPage() {
           // 빈 상태
           <div className="text-center text-gray-400 text-lg py-20 mb-20">
             <div>리뷰할 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
-            <a href="/grouplist" className="text-[#0689E8] font-[15px] mt-[19px] inline-block">
+            <a href="/grouplist" className="text-[#0689E8] font-md mt-[19px] inline-block">
               모임 참여하러 가기 {`>`}
             </a>
           </div>

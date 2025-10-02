@@ -365,7 +365,10 @@ export default function AiGroupsSection() {
                     aria-pressed={isActive}
                     onClick={() => setActive(f.key)}
                     className={[
+
+
                       'py-1 rounded-[5px] font-bold border w-[128px]',
+
                       isActive
                         ? 'bg-brand text-white border-brand'
                         : 'bg-white text-brand border-brand hover:bg-blue-50',

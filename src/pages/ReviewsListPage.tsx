@@ -445,6 +445,14 @@ function ReviewsListPage() {
     return found ? toDetail(found) : null;
   }, [openId, bestItems, items, empathyMap]);
 
+  const sortOptions = ['최신순', '인기순'];
+
+  // option → sortMode 매핑
+  const mapLabelToValue = (label: string): 'latest' | 'popular' =>
+    label === '최신순' ? 'latest' : 'popular';
+
+  const mapValueToLabel = (val: 'latest' | 'popular') => (val === 'latest' ? '최신순' : '인기순');
+
   return (
     <div className="mx-auto w-[1024px] pt-[120px] pb-[80px]">
       <div className="text-xl font-bold text-gray-400 mb-[21px]">후기리뷰</div>
@@ -473,14 +481,11 @@ function ReviewsListPage() {
       {/* 관심사 리뷰 */}
       <div className="flex items-center justify-between pb-[13px]">
         <div className="text-black text-xl font-semibold">관심사에 맞춘 리뷰후기</div>
-        <select
-          value={sortMode}
-          onChange={e => setSortMode(e.target.value as 'latest' | 'popular')}
-          className="border px-3 py-1.5 text-sm rounded-md"
-        >
-          <option value="latest">최신순</option>
-          <option value="popular">인기순</option>
-        </select>
+        <ArrayDropdown
+          options={sortOptions}
+          value={mapValueToLabel(sortMode)}
+          onChange={label => setSortMode(mapLabelToValue(label))}
+        />
       </div>
       <ul className="grid gap-[15px] mb-[60px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {sortedItems.map(item => (

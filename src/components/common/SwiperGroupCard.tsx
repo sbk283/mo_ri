@@ -25,11 +25,11 @@ export default function SwiperGroupCard({
 }: Props) {
   const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
     () => ({
-      0: { slidesPerView: 1.2, spaceBetween: 12 },
-      480: { slidesPerView: 2, spaceBetween: 12 },
-      768: { slidesPerView: 3, spaceBetween: 12 },
-      1024: { slidesPerView: 4, spaceBetween: 12 },
-      1280: { slidesPerView: 4, spaceBetween: 12 },
+      0: { slidesPerView: 2, spaceBetween },
+      480: { slidesPerView: 2, spaceBetween },
+      768: { slidesPerView: 3, spaceBetween },
+      1024: { slidesPerView: 4, spaceBetween },
+      1280: { slidesPerView: 4, spaceBetween },
     }),
     [],
   );

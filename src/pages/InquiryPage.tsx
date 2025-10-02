@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import InquirySelector from '../components/InquirySelector';
 import MyPageLayout from '../components/layout/MyPageLayout';
+import { Modal } from 'antd';
 
 // 1:1 문의하기 페이지입니다.
 function InquiryPage() {
@@ -9,6 +10,8 @@ function InquiryPage() {
   const [inquirySub, setInquirySub] = useState('');
   // 첨부된 파일 이름 보기
   const [fileName, setFileName] = useState<string[]>([]);
+  // 문의하기 모달창
+  const [inquiryBtn, setInquiryBtn] = useState(false);
 
   // 문의 유형 선택
   const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
@@ -128,9 +131,29 @@ function InquiryPage() {
             <p>· 로그인 후 등록한 문의는 고객센터 페이지 1:1 문의 내역에서 확인 할 수 있습니다.</p>
             <p>· 남겨주신 문의는 담당자가 확인 후 업무시간 내 순차적 답변 드리니 기다려주세요.</p>
           </div>
-          <button className="block mx-auto  w-[190px] py-[12px] px-[52px] bg-brand rounded-[5px] font-semibold text-white text-xl items-center">
+
+          <button
+            type="button"
+            onClick={() => setInquiryBtn(true)}
+            className="block mx-auto  w-[190px] py-[12px] px-[52px] bg-brand rounded-[5px] font-semibold text-white text-xl items-center"
+          >
             문의하기
           </button>
+
+          <Modal
+            title="문의완료"
+            open={inquiryBtn}
+            onOk={() => {
+              setInquiryBtn(false);
+              window.location.href = '/inquiry/history';
+            }}
+            onCancel={() => setInquiryBtn(false)}
+            okText="확인"
+            cancelButtonProps={{ style: { display: 'none' } }}
+          >
+            <p>문의가 정상적으로 접수되었습니다.</p>
+            <p>빠른 시일 내에 답변 드리겠습니다.</p>
+          </Modal>
         </form>
       </div>
     </MyPageLayout>

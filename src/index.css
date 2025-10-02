@@ -237,6 +237,14 @@ body,
   border: 1px solid #a6a6a6 !important;
 }
 
+/* 리엑트 툴바 고정 */
+.ql-toolbar.ql-snow {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+}
+
 .ql-container {
   border-radius: 0px 0px 5px 5px;
   border: 1px solid #a6a6a6 !important;

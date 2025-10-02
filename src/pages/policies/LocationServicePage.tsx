@@ -95,8 +95,10 @@ function LocationServicePage() {
                 <button className="w-full bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
                   PDF로 저장 / 인쇄
                 </button>
-                <button className="w-full bg-brand text-white py-[13px] rounded-[5px] hover:bg-blue-700 transition">
-                  고객센터 문의
+                <button className="w-full bg-brand  py-[13px] rounded-[5px] hover:bg-blue-700 transition">
+                  <a href="/inquiry" className="text-white">
+                    고객센터 문의
+                  </a>
                 </button>
               </div>
             </div>

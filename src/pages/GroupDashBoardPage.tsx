@@ -42,7 +42,7 @@ const GroupDashBoardPage = () => {
               </div>
             </div>
             {/* 아래 */}
-            <div className="bg-white shadow-card h-[544px] w-[330px]">
+            <div className="bg-white shadow-card h-[544px] w-[330px] overflow-hidden">
               <DashboardMiniCalendar />
             </div>
           </div>

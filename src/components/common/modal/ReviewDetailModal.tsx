@@ -1,7 +1,8 @@
 // src/components/common/ReviewDetailModal.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import goodImg from '/images/good.png';
 
 export type ReviewDetail = {
   id: number;
@@ -26,7 +27,7 @@ type Props = {
 };
 
 export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: Props) {
-  const backdropRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // 스크롤 락
   useEffect(() => {
@@ -38,17 +39,27 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
     };
   }, [open]);
 
-  if (typeof window === 'undefined') return null;
+  // ESC 닫기
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   if (!open || !review) return null;
 
-  const modal = (
+  const report = () => navigate('/inquiry');
+
+  return (
     <AnimatePresence>
       {open && (
         <motion.div
-          ref={backdropRef}
           className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center p-4"
           onClick={e => {
-            if (e.target === backdropRef.current) onClose();
+            if (e.target === e.currentTarget) onClose();
           }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -56,72 +67,62 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
           aria-modal="true"
           role="dialog"
         >
+          {/* 모달 박스: 높이 고정 제거, 내용만큼 늘어나고 화면 넘치면 스크롤 */}
           <motion.div
-            className="w-full max-w-[539px] max-h-[641px] bg-white rounded-sm overflow-hidden shadow-xl"
+            className="relative w-[539px] max-h-[85vh] bg-white rounded-sm overflow-y-auto shadow-xl"
             initial={{ y: 24, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
           >
-            {/* 헤더: 히어로 이미지 + 타이틀 */}
-            <div className="relative h-[294px]">
+            {/* 뒤 레이어 (위: 이미지 294px / 아래: 흰 배경) */}
+            <div className="absolute inset-0">
+              <div className="absolute inset-0 bg-white" />
               <img
                 src={review.src}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover"
+                className="absolute top-0 left-0 w-full h-[294px] object-cover"
               />
-              <div className="absolute inset-0 bg-black/40" />
-              <div className="relative h-full px-6 py-5 text-white flex flex-col justify-end">
-                <div className="flex items-center gap-3">
-                  {/* 제목 + 트로피 */}
-                  <div className="flex items-center gap-2">
-                    <h3 className="flex-1 min-w-0 flex items-center gap-1 text-lg font-bold hover:underline">
-                      <span className="truncate">{review.title}</span>
-                    </h3>
-                    {review.ad && (
-                      <img
-                        src="/images/trophy.svg"
-                        alt="trophy"
-                        className="w-4 h-4 flex-shrink-0"
-                      />
-                    )}
-                  </div>
+              <div className="absolute top-0 left-0 w-full h-[294px] bg-black/40" />
+            </div>
 
-                  {/* 카테고리 */}
-                  <span className="text-sm font-semibold bg-white text-[#0689E8] border border-[#0689E8] px-2 py-0.5 rounded-sm">
-                    {review.category}
-                  </span>
+            {/* 상단 정보 (이미지 위 흰 글씨) */}
+            <div className="relative z-10 h-[294px] flex flex-col justify-end px-6 pb-16 text-white">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="flex-1 min-w-0 text-lg font-bold truncate">{review.title}</h3>
+                  {review.ad && <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4" />}
                 </div>
-
-                <p className="mt-1 text-sm text-white/90">모임 기간 : {review.period}</p>
-                {/* 별점 */}
-                <div
-                  className="mt-2 flex items-center gap-1"
-                  aria-label={`별점 ${review.rating}점`}
-                >
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <img
-                      key={i}
-                      className="w-5 h-5"
-                      src={i < review.rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
-                      alt={i < review.rating ? '노란별' : '빈별'}
-                    />
-                  ))}
-                </div>
+                <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm">
+                  {review.category}
+                </span>
+              </div>
+              <p className="mt-1 text-sm">모임 기간 : {review.period}</p>
+              <div className="mt-2 flex items-center gap-1" aria-label={`별점 ${review.rating}점`}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <img
+                    key={i}
+                    className="w-5 h-5"
+                    src={i < review.rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+                    alt={i < review.rating ? '노란별' : '빈별'}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* 본문 카드 */}
-            <div className="p-6 w-[539px] h-[641px]">
-              <div className="border rounded-xl p-4 relative">
+            {/* 본문 카드: 이미지에 살짝 걸치게 (-mt-12), 높이 고정 전부 제거 */}
+            <div className="relative z-20 -mt-12 px-6">
+              <div className="border rounded-sm px-4 py-6 bg-white">
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                   <span className="font-semibold text-md text-[#B8641B]">
                     {review.authorMasked}
                   </span>
                   <span className="text-sm text-[#939393]">작성일자: {review.created_at}</span>
                 </div>
+
+                {/* 본문: 높이 고정(h-[]) 제거, 필요하면 내부만 스크롤로 바꾸려면 max-h 사용 */}
                 <p className="text-black leading-6 text-md whitespace-pre-line">{review.content}</p>
 
-                {/* 태그 */}
+                {/* 태그: 위로 조금 더 붙이기 원하면 mt 조절 */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {review.tags.map(tag => (
                     <span
@@ -133,24 +134,29 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                   ))}
                 </div>
 
-                {/* 하단 행동 */}
+                {/* 카드 내부 하단 */}
                 <div className="mt-6 flex items-center justify-between">
                   <span className="text-[#E9A107] text-md">공감+{review.empathy}</span>
                   <button
                     type="button"
                     className="text-gray-400 hover:text-gray-600"
-                    onClick={() => alert('신고 접수 로직 연결')}
+                    onClick={report}
                   >
                     신고하기
                   </button>
                 </div>
               </div>
+            </div>
+
+            {/* 하단 영역: 패딩만으로 여백, 버튼 중앙정렬 */}
+            <div className="px-6 pt-4 pb-6 bg-white relative z-20 flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => onEmpathy?.(review.id)}
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-sm bg-[#2A91E5] text-white font-semibold hover:brightness-95"
+                className="w-[112px] h-[32px] inline-flex justify-center items-center rounded-sm bg-[#0689E8] text-white font-semibold text-md hover:brightness-95"
               >
-                <span>공감하기</span>
+                <img src={goodImg} alt="공감하기" className="w-4 h-4 mr-1" />
+                공감하기
               </button>
             </div>
           </motion.div>
@@ -158,6 +164,4 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
       )}
     </AnimatePresence>
   );
-
-  return createPortal(modal, document.body);
 }

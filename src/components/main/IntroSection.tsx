@@ -9,10 +9,8 @@ function IntroSection() {
     <div>
       <div className="relative  mt-[70px]">
         <div className="relative w-full h-[500px] overflow-hidden rounded-bl-[80px] rounded-br-[80px]">
-
           <img src="/bgimg.jpg" alt="" className="absolute inset-0 bg-cover bg-center " />
           <div className="absolute inset-0 bg-black/50 " />
-
         </div>
 
         <div className="absolute top-[135px] left-1/2 transform -translate-x-1/2  text-xxl font-bold text-gray-50">

@@ -29,9 +29,11 @@ const DashboardChat = () => {
           {/* 내채팅 */}
           <div></div>
         </div>
-        <div>
-          <button>채팅 확인하기</button>
-        </div>
+        <Link to={'/chat'}>
+          <button className="w-[352px] h-[32px] rounded-sm text-white font-bold text-sm">
+            채팅 확인하기
+          </button>
+        </Link>
       </div>
     </div>
   );

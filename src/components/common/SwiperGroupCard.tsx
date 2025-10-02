@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -18,23 +17,23 @@ export default function SwiperGroupCard({
   items,
   onToggleFavorite,
   confirmMode = 'unfav',
-  spaceBetween = 16,
   loop = false,
   className = '',
-  breakpoints,
+  // spaceBetween = 16,
+  // breakpoints,
 }: Props) {
-  const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
-    () => ({
-      0: { slidesPerView: 1.2, spaceBetween },
-      480: { slidesPerView: 2, spaceBetween },
-      768: { slidesPerView: 3, spaceBetween: spaceBetween + 4 },
-      1024: { slidesPerView: 4, spaceBetween: spaceBetween + 8 },
-      1280: { slidesPerView: 4, spaceBetween: spaceBetween + 8 },
-    }),
-    [spaceBetween],
-  );
+  // const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
+  //   () => ({
+  //     0: { slidesPerView: 1.2, spaceBetween },
+  //     480: { slidesPerView: 2, spaceBetween },
+  //     768: { slidesPerView: 3, spaceBetween: spaceBetween + 4 },
+  //     1024: { slidesPerView: 4, spaceBetween: spaceBetween + 8 },
+  //     1280: { slidesPerView: 4, spaceBetween: spaceBetween + 8 },
+  //   }),
+  //   [spaceBetween],
+  // );
 
-  const bps = breakpoints ?? defaultBps;
+  // const bps = breakpoints ?? defaultBps;
 
   return (
     <div className={['relative w-[1024px] mx-auto', className].join(' ')}>
@@ -45,10 +44,12 @@ export default function SwiperGroupCard({
             nextEl: '.swiper-button-next',
             prevEl: '.swiper-button-prev',
           }}
-          spaceBetween={spaceBetween}
           loop={loop}
           grabCursor
-          breakpoints={bps}
+          slidesPerView={4}
+
+          // spaceBetween={spaceBetween}
+          // breakpoints={bps}
         >
           {items.map(item => (
             <SwiperSlide key={item.id} tag="li">
@@ -71,7 +72,7 @@ export default function SwiperGroupCard({
         <img src="/images/swiper_next.svg" alt="" aria-hidden="true" />
       </button>
 
-      <button
+      {/* <button
         className="swiper-button-prev rounded-full !w-[37px] !h-[37px] absolute top-[58%] !-left-4 z-20"
         aria-label="이전 슬라이드"
         type="button"
@@ -82,7 +83,7 @@ export default function SwiperGroupCard({
           aria-hidden="true"
           style={{ transform: 'rotate(180deg)' }}
         />
-      </button>
+      </button> */}
     </div>
   );
 }

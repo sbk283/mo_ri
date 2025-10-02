@@ -108,18 +108,20 @@ export function GroupCard({
 
   return (
     <>
-      <Wrapper className="h-[290px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
-        <article className="rounded-[11px] flex flex-col h-full border border-[#A3A3A3]">
+      <Wrapper className=" w-[245px] relative cursor-pointer flex flex-col pt-4">
+        <article className="rounded-[5px] h-[290px] flex flex-col border border-[#A3A3A3] overflow-hidden">
           <span className="absolute left-2 z-10">
             <StatusBadge text={item.status} />
           </span>
 
-          <div className="relative overflow-hidden">
-            <img
-              src={item.thumbnail}
-              alt={`${item.title} 썸네일`}
-              className="w-full object-cover rounded-t-[10px] h-[133px]"
-            />
+          <div className="relative">
+            <div className="h-[133px]">
+              <img
+                src={item.thumbnail}
+                alt={`${item.title} 썸네일`}
+                className="w-full h-full object-cover"
+              />
+            </div>
             <button
               type="button"
               aria-label="즐겨찾기"
@@ -140,13 +142,8 @@ export function GroupCard({
               <span className="text-[#D83737] font-semibold">{item.category}</span>
               <span className="text-[#767676]">{item.region}</span>
             </header>
-            <h3 className="flex items-center gap-1 text-lg font-bold hover:underline">
-              <span className="truncate block max-w-[calc(100%-20px)]">{item.title}</span>
-              {item.ad && (
-                <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4 flex-shrink-0" />
-              )}
-            </h3>
-            <p className="text-[15px] h-[34px] text-[#979797] line-clamp-2 leading-[17px]">
+            <p className="text-lg font-bold truncate">{item.title}</p>
+            <p className="text-[15px] pt-1 text-[#979797] line-clamp-2 leading-[17px]">
               {item.desc}
             </p>
             <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-2xl px-2 text-[12px]">

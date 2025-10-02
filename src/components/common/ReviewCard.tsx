@@ -14,6 +14,7 @@ export type ReviewItem = {
   authorMasked: string;
   created_at?: string;
   ad?: boolean;
+  empathy?: number;
 };
 
 export function ReviewCard({
@@ -30,7 +31,7 @@ export function ReviewCard({
       type="button"
       onClick={() => onClick?.(item.id)}
       className={[
-        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-[5px] border border-[#A3A3A3] bg-white text-left',
+        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-sm border border-[#A3A3A3] bg-white text-left',
         'focus:outline-none focus:ring-2 focus:ring-[#2A91E5]',
         className,
       ].join(' ')}
@@ -41,7 +42,7 @@ export function ReviewCard({
         <p className="text-white font-semibold text-md mb-1 line-clamp-1" title={item.title}>
           {item.title}
         </p>
-        <span className="border border-[#FF5252] bg-white text-[#FF5252] font-semibold text-sm px-[4px] py-[1px] rounded-[5px]">
+        <span className="border border-[#FF5252] bg-white text-[#FF5252] font-semibold text-sm px-[4px] py-[1px] rounded-sm">
           {item.category}
         </span>
         <img

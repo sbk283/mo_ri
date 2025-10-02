@@ -97,9 +97,9 @@ function App() {
             <Route path="/findid" element={<FindIdPage />} />
             {/* 비밀번호 찾기 */}
             <Route path="/findpw" element={<FindPwPage />} />
-            {/*  이용약관 */}
+            {/* 이용약관 */}
             <Route path="/terms" element={<TermsPage />} />
-            {/*  개인정보 처리방침 */}
+            {/* 개인정보 처리방침 */}
             <Route path="/privacy" element={<PrivacyPage />} />
             {/* 위치기반 서비스 관련 약관 */}
             <Route path="/location-service" element={<LocationServicePage />} />

@@ -25,7 +25,7 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
 
     return true;
   };
-  
+
   // 추후 DB 연결 하면 보강하겠삼..^^
   //   const handleSend = async (text: string) => {
   //   if (!text.trim() || !chatId) return;
@@ -50,9 +50,9 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
 
   /** 내부 스크롤 컨테이너만 맨 아래로 이동 */
   const scrollToBottom = () => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTop = el.scrollHeight;
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+    scrollContainer.scrollTop = scrollContainer.scrollHeight;
   };
 
   useEffect(() => {

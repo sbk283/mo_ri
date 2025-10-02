@@ -80,8 +80,8 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         message="관리자 승인 후 모임 생성이 완료됩니다."
         actions={[
           {
-            label: '이전 페이지로',
-            onClick: () => navigate(-1),
+            label: '모임 페이지로',
+            onClick: () => navigate('/grouplist'),
             variant: 'primary',
           },
         ]}

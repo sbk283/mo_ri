@@ -1,5 +1,5 @@
 // src/pages/ReviewsListPage.tsx
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ReviewCard, type ReviewItem } from '../components/common/ReviewCard';
 import ReviewDetailModal, { type ReviewDetail } from '../components/common/modal/ReviewDetailModal';
 import ArrayDropdown from '../components/common/ArrayDropdown';
@@ -322,20 +322,43 @@ const defaultReviews: ReviewItem[] = [
   },
 ];
 
-// ---- 공감 LocalStorage ----
+// ---- 공감 LocalStorage (회원 전용 스키마) ----
+const SCHEMA_VERSION = 1 as const;
+type LikeStore = {
+  schema: typeof SCHEMA_VERSION;
+  userId: string;
+  ids: number[];
+};
+
 const LS_KEY = (userId: string) => `empathy:${userId}`;
 
 function readLikedSet(userId: string): Set<number> {
   try {
     const raw = localStorage.getItem(LS_KEY(userId));
     if (!raw) return new Set();
-    return new Set(JSON.parse(raw) as number[]);
+
+    const parsed: unknown = JSON.parse(raw);
+
+    // 새 포맷: { schema, userId, ids }
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      (parsed as any).schema === SCHEMA_VERSION &&
+      (parsed as any).userId === userId &&
+      Array.isArray((parsed as any).ids)
+    ) {
+      return new Set<number>((parsed as any).ids as number[]);
+    }
+
+    // 옛 포맷(숫자 배열 등)은 무시
+    return new Set();
   } catch {
     return new Set();
   }
 }
 function writeLikedSet(userId: string, set: Set<number>) {
-  localStorage.setItem(LS_KEY(userId), JSON.stringify([...set]));
+  const payload: LikeStore = { schema: SCHEMA_VERSION, userId, ids: [...set] };
+  localStorage.setItem(LS_KEY(userId), JSON.stringify(payload));
 }
 
 function ReviewsListPage() {
@@ -363,15 +386,12 @@ function ReviewsListPage() {
 
   const [likedSet, setLikedSet] = useState<Set<number>>(() => readLikedSet(currentUserId));
 
+  // 로그인 아이디 변경 시 로컬스토리지 재로드 (실서비스 연동 대비)
+  useEffect(() => {
+    setLikedSet(readLikedSet(currentUserId));
+  }, [currentUserId]);
+
   const [sortMode, setSortMode] = useState<'latest' | 'popular'>('latest');
-
-  const sortOptions = ['최신순', '인기순'];
-
-  // option → sortMode 매핑
-  const mapLabelToValue = (label: string): 'latest' | 'popular' =>
-    label === '최신순' ? 'latest' : 'popular';
-
-  const mapValueToLabel = (val: 'latest' | 'popular') => (val === 'latest' ? '최신순' : '인기순');
 
   const toDate = (s?: string) => (s ? new Date(s).getTime() : 0);
   const getEmpathy = (it: ReviewItem) => empathyMap[it.id] ?? it.empathy ?? 0;
@@ -415,7 +435,7 @@ function ReviewsListPage() {
     tags: v.tags ?? [],
     authorMasked: v.authorMasked,
     created_at: (v as any).created_at ?? DEFAULT_CREATED_AT,
-    ad: v.ad,
+    ad: (v as any).ad,
     empathy: getEmpathy(v),
   });
 
@@ -453,11 +473,14 @@ function ReviewsListPage() {
       {/* 관심사 리뷰 */}
       <div className="flex items-center justify-between pb-[13px]">
         <div className="text-black text-xl font-semibold">관심사에 맞춘 리뷰후기</div>
-        <ArrayDropdown
-          options={sortOptions}
-          value={mapValueToLabel(sortMode)}
-          onChange={label => setSortMode(mapLabelToValue(label))}
-        />
+        <select
+          value={sortMode}
+          onChange={e => setSortMode(e.target.value as 'latest' | 'popular')}
+          className="border px-3 py-1.5 text-sm rounded-md"
+        >
+          <option value="latest">최신순</option>
+          <option value="popular">인기순</option>
+        </select>
       </div>
       <ul className="grid gap-[15px] mb-[60px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {sortedItems.map(item => (

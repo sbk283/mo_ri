@@ -67,7 +67,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
           aria-modal="true"
           role="dialog"
         >
-          {/* 모달 박스: 높이 고정 제거, 내용만큼 늘어나고 화면 넘치면 스크롤 */}
+          {/* 모달 박스 */}
           <motion.div
             className="relative w-[539px] max-h-[85vh] bg-white rounded-sm overflow-y-auto shadow-xl"
             initial={{ y: 24, opacity: 0 }}
@@ -109,7 +109,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
               </div>
             </div>
 
-            {/* 본문 카드: 이미지에 살짝 걸치게 (-mt-12), 높이 고정 전부 제거 */}
+            {/* 본문 카드: 이미지에 살짝 걸치게 */}
             <div className="relative z-20 -mt-12 px-6">
               <div className="border rounded-sm px-4 py-6 bg-white">
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
@@ -119,10 +119,8 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                   <span className="text-sm text-[#939393]">작성일자: {review.created_at}</span>
                 </div>
 
-                {/* 본문: 높이 고정(h-[]) 제거, 필요하면 내부만 스크롤로 바꾸려면 max-h 사용 */}
                 <p className="text-black leading-6 text-md whitespace-pre-line">{review.content}</p>
 
-                {/* 태그: 위로 조금 더 붙이기 원하면 mt 조절 */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   {review.tags.map(tag => (
                     <span
@@ -134,7 +132,6 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                   ))}
                 </div>
 
-                {/* 카드 내부 하단 */}
                 <div className="mt-6 flex items-center justify-between">
                   <span className="text-[#E9A107] text-md">공감+{review.empathy}</span>
                   <button
@@ -148,7 +145,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
               </div>
             </div>
 
-            {/* 하단 영역: 패딩만으로 여백, 버튼 중앙정렬 */}
+            {/* 하단 버튼 영역 */}
             <div className="px-6 pt-4 pb-6 bg-white relative z-20 flex items-center justify-center gap-2">
               <button
                 type="button"

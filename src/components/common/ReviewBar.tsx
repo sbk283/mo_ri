@@ -13,8 +13,7 @@ const Pill = ({
   tone?: 'gray' | 'blue' | 'amber';
   children: ReactNode;
 }) => {
-  const base =
-    'inline-flex items-center rounded-[5px] h-[29px] px-3 py-1 font-semibold gap-2 border';
+  const base = 'inline-flex items-center rounded-sm h-[29px] px-3 py-1 font-semibold gap-2 border';
 
   const toneMap = {
     gray: 'bg-[#8C8C8C] border-[#8c8c8c] text-white leading-none text-[17px]',
@@ -25,22 +24,20 @@ const Pill = ({
   return <span className={clsx(base, toneMap[tone])}>{children}</span>;
 };
 
-const Star = ({ filled }: { filled: boolean }) => (
-  <svg
-    viewBox="0 0 20 20"
-    className={`w-5 h-5 relative bottom-[2px] ${filled ? 'fill-amber-400' : 'fill-gray-300'}`}
-    aria-hidden="true"
-  >
-    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.1 3.38a1 1 0 0 0 .95.69h3.552c.967 0 1.371 1.24.588 1.81l-2.874 2.09a1 1 0 0 0-.364 1.118l1.1 3.38c.3.921-.755 1.688-1.54 1.118l-2.874-2.09a1 1 0 0 0-1.176 0l-2.874 2.09c-.785.57-1.84-.197-1.54-1.118l1.1-3.38a1 1 0 0 0-.364-1.118L1.86 8.807c-.783-.57-.379-1.81.588-1.81h3.552a1 1 0 0 0 .95-.69l1.1-3.38z" />
-  </svg>
+const Star = ({ filled, index }: { filled: boolean; index: number }) => (
+  <img
+    className="w-5 h-5 mb-[6px]"
+    src={filled ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+    alt={filled ? `${index}번째 노란별` : `${index}번째 빈별`}
+  />
 );
 
 const Rating = ({ value }: { value: number }) => (
   <div className="flex items-center gap-2 pr-[100px]">
-    <span className="text-[17px] text-gray-600">별점</span>
-    <div className="flex items-center gap-1" aria-label={`별점 ${value}점 / 5점`}>
-      {[1, 2, 3, 4, 5].map(n => (
-        <Star key={n} filled={n <= value} />
+    <span className="text-lg text-gray-600">별점</span>
+    <div className="flex items-center gap-1" aria-label={`별점 ${value}점 (총 5점 만점)`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star key={i} index={i + 1} filled={i + 1 <= value} />
       ))}
     </div>
   </div>
@@ -82,7 +79,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
     setSuccessModalOpen(true);
     setTimeout(() => {
       setSuccessModalOpen(false);
-    }, 2000);
+    }, 1500);
   };
 
   return (
@@ -93,9 +90,9 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
           initial={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
           transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
-          className="rounded-[5px] overflow-hidden relative flex flex-col w-[1000px]"
+          className="rounded-sm overflow-hidden relative flex flex-col w-[1000px]"
         >
-          <article className="rounded-md flex flex-col border border-[#A3A3A3] bg-white">
+          <article className="rounded-sm flex flex-col border border-[#A3A3A3] bg-white">
             <div className="py-6 pl-9 pr-6">
               <header className="flex items-center justify-start gap-3">
                 <div className="flex flex-col">
@@ -116,7 +113,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                   <Rating value={currentReview.rating} />
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-2 px-3 py-1 text-[15px] hover:bg-gray-50 rounded"
+                    className="flex items-center justify-center gap-2 px-3 py-1 text-[15px] hover:bg-gray-50 rounded-sm"
                     onClick={() => setOpen(o => !o)}
                     aria-expanded={open}
                     aria-controls={`review-panel-${review.id}`}
@@ -146,7 +143,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                       </h3>
                       <Pill tone="blue">{currentReview.category}</Pill>
                       <Rating value={currentReview.rating} />
-                      <p className="mt-1 text-xs text-gray-500 ml-auto">
+                      <p className="mt-1 text-sm text-gray-500 ml-auto">
                         모임 기간 : {currentReview.period}
                       </p>
                     </div>
@@ -176,7 +173,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                     <div className="absolute right-3 bottom-3 flex gap-6 px-[13px] py-1">
                       <button
                         type="button"
-                        className="w-[56px] h-[30px] rounded-md border border-[#6C6C6C] text-[16px] text-[#6C6C6C]"
+                        className="w-[56px] h-[30px] rounded-sm border border-[#6C6C6C] text-md text-[#6C6C6C]"
                         onClick={handleEditClick}
                       >
                         수정
@@ -184,7 +181,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
 
                       <button
                         type="button"
-                        className="w-[56px] h-[30px] rounded-md bg-[#6C6C6C] text-[16px] text-white"
+                        className="w-[56px] h-[30px] rounded-sm bg-[#6C6C6C] text-md text-white"
                         onClick={handleDeleteClick}
                       >
                         삭제

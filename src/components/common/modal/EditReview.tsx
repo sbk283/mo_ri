@@ -47,7 +47,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-white rounded-[5px] w-[590px] h-[740px] overflow-y-auto border-[#B7B7B7] border"
+            className="bg-white rounded-sm w-[590px] h-[740px] overflow-y-auto border-[#B7B7B7] border"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
@@ -56,23 +56,21 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
             <div className="py-8 px-[50px]">
               {/* 헤더 */}
               <div className="text-center mb-6">
-                <h2 className="text-[28px] font-[600] text-[#0689E8]">모임이 종료되었어요!</h2>
-                <p className="mt-2 font-[15px]">
-                  여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.
-                </p>
+                <h2 className="text-xxl font-[600] text-[#0689E8]">모임이 종료되었어요!</h2>
+                <p className="mt-2 text-md">여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.</p>
               </div>
 
               <div className="border border-[#6C6C6C] mb-8"></div>
               {/* 별점 */}
               <div className="my-6">
                 <div className="flex items-center">
-                  <label className="text-[20px] font-semibold mr-3 ">{review.title}</label>
-                  <span className="text-white bg-[#D83737] h-[28px] text-[15px] px-2 py-1 rounded-[5px]">
+                  <label className="text-xl font-semibold mr-3 ">{review.title}</label>
+                  <span className="text-white bg-[#D83737] h-[28px] text-md px-2 py-1 rounded-sm">
                     {review.category}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 leading-normal mt-6">
-                  <span className="mr-5 text-[15px] font-semibold ">별점</span>
+                  <span className="mr-5 text-md font-semibold ">별점</span>
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
                       key={n}
@@ -100,7 +98,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`px-[11px] py-[7px] rounded-[5px] border transition-colors font-semibold leading-none ${
+                      className={`px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
                         selectedTags.includes(tag)
                           ? 'bg-white text-[#0689E8] border-[#0689E8]'
                           : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
@@ -114,9 +112,9 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 리뷰 내용 */}
               <div className="my-6">
-                <label className="block mb-2 text-[15px] font-[600]">어떤 점이 좋았나요?</label>
+                <label className="block mb-2 text-sm font-semibold">어떤 점이 좋았나요?</label>
                 <textarea
-                  className="w-full border border-[#A3A3A3] rounded-[5px] p-3 min-h-[145px] x-[490px] focus:outline-none focus:border-blue-500"
+                  className="w-full border border-[#A3A3A3] rounded-sm p-3 min-h-[145px] x-[490px] focus:outline-none focus:border-blue-500"
                   placeholder="모임 관리자분께서 잘못을 잘 조해주셔서, 좋았어요."
                   value={content}
                   onChange={e => setContent(e.target.value)}
@@ -127,14 +125,14 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="flex gap-[17px] justify-center">
                 <button
                   type="button"
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-[5px] hover:bg-blue-50 transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
                   onClick={onClose}
                 >
                   취소하기
                 </button>
                 <button
                   type="button"
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-[5px] hover:bg-[#0689E8] transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0689E8] transition-colors"
                   onClick={handleSubmit}
                 >
                   등록하기

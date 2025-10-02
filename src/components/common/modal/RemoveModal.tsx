@@ -9,7 +9,7 @@ export type ConfirmModalProps = {
   cancelText?: string;
   onConfirm: () => void;
   onClose: () => void;
-  /** 바깥(배경) 클릭해도 닫히지 않게 하기 */
+  // 바깥(배경) 클릭해도 닫히지 않게 하기
   preventBackdropClose?: boolean;
 };
 
@@ -78,7 +78,7 @@ export default function RemoveModal({
             {/* 제목 */}
             <h2
               id="confirm-title"
-              className="text-center font-bold text-[28px] leading-[37px] text-[#0762E5]"
+              className="text-center font-bold text-xxl leading-[37px] text-[#0762E5]"
             >
               {title}
             </h2>
@@ -86,7 +86,7 @@ export default function RemoveModal({
             {/* 본문 */}
             <p
               id="confirm-desc"
-              className="text-center font-medium text-[17px] leading-[25px] text-black whitespace-pre-line"
+              className="text-center font-medium text-lg leading-[25px] text-black whitespace-pre-line"
             >
               {message}
             </p>
@@ -112,7 +112,7 @@ export default function RemoveModal({
                 className="
                   w-[78px] h-[40px] px-[13px] py-[7px]
                   inline-flex items-center justify-center
-                  rounded-md bg-[#0762E5] text-white font-semibold
+                  rounded-sm bg-[#0762E5] text-white font-semibold
                   shadow-sm hover:brightness-105 active:scale-[0.98] transition
                 "
                 onClick={onConfirm}

@@ -349,7 +349,7 @@ export default function AiGroupsSection() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">나만의 취향 맞춤 모임!</p>
-              <Link to="/grouplist" className="flex items-center text-sm gap-1 pb-1">
+              <Link to="/grouplist" className="flex items-center text-sm gap-1 pt-1">
                 <img src={Plus} alt="" aria-hidden="true" />
                 더보기
               </Link>
@@ -365,10 +365,13 @@ export default function AiGroupsSection() {
                     aria-pressed={isActive}
                     onClick={() => setActive(f.key)}
                     className={[
-                      'py-1 rounded-[5px] text-[16px] border w-[128px]',
+
+
+                      'py-1 rounded-[5px] font-bold border w-[128px]',
+
                       isActive
-                        ? 'bg-blue-500 text-white border-blue-500'
-                        : 'bg-white text-blue-600 border-blue-400 hover:bg-blue-50',
+                        ? 'bg-brand text-white border-brand'
+                        : 'bg-white text-brand border-brand hover:bg-blue-50',
                     ].join(' ')}
                   >
                     {f.label}

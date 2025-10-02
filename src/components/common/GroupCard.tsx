@@ -119,7 +119,7 @@ export function GroupCard({
               <img
                 src={item.thumbnail}
                 alt={`${item.title} 썸네일`}
-                className="w-full h-full object-cover"
+                className="w-[100%] h-full object-cover"
               />
             </div>
             <button

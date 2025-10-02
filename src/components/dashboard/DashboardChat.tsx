@@ -15,6 +15,7 @@ const DashboardChat = () => {
               <img className="w-full h-full object-cover" src="/bruce.jpg" alt="프로필사진" />
             </div>
             <div>
+              d zzzzzzzzzz
               <p className="font-bold truncate">마비노기 던전 레이드 파티원모집</p>
               <p className="text-brand text-sm font-bold">춤추는 낙타</p>
             </div>

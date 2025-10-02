@@ -146,14 +146,14 @@ export function GroupCard({
                 <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4 flex-shrink-0" />
               )}
             </h3>
-            <p className="text-md h-[34px] text-[#979797] line-clamp-2 leading-[17px]">
+            <p className="text-[15px] h-[34px] text-[#979797] line-clamp-2 leading-[17px]">
               {item.desc}
             </p>
-            <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
+            <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-2xl px-2 text-[12px]">
               {item.dday}
             </time>
             {item.ad && (
-              <span className="absolute right-3 bottom-3 bg-[#C5C5C5] text-white rounded-sm px-2 text-[9px]">
+              <span className="absolute right-3 bottom-3 bg-[#C5C5C5] text-white rounded-xl px-2 text-[9px]">
                 AD
               </span>
             )}

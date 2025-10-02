@@ -198,7 +198,7 @@ function PasswordEdit() {
         </div>
         <div className="border-b border-gray-300 opacity-30 my-[27px]" />
         <div className="flex items-center">
-          <div className="text-lg text-gray-400  font-semibold mr-[60px]">경령사항</div>
+          <div className="text-lg text-gray-400  font-semibold mr-[60px]">경f력사항</div>
 
           {/* 추가된 경력 표시 */}
           <div className="flex flex-col gap-1">
@@ -254,7 +254,7 @@ function PasswordEdit() {
               전체보기
             </Link>
             <div className=" flex gap-[10px] ml-auto">
-              <div>동의 여부</div>
+              <div>전체 동의</div>
               <Switch checked={checked} onChange={value => setChecked(value)} />
             </div>
           </div>

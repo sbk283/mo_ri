@@ -1,25 +1,26 @@
-// 풀캘린더 사용함! 근데 UI 출력이 너무 어려워요.. 도와줭...............
+// 미치겟다 진자로
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import dayjs from 'dayjs';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
+import { IoLocationSharp } from 'react-icons/io5';
+import { Modal, DatePicker, TimePicker, Input, Checkbox, Button } from 'antd';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import timeGridPlugin from '@fullcalendar/timegrid';
-import listPlugin from '@fullcalendar/list';
-
-import { Modal, DatePicker, TimePicker, Input, Checkbox, Button } from 'antd';
-import { IoLocationSharp } from 'react-icons/io5';
-import dayjs from 'dayjs';
+import '../css/calendar.css';
 
 function GroupSchedulePage() {
-  // 권한 체크 (참여자면 false)
-  const isLeader = true; // TODO: 유저 권한에 따라 변경
+  const isLeader = true;
 
-  // 모달 상태
+  // 캘린더 제어용 ref
+  const calendarRef = useRef<FullCalendar | null>(null);
+  const [monthLabel, setMonthLabel] = useState(''); // "9월" 표시
+
+  const handlePrev = () => calendarRef.current?.getApi().prev();
+  const handleNext = () => calendarRef.current?.getApi().next();
+
   const [open, setOpen] = useState(false);
-
-  // 일정 데이터 (FullCalendar용 events)
   const [events, setEvents] = useState([
     {
       id: '1',
@@ -51,7 +52,6 @@ function GroupSchedulePage() {
     },
   ]);
 
-  // 모달 입력값 (간단히만 처리)
   const [form, setForm] = useState({
     startDate: null as any,
     endDate: null as any,
@@ -64,58 +64,87 @@ function GroupSchedulePage() {
 
   const handleAddEvent = () => {
     if (!form.startDate || !form.startTime) return;
-
     const start = dayjs(form.startDate).hour(form.startTime.hour()).minute(form.startTime.minute());
     const end =
       form.endDate && form.endTime
         ? dayjs(form.endDate).hour(form.endTime.hour()).minute(form.endTime.minute())
         : start.add(2, 'hour');
 
-    const newEvent = {
-      id: String(events.length + 1),
-      title: form.title || '새 일정',
-      start: start.toISOString(),
-      end: end.toISOString(),
-      location: form.noRegion ? '지역 무관' : form.location,
-    };
-
-    setEvents([...events, newEvent]);
+    setEvents(prev => [
+      ...prev,
+      {
+        id: String(prev.length + 1),
+        title: form.title || '새 일정',
+        start: start.toISOString(),
+        end: end.toISOString(),
+        location: form.noRegion ? '지역 무관' : form.location,
+      },
+    ]);
     setOpen(false);
   };
 
   return (
     <GroupDashboardLayout>
-      <div className="bg-white shadow-card h-[770px] p-6 rounded-sm flex flex-col">
-        {/* 헤더 */}
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
-            일정<span>관리</span>
-          </h2>
-          {isLeader && (
-            <button
-              onClick={() => setOpen(true)}
-              className="px-4 py-2 bg-brand text-white rounded-md shadow hover:bg-brand-dark"
-            >
-              일정등록
-            </button>
-          )}
+      <div className="bg-white shadow-card rounded-sm p-6 flex flex-col h-[770px]">
+        {/* 상단 헤더: 좌측 제목 / 우측 월 내비 + 버튼 */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-black text-[28px] font-semibold pb-8">일정관리</h2>
+
+          <div className="flex items-center gap-48">
+            {/* 월 네비게이션 (< n월 >) */}
+            <div className="flex items-center gap-10 text-sky-600 text-2xl font-semibold">
+              <button
+                onClick={handlePrev}
+                className="px-2 py-1 rounded hover:bg-gray-100 focus:outline-none"
+                aria-label="이전 달"
+              >
+                <img src="/images/left_arrow.svg" alt="왼쪽화살표" />
+              </button>
+              <span className="text-lg font-semibold">{monthLabel || '월'}</span>
+              <button
+                onClick={handleNext}
+                className="px-2 py-1 rounded hover:bg-gray-100 focus:outline-none"
+                aria-label="다음 달"
+              >
+                <img src="/images/right_arrow.svg" alt="오른쪽 화살표" />
+              </button>
+            </div>
+
+            {/* 일정등록 버튼 */}
+            {isLeader && (
+              <button
+                onClick={() => setOpen(true)}
+                className="px-4 py-2 bg-brand text-white rounded-md shadow hover:bg-brand-dark focus:outline-none"
+              >
+                일정등록
+              </button>
+            )}
+          </div>
         </div>
 
+        {/* 본문: 좌 리스트 / 우 캘린더 */}
         <div className="flex gap-6 flex-1">
-          {/* 좌측 타임라인 */}
-          <div className="flex flex-col">
-            <span className="flex">09월 일정</span>
-            <div className="w-[300px] border-r pr-4 space-y-4 overflow-y-auto custom-scrollbar">
+          {/* 좌측 일정 리스트 */}
+          <aside
+            style={{
+              scrollbarWidth: 'thin',
+              scrollbarColor: 'rgba(66, 148, 207, 0.4) transparent',
+            }}
+            className="w-[300px] pr-1 overflow-y-auto"
+          >
+            <h3 className="flex gap-1 justify-end text-brand mb-3 text-3xl font-semibold">
+              9월
+              <span className="mt-[4.5px] text-black text-xl font-semibold">일정</span>
+            </h3>
+            <div className="space-y-4 h-full pr-1">
               {events.map(s => (
-                <div key={s.id} className="relative pl-6">
-                  <span className="absolute left-0 top-0 h-full w-[2px] bg-gray-300"></span>
-
+                <div key={s.id} className="relative pl-4 border-l-2 border-gray-300">
                   <p className="text-brand font-bold mb-1">{dayjs(s.start).format('DD일')}</p>
                   <div className="border rounded-md p-3 shadow-sm">
                     <p className="text-xs text-gray-500">
                       {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
                     </p>
-                    <p className="font-medium">{s.title}</p>
+                    <p className="font-medium text-gray-800">{s.title}</p>
                     <p className="flex items-center text-sm text-gray-500 mt-1">
                       <IoLocationSharp className="text-brand mr-1" />
                       {s.location}
@@ -124,23 +153,31 @@ function GroupSchedulePage() {
                 </div>
               ))}
             </div>
-          </div>
+          </aside>
 
-          {/* 우측 FullCalendar */}
-          <div className="flex-1">
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              locale="ko"
-              events={events}
-              height="100%"
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,listWeek',
-              }}
-            />
-          </div>
+          {/* 오른쪽 캘린더 */}
+          <section className="flex-1 flex justify-end items-stretch">
+            <div className="w-full h-full flex justify-end">
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={false}
+                locale="ko"
+                fixedWeekCount={false}
+                showNonCurrentDates={true}
+                height="100%"
+                contentHeight="100%"
+                expandRows={true} // ✅ 높이 자동 확장
+                datesSet={info => {
+                  const label = info.view.title.replace(/^\d+년\s*/, '');
+                  setMonthLabel(label);
+                }}
+                dayCellContent={arg => ({ html: String(arg.date.getDate()) })}
+                events={events}
+              />
+            </div>
+          </section>
         </div>
 
         {/* 모달 */}
@@ -151,7 +188,6 @@ function GroupSchedulePage() {
           footer={null}
         >
           <div className="space-y-4">
-            {/* 일정 */}
             <div className="grid grid-cols-2 gap-3">
               <DatePicker
                 placeholder="시작 날짜 선택"
@@ -165,7 +201,6 @@ function GroupSchedulePage() {
               />
             </div>
 
-            {/* 시간 */}
             <div className="grid grid-cols-2 gap-3">
               <TimePicker
                 placeholder="시작 시간 선택"
@@ -181,14 +216,12 @@ function GroupSchedulePage() {
               />
             </div>
 
-            {/* 제목 */}
             <Input
               placeholder="제목을 입력하세요."
               value={form.title}
               onChange={e => setForm({ ...form, title: e.target.value })}
             />
 
-            {/* 장소 */}
             <div className="flex gap-2 items-center">
               <Input
                 placeholder="지역검색"
@@ -205,7 +238,6 @@ function GroupSchedulePage() {
               </Checkbox>
             </div>
 
-            {/* 버튼 */}
             <div className="flex justify-end gap-2 pt-4">
               <Button onClick={() => setOpen(false)}>취소</Button>
               <Button type="primary" onClick={handleAddEvent}>

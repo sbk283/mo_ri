@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 function GroupContentBox() {
   return (
     <Link
-      to={'/groupdashboard/:id'}
+      to={'/groupcontent/:id'}
       className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
     >
       {/* 3항연산자로 바꾸기 모집예정, 모집중으로 */}

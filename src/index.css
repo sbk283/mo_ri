@@ -276,6 +276,10 @@ body,
   background: rgba(66, 148, 207, 0.7);
 }
 
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
+}
+
 /* 스와이퍼 next,prev 버튼 */
 .swiper-button-next,
 .swiper-button-prev {

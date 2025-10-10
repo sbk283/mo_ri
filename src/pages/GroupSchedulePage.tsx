@@ -9,6 +9,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import '../css/calendar.css';
+import '../index.css';
 
 function GroupSchedulePage() {
   const isLeader = true;
@@ -87,7 +88,7 @@ function GroupSchedulePage() {
     <GroupDashboardLayout>
       <div className="bg-white shadow-card rounded-sm p-6 flex flex-col h-[770px]">
         {/* 상단 헤더: 좌측 제목 / 우측 월 내비 + 버튼 */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <h2 className="text-black text-[28px] font-semibold pb-8">일정관리</h2>
 
           <div className="flex items-center gap-48">
@@ -127,20 +128,31 @@ function GroupSchedulePage() {
           {/* 좌측 일정 리스트 */}
           <aside
             style={{
+              width: '300px',
+              paddingRight: '4px',
+              overflowY: 'auto',
+              height: '630px',
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(66, 148, 207, 0.4) transparent',
+              scrollbarColor: 'rgba(66,148,207,0.5) transparent',
             }}
-            className="w-[300px] pr-1 overflow-y-auto"
+            className="w-[300px] pr-1 overflow-y-auto h-[670px] overflow-visible"
           >
-            <h3 className="flex gap-1 justify-end text-brand mb-3 text-3xl font-semibold">
+            <h3 className="flex gap-1 justify-end mr-[18px] text-brand mb-3 text-3xl font-semibold">
               9월
               <span className="mt-[4.5px] text-black text-xl font-semibold">일정</span>
             </h3>
-            <div className="space-y-4 h-full pr-1">
+
+            {/* 타임라인 전체 */}
+            <div className="space-y-6 relative pb-6 px-5">
               {events.map(s => (
-                <div key={s.id} className="relative pl-4 border-l-2 border-gray-300">
-                  <p className="text-brand font-bold mb-1">{dayjs(s.start).format('DD일')}</p>
-                  <div className="border rounded-md p-3 shadow-sm">
+                <div key={s.id} className="flex justify-between pb-[25px]">
+                  <div className="flex flex-col relative">
+                    <div>
+                      <p className="text-brand font-bold">{dayjs(s.start).format('DD일')}</p>
+                    </div>
+                    <div className="absolute w-[1px] h-[119px] bg-gray-300 left-[50%] top-[28px]" />
+                  </div>
+                  <div className="border rounded-sm p-3 shadow-sm border-gray-300 w-[189px] h-[104px]">
                     <p className="text-xs text-gray-500">
                       {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
                     </p>
@@ -168,7 +180,7 @@ function GroupSchedulePage() {
                 showNonCurrentDates={true}
                 height="100%"
                 contentHeight="100%"
-                expandRows={true} // ✅ 높이 자동 확장
+                expandRows={true}
                 datesSet={info => {
                   const label = info.view.title.replace(/^\d+년\s*/, '');
                   setMonthLabel(label);

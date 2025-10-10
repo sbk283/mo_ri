@@ -1,12 +1,18 @@
+import DashboardDetail from '../components/dashboard/DashboardDetail';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 
 function GroupContentPage() {
   return (
-    <GroupDashboardLayout>
-      <div className="bg-white shadow-card h-[770px]">
-        <img src="/test_1.png" alt="추후구현" />
-      </div>
-    </GroupDashboardLayout>
+    <div>
+      <GroupDashboardLayout>
+        <div className="flex flex-col gap-3">
+          <div className="bg-white shadow-card h-[155px] w-[1024px] rounded-sm p-[12px]">
+            <DashboardDetail />
+          </div>
+          <div className="bg-white shadow-card h-[770px] rounded-sm"></div>
+        </div>
+      </GroupDashboardLayout>
+    </div>
   );
 }
 

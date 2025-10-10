@@ -5,12 +5,11 @@ function GroupDashboardSidebar() {
   const navigate = useNavigate();
 
   const categories = [
-    {
-      name: '전체보기',
-      icon: '/images/list_all_dark.svg',
-      path: '/groupdashboard/:id',
-    },
-
+    // {
+    //   name: '전체보기',
+    //   icon: '/images/list_all_dark.svg',
+    //   path: '/groupdashboard/:id',
+    // },
     {
       name: '게시판',
       icon: '/grouplist_dark.svg',

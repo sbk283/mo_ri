@@ -70,13 +70,12 @@ function DeleteAccountPage() {
       <div className="border border-gray-300 rounded-[5px] py-[57px] px-[107px] mb-[24px]">
         <div className="mb-[13px] text-lg font-bold text-gray-400">탈퇴 사유를 선택해주세요.</div>
         <DeleteAccountselector reasons={reason} onChange={setReason} />
-        {/* {reason && <div className="mt-4 text-sm text-brand">선택한 탈퇴 사유: {reason}</div>} */}
 
         <div className="mb-[13px] mt-[19px] text-lg font-bold text-gray-400">
           탈퇴하고 싶은 사유나 건의사항을 적어주세요.
           <span className="text-[#8c8c8c] font-normal text-[13px] pl-[10px]">(선택사항)</span>
         </div>
-        <textarea className="w-full border border-gray-300 rounded-[5px] h-[166px]" />
+        <textarea className="w-full border border-gray-300 rounded-[5px] h-[166px] p-3" />
       </div>
       <Checkbox className="mb-[43px]">
         위의 내용, 회원 탈퇴 시 주의사항을 모두 확인했습니다.

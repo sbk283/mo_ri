@@ -123,3 +123,13 @@
 .fc .fc-scrollgrid-sync-table {
   border: none !important;
 }
+
+/* 색상 컬러 브랜드컬러로 교체함 */
+.ant-picker-suffix .anticon {
+  color: #0689e8 !important;
+}
+
+.ant-picker-focused {
+  border-color: #0689e8 !important;
+  box-shadow: 0 0 0 2px rgba(7, 98, 229, 0.2) !important;
+}

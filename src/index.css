@@ -263,7 +263,7 @@ body,
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* 트랙은 투명 */
+  background: transparent; 
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {

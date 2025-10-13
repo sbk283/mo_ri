@@ -259,11 +259,11 @@ body,
 
 /* 스크롤바 스타일 */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px; /* 스크롤바 두께 */
+  width: 6px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent; /* 트랙은 투명 */
+  background: transparent; 
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
@@ -274,6 +274,10 @@ body,
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(66, 148, 207, 0.7);
+}
+
+.custom-scrollbar::-webkit-scrollbar-button {
+  display: none !important;
 }
 
 /* 스와이퍼 next,prev 버튼 */

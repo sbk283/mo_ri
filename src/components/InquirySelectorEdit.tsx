@@ -3,14 +3,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import inquiryOption from '../constants/inquiryOption';
 
-type InquirySelectorProps = {
+type InquirySelectorEditProps = {
   major: string;
   sub: string;
   onChange: (field: 'inquiryMajor' | 'inquirySub', value: string) => void;
   className?: string;
 };
 
-function InquirySelector({ major, sub, onChange, className }: InquirySelectorProps) {
+function InquirySelectorEdit({ major, sub, onChange, className }: InquirySelectorEditProps) {
   const [majorOpen, setMajorOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
 
@@ -18,7 +18,7 @@ function InquirySelector({ major, sub, onChange, className }: InquirySelectorPro
     <section className="flex gap-10">
       <div className="flex gap-[8px]">
         {/* 대분류 */}
-        <div className="relative w-[421px]">
+        <div className="relative w-[210px]">
           <button
             type="button"
             onClick={() => setMajorOpen(prev => !prev)}
@@ -66,7 +66,7 @@ function InquirySelector({ major, sub, onChange, className }: InquirySelectorPro
         </div>
 
         {/* 중분류 */}
-        <div className="relative w-[421px]">
+        <div className="relative w-[210px]">
           <button
             type="button"
             onClick={() => setSubOpen(prev => !prev)}
@@ -121,4 +121,4 @@ function InquirySelector({ major, sub, onChange, className }: InquirySelectorPro
   );
 }
 
-export default InquirySelector;
+export default InquirySelectorEdit;

@@ -40,7 +40,7 @@ function GroupMemberPage() {
 
   return (
     <GroupDashboardLayout>
-      <div className="bg-white shadow-card h-[770px] p-6 rounded-lg">
+      <div className="bg-white shadow-card h-[770px] p-6 rounded-sm">
         <h2 className="text-black text-[28px] font-semibold pb-8">모임 멤버</h2>
 
         {/* 멤버 그리드 */}

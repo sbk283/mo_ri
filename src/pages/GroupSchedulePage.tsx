@@ -68,7 +68,7 @@ function GroupSchedulePage() {
   // FullCalendar로 전달할 일정 데이터
   const styledEvents = events.map(ev => ({
     ...ev,
-    backgroundColor: '#3B82F6', // 브랜드 색상
+    backgroundColor: '#3B82F6',
     borderColor: '#3B82F6',
     textColor: '#fff',
     extendedProps: {
@@ -89,6 +89,7 @@ function GroupSchedulePage() {
     noRegion: false,
   });
 
+  // 일정 등록
   const handleAddEvent = () => {
     if (!form.startDate || !form.startTime) return;
     const start = dayjs(form.startDate).hour(form.startTime.hour()).minute(form.startTime.minute());
@@ -133,6 +134,11 @@ function GroupSchedulePage() {
     );
   };
 
+  // 일정 삭제
+  const handleDeleteEvent = (id: string) => {
+    setEvents(prev => prev.filter(e => e.id !== id));
+  };
+
   useEffect(() => {
     // monthLabel이 바뀌면 일정 초기화
     setEvents([]);
@@ -159,6 +165,7 @@ function GroupSchedulePage() {
             selectedEventId={selectedEventId}
             asideRef={asideRef}
             onUpdateEvent={handleUpdateEvent}
+            onDeleteEvent={handleDeleteEvent}
           />
 
           {/* 오른쪽 캘린더 */}

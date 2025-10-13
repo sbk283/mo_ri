@@ -131,6 +131,7 @@ function GroupCalendar({
                   padding: '2px 4px',
                   marginBottom: '2px',
                 }}
+                className="custom-event"
               >
                 {arg.event.title}
               </div>

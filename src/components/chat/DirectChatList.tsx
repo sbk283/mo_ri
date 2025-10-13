@@ -1,9 +1,9 @@
-// 채팅 리스트 영역
+// 회원 (호스트가 아닐 때) 일 때 보여지는 사이드바
 
 function DirectChatList() {
   return (
     <aside className="w-[324px] p-5">
-      <div className="self-start font-semibold text-[28px] pb-[14px] pl-1">채팅/문의</div>
+      <div className="self-start pt-1 font-semibold text-[28px] pb-[14px] pl-1">채팅/문의</div>
       <div className="pl-5 flex flex-col items-center">
         {/* 프로필 이미지 */}
         <img src="/ham.png" alt="프로필" className="w-32 h-32 mt-3 rounded-full object-cover" />

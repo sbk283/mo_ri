@@ -5,7 +5,7 @@ const DashboardNotice = () => {
     <div className="p-5">
       {/* 제목 */}
       <div className="flex justify-between mb-4 relative">
-        <p className="text-xl font-bold">게시판</p>
+        <p className="text-xl font-bold">게시판이얌</p>
         <Link to={'/groupcontent/:id'} className="flex gap-1 items-center text-[#8C8C8C] text-sm">
           <img src="/plus_gray.svg" alt="더보기" />
           더보기

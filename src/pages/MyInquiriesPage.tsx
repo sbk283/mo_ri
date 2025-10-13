@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import InquirySelectorEdit from '../components/InquirySelectorEdit';
 import MyPageLayout from '../components/layout/MyPageLayout';
 import { mockInquiries } from '../mocks/myInquiriesMock';
+import ConfirmModal from '../components/common/modal/ConfirmModal';
 
 // 1:1 문의 내역 페이지 입니다.
 function MyInquiriesPage() {
@@ -29,6 +30,7 @@ function MyInquiriesPage() {
     if (window.confirm('정말로 이 문의를 삭제하시겠습니까?')) {
       setInquiries(prev => prev.filter(item => item.id !== id));
       setDetailInquiries(null);
+      // if (editInquiry === id) setEditInquiry(null);
     }
   };
 
@@ -39,7 +41,7 @@ function MyInquiriesPage() {
   const handleEdit = (id: number) => {
     setEditInquiry(id);
   };
-
+  // 수정저장
   const handleSaveEdit = () => {
     if (!selectedInquiry) return;
 
@@ -49,6 +51,7 @@ function MyInquiriesPage() {
           ? {
               ...item,
               contentDetail: editedContent,
+              content: editedContent,
               maincategory: inquiryMajor,
               subcategory: inquirySub,
             }
@@ -60,9 +63,16 @@ function MyInquiriesPage() {
     setEditInquiry(null);
   };
 
-  const handleEditDelete = () => {
+  // 수정 취소
+  const handleEditCancel = () => {
     if (window.confirm('수정을 취소하시겠습니까?')) {
       setEditInquiry(null);
+      // 기존 상세보기 내용으로 복원
+      if (selectedInquiry) {
+        setEditedContent(selectedInquiry.contentDetail);
+        setInquiryMajor(selectedInquiry.maincategory);
+        setInquirySub(selectedInquiry.subcategory);
+      }
     }
   };
 
@@ -71,6 +81,7 @@ function MyInquiriesPage() {
     setDetailInquiries(id === detailInquiries ? null : id);
   };
 
+  // 선택된 문의 변경 시 초기값 설정
   useEffect(() => {
     if (selectedInquiry) {
       setEditedContent(selectedInquiry.contentDetail);
@@ -104,14 +115,11 @@ function MyInquiriesPage() {
       <div className="mb-[77px]">
         <div className="text-brand font-semibold text-xxl mb-[38px]">1:1 문의 내역</div>
         {inquiries.length === 0 ? (
-          // 문의 내역 없을 때
           <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[53px] text-center text-xl text-gray-200 font-medium">
             1:1 문의 내역이 없습니다.
           </div>
         ) : (
-          // 문의 내역 있을 때
           <div className="w-[1024px] border border-gray-300 rounded-[5px] text-gray-200 font-medium">
-            {/* 헤더 */}
             <div className="grid grid-cols-6 text-center pt-[14px] gap-[50px] text-lg font-semibold text-gray-400">
               <div>문의 일자</div>
               <div>문의 내용</div>
@@ -125,12 +133,12 @@ function MyInquiriesPage() {
             {/* 문의 항목 */}
             {inquiries.map((item, index) => (
               <div key={item.id}>
-                <div className="grid grid-cols-6 text-center pb-[14px] gap-[50px] items-center text-md text-gray-200 mt-[10px] font-normal">
+                <div className="grid grid-cols-6 text-center pb-[14px] gap-[40px] items-center text-md text-gray-200 mt-[10px] font-normal">
                   <div>{item.date}</div>
-                  <div className="truncate font-medium text-gray-400">{item.content}</div>
-                  <div className="font-medium text-gray-400">
-                    {item.maincategory}
-                    {'>'}
+                  <div className="truncate font-medium text-gray-400">{item.contentDetail}</div>
+                  <div className="font-medium text-gray-400 text-sm">
+                    <b>{item.maincategory}</b>
+                    <br />
                     {item.subcategory}
                   </div>
                   <div
@@ -161,232 +169,146 @@ function MyInquiriesPage() {
           </div>
         )}
       </div>
+
       {/* 상세보기 */}
       <div className="text-brand font-semibold text-xxl mb-[38px]">1:1 문의 내역 상세보기</div>
-      {inquiries.length > 0 ? (
-        (() => {
-          const inquiry = inquiries.find(i => i.id === detailInquiries);
-          if (!inquiry)
-            return (
-              <div>
-                <div className="w-[1024] border border-gray-300 rounded-[5px] py-[53px] text-center text-xl text-gray-200 font-medium">
-                  1:1 문의 내역 상세보기를 눌러 확인하세요.
+      {selectedInquiry ? (
+        <div className="w-[1024px] border border-gray-300 rounded-[5px] p-[60px] text-gray-200 font-medium">
+          {/* 이름 */}
+          <div className="flex gap-[95px] items-center mb-[16px]">
+            <div className="text-gray-400 text-lg font-bold">이름</div>
+            <div className="text-gray-200 text-md">{selectedInquiry.name}</div>
+          </div>
+          <div className="border-b border-black opacity-30 my-[16px]" />
+
+          {/* 이메일 */}
+          <div className="flex gap-[80px] items-center mb-[16px]">
+            <div className="text-gray-400 text-lg font-bold">이메일</div>
+            <div className="text-gray-200 text-md">{selectedInquiry.email}</div>
+          </div>
+          <div className="border-b border-black opacity-30 my-[16px]" />
+
+          {/* 문의 일자 / 유형 */}
+          <div className="flex mb-[16px]">
+            <div className="flex gap-[60px] items-center">
+              <div className="text-gray-400 text-lg font-bold">문의 일자</div>
+              <div className="text-gray-200 text-md">{selectedInquiry.date}</div>
+            </div>
+            <div className="flex items-center gap-[30px] ml-[160px]">
+              <div className="text-gray-400 text-lg font-bold">문의 유형</div>
+              {editInquiry === selectedInquiry.id ? (
+                <InquirySelectorEdit
+                  className="w-[100px]"
+                  major={inquiryMajor}
+                  sub={inquirySub}
+                  onChange={handleChange}
+                />
+              ) : (
+                <div className="text-gray-200 text-md">
+                  {selectedInquiry.maincategory} {'>'} {selectedInquiry.subcategory}
                 </div>
-              </div>
-            );
+              )}
+            </div>
+          </div>
+          <div className="border-b border-black opacity-30 my-[16px]" />
 
-          return (
-            <div className="w-[1024px] border border-gray-300 rounded-[5px] p-[60px] text-gray-200 font-medium">
-              <div className="flex gap-[95px] items-center mb-[16px]">
-                <div className="text-gray-400 text-lg font-bold">이름</div>
-                <div className="text-gray-200 text-md">{inquiry.name}</div>
-              </div>
+          {/* 문의 내용 */}
+          <div className="flex gap-[60px] items-start mb-[16px]">
+            <div className="text-gray-400 text-lg font-bold">문의 내용</div>
+            <div
+              className="text-gray-200 text-md flex-1"
+              style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}
+            >
+              {editInquiry === selectedInquiry.id ? (
+                <textarea
+                  className="h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
+                  value={editedContent}
+                  onChange={e => setEditedContent(e.target.value)}
+                />
+              ) : (
+                selectedInquiry.contentDetail.split('.').map((sentence, index) =>
+                  sentence.trim() ? (
+                    <span key={index}>
+                      {sentence.trim()}.<br />
+                    </span>
+                  ) : null,
+                )
+              )}
+            </div>
+          </div>
 
+          {/* 답변 완료 또는 수정/삭제 버튼 */}
+          {selectedInquiry.status === '답변완료' ? (
+            <>
               <div className="border-b border-black opacity-30 my-[16px]" />
-
-              <div className="flex gap-[80px] items-center mb-[16px]">
-                <div className="text-gray-400 text-lg font-bold">이메일</div>
-                <div className="text-gray-200 text-md">{inquiry.email}</div>
-              </div>
-
-              <div className="border-b border-black opacity-30 my-[16px]" />
-
-              <div className="flex  mb-[16px]">
-                <div className="flex gap-[60px] items-center">
-                  <div className="text-gray-400 text-lg font-bold">문의 일자</div>
-                  <div className="text-gray-200 text-md">{inquiry.date}</div>
-                </div>
-                <div className="flex gap-[60px] items-center  ml-[195px]">
-                  <div className="text-gray-400 text-lg font-bold">문의 유형</div>
-                  <div className="text-gray-200 text-md">
-                    {` ${inquiryMajor}
-                     > ${inquirySub}`}
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-b border-black opacity-30 my-[16px]" />
-
-              <div className="flex gap-[60px] items-start mb-[16px]">
-                <div className="text-gray-400 text-lg font-bold ">문의 내용</div>
+              <div className="flex gap-[60px] items-start ">
+                <div className="text-gray-400 text-lg font-bold">문의 답변</div>
                 <div
                   className="text-gray-200 text-md"
-                  style={{
-                    wordBreak: 'break-word',
-                    whiteSpace: 'normal',
-                  }}
+                  style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}
                 >
-                  {inquiry.contentDetail.split('.').map((sentence, index) =>
-                    sentence.trim() ? (
-                      <span key={index}>
-                        {sentence.trim()}.
-                        <br />
-                      </span>
-                    ) : null,
+                  {selectedInquiry.replyContent?.split('.').map(
+                    (sentence, index) =>
+                      sentence.trim() && (
+                        <span key={index}>
+                          {sentence.trim()}.<br />
+                        </span>
+                      ),
                   )}
                 </div>
               </div>
-
-              {/*  답변 완료 */}
-              {inquiry.status === '답변완료' ? (
+              <div className="flex justify-end mt-[16px]">
+                <button
+                  onClick={() => handleDelete(selectedInquiry.id)}
+                  className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
+                >
+                  문의 삭제
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="flex justify-end gap-[14px]">
+              {editInquiry === selectedInquiry.id ? (
                 <>
-                  <div className="border-b border-black opacity-30 my-[16px]" />
-                  <div className="flex gap-[60px] items-start ">
-                    <div className="text-gray-400 text-lg font-bold">문의 답변</div>
-                    <div
-                      className="text-gray-200 text-md"
-                      style={{
-                        wordBreak: 'break-word',
-                        whiteSpace: 'normal',
-                      }}
-                    >
-                      {inquiry.replyContent?.split('.').map(
-                        (sentence, index) =>
-                          sentence.trim() && (
-                            <span key={index}>
-                              {sentence.trim()}.
-                              <br />
-                            </span>
-                          ),
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
+                  <div className="flex justify-end gap-[14px]">
                     <button
-                      onClick={() => handleDelete(inquiry.id)}
-                      className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
+                      className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
+                      onClick={handleEditCancel}
                     >
-                      문의 삭제
+                      수정 취소
+                    </button>
+                    <button
+                      className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
+                      onClick={handleSaveEdit}
+                    >
+                      수정 완료
                     </button>
                   </div>
                 </>
               ) : (
-                <div className="flex justify-end gap-[14px] ">
+                <>
                   <button
-                    onClick={() => handleEdit(inquiry.id)}
+                    onClick={() => handleEdit(selectedInquiry.id)}
                     className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
                   >
                     문의 수정
                   </button>
                   <button
-                    onClick={() => handleDelete(inquiry.id)}
-                    className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg "
+                    onClick={() => handleDelete(selectedInquiry.id)}
+                    className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                   >
                     문의 삭제
                   </button>
-                </div>
+                </>
               )}
             </div>
-          );
-        })()
+          )}
+        </div>
       ) : (
         <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[53px] text-center text-xl text-gray-200 font-medium">
           1:1 문의 내역 상세보기를 눌러 확인하세요.
         </div>
       )}
-
-      {/*  문의 수정 버튼 눌렀을때 */}
-      {editInquiry && (
-        <div className="w-[1024px] border border-gray-300 rounded-[5px] text-gray-200 font-medium p-[60px]">
-          <div className="flex gap-[95px] items-center">
-            <div className="text-gray-400 text-lg font-bold">이름</div>
-            <div className="text-gray-200 text-md">{selectedInquiry?.name}</div>
-          </div>
-          <div className="border-b border-black opacity-30 my-[16px]" />
-          <div className="flex gap-[80px] items-center">
-            <div className="text-gray-400 text-lg font-bold">이메일</div>
-            <div className="text-gray-200 text-md">{selectedInquiry?.email}</div>
-          </div>
-          <div className="border-b border-black opacity-30 my-[16px]" />
-          <div className="flex">
-            <div className="flex gap-[60px] items-center">
-              <div className="text-gray-400 text-lg font-bold">문의 일자</div>
-              <div className="text-gray-200 text-md">{selectedInquiry?.date}</div>
-            </div>
-            <div className="flex items-center gap-[30px] ml-[160px]">
-              <div className="text-gray-400 text-lg font-bold">문의 유형</div>
-              <InquirySelectorEdit
-                className="w-[100px]"
-                major={inquiryMajor}
-                sub={inquirySub}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="border-b border-black opacity-30 my-[16px]" />
-          <div className="flex gap-[60px]">
-            <div className="text-gray-400 text-lg font-bold">문의 내용</div>
-            <div className="flex-1 text-gray-200 text-md mb-[60px]">
-              <textarea
-                className="h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
-                value={editedContent}
-                onChange={e => setEditedContent(e.target.value)}
-              />
-            </div>
-          </div>
-          <div className="flex justify-end gap-[14px]">
-            <button
-              className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
-              onClick={handleEditDelete}
-            >
-              수정 취소
-            </button>
-            <button
-              className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
-              onClick={handleSaveEdit}
-            >
-              수정 완료
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* <div className="w-[1024] border border-gray-300 rounded-[5px] text-gray-200 font-medium p-[60px]">
-        <div className=" flex gap-[95px] items-center">
-          <div className="text-gray-400 text-lg font-bold">이름</div>
-          <div className="text-gray-200 text-md ">홍길동</div>
-        </div>
-        <div className="border-b border-black opacity-30 my-[16px] " />
-        <div className=" flex gap-[80px] items-center">
-          <div className="text-gray-400 text-lg font-bold">이메일</div>
-          <div className="text-gray-200 text-md ">z.seon.dev@gmail.com</div>
-        </div>
-        <div className="border-b border-black opacity-30 my-[16px] " />
-        <div className=" flex">
-          <div className=" flex gap-[60px] items-center">
-            <div className="text-gray-400 text-lg font-bold">문의 일자</div>
-            <div className="text-gray-200 text-md ">2025.09.03</div>
-          </div>
-          <div className=" flex items-center gap-[30px] ml-[160px]">
-            <div className="text-gray-400 text-lg font-bold">문의 유형</div>
-            <InquirySelectorEdit
-              className="w-[100px]"
-              major={inquiryMajor}
-              sub={inquirySub}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-        <div className="border-b border-black opacity-30 my-[16px] " />
-        <div className=" flex gap-[60px]">
-          <div className="text-gray-400 text-lg font-bold">문의 내용</div>
-          <div className="flex-1 text-gray-200 text-md mb-[60px]">
-            <textarea
-              className="h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
-              value={editedContent}
-              onChange={e => setEditedContent(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="flex justify-end gap-[14px]">
-          <button className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg">
-            수정 취소
-          </button>
-          <button className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg">
-            수정 완료
-          </button>
-        </div>
-      </div> */}
     </MyPageLayout>
   );
 }

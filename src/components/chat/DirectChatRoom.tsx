@@ -9,18 +9,25 @@ interface DirectChatRoomProps {
 interface ChatMessage {
   sender: 'me' | 'other';
   text: string;
+  nickname?: string;
+  avatarUrl?: string | null;
 }
 
 function DirectChatRoom({ chatId }: DirectChatRoomProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const handleSend = async ({ content }: { chat_id: string; content: string }) => {
+  const handleSend = async ({ chatId, content }: { chatId: string; content: string }) => {
     if (!content.trim()) return false;
     setMessages(prev => [
       ...prev,
       { sender: 'me', text: content },
-      { sender: 'other', text: '상대방 응답: ' + content },
+      {
+        sender: 'other',
+        text: '상대방 응답: ' + content,
+        nickname: 'guest123',
+        avatarUrl: null,
+      },
     ]);
 
     return true;
@@ -119,6 +126,8 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
             <AnimatePresence initial={false}>
               {messages.map((msg, i) => {
                 const isMe = msg.sender === 'me';
+                const initial = msg.nickname?.charAt(0)?.toUpperCase() ?? '?';
+
                 return (
                   <motion.div
                     key={`${i}-${msg.text}`}
@@ -127,15 +136,37 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.98 }}
                     transition={{ type: 'spring', stiffness: 420, damping: 28, mass: 0.7 }}
-                    className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'}`}
+                    className={`flex w-full items-end ${isMe ? 'justify-end' : 'justify-start'}`}
                   >
+                    {/* 👤 상대방 프로필 (왼쪽에만 표시) */}
+                    {!isMe && (
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-400 flex items-center justify-center text-white font-semibold mr-2">
+                        {msg.avatarUrl ? (
+                          <img
+                            src={msg.avatarUrl}
+                            alt={msg.nickname ?? 'user'}
+                            className="w-8 h-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <span>{initial}</span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* 💬 카카오톡 스타일 말풍선 */}
                     <div
-                      className={`px-4 py-2 rounded-full max-w-[70%] break-words shadow-sm text-sm leading-relaxed ${
-                        isMe
-                          ? 'bg-blue-500 text-white rounded-br-none'
-                          : 'bg-gray-300 text-gray-900 rounded-bl-none'
-                      }`}
+                      className={`relative px-4 py-2 max-w-[70%] break-words text-sm leading-relaxed whitespace-pre-line shadow 
+        ${isMe ? 'bg-blue-500 text-white rounded-sm rounded-br-sm' : 'bg-gray-300 text-gray-900 rounded-sm rounded-bl-sm'}
+        `}
                     >
+                      {/* 꼬리 삼각형 (카톡 스타일) */}
+                      <span
+                        className={`absolute bottom-0 ${
+                          isMe
+                            ? 'right-[-5px] border-l-[8px] border-l-blue-500 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent'
+                            : 'left-[-5px] border-r-[8px] border-r-gray-300 border-t-[6px] border-t-transparent border-b-[6px] border-b-transparent'
+                        }`}
+                      />
                       {msg.text}
                     </div>
                   </motion.div>

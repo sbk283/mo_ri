@@ -24,22 +24,28 @@
 
 /* ===== 요일 헤더 ===== */
 .fc-col-header-cell {
-  color: #444;
   font-size: 16px;
-  font-weight: 400;
-  padding: 6px 0;
+  font-weight: 600;
   border: 0 !important;
   text-align: center;
 }
+
+.fc-col-header-cell-cushion {
+  font-size: 16px !important;
+  color: #444 !important;
+}
+
 /* 일욜 */
 .fc .fc-col-header-cell:first-child .fc-col-header-cell-cushion {
   color: #ff7676 !important;
-  font-weight: 400;
+  font-weight: 600;
+  font-size: 16px;
 }
 /* 토욜 */
 .fc .fc-col-header-cell:last-child .fc-col-header-cell-cushion {
-  color: #5c5fff !important;
-  font-weight: 400;
+  color: #4b9dff !important;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 /* 요일 밑에 밑줄 제거 (한줄만 쓰려 했으나 실패함.ㅎㅎ;) */
@@ -51,7 +57,7 @@
 
 /* 요일 전체 박스 높이 키우기 */
 .fc-scrollgrid-sync-inner {
-  height: 35px !important;
+  height: 43px !important;
 }
 
 /* ===== 날짜 셀 =====*/
@@ -74,8 +80,8 @@
 }
 .fc-daygrid-day-number {
   text-align: start;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: #222;
 }
 
@@ -87,7 +93,7 @@
 }
 /* 토 */
 .fc-day-sat .fc-daygrid-day-number {
-  color: #5c5fff !important;
+  color: #4b9dff !important;
 }
 
 /* 지난달/다음달 회색처리 */

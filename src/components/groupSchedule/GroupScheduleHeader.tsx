@@ -25,7 +25,7 @@ function GroupScheduleHeader({
   return (
     <div className="flex items-center justify-between">
       {/* 좌측 타이틀 */}
-      <h2 className="text-black text-[28px] font-semibold pb-8">일정관리</h2>
+      <h2 className="text-black text-[28px] font-semibold pb-6">일정관리</h2>
 
       {/* 우측 월 네비게이션 + 버튼 */}
       <div className="flex items-center gap-48">

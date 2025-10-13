@@ -1,13 +1,18 @@
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import DashboardDetail from '../components/dashboard/DashboardDetail';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import { useLayoutEffect, useRef, useState } from 'react';
+import DashboardNotice from '../components/dashboard/DashboardNotice';
 
 function GroupContentPage() {
   const tabs = [
     {
       label: '공지사항',
-      content: <div></div>,
+      content: (
+        <div>
+          <DashboardNotice />
+        </div>
+      ),
     },
     {
       label: '모임일상',
@@ -46,8 +51,11 @@ function GroupContentPage() {
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
-          <div className="bg-white shadow-card h-[770px] rounded-sm">
-            {/* <div className="w-full">      
+          <div className="bg-white shadow-card h-[770px] rounded-sm p-6">
+            <div>
+              <p className="text-xxl font-bold mb-4">게시판</p>
+            </div>
+            <div className="w-full">
               <nav className="h-[40px] border-b border-gray-300">
                 <ul ref={listRef} className="relative flex pb-[5px]">
                   {tabs.map((item, i) => (
@@ -69,7 +77,6 @@ function GroupContentPage() {
                     </li>
                   ))}
 
-                
                   <motion.div
                     className="absolute bottom-0 h-[4px] bg-[#0689E8] rounded"
                     initial={false}
@@ -91,7 +98,7 @@ function GroupContentPage() {
                   </motion.div>
                 </AnimatePresence>
               </main>
-            </div> */}
+            </div>
           </div>
         </div>
       </GroupDashboardLayout>

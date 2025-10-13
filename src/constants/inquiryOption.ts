@@ -1,4 +1,4 @@
-// 문의 유형
+// 문의 유형!
 const inquiryOption: Record<string, string[]> = {
   '모임 탐색 / 참여': [
     '모임 검색 및 필터 기능 문의',

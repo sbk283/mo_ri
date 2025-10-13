@@ -196,7 +196,6 @@ const DashboardNotice = () => {
   const closeDetail = () => setDetailId(null);
 
   return (
-
     <div className="w-[970px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
         {detailId == null ? (
@@ -261,7 +260,7 @@ const DashboardNotice = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
+    </div>
   );
 };
 

@@ -110,13 +110,13 @@ function ScheduleModal({
               value={form.location}
               onChange={e => setForm({ ...form, location: e.target.value })}
               disabled={form.noRegion}
-              //   suffix={
-              //     <img
-              //       src="/images/search.svg"
-              //       alt="검색"
-              //       className="w-[18px] h-[18px] opacity-60 cursor-pointer"
-              //     />
-              //   }
+              // suffix={
+              //   <img
+              //     src="/images/search.svg"
+              //     alt="검색"
+              //     className="w-[18px] h-[18px] opacity-60 cursor-pointer"
+              //   />
+              // }
             />
             <Checkbox
               checked={form.noRegion}

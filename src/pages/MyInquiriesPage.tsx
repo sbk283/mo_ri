@@ -43,12 +43,15 @@ function MyInquiriesPage() {
   const handleSaveEdit = () => {
     if (!selectedInquiry) return;
 
-    const newCategory = `${inquiryMajor} > ${inquirySub}`;
-
     setInquiries(prev =>
       prev.map(item =>
         item.id === selectedInquiry.id
-          ? { ...item, contentDetail: editedContent, category: newCategory }
+          ? {
+              ...item,
+              contentDetail: editedContent,
+              maincategory: inquiryMajor,
+              subcategory: inquirySub,
+            }
           : item,
       ),
     );
@@ -71,8 +74,12 @@ function MyInquiriesPage() {
   useEffect(() => {
     if (selectedInquiry) {
       setEditedContent(selectedInquiry.contentDetail);
+      setInquiryMajor(selectedInquiry.maincategory || '');
+      setInquirySub(selectedInquiry.subcategory || '');
     } else {
       setEditedContent('');
+      setInquiryMajor('');
+      setInquirySub('');
     }
   }, [selectedInquiry]);
 

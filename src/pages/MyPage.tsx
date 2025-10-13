@@ -28,8 +28,8 @@ function MyPage() {
         </div>
         <div className="w-full">
           <div className="flex items-center justify-between mb-[10px]">
-            <div className="bg-brand py-[5px] px-[10px] text-white font-medium rounded-[5px]">
-              프리미엄 모임장 🏆
+            <div className="text-brand text-xxl font-bold mb-[4px] ">
+              춤추는 낙타 <span className="text-black">님 반가워요✨</span>
             </div>
             <Link
               to={'/mypagesetting'}
@@ -38,9 +38,7 @@ function MyPage() {
               회원정보수정
             </Link>
           </div>
-          <div className="text-brand text-xxl font-bold mb-[4px] ">
-            춤추는 낙타 <span className="text-black">님 반가워요✨</span>
-          </div>
+
           <div className="text-md text-gray-400 font-medium mb-[20px]">
             유지선{''} | {''}(z.seon.dev@gmail.com)
           </div>

@@ -4,6 +4,7 @@ import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import Modal from '../components/common/modal/Modal';
 import SuccessModal from '../components/common/modal/SuccessModal';
 import { Link } from 'react-router-dom';
+import GroupPagination from '../components/common/GroupPagination';
 
 const members = Array.from({ length: 23 }, (_, i) => ({
   id: i + 1,
@@ -101,35 +102,11 @@ function GroupMemberPage() {
         </div>
 
         {/* 페이지네이션 */}
-        <div className="flex justify-center items-center gap-2 mt-6">
-          <button
-            onClick={() => setPage(p => Math.max(p - 1, 1))}
-            disabled={page === 1}
-            className="px-2 py-1 text-sm text-gray-600 disabled:opacity-40"
-          >
-            &lt;
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => setPage(i + 1)}
-              className={`px-3 py-1 rounded ${
-                page === i + 1
-                  ? 'bg-brand text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => setPage(p => Math.min(p + 1, totalPages))}
-            disabled={page === totalPages}
-            className="px-2 py-1 text-sm text-gray-600 disabled:opacity-40"
-          >
-            &gt;
-          </button>
-        </div>
+        <GroupPagination
+          page={page}
+          totalPages={totalPages}
+          onPageChange={newPage => setPage(newPage)}
+        />
       </div>
 
       {/* 추방 확인 모달 */}

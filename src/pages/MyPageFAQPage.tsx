@@ -45,7 +45,7 @@ function MyPageFAQPage() {
             고객님, 무엇을 도와드릴까요?
           </div>
           {/*  검색창 */}
-          <form onSubmit={handleSearch} className="relative">
+          {/* <form onSubmit={handleSearch} className="relative">
             <input
               type="text"
               placeholder="자주 묻는 질문을 검색해 보세요!"
@@ -54,9 +54,9 @@ function MyPageFAQPage() {
             <button type="submit" className="absolute right-[30px] top-[5px]">
               <img src="./search.png" alt="검색" className="w-[30px] h-[30px] transform scale-75" />
             </button>
-          </form>
+          </form> */}
           {/* 토글 버튼 */}
-          <div className="flex justify-between mt-[41px] mb-[48px]">
+          <div className="flex items-center justify-center gap-[20px] mt-[41px] mb-[48px]">
             {Faq.map(cat => (
               <button
                 key={cat.id}

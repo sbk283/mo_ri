@@ -50,7 +50,7 @@ function App() {
       <AuthProvider>
         <Router>
           <ScrollToTop />
-          <Header isLoggedIn={true} />
+          <Header />
           <Routes>
             {/*메인 홈 */}
             <Route path="/" element={<Index />} />

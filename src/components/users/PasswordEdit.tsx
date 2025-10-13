@@ -37,16 +37,12 @@ function PasswordEdit() {
       <div className="text-brand font-bold text-xl mb-[21px]">기본정보</div>
       {/* 박스 부분 */}
       <div className="border border-gray-300 rounded-[5px] py-[60px] px-[80px] mb-[39px] w-[1024px]">
-        <div className="flex justify-between ">
+        <div className="flex  ">
           {/* 왼쪽 - 이름 프로필 */}
           <div className="text-lg text-gray-200 font-semibold mr-[97px]">
-            <div className="flex gap-[38px] mb-[27px]">
-              <label className="w-[100px] text-gray-400">이름</label>
-              <p>홍길동</p>
-            </div>
             <div className="flex gap-[38px]">
               <label className="w-[100px] text-gray-400">프로필 사진</label>
-              <div className="w-[130px] h-[140px] relative">
+              <div className="w-[170px] h-[170px] relative">
                 <img src="/ham.png" alt="" className="w-full h-full object-cover rounded-[5px] " />
                 <button className="absolute right-1 bottom-1 ">
                   <img src="/profilesave.svg" alt="수정" />
@@ -55,7 +51,11 @@ function PasswordEdit() {
             </div>
           </div>
           {/* 오른쪽 - 생년월일, 아이디, 닉네임, 비밀번호 */}
-          <div className="text-lg text-gray-200 font-semibold flex-1">
+          <div className="text-lg text-gray-200 font-semibold ">
+            <div className="flex mb-[27px]">
+              <label className="w-[100px] text-gray-400">이름</label>
+              <p>홍길동</p>
+            </div>
             <div className="flex mb-[27px]">
               <label className="w-[100px] text-gray-400">생년월일</label>
               <p>1997.01.06</p>
@@ -73,7 +73,7 @@ function PasswordEdit() {
                     type="text"
                     value={nickname}
                     onChange={e => setNickname(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-1 flex-1"
+                    className="border border-gray-300 rounded px-2 py-1 w-[230px]"
                   />
                   <button
                     onClick={() => setEditing(false)}
@@ -94,71 +94,7 @@ function PasswordEdit() {
                 </>
               ) : (
                 <>
-                  <p>{nickname}</p>
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="ml-auto text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"
-                  >
-                    변경
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* 비밀번호 */}
-            <div className="flex mb-[27px] items-start">
-              {editing ? (
-                <div className="flex flex-col gap-2 flex-1">
-                  {/* 새 비밀번호 */}
-                  <div className="flex items-center gap-2">
-                    <label className="w-[120px] text-gray-400">새 비밀번호</label>
-                    <input
-                      type="password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="border border-gray-300 rounded px-2 py-1 flex-1"
-                    />
-                  </div>
-
-                  {/* 새 비밀번호 확인 */}
-                  <div className="flex items-center gap-2">
-                    <label className="w-[120px] text-gray-400">새 비밀번호 확인</label>
-                    <input
-                      type="password"
-                      value={confirm}
-                      onChange={e => setConfirm(e.target.value)}
-                      className="border border-gray-300 rounded px-2 py-1 flex-1"
-                    />
-                  </div>
-
-                  {/* 버튼 영역 */}
-                  <div className="flex gap-2 mt-2 ml-[120px]">
-                    <button
-                      onClick={() => setEditing(false)}
-                      className="text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"
-                    >
-                      취소
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (password === confirm) {
-                          console.log('비밀번호 저장:', password);
-                          setEditing(false);
-                        } else {
-                          alert('비밀번호가 일치하지 않습니다.');
-                        }
-                      }}
-                      className="text-sm text-white bg-brand py-[6px] px-[14px] rounded-[5px]"
-                    >
-                      완료
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  {/* 기본 상태 */}
-                  <label className="w-[120px] text-gray-400">비밀번호</label>
-                  <p className="flex-1">************</p>
+                  <p className="w-[300px]">{nickname}</p>
                   <button
                     onClick={() => setEditing(true)}
                     className="ml-auto text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"

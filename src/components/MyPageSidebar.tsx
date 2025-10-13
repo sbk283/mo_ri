@@ -13,11 +13,11 @@ function MyPageSidebar() {
       icon: '/people_dark.svg',
       path: '/mypage',
     },
-    {
-      name: '결제수단/관리',
-      icon: '/pay_dark.svg',
-      path: '/payments',
-    },
+    // {
+    //   name: '결제수단/관리',
+    //   icon: '/pay_dark.svg',
+    //   path: '/payments',
+    // },
     {
       name: '고객센터',
       icon: '/faqicon_dark.svg',

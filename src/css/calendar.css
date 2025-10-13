@@ -1,0 +1,135 @@
+/* ================== FullCalendar 기본 리셋 ================== */
+.fc {
+  width: 100%;
+  background: #fff;
+  border: 0 !important;
+}
+.fc-theme-standard .fc-scrollgrid {
+  border: 0 !important;
+}
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border-color: #e6e6e6 !important;
+}
+
+/* 버튼 포커스 과다 제거 */
+.fc .fc-button:focus,
+.fc a:focus {
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* ===== 헤더(우린 숨김: headerToolbar=false) 
+월 라벨/화살표는 커스텀 헤더에서 만들었음. */
+
+/* ===== 요일 헤더 ===== */
+.fc-col-header-cell {
+  color: #444;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 6px 0;
+  border: 0 !important;
+  text-align: center;
+}
+/* 일욜 */
+.fc .fc-col-header-cell:first-child .fc-col-header-cell-cushion {
+  color: #ff7676 !important;
+  font-weight: 400;
+}
+/* 토욜 */
+.fc .fc-col-header-cell:last-child .fc-col-header-cell-cushion {
+  color: #5c5fff !important;
+  font-weight: 400;
+}
+
+/* 요일 밑에 밑줄 제거 (한줄만 쓰려 했으나 실패함.ㅎㅎ;) */
+.fc .fc-col-header-cell,
+.fc .fc-col-header-cell:first-child,
+.fc .fc-col-header-cell:last-child {
+  border-bottom: none !important;
+}
+
+/* 요일 전체 박스 높이 키우기 */
+.fc-scrollgrid-sync-inner {
+  height: 35px !important;
+}
+
+/* ===== 날짜 셀 =====*/
+.fc-daygrid-day {
+  height: 90px;
+  vertical-align: top;
+  text-align: center;
+}
+
+.fc .fc-daygrid-day-top {
+  display: flex;
+  flex-direction: row;
+}
+
+.fc-daygrid-day-top {
+  display: flex;
+  justify-content: flex-start;
+  padding-left: 6px;
+  padding-top: 2px;
+}
+.fc-daygrid-day-number {
+  text-align: start;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+}
+
+/* ===== 주말 날짜 색상 ===== */
+
+/* 일 */
+.fc-day-sun .fc-daygrid-day-number {
+  color: #ff7676 !important;
+}
+/* 토 */
+.fc-day-sat .fc-daygrid-day-number {
+  color: #5c5fff !important;
+}
+
+/* 지난달/다음달 회색처리 */
+.fc-day-other .fc-daygrid-day-number {
+  color: #c0c4cc;
+}
+
+/* hover */
+.fc-daygrid-day:hover {
+  background: #f9fbff;
+}
+
+/* ===== 이벤트 바 ===== */
+.fc-event {
+  background-color: #3b82f6 !important;
+  border: none !important;
+  height: 20px !important;
+  margin-top: 10px !important;
+}
+.fc-event:hover {
+  opacity: 0.85;
+}
+
+/* FullCalendar 기본 보더 제거 */
+.fc-theme-standard td,
+.fc-theme-standard th {
+  border: none !important;
+}
+
+/* 날짜셀 회색선 제거 */
+.fc .fc-scrollgrid,
+.fc .fc-scrollgrid-section > *,
+.fc .fc-scrollgrid-sync-table {
+  border: none !important;
+}
+
+/* 색상 컬러 브랜드컬러로 교체함 */
+.ant-picker-suffix .anticon {
+  color: #0689e8 !important;
+}
+
+.ant-picker-focused {
+  border-color: #0689e8 !important;
+  box-shadow: 0 0 0 2px rgba(7, 98, 229, 0.2) !important;
+}

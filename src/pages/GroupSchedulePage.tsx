@@ -2,7 +2,7 @@
 
 import FullCalendar from '@fullcalendar/react';
 import dayjs, { Dayjs } from 'dayjs';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GroupCalendar from '../components/groupSchedule/GroupCalendar';
 import GroupScheduleHeader from '../components/groupSchedule/GroupScheduleHeader';
 import GroupScheduleList from '../components/groupSchedule/GroupScheduleList';
@@ -132,6 +132,11 @@ function GroupSchedulePage() {
       ),
     );
   };
+
+  useEffect(() => {
+    // monthLabel이 바뀌면 일정 초기화
+    setEvents([]);
+  }, [monthLabel]);
 
   return (
     <GroupDashboardLayout>

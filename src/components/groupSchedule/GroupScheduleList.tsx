@@ -91,50 +91,63 @@ function GroupScheduleList({
 
       {/* 일정 타임라인 전체 */}
       <div className="space-y-6 relative pb-6 px-5">
-        {events.map(s => (
-          <div
-            key={s.id}
-            id={`event-${s.id}`}
-            className={`flex justify-between pb-[25px] transition-all duration-200 ${
-              selectedEventId === s.id ? 'bg-[#E6F4FF] rounded-md shadow-inner scale-[1.02]' : ''
-            }`}
-          >
-            {/* 날짜 + 세로선 */}
-            <div className="flex flex-col relative">
-              <div>
-                <p className="text-brand font-bold">{dayjs(s.start).format('DD일')}</p>
-              </div>
-              <div className="absolute w-[1px] h-[119px] bg-gray-300 left-[50%] top-[28px]" />
-            </div>
-
-            {/* 일정 카드 */}
-            <div className="border rounded-sm p-2 shadow-sm border-gray-300 w-[189px] h-[104px] flex flex-col justify-between">
-              <div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-gray-500">
-                    {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
-                  </p>
-                  <button
-                    onClick={() => handleEditClick(s)}
-                    className="text-[12px] text-brand font-medium hover:opacity-80 transition"
-                    aria-label="일정 수정"
-                  >
-                    <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
-                  </button>
-                </div>
-
-                {/* 제목 */}
-                <p className="font-medium text-gray-800 mt-1">{s.title}</p>
-
-                {/* 위치 */}
-                <p className="flex items-center text-sm text-gray-500 mt-1">
-                  <IoLocationSharp className="text-brand mr-1" />
-                  {s.location}
-                </p>
-              </div>
-            </div>
+        {events.length === 0 ? (
+          // 일정이 없을 때
+          <div className="flex flex-col items-center justify-center h-[200px] text-gray-400">
+            <img
+              src="/images/empty_calendar.svg"
+              alt="일정 없음"
+              className="w-10 h-10 mb-2 opacity-70"
+            />
+            <p className="text-sm">일정이 없습니다.</p>
           </div>
-        ))}
+        ) : (
+          // 일정이 있을 때
+          events.map(s => (
+            <div
+              key={s.id}
+              id={`event-${s.id}`}
+              className={`flex justify-between pb-[25px] transition-all duration-200 ${
+                selectedEventId === s.id ? 'bg-[#E6F4FF] rounded-md shadow-inner scale-[1.02]' : ''
+              }`}
+            >
+              {/* 날짜 + 세로선 */}
+              <div className="flex flex-col relative">
+                <div>
+                  <p className="text-brand font-bold">{dayjs(s.start).format('DD일')}</p>
+                </div>
+                <div className="absolute w-[1px] h-[119px] bg-gray-300 left-[50%] top-[28px]" />
+              </div>
+
+              {/* 일정 카드 */}
+              <div className="border rounded-sm p-2 shadow-sm border-gray-300 w-[189px] h-[104px] flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-500">
+                      {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
+                    </p>
+                    <button
+                      onClick={() => handleEditClick(s)}
+                      className="text-[12px] text-brand font-medium hover:opacity-80 transition"
+                      aria-label="일정 수정"
+                    >
+                      <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
+                    </button>
+                  </div>
+
+                  {/* 제목 */}
+                  <p className="font-medium text-gray-800 mt-1">{s.title}</p>
+
+                  {/* 위치 */}
+                  <p className="flex items-center text-sm text-gray-500 mt-1">
+                    <IoLocationSharp className="text-brand mr-1" />
+                    {s.location}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* 일정 수정 모달 (재사용) */}

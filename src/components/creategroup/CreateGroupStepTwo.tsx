@@ -120,9 +120,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
               setFiles(newFiles); // 로컬 유지
               onChange('files', newFiles);
             }}
-            onAdd={index =>
-              addCurriculum(formData.curriculum, next => onChange('curriculum', next))
-            }
+            onAdd={() => addCurriculum(formData.curriculum, next => onChange('curriculum', next))}
           />
         ))}
       </div>

@@ -1,18 +1,20 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo, useState } from 'react';
 import GroupPagination from '../common/GroupPagination';
-import GroupContentDetail from './GroupContentDetail';
+import GroupDailyDetail from '../GroupDailyDetail';
 
-type Notice = {
+type Daily = {
   id: number;
+  writer?: string;
   title: string;
   content: string;
   date: string; // YYYY-MM-DD
   views?: number;
   isRead: boolean;
+  likedCount?: number;
 };
 
-export const noticeMock: Notice[] = [
+export const dailyMock: Daily[] = [
   {
     id: 1,
     title:
@@ -21,6 +23,8 @@ export const noticeMock: Notice[] = [
       '안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다.안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다.안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다. 안녕하세요! 이번 주 마비노기 던전 레이드 파티 모집 공지입니다. 참여를 원하시는 분은 사전에 장비 점검과 물약 준비를 꼭 완료해주세요. 신청 마감은 수요일까지입니다.',
     date: '2025-06-26',
     isRead: true,
+    writer: '홍길동',
+    likedCount: 5,
   },
   {
     id: 2,
@@ -177,25 +181,17 @@ export const noticeMock: Notice[] = [
     date: '2025-06-26',
     isRead: true,
   },
-  {
-    id: 21,
-    title: '[필독!] 마비노기 던전 레이드 파티원 모집 공지사항입니다. 아래 글을 잘 확인해주세요.',
-    content:
-      '레이드 종료 후 만족도 조사를 진행할 예정입니다. 설문에 참여해주신 분께는 감사의 마음으로 소정의 쿠폰을 드립니다. 여러분의 의견을 기다립니다!',
-    date: '2025-06-26',
-    isRead: true,
-  },
 ];
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 6;
 
-const DashboardNotice = () => {
+const GroupDailyContent = () => {
   const [page, setPage] = useState(1);
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(noticeMock.length / ITEMS_PER_PAGE)), []);
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(dailyMock.length / ITEMS_PER_PAGE)), []);
   const pageItems = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return noticeMock.slice(start, end);
+    return dailyMock.slice(start, end);
   }, [page]);
 
   const [detailId, setDetailId] = useState<number | null>(null);
@@ -203,49 +199,40 @@ const DashboardNotice = () => {
   const closeDetail = () => setDetailId(null);
 
   return (
-    <div className="w-[970px] bg-white overflow-hidden ">
+    <div className="w-[970px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
         {detailId == null ? (
           // ===== 리스트 뷰 =====
           <motion.div
-            key="notice-list"
+            key="daily-list"
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            {/* 헤더 */}
-            <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
-              <div className="w-[700px] truncate font-semibold pl-7 text-md">제목</div>
-              <div className="w-[150px] text-center text-md">작성일자</div>
-              <div className="w-[50px] text-center mr-7 text-sm">상태</div>
-            </div>
-
-            {/* 목록 */}
-            <div className="flex flex-col divide-y divide-dashed divide-gray-300">
-              {pageItems.map(notice => (
+            {/* 목록 (6그리드) */}
+            <div className="grid grid-cols-3 auto-rows-fr gap-3 py-6">
+              {pageItems.map(daily => (
                 <button
-                  key={notice.id}
+                  key={daily.id}
                   type="button"
-                  onClick={() => openDetail(notice.id)}
-                  className="flex justify-between items-center py-3 hover:bg-gray-50 text-left focus:outline-none"
+                  onClick={() => openDetail(daily.id)}
+                  className="relative flex h-[233px] flex-col rounded-sm bg-white text-left transition px-4 py-1"
                 >
-                  <span
-                    className="w-[700px] truncate font-semibold pl-7 transition text-[#111]"
-                    title={notice.title}
-                  >
-                    {notice.title}
-                  </span>
-
-                  <span className="w-[150px] text-center text-gray-400 text-sm">{notice.date}</span>
-
-                  <span
-                    className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
-                    flex items-center justify-center mr-7
-                    ${notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
-                  >
-                    {notice.isRead ? '읽음' : '안읽음'}
-                  </span>
+                  {/* 썸네일 */}
+                  <img src="/images/nacta.png" alt="낙타사진" className="w-[290px] h-[160px]" />
+                  {/* 제목 */}
+                  <h3 className="mt-1 line-clamp-1 text-md font-bold text-[#000]">{daily.title}</h3>
+                  {/* 날짜 */}
+                  <span className="text-sm text-gray-400">{daily.date}</span>
+                  <div className="flex w-full justify-between">
+                    {/* 작성자 */}
+                    {daily.writer && <span className="text-sm text-gray-400">{daily.writer}</span>}
+                    {/* 좋아요 갯수 */}
+                    {daily.likedCount !== undefined && (
+                      <span className="text-sm text-gray-400">💜좋아요{daily.likedCount}</span>
+                    )}
+                  </div>
                 </button>
               ))}
             </div>
@@ -256,13 +243,13 @@ const DashboardNotice = () => {
         ) : (
           // ===== 상세 뷰 =====
           <motion.div
-            key="notice-detail"
+            key="daily-detail"
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            <GroupContentDetail id={detailId} onBack={closeDetail} />
+            <GroupDailyDetail id={detailId} onBack={closeDetail} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -270,4 +257,4 @@ const DashboardNotice = () => {
   );
 };
 
-export default DashboardNotice;
+export default GroupDailyContent;

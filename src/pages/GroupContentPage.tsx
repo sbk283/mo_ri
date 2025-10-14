@@ -1,8 +1,9 @@
 import { AnimatePresence, motion } from 'motion/react';
-import DashboardDetail from '../components/dashboard/DashboardDetail';
-import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import { useLayoutEffect, useRef, useState } from 'react';
+import GroupDailyContent from '../components/common/GroupDailyContent';
+import DashboardDetail from '../components/dashboard/DashboardDetail';
 import DashboardNotice from '../components/dashboard/DashboardNotice';
+import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 
 function GroupContentPage() {
   const tabs = [
@@ -16,7 +17,11 @@ function GroupContentPage() {
     },
     {
       label: '모임일상',
-      content: <div></div>,
+      content: (
+        <div>
+          <GroupDailyContent />
+        </div>
+      ),
     },
   ];
 
@@ -51,7 +56,7 @@ function GroupContentPage() {
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
-          <div className="bg-white shadow-card h-[770px] rounded-sm p-6">
+          <div className="bg-white shadow-card min-h-[770px] rounded-sm p-6">
             <div>
               <p className="text-xxl font-bold mb-4">게시판</p>
             </div>

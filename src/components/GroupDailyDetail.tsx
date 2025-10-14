@@ -1,6 +1,6 @@
 // src/pages/GroupContentDetail.tsx
 import { useParams, useNavigate } from 'react-router-dom';
-import { noticeMock } from './DashboardNotice';
+import { dailyMock } from './common/GroupDailyContent';
 
 type Props =
   | { id: number; onBack: () => void } // 라우팅 없이 사용
@@ -16,7 +16,7 @@ export default function GroupContentDetail(props: Props) {
 
   const goBack = 'onBack' in props && props.onBack ? props.onBack : () => navigate(-1);
 
-  const notice = noticeMock.find(n => n.id === Number(resolvedId));
+  const notice = dailyMock.find(n => n.id === Number(resolvedId));
 
   if (!notice) {
     return (

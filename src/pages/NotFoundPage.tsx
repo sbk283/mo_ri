@@ -6,17 +6,8 @@ import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import NotFoundFloatingBits from '../components/NotFoundloatingBits';
 
-export default function NotFoundPage() {
+function NotFoundPage() {
   const navigate = useNavigate();
-
-  // keyboard shortcut: B = 백키 (뒤로가기) 아.. 별로라 지움
-  //   useEffect(() => {
-  //     const onKey = (e: KeyboardEvent) => {
-  //       if (e.key.toLowerCase() === 'b') navigate(-1);
-  //     };
-  //     window.addEventListener('keydown', onKey);
-  //     return () => window.removeEventListener('keydown', onKey);
-  //   }, [navigate]);
 
   return (
     <div className="relative min-h-dvh w-full overflow-hidden bg-gradient-to-b from-white via-[#f7fbff] to-[#eef6ff] dark:from-[#0b1020] dark:via-[#0a0f1c] dark:to-[#070b14]">
@@ -91,7 +82,7 @@ export default function NotFoundPage() {
               size="large"
               allowClear
               prefix={<SearchOutlined />}
-              placeholder="모임, 주제, 닉네임으로 검색해보기"
+              placeholder="모임명, 카테고리, 모임장 닉네임으로 검색해보기"
               onPressEnter={e => {
                 const q = (e.target as HTMLInputElement).value?.trim();
                 if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
@@ -146,3 +137,5 @@ export default function NotFoundPage() {
     </div>
   );
 }
+
+export default NotFoundPage;

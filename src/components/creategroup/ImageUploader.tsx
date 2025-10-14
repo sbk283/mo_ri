@@ -94,9 +94,9 @@ function ImageUploader({ images, onChange, mode = 'multi' }: ImageUploaderProps)
   // 멀티 생성용
   return (
     <section className="flex flex-col">
-      <label className="font-semibold mb-2 text-lg text-gray-400">이미지 첨부</label>
+      <label className="font-semibold mb-2 text-lg">이미지 첨부</label>
 
-      <div className="flex pl-[40px] gap-4">
+      <div className="flex pl-[122px] gap-4">
         {/* 대표 이미지 */}
         <div className="relative w-[310px] h-[200px] border border-gray-300 rounded-md flex items-center justify-center text-gray-400 overflow-hidden">
           {previews[0] ? (

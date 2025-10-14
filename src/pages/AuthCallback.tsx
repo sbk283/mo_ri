@@ -10,6 +10,7 @@ import { Button } from 'antd';
  */
 
 function AuthCallback() {
+  const [msg, setMsg] = useState<string>('인증 처리 중...');
   const navigate = useNavigate();
   useEffect(() => {
     const timer = setTimeout(() => {}, 1500);
@@ -22,6 +23,7 @@ function AuthCallback() {
   const handleClink = () => {
     navigate('/signup?step=3');
   };
+
   return (
     <div className="mt-[140px] mb-[100px]">
       <div className="border border-gray-300 rounded-[5px] bg-white w-[1326px] h-[737px] shadow-card mx-auto flex">

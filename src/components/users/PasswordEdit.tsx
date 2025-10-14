@@ -4,18 +4,20 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import InterestModal from '../common/modal/InterestModal';
 import CareerModal, { type CareerItem } from '../common/modal/CareerModal';
+import NicknameEditModal from '../common/modal/NicknameEditModal';
 
 function PasswordEdit() {
   const [checked, setChecked] = useState(false);
 
-  const [editing, setEditing] = useState(false);
-  const [nickname, setNickname] = useState('불주먹 햄스터');
+  // 닉네임 변경
+  const [nickname, setNickname] = useState('불주먹햄스터');
+  const [isNicknameEditModalOpen, setIsNicknameEditModalOpen] = useState(false);
 
-  const [password, setPassword] = useState('');
-  const [confirm, setConfirm] = useState('');
-
+  // 관심사
   const [selected, setSelected] = useState(['구기활동', 'IT']);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 경력사항
   const [isCareerModalOpen, setIsCareerModalOpen] = useState(false);
   const [careerList, setCareerList] = useState<CareerItem[]>([]);
 
@@ -69,14 +71,14 @@ function PasswordEdit() {
 
       {/* 박스 부분 */}
       <div className="border border-gray-300 rounded-[5px] py-[60px] px-[80px] mb-[39px] w-[1024px]">
-        <div className="flex">
+        <div className="flex justify-between">
           {/* 왼쪽 - 이름 프로필 */}
-          <div className="text-lg text-gray-200 font-semibold mr-[97px]">
+          <div className="text-lg text-gray-200 font-semibold mr-[63px]">
             <div className="flex gap-[38px]">
               <label className="w-[100px] text-gray-400">프로필 사진</label>
 
               {/* 프로필 이미지 영역 (클릭 시 교체 가능) */}
-              <div className="w-[170px] h-[170px] relative">
+              <div className="w-[160px] h-[160px] relative">
                 <img
                   src={profilePreview}
                   alt="프로필"
@@ -98,10 +100,10 @@ function PasswordEdit() {
                   <button
                     type="button"
                     onClick={clearImage}
-                    className="absolute right-1 top-1 bg-white/90 rounded-full p-1"
+                    className="absolute right-[5px] top-[5px]"
                     aria-label="프로필 이미지 제거"
                   >
-                    <img src="/images/close_dark.svg" alt="삭제" className="w-4 h-4" />
+                    <img src="/images/close_white.svg" alt="삭제" className="w-4 h-4" />
                   </button>
                 )}
 
@@ -118,58 +120,36 @@ function PasswordEdit() {
             </div>
           </div>
 
-          {/* 오른쪽 - 생년월일, 아이디, 닉네임, 비밀번호 */}
-          <div className="text-lg text-gray-200 font-semibold">
-            <div className="flex mb-[27px]">
-              <label className="w-[100px] text-gray-400">이름</label>
+          {/* 오른쪽 -  아이디, 닉네임, 비밀번호 */}
+          <div className="text-lg text-gray-200 font-medium">
+            <div className="flex mb-[23px]">
+              <label className="w-[100px] text-gray-400 font-semibold">이름</label>
               <p>홍길동</p>
             </div>
-            <div className="flex mb-[27px]">
-              <label className="w-[100px] text-gray-400">생년월일</label>
-              <p>1997.01.06</p>
-            </div>
-            <div className="flex  mb-[27px]">
-              <label className="w-[100px] text-gray-400">아이디</label>
+
+            <div className="flex  mb-[23px]">
+              <label className="w-[100px] text-gray-400 font-semibold">아이디</label>
               <p>z.seon.dev@gmail.com</p>
             </div>
 
-            <div className="flex mb-[27px] items-center">
-              <label className="w-[100px] text-gray-400">닉네임</label>
-              {editing ? (
-                <>
-                  <input
-                    type="text"
-                    value={nickname}
-                    onChange={e => setNickname(e.target.value)}
-                    className="border border-gray-300 rounded px-2 py-1 w-[230px]"
-                  />
-                  <button
-                    onClick={() => setEditing(false)}
-                    className="text-sm text-brand py-[6px] px-[14px] border border-brand rounded-[5px] ml-[11px]"
-                  >
-                    취소
-                  </button>
-                  <button
-                    onClick={() => {
-                      // 저장 로직 실행
-                      console.log('닉네임 저장:', nickname);
-                      setEditing(false);
-                    }}
-                    className="text-sm text-white bg-brand py-[6px] px-[14px] rounded-[5px] ml-[4px]"
-                  >
-                    완료
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="w-[300px]">{nickname}</p>
-                  <button
-                    onClick={() => setEditing(true)}
-                    className="ml-auto text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"
-                  >
-                    변경
-                  </button>
-                </>
+            <div className="flex mb-[10px] items-center justify-between">
+              <label className="w-[100px] text-gray-400 font-semibold">닉네임</label>
+              <p className="w-[300px]">{nickname}</p>
+              <button
+                onClick={() => setIsNicknameEditModalOpen(true)}
+                className="mr-[3px] font-semibold text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"
+              >
+                변경
+              </button>
+              {isNicknameEditModalOpen && (
+                <NicknameEditModal
+                  currentNickname={nickname}
+                  onClose={() => setIsNicknameEditModalOpen(false)}
+                  onSave={newName => {
+                    setNickname(newName);
+                    setIsNicknameEditModalOpen(false);
+                  }}
+                />
               )}
             </div>
           </div>
@@ -212,12 +192,22 @@ function PasswordEdit() {
               <p className="text-gray-300">등록된 경력이 없습니다. 경력사항을 추가해주세요.</p>
             ) : (
               careerList.map(item => (
-                <p key={item.id} className="text-gray-700 text-sm">
-                  <b>
-                    기간 : {item.period} 경력 : {item.career} 첨부파일 :{' '}
-                    {item.file && `(${item.file.name})`}
-                  </b>
-                </p>
+                <div key={item.id} className="text-gray-700 text-sm mb-[10px] ">
+                  <div>
+                    <span className="mr-[15px]">
+                      <b>{item.period}</b>
+                    </span>
+                  </div>
+                  <div className="text-md">
+                    <span className="mr-[15px]">
+                      <b>경력 : </b> {item.career}
+                    </span>
+                    <span>
+                      <b> 첨부파일 : </b>
+                      {item.file ? `${item.file.name}` : '없음'}
+                    </span>
+                  </div>
+                </div>
               ))
             )}
           </div>
@@ -254,7 +244,7 @@ function PasswordEdit() {
             </div>
             <div className="flex gap-[10px] text-md text-gray-200">
               <Checkbox checked={checked} onChange={e => setChecked(e.target.checked)}>
-                알림
+                카카오톡
               </Checkbox>
             </div>
           </div>

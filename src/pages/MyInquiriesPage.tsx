@@ -19,6 +19,11 @@ function MyInquiriesPage() {
   const [inquiryMajor, setInquiryMajor] = useState('');
   const [inquirySub, setInquirySub] = useState('');
 
+  // 모달 상태
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'delete' | 'save' | 'cancel' | null>(null);
+  const [targetId, setTargetId] = useState<number | null>(null);
+
   // 문의 유형 선택
   const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
     if (field === 'inquiryMajor') setInquiryMajor(value);
@@ -37,6 +42,47 @@ function MyInquiriesPage() {
   // 해당 내용 찾기
   const selectedInquiry = inquiries.find(item => item.id === detailInquiries);
 
+  // 모달 오픈 함수.
+  const openModal = (type: 'delete' | 'save' | 'cancel', id?: number) => {
+    setModalType(type);
+    setTargetId(id || null);
+    setModalOpen(true);
+  };
+  // 모달 확인 시 실행
+  const handleConfirm = () => {
+    if (modalType === 'delete' && targetId) {
+      setInquiries(prev => prev.filter(item => item.id !== targetId));
+      setDetailInquiries(null);
+    }
+
+    if (modalType === 'save' && selectedInquiry) {
+      setInquiries(prev =>
+        prev.map(item =>
+          item.id === selectedInquiry.id
+            ? {
+                ...item,
+                contentDetail: editedContent,
+                content: editedContent,
+                maincategory: inquiryMajor,
+                subcategory: inquirySub,
+              }
+            : item,
+        ),
+      );
+      setEditInquiry(null);
+    }
+
+    if (modalType === 'cancel') {
+      setEditInquiry(null);
+      if (selectedInquiry) {
+        setEditedContent(selectedInquiry.contentDetail);
+        setInquiryMajor(selectedInquiry.maincategory);
+        setInquirySub(selectedInquiry.subcategory);
+      }
+    }
+
+    setModalOpen(false);
+  };
   // 수정 버튼
   const handleEdit = (id: number) => {
     setEditInquiry(id);
@@ -80,6 +126,11 @@ function MyInquiriesPage() {
   const handleDetail = (id: number) => {
     setDetailInquiries(id === detailInquiries ? null : id);
   };
+
+  // 기존 버튼 클릭을 모달로 변경
+  const handleDeleteClick = (id: number) => openModal('delete', id);
+  const handleSaveClick = () => openModal('save');
+  const handleCancelClick = () => openModal('cancel');
 
   // 선택된 문의 변경 시 초기값 설정
   useEffect(() => {
@@ -134,26 +185,28 @@ function MyInquiriesPage() {
             {inquiries.map((item, index) => (
               <div key={item.id}>
                 <div className="grid grid-cols-6 text-center pb-[14px] gap-[40px] items-center text-md text-gray-200 mt-[10px] font-normal">
-                  <div>{item.date}</div>
+                  <div className="font-medium">{item.date}</div>
                   <div className="truncate font-medium text-gray-400">{item.contentDetail}</div>
                   <div className="font-medium text-gray-400 text-sm">
                     <b>{item.maincategory}</b>
                     <br />
-                    {item.subcategory}
+                    <span className=" text-gray-200">{item.subcategory}</span>
                   </div>
                   <div
                     className={`text-md ${
-                      item.status === '답변완료' ? 'text-gray-400 font-semibold' : 'text-gray-200'
+                      item.status === '답변완료'
+                        ? 'text-gray-400 font-semibold'
+                        : 'text-gray-200 font-medium'
                     }`}
                   >
                     {item.status}
                   </div>
-                  <div>{item.replyDate}</div>
+                  <div className="font-medium">{item.replyDate}</div>
                   <button
                     className={`${
                       detailInquiries === item.id
                         ? 'font-bold text-brand'
-                        : 'font-normal text-gray-200'
+                        : 'font-medium text-gray-200'
                     }`}
                     onClick={() => handleDetail(item.id)}
                   >
@@ -273,13 +326,13 @@ function MyInquiriesPage() {
                   <div className="flex justify-end gap-[14px]">
                     <button
                       className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
-                      onClick={handleEditCancel}
+                      onClick={handleCancelClick}
                     >
                       수정 취소
                     </button>
                     <button
                       className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
-                      onClick={handleSaveEdit}
+                      onClick={handleSaveClick}
                     >
                       수정 완료
                     </button>
@@ -294,13 +347,34 @@ function MyInquiriesPage() {
                     문의 수정
                   </button>
                   <button
-                    onClick={() => handleDelete(selectedInquiry.id)}
+                    onClick={() => handleDeleteClick(selectedInquiry.id)}
                     className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                   >
                     문의 삭제
                   </button>
                 </>
               )}
+              <ConfirmModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onConfirm={handleConfirm}
+                title={
+                  modalType === 'delete'
+                    ? '문의 내역을 삭제하시겠습니까?'
+                    : modalType === 'save'
+                      ? '수정 내용을 저장하시겠습니까?'
+                      : '수정을 취소하시겠습니까?'
+                }
+                message={
+                  modalType === 'delete'
+                    ? '삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?'
+                    : modalType === 'save'
+                      ? '수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?'
+                      : '변경된 내용이 사라집니다.\n정말 취소하시겠습니까?'
+                }
+                confirmText="확인"
+                cancelText="취소"
+              />
             </div>
           )}
         </div>

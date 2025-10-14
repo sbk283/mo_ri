@@ -125,7 +125,7 @@ function IntroSection() {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-[23px] transform -translate-x-[-170px] pt-[42px]">
+                <div className="flex items-center gap-[23px] transform -translate-x-[-170px] pt-[50px]">
                   <img src="/images/mori_logo.svg" alt="" className="w-[75px] h-[24px]" />
                   <div>
                     <p className=" text-md font-semibold text-gray-500 leading-tight">
@@ -136,25 +136,12 @@ function IntroSection() {
                 </div>
                 <Link
                   to={'/login'}
-                  className="absolute transform -translate-x-[-570px] -translate-y-[-95px] "
+                  className="absolute transform -translate-x-[-570px] -translate-y-[-115px] "
                 >
                   <p className="text-xxl font-bold text-white  bg-brand w-[385px] text-center py-[6px] rounded-[5px]">
                     로그인
                   </p>
                 </Link>
-                <div className="absolute transform -translate-x-[-643px] -translate-y-[-164px] text-sm font-medium ">
-                  <Link to={'/signup'} className="text-gray-400">
-                    회원가입
-                  </Link>
-                  <span className="px-[16px] text-gray-400">|</span>
-                  <Link to={'/findid'} className="text-gray-400">
-                    아이디찾기
-                  </Link>
-                  <span className="px-[16px] text-gray-400">|</span>
-                  <Link to={'/findpw'} className="text-gray-400">
-                    비밀번호 찾기
-                  </Link>
-                </div>
               </>
             )}
           </div>

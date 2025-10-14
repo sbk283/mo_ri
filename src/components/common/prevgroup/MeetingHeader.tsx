@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import type { Swiper as SwiperClass } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
+import ConfirmModal from '../modal/ConfirmModal';
 import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';
 import SuccessModal from '../modal/SuccessModal';
-import ConfirmModal from '../modal/ConfirmModal';
+import MeetingCard from './MeetingCard';
 
 export interface MeetingHeaderProps {
   title: string;
@@ -28,15 +29,12 @@ function MeetingHeader({
   status,
   category,
   subCategory,
-  summary,
-  dday,
   duration,
   participants,
   images,
   isFavorite,
-  // mode,
+  mode, // 🟢 추가: mode 사용
   onFavoriteToggle,
-  // onApply,
 }: MeetingHeaderProps) {
   // 대표 이미지
   const [selectedImage, setSelectedImage] = useState<string>(
@@ -87,6 +85,24 @@ function MeetingHeader({
   };
   const handleCloseModal = () => {
     setConfirmOpen(false);
+  };
+
+  // 🟢 공유 버튼 클릭
+  const handleShareClick = () => {
+    if (mode === 'preview') return;
+    setShareOpen(true);
+  };
+
+  // 🟢 찜 버튼 클릭
+  const handleFavoriteClick = () => {
+    if (mode === 'preview') return;
+    setConfirmOpen(true);
+  };
+
+  // 🟢 참가 버튼 클릭
+  const handleJoinClick = () => {
+    if (mode === 'preview') return;
+    setOpen(true);
   };
 
   return (
@@ -142,48 +158,25 @@ function MeetingHeader({
 
       {/* 우측 정보 */}
       <div className="min-w-0">
-        <div className="w-full border border-[#c6c6c6] rounded-sm shadow p-4">
-          <div className="flex items-center justify-between gap-2 pb-5">
-            <span className="flex px-2 py-1 rounded-full bg-[#E06251] text-white text-[13px] font-semibold">
-              {status}
-            </span>
-
-            <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">{title}</h2>
-
-            <span className="text-white text-[15px] font-semibold bg-gray-700 rounded px-2">
-              {dday}
-            </span>
-          </div>
-
-          <p className="mt-1 text-[15px] text-gray-800 leading-snug line-clamp-2">
-            {summary || '간략 소개가 없습니다.'}
-          </p>
-
-          {/* 대분류 중분류 */}
-          <div className="flex items-center justify-between mt-7">
-            <div className="flex items-center justify-between text-[15px] gap-2">
-              <span className="text-[#D83737] font-semibold">
-                {category} &gt; {subCategory}
-              </span>
-
-              {/* 참여 인원 */}
-              <span className="flex items-center gap-1 text-gray-600">
-                <img src="/people_dark.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
-                {participants}
-              </span>
-            </div>
-
-            {/* 날짜 */}
-            <span className="text-gray-500 font-medium">{duration}</span>
-          </div>
-        </div>
+        <MeetingCard
+          title="[4주차] 마비노기 던전 공파 모집"
+          status="모집중"npm
+          dday="D-30"
+          summary="혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요. 마비노기 모바일 아닙니다."
+          category="취미/여가"
+          subCategory="게임/오락"
+          participants="2/10"
+          duration="2025.02.12 ~ 2025.05.12"
+          width={mode === 'preview' ? '553px' : '680px'}
+          height={mode === 'preview' ? '200px' : '180px'}
+        />
 
         {/* 액션 버튼 */}
         <div className="flex gap-4 mt-4 justify-end">
           {/* 공유 */}
           <button
             type="button"
-            onClick={() => setShareOpen(true)}
+            onClick={handleShareClick}
             className="flex flex-col items-center justify-center gap-1"
           >
             <img src="/images/share_dark.svg" alt="공유" className="w-6 h-6" />
@@ -193,7 +186,7 @@ function MeetingHeader({
           {/* 찜하기 */}
           <button
             type="button"
-            onClick={() => setConfirmOpen(true)}
+            onClick={handleFavoriteClick}
             className="flex flex-col items-center justify-center gap-1"
           >
             {isFavorite ? (
@@ -206,7 +199,7 @@ function MeetingHeader({
 
           {/* 참가하기 */}
           <button
-            onClick={() => setOpen(true)}
+            onClick={handleJoinClick}
             className="w-[210px] h-[50px] px-4 py-2 bg-brand text-white rounded-md"
           >
             참가하기
@@ -222,11 +215,11 @@ function MeetingHeader({
         isOpen={open}
         onClose={() => setOpen(false)}
         onSubmit={intro => {
-          console.log('참가신청 완료:', intro); // 참가 싲청 누르면 나오는 콘솔이라 메인에는 안뜸다 신경쓰이시면 지우겠슴다..
+          console.log('참가신청 완료:', intro);
           setOpen(false);
           setJoinSuccess(true);
         }}
-        group={dummyGroup} // 오류 수정 완료^^
+        group={dummyGroup}
       />
       <SuccessModal
         isOpen={joinSuccess}

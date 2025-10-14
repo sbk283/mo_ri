@@ -26,8 +26,8 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   return (
     <div className="flex flex-col p-8 bg-white rounded shadow space-y-6">
       <h2 className="text-2xl font-bold">미리보기 / 확정</h2>
-      <hr className="mb-6 pb-[51px] border-brand" />
-      <div className="p-8 bg-white rounded shadow space-y-8">
+      <hr className="mb-6 pb-3 border-brand" />
+      <div className="space-y-8">
         {/* 상단 MeetingHeader */}
         <MeetingHeader
           title={formData.title}

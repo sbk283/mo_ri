@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import InterestModal from '../common/modal/InterestModal';
 import CareerModal, { type CareerItem } from '../common/modal/CareerModal';
 import NicknameEditModal from '../common/modal/NicknameEditModal';
+import { supabase } from '../../lib/supabase';
 
 function PasswordEdit() {
   const [checked, setChecked] = useState(false);
@@ -64,6 +65,34 @@ function PasswordEdit() {
       setSelected([...selected, item]);
     }
   };
+
+  // 닉네임 저장 함수 (Supabase 연동)
+  // const handleNicknameSave = async (newName: string) => {
+  //   try {
+  //     const {
+  //       data: { user },
+  //     } = await supabase.auth.getUser();
+
+  //     if (!user) {
+  //       alert('로그인이 필요합니다.');
+  //       return;
+  //     }
+
+  //     const { error } = await supabase
+  //       .from('user_profiles')
+  //       .update({ nickname: newName })
+  //       .eq('user_id', user.id);
+
+  //     if (error) throw error;
+
+  //     setNickname(newName);
+  //     setIsNicknameEditModalOpen(false);
+  //     console.log('✅ 닉네임 업데이트 성공:', newName);
+  //   } catch (err) {
+  //     console.error('닉네임 업데이트 실패:', err);
+  //     alert('닉네임 변경 중 오류가 발생했습니다.');
+  //   }
+  // };
 
   return (
     <div>

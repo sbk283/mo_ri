@@ -90,7 +90,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (error) {
       return { error: error.message };
     }
-    console.log('카카오 로그인 성공 :', data);
+    // console.log('카카오 로그인 성공 :', data);
     return {};
   };
 

@@ -1,9 +1,60 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MyPageLayout from '../components/layout/MyPageLayout';
 import MypageMyGroupMenu from '../components/MypageMyGroupMenu';
+import { useAuth } from '../contexts/AuthContext';
+import { getProfile } from '../lib/profile';
 
 // 기본 회원 정보, 모임 참여이력, 모임 생성이력 출력해야합니다.
 function MyPage() {
+  const { user } = useAuth();
+  const [nickname, setNickname] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const profile = await getProfile(user.id);
+
+        if (profile) {
+          setNickname(profile.nickname || '사용자');
+          setName(profile.name || '');
+        } else {
+          console.log('프로필 정보가 없습니다.');
+        }
+      } catch (err) {
+        console.error('프로필 로드 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // 로딩중일때
+  if (loading) {
+    return (
+      <MyPageLayout>
+        <div className="text-center text-gray-400">불러오는 중...</div>
+      </MyPageLayout>
+    );
+  }
+  // 사용자 없다면
+  if (!user) {
+    return (
+      <MyPageLayout>
+        <div className="text-center text-gray-400">로그인이 필요합니다.</div>
+      </MyPageLayout>
+    );
+  }
+
   return (
     <MyPageLayout>
       {/* 상단 텍스트 부분 */}
@@ -29,7 +80,7 @@ function MyPage() {
         <div className="w-full">
           <div className="flex items-center justify-between mb-[10px]">
             <div className="text-brand text-xxl font-bold mb-[4px] ">
-              춤추는 낙타 <span className="text-black">님 반가워요✨</span>
+              {nickname} <span className="text-black">님 반가워요✨</span>
             </div>
             <Link
               to={'/mypagesetting'}
@@ -40,7 +91,7 @@ function MyPage() {
           </div>
 
           <div className="text-md text-gray-400 font-medium mb-[20px]">
-            유지선{''} | {''}(z.seon.dev@gmail.com)
+            {name || '이름없음'} | {user?.email || '이메일 없음'}
           </div>
           <div className=" border border-gray-300 mb-[12px]" />
           <div>

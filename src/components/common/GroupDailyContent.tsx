@@ -12,6 +12,7 @@ type Daily = {
   views?: number;
   isRead: boolean;
   likedCount?: number;
+  imageUrl?: string;
 };
 
 export const dailyMock: Daily[] = [
@@ -24,7 +25,7 @@ export const dailyMock: Daily[] = [
     date: '2025-06-26',
     isRead: true,
     writer: '홍길동',
-    likedCount: 5,
+    likedCount: 21,
   },
   {
     id: 2,
@@ -34,6 +35,8 @@ export const dailyMock: Daily[] = [
       '이번 레이드는 초보자도 참여할 수 있으며, 공략 설명과 역할 분배를 사전에 진행합니다. 회복 포션과 부활 스크롤은 필수이며, 음성 채팅 참여가 권장됩니다.',
     date: '2025-06-26',
     isRead: false,
+    writer: '홍길순',
+    likedCount: 5,
   },
   {
     id: 3,

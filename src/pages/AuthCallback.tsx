@@ -29,7 +29,9 @@ function AuthCallback() {
 
       if (data.session?.user) {
         const user = data.session.user;
-        const isAuthLogin = (user.app_metadata.provider === 'kakao') | 'google';
+        const isAuthLogin = user.app_metadata.provider === 'kakao' || 'google';
+        const isKakaoLogin = user.app_metadata.provider === 'kakao';
+        const isGoogleLogin = user.app_metadata.provider === 'google';
 
         let nickName = user.user_metadata.nickName;
         const email = user.email || '';
@@ -42,7 +44,7 @@ function AuthCallback() {
             user.user_metadata.full_name ||
             user.user_metadata.name ||
             user.email?.split('@')[0] ||
-            (loginType === '카카오 로그인' ? '카카오사용자' : '구글사용자');
+            (isKakaoLogin ? '카카오사용자' : isGoogleLogin ? '구글사용자' : '사용자');
         }
 
         const { data: existingProfile } = await supabase

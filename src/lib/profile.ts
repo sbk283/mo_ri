@@ -47,7 +47,7 @@ const updateProfile = async (editUserProfile: profileUpdate, userId: string): Pr
     const { error } = await supabase
       .from('user_profiles')
       .update({ ...editUserProfile })
-      .eq('id', userId);
+      .eq('user_id', userId);
     if (error) {
       console.log(error.message);
       return false;

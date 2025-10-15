@@ -46,7 +46,7 @@ function MyPage() {
       </MyPageLayout>
     );
   }
-  // 사용자 없다면
+  // 사용자 없다면(추후 확인 후 ui 작업 실행할거임.)
   if (!user) {
     return (
       <MyPageLayout>

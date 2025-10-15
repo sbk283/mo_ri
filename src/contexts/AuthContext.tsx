@@ -33,6 +33,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   // 현재 로그인한 사용자 정보
   const [user, setUser] = useState<User | null>(null);
+
   // 초기 세션 로드 및 인증 상태 변경 감시
   useEffect(() => {
     // 기존 세션이 있는지 확인
@@ -51,6 +52,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
       data.subscription.unsubscribe();
     };
   }, []);
+
   // 회원 가입 함수
   const signUp: AuthContextType['signUp'] = async (email, password) => {
     const { error } = await supabase.auth.signUp({

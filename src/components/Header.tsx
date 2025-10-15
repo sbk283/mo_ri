@@ -1,11 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getProfile } from '../lib/profile';
 
 const Header: React.FC = () => {
   const { user, session } = useAuth();
   const isLoggedIn = !!session;
-  const userName = user?.user_metadata?.nickname || user?.email?.split('@')[0];
+  const [nickname, setNickname] = useState<string>('');
+
+  useEffect(() => {
+    const fetchNickname = async () => {
+      if (!user) return;
+
+      // 카카오 로그인 시 metadata에서 바로 닉네임 가져오기
+      if (user.user_metadata?.nickname) {
+        setNickname(user.user_metadata.nickname);
+        return;
+      }
+
+      // DB(user_profiles)에서 닉네임 조회 (소셜로그인 외 사용자)
+      const profile = await getProfile(user.id);
+      if (profile?.nickname) {
+        setNickname(profile.nickname);
+      } else {
+        setNickname(user.email?.split('@')[0] || '');
+      }
+    };
+
+    fetchNickname();
+  }, [user]);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-card">
@@ -32,7 +55,7 @@ const Header: React.FC = () => {
           {/* 로그인 상태별 렌더링 */}
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
-              <span className="font-medium text-blue-600">{userName}님 반가워요 ✨</span>
+              <span className="font-medium text-blue-600">{nickname}님 반가워요 ✨</span>
               <Link to="/mypage" className="text-xs text-gray-500 hover:underline">
                 마이페이지
               </Link>

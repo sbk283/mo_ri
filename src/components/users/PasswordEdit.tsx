@@ -2,16 +2,20 @@
 import { Checkbox, Switch } from 'antd';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import InterestModal from '../common/modal/InterestModal';
-import CareerModal, { type CareerItem } from '../common/modal/CareerModal';
-import NicknameEditModal from '../common/modal/NicknameEditModal';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { getProfile } from '../../lib/profile';
+import CareerModal, { type CareerItem } from '../common/modal/CareerModal';
+import InterestModal from '../common/modal/InterestModal';
+import NicknameEditModal from '../common/modal/NicknameEditModal';
 
 function PasswordEdit() {
-  const [checked, setChecked] = useState(false);
+  const { user } = useAuth();
 
-  // 닉네임 변경
-  const [nickname, setNickname] = useState('불주먹햄스터');
+  // 닉네임 , 이름 상태
+  const [nickname, setNickname] = useState<string>('');
+  const [name, setName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true);
   const [isNicknameEditModalOpen, setIsNicknameEditModalOpen] = useState(false);
 
   // 관심사
@@ -26,6 +30,55 @@ function PasswordEdit() {
   const [profileFile, setProfileFile] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string>('/ham.png'); // 초기 이미지
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [checked, setChecked] = useState(false);
+  // 프로필 불러오기
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const profile = await getProfile(user.id);
+        if (profile) {
+          setNickname(profile.nickname || '사용자');
+          setName(profile.name || '');
+        }
+      } catch (err) {
+        console.error('프로필 로드 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
+
+  // 닉네임 저장함수
+  const handleNicknameSave = async (newName: string) => {
+    try {
+      if (!user) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ nickname: newName })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setNickname(newName);
+      setIsNicknameEditModalOpen(false);
+      console.log('✅ 닉네임 업데이트 성공:', newName);
+    } catch (err) {
+      console.error('닉네임 업데이트 실패:', err);
+      alert('닉네임 변경 중 오류가 발생했습니다.');
+    }
+  };
 
   // 미리보기 URL 관리 (메모리 누수 방지)
   useEffect(() => {
@@ -66,33 +119,10 @@ function PasswordEdit() {
     }
   };
 
-  // 닉네임 저장 함수 (Supabase 연동)
-  // const handleNicknameSave = async (newName: string) => {
-  //   try {
-  //     const {
-  //       data: { user },
-  //     } = await supabase.auth.getUser();
-
-  //     if (!user) {
-  //       alert('로그인이 필요합니다.');
-  //       return;
-  //     }
-
-  //     const { error } = await supabase
-  //       .from('user_profiles')
-  //       .update({ nickname: newName })
-  //       .eq('user_id', user.id);
-
-  //     if (error) throw error;
-
-  //     setNickname(newName);
-  //     setIsNicknameEditModalOpen(false);
-  //     console.log('✅ 닉네임 업데이트 성공:', newName);
-  //   } catch (err) {
-  //     console.error('닉네임 업데이트 실패:', err);
-  //     alert('닉네임 변경 중 오류가 발생했습니다.');
-  //   }
   // };
+
+  // 로딩중..
+  if (loading) return <div className="text-gray-400">불러오는 중...</div>;
 
   return (
     <div>
@@ -153,12 +183,12 @@ function PasswordEdit() {
           <div className="text-lg text-gray-200 font-medium">
             <div className="flex mb-[23px]">
               <label className="w-[100px] text-gray-400 font-semibold">이름</label>
-              <p>홍길동</p>
+              <p>{name || '이름없음'}</p>
             </div>
 
             <div className="flex  mb-[23px]">
               <label className="w-[100px] text-gray-400 font-semibold">아이디</label>
-              <p>z.seon.dev@gmail.com</p>
+              <p>{user?.email || '이름없음'}</p>
             </div>
 
             <div className="flex mb-[10px] items-center justify-between">
@@ -174,10 +204,7 @@ function PasswordEdit() {
                 <NicknameEditModal
                   currentNickname={nickname}
                   onClose={() => setIsNicknameEditModalOpen(false)}
-                  onSave={newName => {
-                    setNickname(newName);
-                    setIsNicknameEditModalOpen(false);
-                  }}
+                  onSave={handleNicknameSave}
                 />
               )}
             </div>

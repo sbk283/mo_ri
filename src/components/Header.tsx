@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile } from '../lib/profile';
+import { supabase } from '../lib/supabase';
 
 const Header: React.FC = () => {
   const { user, session } = useAuth();
   const isLoggedIn = !!session;
   const [nickname, setNickname] = useState<string>('');
+  const navigate = useNavigate(); // 로그아웃 후 리다이렉트
 
   useEffect(() => {
     const fetchNickname = async () => {
@@ -18,7 +20,7 @@ const Header: React.FC = () => {
         return;
       }
 
-      // DB(user_profiles)에서 닉네임 조회 (소셜로그인 외 사용자)
+      // 일반 회원 - DB(user_profiles)에서 닉네임 조회
       const profile = await getProfile(user.id);
       if (profile?.nickname) {
         setNickname(profile.nickname);
@@ -29,6 +31,18 @@ const Header: React.FC = () => {
 
     fetchNickname();
   }, [user]);
+
+  // 로그아웃 함수
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      console.error('로그아웃 실패:', error.message);
+      return;
+    }
+    // 세션 초기화 후 메인으로 이동
+    navigate('/');
+    window.location.reload();
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-card">
@@ -54,11 +68,19 @@ const Header: React.FC = () => {
 
           {/* 로그인 상태별 렌더링 */}
           {isLoggedIn ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-4">
               <span className="font-medium text-blue-600">{nickname}님 반가워요 ✨</span>
               <Link to="/mypage" className="text-xs text-gray-500 hover:underline">
                 마이페이지
               </Link>
+
+              {/* 로그아웃 버튼 */}
+              <button
+                onClick={handleLogout}
+                className="font-bold border px-5 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
+              >
+                로그아웃
+              </button>
             </div>
           ) : (
             <Link

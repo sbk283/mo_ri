@@ -1,4 +1,4 @@
-// 모임 생성 - StepOne 관심사 설정
+// 모임 생성 - StepOne 카테고리 설정
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,8 +15,8 @@ function InterestSelector({ major, sub, onChange }: InterestSelectorProps) {
   const [subOpen, setSubOpen] = useState(false);
 
   return (
-    <section className="flex gap-10">
-      <label className="flex items-center font-semibold mb-2 text-lg">관심사 설정</label>
+    <section className="flex gap-[58px]">
+      <label className="flex items-center font-semibold mb-2 text-lg">카테고리</label>
       <div className="flex gap-4">
         {/* 대분류 */}
         <div className="relative w-[214px]">

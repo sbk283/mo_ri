@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import GroupPagination from '../common/GroupPagination';
 import GroupContentDetail from './GroupContentDetail';
 
-type Notice = {
+export type Notice = {
   id: number;
   title: string;
   content: string;

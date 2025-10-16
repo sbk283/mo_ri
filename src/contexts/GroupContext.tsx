@@ -1,14 +1,14 @@
-import { supabase } from '../lib/supabase';
-import { useAuth } from './AuthContext';
-import type { GroupInsertPayload, groups, groupsUpdate } from '../types/group';
 import {
   createContext,
-  useState,
   useCallback,
-  useEffect,
   useContext,
+  useEffect,
+  useState,
   type PropsWithChildren,
 } from 'react';
+import { supabase } from '../lib/supabase';
+import type { GroupFormData, groups, groupsUpdate } from '../types/group';
+import { useAuth } from './AuthContext';
 
 interface GroupContextType {
   groups: groups[];
@@ -17,7 +17,7 @@ interface GroupContextType {
   error: string | null;
   fetchGroups: (slug?: string) => Promise<void>;
   fetchGroupById: (groupId: string) => Promise<void>;
-  createGroup: (newGroup: Omit<GroupInsertPayload, 'created_by'>) => Promise<void>;
+  createGroup: (formData: GroupFormData) => Promise<void>;
   updateGroup: (groupId: string, updates: groupsUpdate) => Promise<void>;
   deleteGroup: (groupId: string) => Promise<void>;
 }
@@ -48,29 +48,76 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   }, []);
 
-  // 그룹 생성
+  // 그룹 생성 (이미지 업로드 + image_urls 업데이트까지 포함)
   const createGroup = useCallback(
-    async (newGroup: Omit<GroupInsertPayload, 'created_by'>) => {
+    async (formData: GroupFormData) => {
       if (!user) throw new Error('로그인 후 이용해주세요.');
       setLoading(true);
+      try {
+        // 그룹 정보 생성
+        const { data: inserted, error: insertError } = await supabase
+          .from('groups')
+          .insert({
+            group_title: formData.title,
+            group_region: formData.regionFree ? null : formData.region,
+            group_short_intro: formData.summary,
+            group_content: formData.description,
+            group_start_day: formData.startDate,
+            group_end_day: formData.endDate,
+            group_kind:
+              formData.interestMajor === '운동/건강'
+                ? 'sports'
+                : formData.interestMajor === '스터디/학습'
+                  ? 'study'
+                  : formData.interestMajor === '취미/여가'
+                    ? 'hobby'
+                    : formData.interestMajor === '봉사/사회참여'
+                      ? 'volunteer'
+                      : 'etc',
+            group_capacity: formData.memberCount,
+            group_region_any: formData.regionFree,
+            status: 'recruiting',
+            created_by: user.id,
+          })
+          .select('group_id')
+          .single();
 
-      const payload: GroupInsertPayload = {
-        group_title: newGroup.group_title,
-        group_region: newGroup.group_region_any ? null : newGroup.group_region,
-        group_short_intro: newGroup.group_short_intro ?? '',
-        group_content: newGroup.group_content ?? '',
-        group_start_day: newGroup.group_start_day,
-        group_end_day: newGroup.group_end_day,
-        group_kind: newGroup.group_kind,
-        status: 'recruiting',
-        group_capacity: newGroup.group_capacity ?? 0,
-        group_region_any: newGroup.group_region_any ?? false,
-        created_by: user.id,
-      };
+        if (insertError) throw insertError;
+        if (!inserted) throw new Error('그룹 생성 데이터가 반환되지 않았습니다.');
 
-      const { error } = await supabase.from('groups').insert(payload);
-      if (error) throw error;
-      await fetchGroups();
+        const groupId = inserted.group_id;
+        const uploadedUrls: string[] = [];
+
+        // 스토리지 업로드: 폴더 이름 주의하자 유비야!!!!!!!!!!! (bucket: group-images)
+        for (const file of formData.images) {
+          const path = `groups/${groupId}/${file.name}`;
+          const { error: uploadError } = await supabase.storage
+            .from('group-images')
+            .upload(path, file, {
+              upsert: false,
+            });
+          if (uploadError && uploadError.message !== 'The resource already exists')
+            throw uploadError;
+
+          const { data: publicUrlData } = supabase.storage.from('group-images').getPublicUrl(path);
+          if (publicUrlData?.publicUrl) uploadedUrls.push(publicUrlData.publicUrl);
+        }
+
+        // image_urls 컬럼 업데이트
+        const { error: updateError } = await supabase
+          .from('groups')
+          .update({ image_urls: uploadedUrls })
+          .eq('group_id', groupId);
+        if (updateError) throw updateError;
+
+        console.log('그룹 생성 성공:', groupId, uploadedUrls);
+        await fetchGroups();
+      } catch (err: any) {
+        console.error('그룹 생성 실패:', err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
     },
     [user, fetchGroups],
   );

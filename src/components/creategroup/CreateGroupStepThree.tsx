@@ -20,34 +20,10 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const handleSubmit = async () => {
     try {
       setSubmitting(true);
-
-      // Supabase에 저장할 데이터 매핑
-      await createGroup({
-        group_title: formData.title,
-        group_region: formData.region,
-        group_short_intro: formData.summary,
-        group_content: formData.description,
-        group_start_day: formData.startDate,
-        group_end_day: formData.endDate,
-        group_kind:
-          formData.interestMajor === '운동/건강'
-            ? 'sports'
-            : formData.interestMajor === '스터디/학습'
-              ? 'study'
-              : formData.interestMajor === '취미/여가'
-                ? 'hobby'
-                : formData.interestMajor === '봉사/사회참여'
-                  ? 'volunteer'
-                  : 'etc',
-        group_capacity: formData.memberCount,
-        group_region_any: formData.regionFree,
-        status: 'recruiting', // 관리자 승인 기능 전까지는 즉시 모집중 상태로 (관리자 승인 로직은 나중에 status: 'pending'만 바꾸면 됨!!)
-      });
-
-      setOpen(true); // 성공 시 모달 오픈
+      await createGroup(formData);
+      setOpen(true);
     } catch (error) {
-      console.error('모임 등록 실패:', error);
-      alert('모임 등록 중 오류가 발생했습니다.');
+      console.error(error);
     } finally {
       setSubmitting(false);
     }
@@ -82,10 +58,10 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         {/* 모임 소개 - 이 안에 모임장, 커리큘럼 다모아놈 */}
         <MeetingTabs
           intro={formData.description}
-          curriculum={formData.curriculum.map((c, i) => ({
+          curriculum={formData.curriculum.map(c => ({
             title: c.title,
             detail: c.detail,
-            files: formData.files?.[i]?.map(f => URL.createObjectURL(f)) ?? [],
+            files: c.files ? c.files.map(f => URL.createObjectURL(f)) : [],
           }))}
           leader={{
             name: formData.leaderName,

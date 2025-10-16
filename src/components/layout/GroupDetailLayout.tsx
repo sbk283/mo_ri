@@ -1,45 +1,68 @@
-// 모임 상세보기 레이아웃
-
+// src/components/layout/GroupDetailLayout.tsx
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { dummyGroups } from '../../mocks/groups';
+import { supabase } from '../../lib/supabase';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
 
+interface GroupData {
+  group_id: string;
+  group_title: string;
+  group_region: string | null;
+  group_short_intro: string | null;
+  group_content: string | null;
+  group_start_day: string;
+  group_end_day: string;
+  group_kind: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
+  status: 'recruiting' | 'closed' | 'finished';
+  group_capacity: number | null;
+  group_region_any: boolean;
+  created_by: string | null;
+  group_created_at: string;
+  group_updated_at: string;
+}
+
 function GroupDetailLayout() {
   const { id } = useParams<{ id: string }>();
+  const [group, setGroup] = useState<GroupData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 유효성 체크
-  const groupId = Number(id);
-  if (!id || Number.isNaN(groupId)) {
-    return (
-      <div className="flex justify-center items-center h-80 text-gray-500">
-        잘못된 주소입니다. (id 없음/숫자 아님)
-      </div>
-    );
-  }
+  // 데이터 불러오기
+  useEffect(() => {
+    const fetchGroup = async () => {
+      if (!id) return;
+      setLoading(true);
+      const { data, error } = await supabase.from('groups').select('*').eq('group_id', id).single();
+      if (error) {
+        console.error('그룹 불러오기 실패:', error);
+      } else {
+        setGroup(data);
+      }
+      setLoading(false);
+    };
+    fetchGroup();
+  }, [id]);
 
-  const group = dummyGroups.find(g => g.id === groupId);
-  if (!group) {
+  if (loading)
+    return <div className="flex justify-center items-center h-80 text-gray-500">로딩 중...</div>;
+
+  if (!group)
     return (
       <div className="flex justify-center items-center h-80 text-gray-500">
         해당 모임을 찾을 수 없습니다.
       </div>
     );
-  }
 
-  // 이미지 3장 이상 없으면 썸네일 + 가짜 이미지 목데이터 채워버림
-  const imagesForHeader =
-    group.images && group.images.length > 1
-      ? group.images
-      : [
-          group.thumbnail,
-          `https://picsum.photos/seed/${group.id}-2/640/360`,
-          `https://picsum.photos/seed/${group.id}-3/640/360`,
-        ];
+  // d-day 계산
+  const calcDday = (end: string) => {
+    const today = new Date();
+    const endDate = new Date(end);
+    const diff = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? `D-${diff}` : diff === 0 ? 'D-DAY' : `종료됨`;
+  };
 
   return (
     <div className="mx-auto w-[1024px] py-10 space-y-8">
-      {/* 헤더 */}
       <header className="mb-10">
         <h1 className="text-xl font-bold">모임리스트 &gt; 상세보기</h1>
         <div className="mt-2 border-l-4 border-brand pl-3">
@@ -51,52 +74,46 @@ function GroupDetailLayout() {
           </p>
         </div>
       </header>
-      {/* 상단 헤더 */}
+
+      {/* MeetingHeader 연결 */}
       <MeetingHeader
-        title={group.title}
-        status={group.status}
-        category={group.category}
-        subCategory={group.subCategory}
-        summary={group.desc}
-        dday={group.dday}
-        duration={group.duration}
-        participants={`${group.memberCount}/${group.memberLimit}`}
-        images={imagesForHeader}
+        title={group.group_title}
+        status={
+          group.status === 'recruiting'
+            ? '모집중'
+            : group.status === 'closed'
+              ? '모집종료'
+              : '모임종료'
+        }
+        category={group.group_kind}
+        subCategory={group.group_region ?? '지역 무관'}
+        summary={group.group_short_intro ?? ''}
+        dday={calcDday(group.group_end_day)}
+        duration={`${group.group_start_day} ~ ${group.group_end_day}`}
+        participants={`0/${group.group_capacity ?? 0}`}
+        images={[
+          `https://picsum.photos/seed/${group.group_id}/640/360`,
+          `https://picsum.photos/seed/${group.group_id}-2/640/360`,
+          `https://picsum.photos/seed/${group.group_id}-3/640/360`,
+        ]}
         isFavorite={false}
         mode="detail"
         onFavoriteToggle={() => console.log('찜')}
         onApply={() => console.log('신청')}
       />
 
-      {/* 목데이터 탭 (소개 / 커리큘럼 / 모임장) - 추후 수정할것임! */}
+      {/* MeetingTabs 연결 */}
       <MeetingTabs
-        intro={group.desc}
+        intro={group.group_content ?? ''}
         curriculum={[
-          {
-            title: '첫 주: 오리엔테이션 및 아이스브레이킹',
-            detail: '서로 친해지고 기본 규칙을 공유합니다.',
-            files: ['https://picsum.photos/seed/c1/200/150'],
-          },
-          {
-            title: '둘째 주: 심화 학습 및 실습',
-            detail: '실제 예제를 통해 심화된 학습을 진행합니다.',
-            files: ['https://picsum.photos/seed/c2/200/150'],
-          },
-          {
-            title: '셋째 주: 프로젝트 진행',
-            detail: '팀별 프로젝트를 구성하여 진행합니다.',
-            files: ['https://picsum.photos/seed/c3/200/150'],
-          },
-          {
-            title: '넷째 주: 발표 및 피드백',
-            detail: '완성된 프로젝트를 발표하고 피드백을 공유합니다.',
-            files: ['https://picsum.photos/seed/c4/200/150'],
-          },
+          { title: '1주차 OT', detail: '모임 오리엔테이션 및 자기소개', files: [] },
+          { title: '2주차', detail: '팀 빌딩 및 기초 실습', files: [] },
+          { title: '3주차', detail: '중간 프로젝트 진행', files: [] },
         ]}
         leader={{
           name: '홍길동',
-          location: '서울',
-          career: '10년 경력의 전문가이며, 다수의 프로젝트를 진행했습니다.',
+          location: group.group_region ?? '미정',
+          career: '해당 모임의 호스트 정보는 곧 연결됩니다.',
         }}
       />
     </div>

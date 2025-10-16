@@ -221,6 +221,7 @@ export type Database = {
       groups: {
         Row: {
           created_by: string | null
+          curriculum: Json | null
           group_capacity: number | null
           group_content: string | null
           group_created_at: string
@@ -234,10 +235,12 @@ export type Database = {
           group_start_day: string
           group_title: string
           group_updated_at: string
+          image_urls: string[] | null
           status: Database["public"]["Enums"]["group_status_enum"]
         }
         Insert: {
           created_by?: string | null
+          curriculum?: Json | null
           group_capacity?: number | null
           group_content?: string | null
           group_created_at?: string
@@ -251,10 +254,12 @@ export type Database = {
           group_start_day: string
           group_title: string
           group_updated_at?: string
+          image_urls?: string[] | null
           status?: Database["public"]["Enums"]["group_status_enum"]
         }
         Update: {
           created_by?: string | null
+          curriculum?: Json | null
           group_capacity?: number | null
           group_content?: string | null
           group_created_at?: string
@@ -268,6 +273,7 @@ export type Database = {
           group_start_day?: string
           group_title?: string
           group_updated_at?: string
+          image_urls?: string[] | null
           status?: Database["public"]["Enums"]["group_status_enum"]
         }
         Relationships: [
@@ -414,7 +420,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      unaccent: {
+        Args: { "": string }
+        Returns: string
+      }
+      unaccent_init: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
     }
     Enums: {
       group_kind_enum: "study" | "hobby" | "sports" | "volunteer" | "etc"

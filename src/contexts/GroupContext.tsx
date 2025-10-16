@@ -1,15 +1,9 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type PropsWithChildren,
-} from 'react';
+import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
 import { supabase } from '../lib/supabase';
 import type { GroupFormData, groups, groupsUpdate } from '../types/group';
 import { useAuth } from './AuthContext';
 
+// 그룹 관련 컨텍스트 타입 정의
 interface GroupContextType {
   groups: groups[];
   currentGroup: groups | null;
@@ -22,6 +16,7 @@ interface GroupContextType {
   deleteGroup: (groupId: string) => Promise<void>;
 }
 
+// 컨텍스트 생성
 const GroupContext = createContext<GroupContextType | null>(null);
 
 export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -48,13 +43,36 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   }, []);
 
-  // 그룹 생성 (이미지 업로드 + image_urls 업데이트까지 포함)
+  // 그룹 생성
   const createGroup = useCallback(
     async (formData: GroupFormData) => {
       if (!user) throw new Error('로그인 후 이용해주세요.');
       setLoading(true);
+
       try {
-        // 그룹 정보 생성
+        // 1. 버킷 존재 확인 (없으면 자동 생성)
+        const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
+        if (bucketError) throw new Error(`스토리지 버킷 조회 실패: ${bucketError.message}`);
+
+        const hasBucket = buckets.some(b => b.name === 'group-images');
+        if (!hasBucket) {
+          const { error: createBucketError } = await supabase.storage.createBucket('group-images', {
+            public: true,
+          });
+          if (createBucketError)
+            throw new Error(`스토리지 버킷 생성 실패: ${createBucketError.message}`);
+          console.log('group-images 버킷 자동 생성 완료');
+        }
+
+        // 2. 파일명 안전하게 변환하는 유틸
+        const sanitizeFileName = (name: string) =>
+          encodeURIComponent(
+            name
+              .replace(/\s+/g, '_') // 공백 -> _
+              .replace(/[^\w.-]/g, ''), // 한글, 특수문자 제거
+          );
+
+        // 3. 그룹 기본 데이터 생성
         const { data: inserted, error: insertError } = await supabase
           .from('groups')
           .insert({
@@ -83,34 +101,87 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .single();
 
         if (insertError) throw insertError;
-        if (!inserted) throw new Error('그룹 생성 데이터가 반환되지 않았습니다.');
-
         const groupId = inserted.group_id;
-        const uploadedUrls: string[] = [];
 
-        // 스토리지 업로드: 폴더 이름 주의하자 유비야!!!!!!!!!!! (bucket: group-images)
-        for (const file of formData.images) {
-          const path = `groups/${groupId}/${file.name}`;
-          const { error: uploadError } = await supabase.storage
-            .from('group-images')
-            .upload(path, file, {
-              upsert: false,
-            });
-          if (uploadError && uploadError.message !== 'The resource already exists')
-            throw uploadError;
+        // 그룹 생성 직후, 생성자를 host로 멤버 등록
+        const { error: hostInsertError } = await supabase.from('group_members').insert({
+          group_id: groupId,
+          user_id: user.id,
+          member_role: 'host',
+          member_status: 'approved',
+        });
 
-          const { data: publicUrlData } = supabase.storage.from('group-images').getPublicUrl(path);
-          if (publicUrlData?.publicUrl) uploadedUrls.push(publicUrlData.publicUrl);
+        if (hostInsertError) {
+          console.error('그룹 멤버(host) 추가 실패:', hostInsertError.message);
+          throw hostInsertError;
         }
 
-        // image_urls 컬럼 업데이트
+        // 4. 커리큘럼 파일 업로드
+        const uploadedCurriculum = await Promise.all(
+          formData.curriculum.map(async (item, i) => {
+            const fileUrls: string[] = [];
+
+            if (item.files && item.files.length > 0) {
+              for (const file of item.files) {
+                const safeName = sanitizeFileName(`${i + 1}-${file.name}`);
+                const path = `groups/${groupId}/curriculum/${safeName}`;
+
+                const { error: uploadError } = await supabase.storage
+                  .from('group-images')
+                  .upload(path, file, { upsert: false });
+
+                if (uploadError && uploadError.message !== 'The resource already exists')
+                  throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                  .from('group-images')
+                  .getPublicUrl(path);
+
+                if (publicUrlData?.publicUrl) fileUrls.push(publicUrlData.publicUrl);
+              }
+            }
+
+            return { title: item.title, detail: item.detail, files: fileUrls };
+          }),
+        );
+
+        // 5. 대표 이미지 업로드
+        const uploadedUrls: string[] = [];
+        if (formData.images && formData.images.length > 0) {
+          for (const file of formData.images) {
+            const safeName = sanitizeFileName(file.name);
+            const path = `groups/${groupId}/${safeName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from('group-images')
+              .upload(path, file, { upsert: false });
+
+            if (uploadError && uploadError.message !== 'The resource already exists')
+              throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+              .from('group-images')
+              .getPublicUrl(path);
+
+            if (publicUrlData?.publicUrl) uploadedUrls.push(publicUrlData.publicUrl);
+          }
+        }
+
+        // 6. DB 업데이트 (image_urls + curriculum)
         const { error: updateError } = await supabase
           .from('groups')
-          .update({ image_urls: uploadedUrls })
+          .update({
+            image_urls: uploadedUrls.length > 0 ? uploadedUrls : null,
+            curriculum:
+              uploadedCurriculum && uploadedCurriculum.length > 0
+                ? JSON.stringify(uploadedCurriculum)
+                : null,
+          })
           .eq('group_id', groupId);
+
         if (updateError) throw updateError;
 
-        console.log('그룹 생성 성공:', groupId, uploadedUrls);
+        console.log('그룹 생성 성공:', groupId);
         await fetchGroups();
       } catch (err: any) {
         console.error('그룹 생성 실패:', err.message);
@@ -121,10 +192,6 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     },
     [user, fetchGroups],
   );
-
-  useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
 
   return (
     <GroupContext.Provider
@@ -145,6 +212,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
+// 컨텍스트 훅
 export function useGroup() {
   const ctx = useContext(GroupContext);
   if (!ctx) throw new Error('useGroup은 GroupProvider 안에서만 사용 가능합니다.');

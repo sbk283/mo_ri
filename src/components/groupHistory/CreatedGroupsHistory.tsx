@@ -1,6 +1,6 @@
 // 생성한 모임 이력 (생성된 것들만 )
 
-import { useState } from 'react';
+import { forwardRef, useImperativeHandle, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { userCareers, type userCareersType } from '../../mocks/userCareers';
 
@@ -8,36 +8,52 @@ interface CreatedGroupsHistoryProps {
   onCheckChange: (count: number) => void;
 }
 
-function CreatedGroupsHistory({ onCheckChange }: CreatedGroupsHistoryProps) {
-  const [careerItems, setCareerItems] = useState<userCareersType[]>(
-    userCareers.filter(career => career.created_by),
-  );
+const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroupsHistoryProps>(
+  ({ onCheckChange }, ref) => {
+    // t생성한 모임만 필터링
+    const [careerItems, setCareerItems] = useState<userCareersType[]>(
+      userCareers.filter(career => career.created_by),
+    );
 
-  // 체크박스 토글 함수
-  const handleCheckboxToggle = (id: number) => {
-    setCareerItems(prev => {
-      const updated = prev.map(item =>
-        item.id === id ? { ...item, isChecked: !item.isChecked } : item,
+    // 체크박스 토글 함수
+    const handleCheckboxToggle = (id: number) => {
+      setCareerItems(prev => {
+        const updated = prev.map(item =>
+          item.id === id ? { ...item, isChecked: !item.isChecked } : item,
+        );
+        // 체크된 개수를 부모에게 전달
+        const checkedCount = updated.filter(item => item.isChecked).length;
+        onCheckChange(checkedCount);
+        return updated;
+      });
+    };
+
+    // 전체선택 함수
+    const selectAll = () => {
+      setCareerItems(prev => {
+        const allChecked = prev.every(item => item.isChecked); // 모두 체크된 상태인지 확인
+        const updated = prev.map(item => ({ ...item, isChecked: !allChecked })); // 전체 토글
+        const checkedCount = updated.filter(item => item.isChecked).length;
+        onCheckChange(checkedCount);
+        return updated;
+      });
+    };
+
+    // 부모가 ref.current.selectAll() 호출 가능하도록 연결
+    useImperativeHandle(ref, () => ({
+      selectAll,
+    }));
+
+    if (careerItems.length === 0) {
+      return (
+        <div className="text-center py-20 text-gray-400 font-bold">생성한 모임이 없습니다.</div>
       );
+    }
 
-      // ✅ 체크된 개수를 부모에게 전달
-      const checkedCount = updated.filter(item => item.isChecked).length;
-      onCheckChange(checkedCount);
-
-      return updated;
-    });
-  };
-
-  if (careerItems.length === 0) {
-    return <div className="text-center py-20 text-gray-400 font-bold">생성한 모임이 없습니다.</div>;
-  }
-  return (
-    <div>
-      {/* 메뉴 클릭시 변경되는 부분 추후 데이터베이스 연동 해야함 */}
-      {careerItems.length === 0 ? (
-        <div className="text-center py-20 text-gray-400 font-bold">참여 이력이 없습니다.</div>
-      ) : (
-        careerItems.map(career => (
+    return (
+      <div>
+        {/* 메뉴 클릭시 변경되는 부분 추후 데이터베이스 연동 해야함 */}
+        {careerItems.map(career => (
           <div
             key={career.id}
             className="flex border-[1px] border-gray-300 rounded-[5px] py-[23px] px-[26px] items-center mb-[10px]"
@@ -91,10 +107,10 @@ function CreatedGroupsHistory({ onCheckChange }: CreatedGroupsHistoryProps) {
               상세보기
             </Link>
           </div>
-        ))
-      )}
-    </div>
-  );
-}
+        ))}
+      </div>
+    );
+  },
+);
 
 export default CreatedGroupsHistory;

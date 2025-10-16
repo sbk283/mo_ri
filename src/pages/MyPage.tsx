@@ -4,6 +4,7 @@ import MyPageLayout from '../components/layout/MyPageLayout';
 import MypageMyGroupMenu from '../components/MypageMyGroupMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile } from '../lib/profile';
+import { supabase } from '../lib/supabase';
 
 // 기본 회원 정보, 모임 참여이력, 모임 생성이력 출력해야합니다.
 function MyPage() {
@@ -13,6 +14,8 @@ function MyPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [avatarUrl, setAvatarUrl] = useState<string>('/ham.png');
 
+  const [interests, setInterests] = useState<string[]>([]);
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
@@ -21,14 +24,41 @@ function MyPage() {
       }
 
       try {
+        //  기본 프로필 가져오기
         const profile = await getProfile(user.id);
-
         if (profile) {
           setNickname(profile.nickname || '사용자');
           setName(profile.name || '');
           setAvatarUrl(profile.avatar_url || '/ham.png');
-        } else {
-          console.log('프로필 정보가 없습니다.');
+        }
+
+        //  유저 관심사 id만 가져오기
+        const { data: userInterests, error: interestsError } = await supabase
+          .from('user_interests')
+          .select('category_sub_id')
+          .eq('user_id', user.id);
+
+        if (interestsError) {
+          console.error('관심사 로드 에러:', interestsError);
+        }
+
+        //  전체 카테고리 가져오기
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories_sub')
+          .select('sub_id, category_sub_name');
+
+        if (categoriesError) {
+          console.error('카테고리 로드 에러:', categoriesError);
+        }
+
+        // id -> name 매핑
+        if (userInterests && categories) {
+          const interestNames = userInterests.map((ui: any) => {
+            const cat = categories.find((c: any) => c.sub_id === ui.category_sub_id);
+            return cat?.category_sub_name || '이름없음';
+          });
+          setInterests(interestNames);
+          console.log('userInterests mapped:', interestNames);
         }
       } catch (err) {
         console.error('프로필 로드 실패:', err);
@@ -100,7 +130,20 @@ function MyPage() {
             <div className="text-md font-bold text-gray-400 mb-[9px]">내 관심 키워드</div>
             {/* 관심사 키워드 영역 추후 선택따라서 변경 가능하게~ */}
             <div className="flex gap-[14px]">
-              <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
+              {interests.length > 0 ? (
+                interests.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium"
+                  >
+                    {item}
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-300">선택된 관심사가 없습니다.</div>
+              )}
+
+              {/* <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
                 봉사 / 사회 참여
               </div>
               <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
@@ -108,7 +151,7 @@ function MyPage() {
               </div>
               <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
                 운동 / 건강
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

@@ -34,15 +34,16 @@ function PasswordEdit() {
 
   const [checked, setChecked] = useState(false);
 
-  // 프로필 불러오기
+  // 프로필 / 관심사 불러오기
   useEffect(() => {
-    const fetchProfile = async () => {
+    const fetchProfileAndInterests = async () => {
       if (!user) {
         setLoading(false);
         return;
       }
 
       try {
+        // 프로필 가져오기
         const profile = await getProfile(user.id);
         if (profile) {
           setNickname(profile.nickname || '사용자');
@@ -51,14 +52,44 @@ function PasswordEdit() {
           setAvatarUrl(avatar);
           setProfilePreview(avatar);
         }
+
+        // 유저 관심사 ID 가져오기
+        const { data: userInterests, error: interestsError } = await supabase
+          .from('user_interests')
+          .select('category_sub_id')
+          .eq('user_id', user.id);
+
+        if (interestsError) {
+          console.error('관심사 로드 에러:', interestsError);
+        }
+
+        // 전체 카테고리 가져오기
+        const { data: categories, error: categoriesError } = await supabase
+          .from('categories_sub')
+          .select('sub_id, category_sub_name'); // 🔑 컬럼명 주의
+
+        if (categoriesError) {
+          console.error('카테고리 로드 에러:', categoriesError);
+        }
+
+        // id -> name 매핑
+        if (userInterests && categories) {
+          const interestNames = userInterests.map((ui: any) => {
+            const cat = categories.find((c: any) => c.sub_id === ui.category_sub_id);
+            return cat?.category_sub_name || '이름없음';
+          });
+
+          setSelected(interestNames);
+          console.log('유저 관심사:', interestNames);
+        }
       } catch (err) {
-        console.error('프로필 로드 실패:', err);
+        console.error('프로필/관심사 로드 실패:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProfile();
+    fetchProfileAndInterests();
   }, [user]);
 
   // 닉네임 저장함수
@@ -197,11 +228,39 @@ function PasswordEdit() {
     }
   };
 
-  const toggleInterest = (item: string) => {
-    if (selected.includes(item)) {
-      setSelected(selected.filter(i => i !== item));
-    } else if (selected.length < 5) {
-      setSelected([...selected, item]);
+  const toggleInterest = async (item: string) => {
+    if (!user) return;
+
+    try {
+      // 전체 카테고리에서 sub_id 찾기
+      const { data: categories } = await supabase
+        .from('categories_sub')
+        .select('sub_id, category_sub_name');
+
+      const category = categories?.find(c => c.category_sub_name === item);
+      if (!category) return;
+
+      // 선택 해제
+      if (selected.includes(item)) {
+        await supabase
+          .from('user_interests')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('category_sub_id', category.sub_id);
+
+        setSelected(prev => prev.filter(i => i !== item));
+      }
+      // 선택 추가
+      else if (selected.length < 5) {
+        await supabase
+          .from('user_interests')
+          .insert({ user_id: user.id, category_sub_id: category.sub_id });
+
+        setSelected(prev => [...prev, item]);
+      }
+    } catch (err) {
+      console.error('관심사 업데이트 실패:', err);
+      alert('관심사 업데이트 중 오류가 발생했습니다.');
     }
   };
 

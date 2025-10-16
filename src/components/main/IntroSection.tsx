@@ -117,8 +117,8 @@ function IntroSection() {
                     <div className="flex justify-between font-bold text-lg">
                       <div>
                         {profile.nickname || '프로모임자1'}
-                        <span className="font-medium text-sm text-gray-200 ml-[5px]">
-                          환영합니다.
+                        <span className="font-medium text-sm text-gray-200 ml-[3px]">
+                          님 환영합니다.
                         </span>
                       </div>
                       <button onClick={() => supabase.auth.signOut()}>

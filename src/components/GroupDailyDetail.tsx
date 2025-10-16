@@ -27,7 +27,7 @@ export default function GroupDailyDetail(props: Props) {
   if (!resolvedId || !daily) {
     return (
       <div className="p-8 text-center">
-        <p>⚠️ 해당 공지를 찾을 수 없습니다.</p>
+        <p>⚠️ 해당 글을 찾을 수 없습니다.</p> {/* 변경: 문구 살짝 수정 */}
         <button
           onClick={goBack}
           className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -49,6 +49,22 @@ export default function GroupDailyDetail(props: Props) {
     }
     saveArray(LS_KEYS.dailies, updated);
     setEditMode(false);
+  };
+
+  const handleDelete = () => {
+    if (!resolvedId) return;
+    const ok = window.confirm('정말 삭제할까요? 되돌릴 수 없어요.');
+    if (!ok) return;
+
+    const list = loadArray<Daily>(LS_KEYS.dailies, []);
+    const updated = list.filter(n => n.id !== resolvedId);
+    saveArray(LS_KEYS.dailies, updated);
+
+    // 같은 탭에서도 목록이 즉시 갱신되게 커스텀 storage 이벤트 발행
+    window.dispatchEvent(new StorageEvent('storage', { key: LS_KEYS.dailies } as StorageEventInit));
+
+    // 상세 닫고 목록으로 (탭 유지)
+    goBack();
   };
 
   const cardVariants = {
@@ -227,9 +243,7 @@ export default function GroupDailyDetail(props: Props) {
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                  onClick={() => {
-                    /* TODO: 삭제 로직 */
-                  }}
+                  onClick={handleDelete}
                 >
                   삭제
                 </motion.button>

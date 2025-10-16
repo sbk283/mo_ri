@@ -1,5 +1,5 @@
-import React, { useLayoutEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import GroupContentBox from './GroupContentBox';
 import GroupContentNon from './GroupContentNon';
 

@@ -4,33 +4,31 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { userCareers, type userCareersType } from '../../mocks/userCareers';
 
-function CreatedGroupsHistory() {
-  const [careerItems, setCareerItems] = useState<userCareersType[]>(userCareers);
+interface CreatedGroupsHistoryProps {
+  onCheckChange: (count: number) => void;
+}
 
-  // 생성한 모임만 필터
-  const createdItems = userCareers.filter(item => item.created_by);
+function CreatedGroupsHistory({ onCheckChange }: CreatedGroupsHistoryProps) {
+  const [careerItems, setCareerItems] = useState<userCareersType[]>(
+    userCareers.filter(career => career.created_by),
+  );
 
   // 체크박스 토글 함수
   const handleCheckboxToggle = (id: number) => {
-    setCareerItems(prev =>
-      prev.map(item => (item.id === id ? { ...item, isChecked: !item.isChecked } : item)),
-    );
+    setCareerItems(prev => {
+      const updated = prev.map(item =>
+        item.id === id ? { ...item, isChecked: !item.isChecked } : item,
+      );
+
+      // ✅ 체크된 개수를 부모에게 전달
+      const checkedCount = updated.filter(item => item.isChecked).length;
+      onCheckChange(checkedCount);
+
+      return updated;
+    });
   };
 
-  // 체크된 항목
-  const checkedItems = careerItems.filter(item => item.isChecked);
-
-  // 출력 버튼 핸들러
-  const handlePrint = () => {
-    if (checkedItems.length === 0) {
-      alert('출력할 항목을 선택해주세요.');
-      return;
-    }
-    console.log('출력할 항목들:', checkedItems);
-    // 실제 출력 로직 구현
-  };
-
-  if (createdItems.length === 0) {
+  if (careerItems.length === 0) {
     return <div className="text-center py-20 text-gray-400 font-bold">생성한 모임이 없습니다.</div>;
   }
   return (

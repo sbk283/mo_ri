@@ -1,92 +1,93 @@
-// 그룹리스트 카드 컴포넌트. 위에서 말고
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 export type GroupListCardProps = {
-  id: number;
-  title: string;
-  status: '모집중' | '모집예정' | '서비스종료';
-  category: string;
-  subCategory: string;
-  desc: string;
-  dday: string;
-  thumbnail: string;
-  memberCount: number;
-  memberLimit: number;
-  duration: string;
+  group_id: string;
+  group_title: string;
+  group_short_intro?: string | null;
+  group_kind: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
+  status: 'recruiting' | 'closed' | 'finished';
+  group_capacity?: number | null;
+  group_start_day: string;
+  group_end_day: string;
 };
 
 function GroupListCard({
-  id,
-  title,
+  group_id,
+  group_title,
+  group_short_intro,
+  group_kind,
   status,
-  category,
-  subCategory,
-  desc,
-  dday,
-  thumbnail,
-  memberCount,
-  memberLimit,
-  duration,
+  group_capacity,
+  group_start_day,
+  group_end_day,
 }: GroupListCardProps) {
   const navigate = useNavigate();
+
+  const statusLabel: Record<GroupListCardProps['status'], string> = {
+    recruiting: '모집중',
+    closed: '모집마감',
+    finished: '모임종료',
+  };
+
+  const kindLabel: Record<GroupListCardProps['group_kind'], string> = {
+    study: '스터디/학습',
+    hobby: '취미/여가',
+    sports: '운동/건강',
+    volunteer: '봉사/사회참여',
+    etc: '기타',
+  };
+
+  const dday = Math.ceil(
+    (new Date(group_end_day).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+  );
+
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -20 }} // 위에서 올라옴
-      animate={{ opacity: 1, y: 0 }} // 자연스럽게 보임
-      exit={{ opacity: 0, y: 20 }} // 위로 사라짐
-      onClick={() => navigate(`/groupdetail/${id}`)}
-      transition={{ duration: 0.3 }}
-      className="h-[175px] w-[1024px] flex items-start gap-2 rounded-sm border border-[#D9D9D9] bg-white shadow-sm hover:shadow-md transition cursor-pointer"
+      onClick={() => navigate(`/groupdetail/${group_id}`)}
+      className="h-[175px] w-[1024px] flex items-start gap-2 border rounded-sm bg-white shadow-sm hover:shadow-md cursor-pointer"
     >
-      {/* 썸네일 */}
       <img
-        src={thumbnail}
+        src="https://i.ibb.co/s5cD7JG/default-group-thumb.jpg"
         alt="모임 이미지"
-        className="h-[175px] w-[300px] rounded-tl-sm rounded-bl-sm object-cover"
+        className="h-[175px] w-[300px] object-cover rounded-l-sm"
       />
 
-      {/* 정보 */}
-      <div className="flex-1 pt-[21px] pl-[22px]">
-        {/* 모집상태 + 제목 */}
+      <div className="flex-1 p-4">
         <div className="flex items-center gap-2">
-          <span className="flex w-[60px] h-[23px] items-center justify-center rounded-sm bg-[#FF5252] text-xs font-semibold text-white whitespace-nowrap">
-            {status}
+          <span
+            className={`px-2 py-1 text-xs font-bold text-white rounded-sm ${
+              status === 'recruiting'
+                ? 'bg-[#FF5252]'
+                : status === 'closed'
+                  ? 'bg-gray-400'
+                  : 'bg-gray-600'
+            }`}
+          >
+            {statusLabel[status]}
           </span>
-          <h3 className="font-semibold text-sm flex items-center gap-[13px]">
-            {title}
-            <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4" />
-          </h3>
-          {/* D-day */}
-          <span className="flex w-[40px] h-[21px] items-center justify-center rounded-sm bg-[#BEC0C4] text-[11px] font-extrabold text-white">
-            {dday}
-          </span>
-          {/* 원데이 (예시용 고정) */}
-          <span className="flex w-[47px] h-[21px] items-center justify-center rounded-sm bg-[#FBAB17] text-[11px] font-bold text-white">
-            원데이
+
+          <h3 className="text-sm font-semibold">{group_title}</h3>
+          <span className="bg-[#BEC0C4] text-[11px] px-2 py-[2px] rounded-sm text-white font-bold">
+            D-{dday}
           </span>
         </div>
 
-        {/* 설명 */}
-        <p className="mt-[26px] text-sm text-[#818181]">{desc}</p>
+        <p className="mt-3 text-sm text-gray-600 line-clamp-1">
+          {group_short_intro ?? '소개글이 없습니다.'}
+        </p>
 
-        {/* 하단 메타 */}
-        <div className="mt-[42px] flex items-center justify-between text-xs text-gray-500">
-          {/* 좌측: 카테고리 + 멤버 */}
+        <div className="mt-6 flex items-center justify-between text-xs text-gray-500">
           <div className="flex items-center gap-2">
-            <p className="font-semibold text-[#FF5252] text-md">
-              {category} &gt;{' '}
-              <span className="font-semibold text-gray-200 text-md mr-11">{subCategory}</span>
-            </p>
+            <p className="text-[#FF5252] font-semibold">{kindLabel[group_kind]}</p>
             <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
-            <span className="text-[#767676]">
-              {memberCount}/{memberLimit}
-            </span>
+            <span>{group_capacity ?? 0}명</span>
           </div>
 
-          {/* 우측: 기간 */}
-          <span className="text-md text-[#777] mr-6">{duration}</span>
+          <span>
+            {group_start_day} ~ {group_end_day}
+          </span>
         </div>
       </div>
     </motion.div>

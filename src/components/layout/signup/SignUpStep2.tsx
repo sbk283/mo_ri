@@ -1,5 +1,8 @@
 import { Button } from 'antd';
 import { useState } from 'react';
+import { supabase } from '../../../lib/supabase';
+import { saveUserInterests } from '../../../lib/interests';
+import { useCategorySubs } from '../../../hooks/useCategoriesSub';
 
 interface SignUpStep2Props {
   onSubmit: (selectedItems: string[]) => void;
@@ -30,9 +33,44 @@ const categories = [
 
 function SignUpStep2({ onSubmit }: SignUpStep2Props) {
   const [selected, setSelected] = useState<string[]>([]);
+  const [saving, setSaving] = useState(false);
+  const { subCategories, loading, error } = useCategorySubs();
+  const categorySubs = useCategorySubs();
+
+  console.log('subCategories:', subCategories, loading, error);
 
   const toggleSelect = (item: string) => {
     setSelected(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+  };
+
+  const handleNext = async () => {
+    if (selected.length === 0 || saving) return;
+
+    setSaving(true);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+
+    if (!user || error) {
+      setSaving(false);
+      alert('로그인 정보를 확인할 수 없습니다.');
+      return;
+    }
+
+    const selectedSubIds = subCategories
+      .filter(sub => selected.includes(sub.category_sub_name))
+      .map(sub => sub.sub_id);
+
+    const { error: saveError } = await saveUserInterests(user.id, selectedSubIds);
+    setSaving(false);
+
+    if (saveError) {
+      alert('관심사 저장 실패');
+      return;
+    }
+
+    onSubmit(selected);
   };
 
   return (
@@ -75,12 +113,13 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
             <p className="absolute">최소 1개 이상 선택해 주세요.</p>
           </div>
         )}
+
         <div className="mb-14"></div>
         <Button
           htmlType="button"
-          onClick={() => onSubmit(selected)}
+          onClick={handleNext}
+          disabled={selected.length === 0 || saving}
           className="w-[100%] h-[48px] bg-brand text-white text-xl font-bold rounded-[5px]"
-          disabled={selected.length === 0}
         >
           다음단계
         </Button>

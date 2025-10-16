@@ -35,7 +35,7 @@ const SignUpPage: React.FC = () => {
   };
 
   // 3. 관심사/카테고리 등록 완료 → 사용자 홈 또는 로그인 등 이동
-  const handleCategorySubmit = (categoryData: any) => {
+  const handleCategorySubmit = () => {
     setStep(4);
   };
 

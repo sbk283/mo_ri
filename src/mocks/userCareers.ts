@@ -65,7 +65,7 @@ export const userCareers: userCareersType[] = [
     isChecked: false,
     status: '종료',
     detailLink: '/groupdetail/7',
-    created_by: false,
+    created_by: true,
   },
   {
     id: 5,
@@ -91,7 +91,7 @@ export const userCareers: userCareersType[] = [
     isChecked: false,
     status: '종료',
     detailLink: '/groupdetail/9',
-    created_by: false,
+    created_by: true,
   },
   {
     id: 7,

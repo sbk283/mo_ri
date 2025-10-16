@@ -1,32 +1,35 @@
-import { motion } from 'motion/react';
-import { useLayoutEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { userCareers, type userCareersType } from '../mocks/userCareers';
-import ParticipationHistory from './groupHistory/ParticipationHistory';
+import { AnimatePresence, motion } from 'motion/react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import CreatedGroupsHistory from './groupHistory/CreatedGroupsHistory';
+import ParticipationHistory from './groupHistory/ParticipationHistory';
 
 function MypageMyGroupMenu() {
-  const tabs = [
-    {
-      label: '모임 참여 이력',
-      content: (
-        <div>
-          <ParticipationHistory />
-        </div>
-      ),
-    },
-    {
-      label: '모임 생성 이력',
-      content: (
-        <div>
-          <CreatedGroupsHistory />
-        </div>
-      ),
-    },
-  ];
+  const [checkedCount, setCheckedCount] = useState(0);
+
+  // tab 을 useMemo 를 써서 불필요한 재생성 방지.
+  const tabs = useMemo(
+    () => [
+      {
+        label: '모임 참여 이력',
+        content: (
+          <div>
+            <ParticipationHistory onCheckChange={setCheckedCount} />
+          </div>
+        ),
+      },
+      {
+        label: '모임 생성 이력',
+        content: (
+          <div>
+            <CreatedGroupsHistory onCheckChange={setCheckedCount} />
+          </div>
+        ),
+      },
+    ],
+    [],
+  );
 
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
-  const [careerItems, setCareerItems] = useState<userCareersType[]>(userCareers);
 
   // underline 위치/너비 계산용
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -50,23 +53,13 @@ function MypageMyGroupMenu() {
     return () => window.removeEventListener('resize', onResize);
   }, [selectedTab]);
 
-  // 체크박스 토글 함수
-  const handleCheckboxToggle = (id: number) => {
-    setCareerItems(prev =>
-      prev.map(item => (item.id === id ? { ...item, isChecked: !item.isChecked } : item)),
-    );
-  };
-
-  // 체크된 항목들
-  const checkedItems = careerItems.filter(item => item.isChecked);
-
   // 출력하기 버튼 핸들러
   const handlePrint = () => {
-    if (checkedItems.length === 0) {
+    if (checkedCount === 0) {
       alert('출력할 항목을 선택해주세요.');
       return;
     }
-    console.log('출력할 항목들:', checkedItems);
+    console.log('출력 실행, 체크된 개수:', checkedCount);
     // 실제 출력 로직 구현
   };
 
@@ -105,15 +98,28 @@ function MypageMyGroupMenu() {
       <div className="border-l-[4px] border-brand  text-md pl-[16px] mb-[26px] text-gray-400 font-bold mt-[17px]">
         참여 이력을 선택하여 원하는 이력만 출력이 가능합니다.
       </div>
+      {/* 콘텐츠 출력 */}
+      <main>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={selectedTab.label}
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {selectedTab.content}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
-      <div className="mt-6">{selectedTab.content}</div>
       {/* 참여이력 출력하기 버튼 */}
       <div className="flex justify-end ">
         <button
           onClick={handlePrint}
-          disabled={checkedItems.length === 0}
-          className={`text-xl py-[8px] px-[28px] rounded-[5px] font-bold transition-colors ${
-            checkedItems.length === 0
+          disabled={checkedCount === 0}
+          className={`text-xl mt-[10px] py-[8px] px-[28px] rounded-[5px] font-bold transition-colors ${
+            checkedCount === 0
               ? 'bg-gray-300 text-white cursor-not-allowed'
               : 'bg-brand text-white hover:bg-blue-600'
           }`}

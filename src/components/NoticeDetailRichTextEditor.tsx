@@ -17,11 +17,8 @@ interface DetailRichTextEditorProps {
   placeholder?: string;
   disabled?: boolean;
   onImagesChange?: (images: File[]) => void;
-  /** 업로드 허용 최대 용량(MB). 기본 5 */
   maxImageMB?: number;
-  /** 에디터 전체 높이(px). 기본 350 */
   height?: number;
-  /** 이미지 버튼/업로드 비활성화 */
   disableImage?: boolean;
 }
 

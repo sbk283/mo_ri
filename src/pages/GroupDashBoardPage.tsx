@@ -1,7 +1,7 @@
 import DashboardChat from '../components/dashboard/DashboardChat';
 import DashboardMember from '../components/dashboard/DashboardMember';
 import DashboardMiniCalendar from '../components/dashboard/DashboardMiniCalendar';
-import DashboardNotice from '../components/dashboard/DashboardNotice';
+import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 
 const GroupDashBoardPage = () => {

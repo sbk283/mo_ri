@@ -1,15 +1,14 @@
-// 페이지네이션
-
+// 페이지네이션 공용 컴포넌트
 interface PaginationProps {
   page: number;
   totalPages: number;
   onPageChange: (page: number) => void;
 }
 
-function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
+export default function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
   return (
     <div className="flex justify-center items-center gap-2 mt-6">
-      {/* 이전 버튼 */}
+      {/* 이전 */}
       <button
         onClick={() => onPageChange(Math.max(page - 1, 1))}
         disabled={page === 1}
@@ -18,7 +17,7 @@ function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
         &lt;
       </button>
 
-      {/* 페이지 번호들 */}
+      {/* 페이지 번호 */}
       {Array.from({ length: totalPages }, (_, i) => (
         <button
           key={i}
@@ -31,7 +30,7 @@ function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
         </button>
       ))}
 
-      {/* 다음 버튼 */}
+      {/* 다음 */}
       <button
         onClick={() => onPageChange(Math.min(page + 1, totalPages))}
         disabled={page === totalPages}
@@ -42,5 +41,3 @@ function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
     </div>
   );
 }
-
-export default GroupPagination;

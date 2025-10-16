@@ -1,19 +1,12 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useMemo, useState } from 'react';
+// src/components/common/GroupDailyContent.tsx
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Daily } from '../../types/daily';
 import GroupPagination from '../common/GroupPagination';
 import GroupDailyDetail from '../GroupDailyDetail';
-
-type Daily = {
-  id: number;
-  writer?: string;
-  title: string;
-  content: string;
-  date: string; // YYYY-MM-DD
-  views?: number;
-  isRead: boolean;
-  likedCount?: number;
-  imageUrl?: string;
-};
+import GroupDailyDetailEdit from '../GroupDailyDetailEdit';
+import { loadArray, saveArray, LS_KEYS } from '../../utils/storage';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 export const dailyMock: Daily[] = [
   {
@@ -188,23 +181,105 @@ export const dailyMock: Daily[] = [
 
 const ITEMS_PER_PAGE = 6;
 
-const GroupDailyContent = () => {
+const today = () => new Date().toISOString().slice(0, 10);
+
+export default function GroupDailyContent({ createRequestKey = 0 }: { createRequestKey?: number }) {
+  const user = useCurrentUser();
+
+  const [isCreating, setIsCreating] = useState(false);
+  const prevKey = useRef(createRequestKey);
+
+  useEffect(() => {
+    if (createRequestKey > prevKey.current) {
+      setIsCreating(true);
+    }
+    prevKey.current = createRequestKey;
+  }, [createRequestKey]);
+
+  // 최초 로드: localStorage 비었으면 목업 저장
+  useEffect(() => {
+    const existing = loadArray<Daily>(LS_KEYS.dailies, []);
+    if (!existing || existing.length === 0) {
+      saveArray(LS_KEYS.dailies, dailyMock);
+    }
+  }, []);
+
+  // 목록 state (로컬스토리지 → 없으면 목업)
+  const [items, setItems] = useState<Daily[]>(() => loadArray<Daily>(LS_KEYS.dailies, dailyMock));
+
+  // ✅ items 변경될 때마다 자동 저장 (요게 빠져있어서 저장 안 됐던 거야!)
+  useEffect(() => {
+    saveArray(LS_KEYS.dailies, items);
+  }, [items]);
+
+  // 페이지네이션
   const [page, setPage] = useState(1);
-  const totalPages = useMemo(() => Math.max(1, Math.ceil(dailyMock.length / ITEMS_PER_PAGE)), []);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(items.length / ITEMS_PER_PAGE)),
+    [items.length],
+  );
   const pageItems = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
     const end = start + ITEMS_PER_PAGE;
-    return dailyMock.slice(start, end);
-  }, [page]);
+    return items.slice(start, end);
+  }, [page, items]);
 
+  // 상세/작성 모드
   const [detailId, setDetailId] = useState<number | null>(null);
   const openDetail = (id: number) => setDetailId(id);
   const closeDetail = () => setDetailId(null);
 
+  // 새 글 기본값
+  const emptyDaily: Daily = {
+    id: 0,
+    title: '',
+    content: '',
+    date: today(),
+    isRead: false,
+    writer: user?.nickname ?? '익명',
+    likedCount: 0,
+    imageUrl: user?.profileImageUrl ?? null, // Daily 타입이 string | null 이어야 함
+  };
+
+  // 작성 저장
+  const handleCreateSave = (next: Daily) => {
+    const nextId = (items.length ? Math.max(...items.map(i => i.id)) : 0) + 1;
+    const toInsert: Daily = {
+      ...next,
+      id: nextId,
+      title: next.title || '',
+      content: next.content || '',
+      date: next.date || today(),
+      isRead: false,
+      writer: next.writer || user?.nickname || '익명',
+      // imageUrl: next.imageUrl ?? user?.profileImageUrl ?? null,
+      likedCount: next.likedCount ?? 0,
+    };
+    setItems(prev => [toInsert, ...prev]); // ← 이 변경을 위의 useEffect가 localStorage에 저장
+    setIsCreating(false);
+    setPage(1);
+    setDetailId(nextId);
+  };
+
   return (
     <div className="w-[970px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
-        {detailId == null ? (
+        {isCreating ? (
+          // ===== 작성(에디트) 뷰 =====
+          <motion.div
+            key="daily-create"
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -10, opacity: 0 }}
+            transition={{ duration: 0.18 }}
+          >
+            <GroupDailyDetailEdit
+              daily={emptyDaily}
+              onCancel={() => setIsCreating(false)}
+              onSave={handleCreateSave}
+            />
+          </motion.div>
+        ) : detailId == null ? (
           // ===== 리스트 뷰 =====
           <motion.div
             key="daily-list"
@@ -213,7 +288,6 @@ const GroupDailyContent = () => {
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            {/* 목록 (6그리드) */}
             <div className="grid grid-cols-3 auto-rows-fr gap-3 py-6">
               {pageItems.map(daily => (
                 <button
@@ -222,16 +296,15 @@ const GroupDailyContent = () => {
                   onClick={() => openDetail(daily.id)}
                   className="relative flex h-[233px] flex-col rounded-sm bg-white text-left transition px-4 py-1"
                 >
-                  {/* 썸네일 */}
-                  <img src="/images/nacta.png" alt="낙타사진" className="w-[290px] h-[160px]" />
-                  {/* 제목 */}
+                  <img
+                    src={daily.imageUrl ?? '/images/nacta.png'}
+                    alt="썸네일"
+                    className="w-[290px] h-[160px] object-cover"
+                  />
                   <h3 className="mt-1 line-clamp-1 text-md font-bold text-[#000]">{daily.title}</h3>
-                  {/* 날짜 */}
                   <span className="text-sm text-gray-400">{daily.date}</span>
                   <div className="flex w-full justify-between">
-                    {/* 작성자 */}
                     {daily.writer && <span className="text-sm text-gray-400">{daily.writer}</span>}
-                    {/* 좋아요 갯수 */}
                     {daily.likedCount !== undefined && (
                       <span className="text-sm text-gray-400">💜좋아요{daily.likedCount}</span>
                     )}
@@ -240,7 +313,6 @@ const GroupDailyContent = () => {
               ))}
             </div>
 
-            {/* 페이지네이션 */}
             <GroupPagination page={page} totalPages={totalPages} onPageChange={setPage} />
           </motion.div>
         ) : (
@@ -258,6 +330,4 @@ const GroupDailyContent = () => {
       </AnimatePresence>
     </div>
   );
-};
-
-export default GroupDailyContent;
+}

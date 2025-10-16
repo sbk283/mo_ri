@@ -1,12 +1,8 @@
 // 커리큘럼 훅 - Step2, Step3 공용
 import { useCallback } from 'react';
+import type { CurriculumItem } from '../types/group';
 
-export interface CurriculumItem {
-  title: string;
-  detail: string;
-  files?: File[];
-}
-
+// Step2, Step3 공용 커리큘럼 관리 훅
 export function useCurriculum() {
   // 새 커리큘럼 추가
   const addCurriculum = useCallback(

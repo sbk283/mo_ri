@@ -31,9 +31,10 @@ function MeetingHeader({
   subCategory,
   duration,
   participants,
+  dday,
   images,
   isFavorite,
-  mode, // 🟢 추가: mode 사용
+  mode, // 추가: mode 사용
   onFavoriteToggle,
 }: MeetingHeaderProps) {
   // 대표 이미지
@@ -87,19 +88,19 @@ function MeetingHeader({
     setConfirmOpen(false);
   };
 
-  // 🟢 공유 버튼 클릭
+  // 공유
   const handleShareClick = () => {
     if (mode === 'preview') return;
     setShareOpen(true);
   };
 
-  // 🟢 찜 버튼 클릭
+  // 찜
   const handleFavoriteClick = () => {
     if (mode === 'preview') return;
     setConfirmOpen(true);
   };
 
-  // 🟢 참가 버튼 클릭
+  // 참가
   const handleJoinClick = () => {
     if (mode === 'preview') return;
     setOpen(true);
@@ -160,11 +161,11 @@ function MeetingHeader({
       <div className="min-w-0">
         <MeetingCard
           title="[4주차] 마비노기 던전 공파 모집"
-          status="모집중"npm
-          dday="D-30"
+          status="모집중"
           summary="혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요. 마비노기 모바일 아닙니다."
           category="취미/여가"
           subCategory="게임/오락"
+          dday={dday}
           participants="2/10"
           duration="2025.02.12 ~ 2025.05.12"
           width={mode === 'preview' ? '553px' : '680px'}

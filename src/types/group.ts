@@ -2,6 +2,7 @@
 export interface CurriculumItem {
   title: string;
   detail: string;
+  files?: File[];
 }
 
 // 모임 생성 전체 폼 데이터

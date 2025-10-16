@@ -1,9 +1,46 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { profile } from '../../types/profileType';
+import { supabase } from '../../lib/supabase';
+import { getProfile } from '../../lib/profile';
 
 function IntroSection() {
   // 로그인 상태관리
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<profile | null>(null);
+  const [loading, setLoading] = useState(true);
+  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // 로그인 상태 감지 및 프로필 불러오기
+  useEffect(() => {
+    const fetchUserAndProfile = async () => {
+      setLoading(true);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        setUser(session.user);
+        const profileData = await getProfile(session.user.id);
+        setProfile(profileData);
+      } else {
+        setUser(null);
+        setProfile(null);
+      }
+      setLoading(false);
+    };
+    fetchUserAndProfile();
+    // 로그인 상태가 변경될때 자동 업데이트
+    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
+      fetchUserAndProfile();
+    });
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return <div>로딩중...</div>;
+  }
 
   return (
     <div>
@@ -64,12 +101,12 @@ function IntroSection() {
             </Link>
 
             {/* 로그인 / 비회원 일때 보여지는 화면 전환 (날리지 말것!!) */}
-            {isLoggedIn ? (
+            {user && profile ? (
               <>
                 <div className="flex transform -translate-x-[-65px] pt-[22px]">
                   <div>
                     <img
-                      src="./ham.png"
+                      src={profile.avatar_url || './ham.png'}
                       alt="프로필 이미지"
                       className="w-[140px] h-[175px] rounded-[5px] object-cover "
                     />
@@ -79,10 +116,10 @@ function IntroSection() {
                   <div className="pl-[35px]">
                     <div className="flex justify-between font-bold text-lg">
                       <div>
-                        홍길동님(용산동 불주먹)
+                        {profile.nickname || '프로모임자1'}
                         <span className="font-medium text-sm text-gray-200">환영합니다.</span>
                       </div>
-                      <button>
+                      <button onClick={() => supabase.auth.signOut()}>
                         <img src="/logout.svg" alt="로그아웃" className="w-[18px]" />
                       </button>
                     </div>
@@ -94,9 +131,9 @@ function IntroSection() {
                       </Link>
                     </div>
                     <div className="space-y-[4px]  text-sm">
-                      <div>· [장기]이러쿵저러쿵 스터디</div>
-                      <div>· [원데이]이러쿵저러쿵 스터디</div>
-                      <div>· [원데이]이러쿵저러쿵 스터디</div>
+                      <div>· [장기]추후 연동 예정</div>
+                      <div>· [원데이]추후 연동 예정</div>
+                      <div>· [원데이]추후 연동 예정</div>
                     </div>
                     <div className=" flex justify-between mt-[9px] items-center gap-[8px]">
                       <div className="font-bold text-md text-brand">바로가기</div>

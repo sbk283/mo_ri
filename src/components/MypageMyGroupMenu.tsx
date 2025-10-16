@@ -5,6 +5,9 @@ import ParticipationHistory from './groupHistory/ParticipationHistory';
 
 function MypageMyGroupMenu() {
   const [checkedCount, setCheckedCount] = useState(0);
+  //전체 선택을 위한 ref 저장
+  const participationRef = useRef<{ selectAll: () => void }>(null);
+  const createdRef = useRef<{ selectAll: () => void }>(null);
 
   // tab 을 useMemo 를 써서 불필요한 재생성 방지.
   const tabs = useMemo(
@@ -13,17 +16,19 @@ function MypageMyGroupMenu() {
         label: '모임 참여 이력',
         content: (
           <div>
-            <ParticipationHistory onCheckChange={setCheckedCount} />
+            <ParticipationHistory onCheckChange={setCheckedCount} ref={participationRef} />
           </div>
         ),
+        ref: participationRef,
       },
       {
         label: '모임 생성 이력',
         content: (
           <div>
-            <CreatedGroupsHistory onCheckChange={setCheckedCount} />
+            <CreatedGroupsHistory onCheckChange={setCheckedCount} ref={createdRef} />
           </div>
         ),
+        ref: createdRef,
       },
     ],
     [],
@@ -53,6 +58,16 @@ function MypageMyGroupMenu() {
     return () => window.removeEventListener('resize', onResize);
   }, [selectedTab]);
 
+  // 전체선택 핸들러
+  const handleSelectAll = () => {
+    const currentTabIndex = tabs.findIndex(t => t.label === selectedTab.label);
+    const currentRef = tabs[currentTabIndex].ref;
+
+    if (currentRef?.current?.selectAll) {
+      currentRef.current.selectAll();
+    }
+  };
+
   // 출력하기 버튼 핸들러
   const handlePrint = () => {
     if (checkedCount === 0) {
@@ -73,7 +88,10 @@ function MypageMyGroupMenu() {
               key={item.label}
               ref={el => (tabRefs.current[i] = el)}
               className="relative w-[167px] text-center pt-1 top-[-10px] cursor-pointer "
-              onClick={() => setSelectedTab(item)}
+              onClick={() => {
+                setSelectedTab(item);
+                setCheckedCount(0);
+              }}
             >
               <p
                 className={`text-xl font-bold transition-colors duration-200   ${
@@ -94,10 +112,18 @@ function MypageMyGroupMenu() {
           />
         </ul>
       </nav>
-
-      <div className="border-l-[4px] border-brand  text-md pl-[16px] mb-[26px] text-gray-400 font-bold mt-[17px]">
-        참여 이력을 선택하여 원하는 이력만 출력이 가능합니다.
+      <div className="flex justify-between items-center mb-[26px]  mt-[17px]">
+        <div className="border-l-[4px] border-brand  text-md pl-[16px]  text-gray-400 font-bold">
+          참여 이력을 선택하여 원하는 이력만 출력이 가능합니다.
+        </div>
+        <button
+          onClick={handleSelectAll}
+          className="bg-brand text-white py-[4px] px-[12px]  rounded-[5px] font-medium text-sm "
+        >
+          전체선택
+        </button>
       </div>
+
       {/* 콘텐츠 출력 */}
       <main>
         <AnimatePresence mode="wait">

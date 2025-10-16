@@ -12,11 +12,12 @@ import NicknameEditModal from '../common/modal/NicknameEditModal';
 function PasswordEdit() {
   const { user } = useAuth();
 
-  // 닉네임 , 이름 상태
+  // 닉네임 , 이름 , 프로필 이미지 상태
   const [nickname, setNickname] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [isNicknameEditModalOpen, setIsNicknameEditModalOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>('/ham.png');
 
   // 관심사
   const [selected, setSelected] = useState(['구기활동', 'IT']);
@@ -32,6 +33,7 @@ function PasswordEdit() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [checked, setChecked] = useState(false);
+
   // 프로필 불러오기
   useEffect(() => {
     const fetchProfile = async () => {
@@ -45,6 +47,9 @@ function PasswordEdit() {
         if (profile) {
           setNickname(profile.nickname || '사용자');
           setName(profile.name || '');
+          const avatar = profile.avatar_url || '/ham.png';
+          setAvatarUrl(avatar);
+          setProfilePreview(avatar);
         }
       } catch (err) {
         console.error('프로필 로드 실패:', err);
@@ -73,7 +78,6 @@ function PasswordEdit() {
 
       setNickname(newName);
       setIsNicknameEditModalOpen(false);
-      console.log('✅ 닉네임 업데이트 성공:', newName);
     } catch (err) {
       console.error('닉네임 업데이트 실패:', err);
       alert('닉네임 변경 중 오류가 발생했습니다.');
@@ -97,18 +101,126 @@ function PasswordEdit() {
   };
 
   // 파일 선택 처리
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setProfileFile(file);
-    // 여기서 서버 업로드/프로필 갱신 API 호출 연결 가능
-    // 例) await uploadToSupabase(file).then(url => saveProfile(url));
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const file = e.target.files?.[0];
+      if (!file || !user) return;
+
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}_${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      // 기존 이미지 삭제(있다면!)
+      if (avatarUrl && avatarUrl !== '/ham.png') {
+        const oldFileName = avatarUrl.split('/').pop();
+        await supabase.storage.from('avatars').remove([`avatars/${oldFileName}`]);
+      }
+
+      // 새 이미지 업로드
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      // public url 얻기
+      const { data: publicURL } = supabase.storage.from('avatars').getPublicUrl(filePath);
+      if (!publicURL?.publicUrl) {
+        throw new Error('URL 생성 실패');
+      }
+      console.log('업로드 후 URL:', publicURL.publicUrl);
+
+      // DB 업데이트
+      const { error: dbError } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: publicURL.publicUrl })
+        .eq('user_id', user.id);
+
+      if (dbError) {
+        throw dbError;
+      }
+
+      // ui 반영하기
+      setAvatarUrl(publicURL.publicUrl);
+      setProfilePreview(publicURL.publicUrl);
+      alert('프로필 이미지가 업데이트 되었습니다.');
+    } catch (err) {
+      console.log('이미지 업로드 실패 : ', err);
+      alert('이미지 업로드 중 오류가 발생했습니다.');
+    }
   };
 
   // 이미지 제거
-  const clearImage = () => {
-    setProfileFile(null);
-    setProfilePreview('/ham.png'); // 기본 이미지는 일단 햄찌로
+  const clearImage = async () => {
+    try {
+      if (!user) return;
+      // 테스트중..
+      // avatarUrl이 기본 이미지가 아닐 때만 스토리지 파일 삭제
+      if (avatarUrl && avatarUrl !== '/ham.png') {
+        try {
+          // URL 객체로 path 추출
+          const url = new URL(avatarUrl);
+          // pathname에서 storage 경로 제거
+          const filePath = url.pathname.replace('/storage/v1/object/public/', '');
+
+          if (filePath) {
+            const { error: storageError } = await supabase.storage
+              .from('avatars')
+              .remove([filePath]);
+            if (storageError) {
+              console.error('Storage 파일 삭제 실패:', storageError);
+            } else {
+              console.log('스토리지 파일 삭제 성공:', filePath);
+            }
+          }
+        } catch (err) {
+          console.error('파일 삭제 중 URL 파싱 오류:', err);
+        }
+      }
+
+      // DB에서 avatar_url 제거
+      const { error: dbError } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: null })
+        .eq('user_id', user.id);
+
+      if (dbError) {
+        console.error('DB 업데이트 실패:', dbError);
+      }
+
+      // UI 기본 이미지로 변경
+      setAvatarUrl('/ham.png');
+      setProfilePreview('/ham.png');
+
+      console.log('프로필 이미지 삭제 완료');
+    } catch (err) {
+      console.error('이미지 삭제 중 오류:', err);
+      alert('프로필 이미지 삭제 중 오류가 발생했습니다.');
+    }
+    // 기존이미지 파일명 추출
+    // if (avatarUrl && avatarUrl !== '/ham.png') {
+    //   const fileName = avatarUrl.split('/').pop(); // 파일명만 가져오기
+    //   const { error: storageError } = await supabase.storage.from('avatars').remove([fileName]);
+    //   if (storageError) {
+    //     console.error('Storage 파일 삭제 실패:', storageError);
+    //   }
+    // }
+
+    // DB 에서 avatar_url 제거
+    // const { error: dbError } = await supabase
+    //   .from('user_profiles')
+    //   .update({ avatar_url: null })
+    //   .eq('user_id', user.id);
+    // if (dbError) {
+    //   console.error('DB 업데이트 실패:', dbError);
+    // }
+    // ui 기본이미지로 변경
+    //   setAvatarUrl('/ham.png');
+    //   setProfilePreview('/ham.png');
+    //   console.log('이미지 삭제 성공');
+    // } catch (err) {
+    //   console.log('이미지 삭제 실패 : ', err);
+    //   alert('삭제중 오류 발생');
+    // }
   };
 
   const toggleInterest = (item: string) => {
@@ -142,6 +254,7 @@ function PasswordEdit() {
                   src={profilePreview}
                   alt="프로필"
                   className="w-full h-full object-cover rounded-[5px]"
+                  onError={() => console.log('이미지 로딩 실패:', profilePreview)}
                 />
 
                 {/* 우하단 수정 버튼 (클릭 시 파일 선택) */}
@@ -155,7 +268,7 @@ function PasswordEdit() {
                 </button>
 
                 {/* 우상단 제거 버튼 */}
-                {profileFile && (
+                {avatarUrl !== '/ham.png' && (
                   <button
                     type="button"
                     onClick={clearImage}

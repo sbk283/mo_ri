@@ -1,8 +1,7 @@
-// src/pages/GroupDailyDetailEdit.tsx
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import DetailRichTextEditor from './DailyDetailRichTextEditor';
-import type { Daily } from './GroupDailyDetail';
+import type { Daily } from '../types/daily';
 
 type Props = {
   daily: Daily;
@@ -15,9 +14,6 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
 
   const update = <K extends keyof Daily>(key: K, value: Daily[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
-
-  // 이미지 업로드 원본 파일(서버 업로드 등)에 사용하려면 여기서 처리
-  //   const handleImagesChange = useCallback((images: File[]) => {}, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

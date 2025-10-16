@@ -1,8 +1,9 @@
-// src/pages/GroupContentDetail.tsx
-import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+// src/components/dashboard/GroupContentDetail.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { noticeMock, type Notice } from './DashboardNotice';
+import { useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import type { Notice } from '../../types/notice';
+import { loadArray, saveArray, LS_KEYS } from '../../utils/storage';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
 
 type Props =
@@ -20,12 +21,15 @@ export default function GroupContentDetail(props: Props) {
 
   const goBack = 'onBack' in props && props.onBack ? props.onBack : () => navigate(-1);
 
-  // 초기 데이터 찾고, 이후 편집 반영을 위해 로컬 상태로 보관
-  const initial = noticeMock.find(n => n.id === Number(resolvedId));
-  const [current, setCurrent] = useState<Notice | undefined>(initial);
+  // noticeMock 대신 항상 localStorage에서 읽어옴
+  const current = useMemo(() => {
+    const list = loadArray<Notice>(LS_KEYS.notices, []);
+    return list.find(n => n.id === Number(resolvedId));
+  }, [resolvedId]);
+
   const [editMode, setEditMode] = useState(false);
 
-  if (!current) {
+  if (!resolvedId || !current) {
     return (
       <div className="p-8 text-center">
         <p>⚠️ 해당 공지를 찾을 수 없습니다.</p>
@@ -40,7 +44,16 @@ export default function GroupContentDetail(props: Props) {
   }
 
   const handleSave = (next: Notice) => {
-    setCurrent(next); // 로컬 상태 업데이트
+    const list = loadArray<Notice>(LS_KEYS.notices, []);
+    const idx = list.findIndex(n => n.id === next.id);
+    const updated = [...list];
+    if (idx >= 0) {
+      updated[idx] = { ...list[idx], ...next };
+    } else {
+      // 혹시 id가 없던 경우 대비(신규 삽입)
+      updated.unshift(next);
+    }
+    saveArray(LS_KEYS.notices, updated);
     setEditMode(false);
   };
 
@@ -85,7 +98,7 @@ export default function GroupContentDetail(props: Props) {
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
             <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
-              {/* 제목 + 날짜 + 조회수 */}
+              {/* 제목 + 날짜 + 읽음상태 */}
               <header className="px-8 pt-6">
                 <div className="flex">
                   <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
@@ -109,9 +122,16 @@ export default function GroupContentDetail(props: Props) {
                 <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
               </div>
 
-              {/* 본문 내용 */}
-              <section className="px-8 py-10 text-gray-800 leading-relaxed whitespace-pre-wrap">
-                {current.content}
+              {/* 본문 내용 (HTML도 그대로 렌더) */}
+              <section className="px-8 py-10 text-gray-800 leading-relaxed">
+                {typeof current.content === 'string' && current.content.trim().startsWith('<') ? (
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: current.content as string }}
+                  />
+                ) : (
+                  <div className="whitespace-pre-wrap">{current.content as string}</div>
+                )}
               </section>
             </article>
 

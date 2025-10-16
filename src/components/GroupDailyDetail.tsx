@@ -1,19 +1,10 @@
-// src/pages/GroupContentDetail.tsx
-import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+// src/components/common/GroupDailyDetail.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { dailyMock } from './common/GroupDailyContent';
+import { useState, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import GroupDailyDetailEdit from './GroupDailyDetailEdit';
-
-export type Daily = {
-  id: number;
-  title: string;
-  date: string;
-  views?: number;
-  likedCount?: number;
-  imageUrl?: string | null;
-  content: string;
-};
+import { loadArray, LS_KEYS, saveArray } from '../utils/storage';
+import type { Daily } from '../types/daily';
 
 type Props = { id: number; onBack: () => void } | { id?: never; onBack?: never };
 
@@ -27,9 +18,13 @@ export default function GroupDailyDetail(props: Props) {
     (params.id ? Number(params.id) : undefined);
 
   const goBack = 'onBack' in props && props.onBack ? props.onBack : () => navigate(-1);
-  const daily = dailyMock.find(n => n.id === Number(resolvedId)) as Daily | undefined;
 
-  if (!daily) {
+  const daily = useMemo(() => {
+    const list = loadArray<Daily>(LS_KEYS.dailies, []);
+    return list.find(n => n.id === Number(resolvedId));
+  }, [resolvedId]);
+
+  if (!resolvedId || !daily) {
     return (
       <div className="p-8 text-center">
         <p>⚠️ 해당 공지를 찾을 수 없습니다.</p>
@@ -44,7 +39,15 @@ export default function GroupDailyDetail(props: Props) {
   }
 
   const handleSave = (next: Daily) => {
-    next;
+    const list = loadArray<Daily>(LS_KEYS.dailies, []);
+    const idx = list.findIndex(n => n.id === next.id);
+    const updated = [...list];
+    if (idx >= 0) {
+      updated[idx] = { ...list[idx], ...next };
+    } else {
+      updated.unshift(next);
+    }
+    saveArray(LS_KEYS.dailies, updated);
     setEditMode(false);
   };
 
@@ -54,7 +57,6 @@ export default function GroupDailyDetail(props: Props) {
     exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -24 : 24 }),
   };
 
-  // editMode 전환 방향(디테일→수정: 오른쪽에서 들어오게, 수정→디테일: 반대)
   const dir = editMode ? 1 : -1;
 
   return (
@@ -149,7 +151,15 @@ export default function GroupDailyDetail(props: Props) {
                     className="w-[290px] h-[160px] mb-6"
                   />
                 )}
-                {daily.content}
+                {/* HTML 문자열이면 그대로 렌더 */}
+                {typeof daily.content === 'string' && daily.content.trim().startsWith('<') ? (
+                  <div
+                    className="prose max-w-none"
+                    dangerouslySetInnerHTML={{ __html: daily.content as string }}
+                  />
+                ) : (
+                  <div className="whitespace-pre-wrap">{daily.content as string}</div>
+                )}
               </section>
 
               <motion.button
@@ -196,7 +206,6 @@ export default function GroupDailyDetail(props: Props) {
                     className="w-[50px] h-[50px] rounded-full object-cover"
                   />
                 ))}
-
                 {(daily.likedCount ?? 0) > 10 && (
                   <motion.span
                     initial={{ opacity: 0, scale: 0.9 }}

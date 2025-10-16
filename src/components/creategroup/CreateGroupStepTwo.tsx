@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useCurriculum } from '../../hooks/useCurriculum';
-import type { StepTwoProps } from '../../types/group';
+import type { CurriculumItem, StepTwoProps } from '../../types/group';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import CreateGroupExample from './CreateGroupExample';
 import CurriculumCard from './CurriculumCard';
@@ -11,15 +11,64 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
 
   const [tempSummary, setTempSummary] = useState<string>(formData.summary);
 
+  // 모임 소개 (RichText)
   const handleDescriptionChange = useCallback(
     (content: string) => onChange('description', content),
     [onChange],
   );
 
+  // 본문 이미지 핸들러
   const handleImagesChange = useCallback((images: File[]) => {
     console.log('본문 이미지:', images);
   }, []);
 
+  // 간략 소개
+  const handleSummaryChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setTempSummary(value);
+      onChange('summary', value);
+    },
+    [onChange],
+  );
+
+  // 커리큘럼 개별 필드 수정
+  const handleCurriculumChange = useCallback(
+    <K extends keyof CurriculumItem>(index: number, field: K, value: CurriculumItem[K]) => {
+      updateCurriculum(index, field, value, formData.curriculum, next =>
+        onChange('curriculum', next),
+      );
+    },
+    [formData.curriculum, onChange, updateCurriculum],
+  );
+
+  // 커리큘럼 파일 변경
+  const handleCurriculumFileChange = useCallback(
+    (index: number, files: File[]) => {
+      updateCurriculum(index, 'files', files, formData.curriculum, next =>
+        onChange('curriculum', next),
+      );
+    },
+    [formData.curriculum, onChange, updateCurriculum],
+  );
+
+  // 커리큘럼 추가
+  const handleAddCurriculum = useCallback(
+    (index: number) => {
+      addCurriculum(formData.curriculum, next => onChange('curriculum', next), index);
+    },
+    [formData.curriculum, onChange, addCurriculum],
+  );
+
+  // 커리큘럼 삭제
+  const handleRemoveCurriculum = useCallback(
+    (index: number) => {
+      removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next));
+    },
+    [formData.curriculum, onChange, removeCurriculum],
+  );
+
+  // 리치 텍스트 에디터 메모이제이션
   const richTextEditor = useMemo(
     () => (
       <RichTextEditor
@@ -29,9 +78,10 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         placeholder="모임을 자세히 소개해 주세요"
       />
     ),
-    [handleDescriptionChange, handleImagesChange],
+    [formData.description, handleDescriptionChange, handleImagesChange],
   );
 
+  // 유효성 검사
   const isValid =
     formData.summary.trim().length > 0 &&
     formData.description.trim().length > 0 &&
@@ -51,10 +101,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         <input
           type="text"
           value={tempSummary}
-          onChange={e => {
-            setTempSummary(e.target.value);
-            onChange('summary', e.target.value);
-          }}
+          onChange={handleSummaryChange}
           placeholder="썸네일에 보여질 간략한 소개를 작성해 주세요."
           className="w-[732px] h-10 border border-gray-300 rounded px-4 py-2 placeholder:text-[#A6A6A6]"
         />
@@ -76,22 +123,10 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
             key={i}
             index={i}
             item={item}
-            onChange={(index, field, value) =>
-              updateCurriculum(index, field, value, formData.curriculum, next =>
-                onChange('curriculum', next),
-              )
-            }
-            onFileChange={(index, files) =>
-              updateCurriculum(index, 'files', files, formData.curriculum, next =>
-                onChange('curriculum', next),
-              )
-            }
-            onAdd={index =>
-              addCurriculum(formData.curriculum, next => onChange('curriculum', next), index)
-            }
-            onRemove={index =>
-              removeCurriculum(index, formData.curriculum, next => onChange('curriculum', next))
-            }
+            onChange={handleCurriculumChange}
+            onFileChange={handleCurriculumFileChange}
+            onAdd={handleAddCurriculum}
+            onRemove={handleRemoveCurriculum}
           />
         ))}
       </div>

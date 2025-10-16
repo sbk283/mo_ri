@@ -5,7 +5,7 @@ import MeetingCard from '../prevgroup/MeetingCard';
 
 export type JoinGroupData = {
   title: string;
-  status: '모집중' | '모집예정' | '서비스종료';
+  status: '모집중' | '모집종료' | '모임종료';
   category: string;
   subCategory: string;
   memberCount: number;

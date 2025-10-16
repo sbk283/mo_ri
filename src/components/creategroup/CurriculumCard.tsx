@@ -1,9 +1,9 @@
-import type { CurriculumItem } from '../../hooks/useCurriculum';
+import type { CurriculumItem } from '../../types/group';
 
 interface CurriculumCardProps {
   index: number;
   item: CurriculumItem;
-  onChange: (index: number, field: keyof CurriculumItem, value: string) => void;
+  onChange: (index: number, field: string, value: any) => void;
   onRemove: (index: number) => void;
   onFileChange: (index: number, files: File[]) => void;
   onAdd: (index: number) => void;
@@ -77,10 +77,10 @@ function CurriculumCard({
           className="w-[730px] h-[159px] resize-none mr-4 border border-gray-300 rounded-sm px-3 py-2 placeholder:text-[#A6A6A6]"
         />
       </div>
-      
+
       <div className="flex justify-between">
         {/* 파일 미리보기 */}
-        <div className='bg-white w-[430px]'>
+        <div className="bg-white w-[430px]">
           {item.files && item.files.length > 0 && (
             <div className="flex gap-2 pl-[150px] mt-2">
               {item.files.map((file, i) => (

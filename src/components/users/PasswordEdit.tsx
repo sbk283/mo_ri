@@ -153,23 +153,22 @@ function PasswordEdit() {
   const clearImage = async () => {
     try {
       if (!user) return;
-      // 테스트중..
+
       // avatarUrl이 기본 이미지가 아닐 때만 스토리지 파일 삭제
       if (avatarUrl && avatarUrl !== '/ham.png') {
         try {
-          // URL 객체로 path 추출
           const url = new URL(avatarUrl);
-          // pathname에서 storage 경로 제거
-          const filePath = url.pathname.replace('/storage/v1/object/public/', '');
+          const parts = url.pathname.split('/');
+          const fileName = parts[parts.length - 1]; // 파일명만 추출
 
-          if (filePath) {
+          if (fileName) {
             const { error: storageError } = await supabase.storage
               .from('avatars')
-              .remove([filePath]);
+              .remove([fileName]);
             if (storageError) {
               console.error('Storage 파일 삭제 실패:', storageError);
             } else {
-              console.log('스토리지 파일 삭제 성공:', filePath);
+              console.log('스토리지 파일 삭제 성공:', fileName);
             }
           }
         } catch (err) {
@@ -196,31 +195,6 @@ function PasswordEdit() {
       console.error('이미지 삭제 중 오류:', err);
       alert('프로필 이미지 삭제 중 오류가 발생했습니다.');
     }
-    // 기존이미지 파일명 추출
-    // if (avatarUrl && avatarUrl !== '/ham.png') {
-    //   const fileName = avatarUrl.split('/').pop(); // 파일명만 가져오기
-    //   const { error: storageError } = await supabase.storage.from('avatars').remove([fileName]);
-    //   if (storageError) {
-    //     console.error('Storage 파일 삭제 실패:', storageError);
-    //   }
-    // }
-
-    // DB 에서 avatar_url 제거
-    // const { error: dbError } = await supabase
-    //   .from('user_profiles')
-    //   .update({ avatar_url: null })
-    //   .eq('user_id', user.id);
-    // if (dbError) {
-    //   console.error('DB 업데이트 실패:', dbError);
-    // }
-    // ui 기본이미지로 변경
-    //   setAvatarUrl('/ham.png');
-    //   setProfilePreview('/ham.png');
-    //   console.log('이미지 삭제 성공');
-    // } catch (err) {
-    //   console.log('이미지 삭제 실패 : ', err);
-    //   alert('삭제중 오류 발생');
-    // }
   };
 
   const toggleInterest = (item: string) => {

@@ -206,11 +206,20 @@ export default function GroupDailyContent({ createRequestKey = 0 }: { createRequ
 
   // 목록 state (로컬스토리지 → 없으면 목업)
   const [items, setItems] = useState<Daily[]>(() => loadArray<Daily>(LS_KEYS.dailies, dailyMock));
-
-  // ✅ items 변경될 때마다 자동 저장 (요게 빠져있어서 저장 안 됐던 거야!)
   useEffect(() => {
     saveArray(LS_KEYS.dailies, items);
   }, [items]);
+
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === LS_KEYS.dailies) {
+        const next = loadArray<Daily>(LS_KEYS.dailies, []);
+        setItems(next);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // 페이지네이션
   const [page, setPage] = useState(1);

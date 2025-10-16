@@ -47,14 +47,23 @@ export default function GroupContentDetail(props: Props) {
     const list = loadArray<Notice>(LS_KEYS.notices, []);
     const idx = list.findIndex(n => n.id === next.id);
     const updated = [...list];
-    if (idx >= 0) {
-      updated[idx] = { ...list[idx], ...next };
-    } else {
-      // 혹시 id가 없던 경우 대비(신규 삽입)
-      updated.unshift(next);
-    }
+    if (idx >= 0) updated[idx] = { ...list[idx], ...next };
+    else updated.unshift(next);
     saveArray(LS_KEYS.notices, updated);
     setEditMode(false);
+  };
+
+  const handleDelete = () => {
+    if (!resolvedId) return;
+    const ok = window.confirm('정말 삭제할까요? 삭제 후 되돌릴 수 없어요.');
+    if (!ok) return;
+
+    const list = loadArray<Notice>(LS_KEYS.notices, []);
+    const updated = list.filter(n => n.id !== resolvedId);
+    saveArray(LS_KEYS.notices, updated);
+
+    goBack();
+    window.location.reload();
   };
 
   const cardVariants = {
@@ -144,9 +153,7 @@ export default function GroupContentDetail(props: Props) {
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                  onClick={() => {
-                    /* TODO: 삭제 로직 */
-                  }}
+                  onClick={handleDelete}
                 >
                   삭제
                 </motion.button>

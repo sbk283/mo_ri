@@ -1,24 +1,57 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { StepTwoProps } from '../../types/group';
 import { calcDday } from '../../utils/date';
 import Modal from '../common/modal/Modal';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
+import { useGroup } from '../../contexts/GroupContext';
+import type { StepTwoProps } from '../../types/group';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
+  const { createGroup } = useGroup();
 
-  const handleSubmit = () => {
-    setOpen(true);
+  // 모임 등록 함수
+  const handleSubmit = async () => {
+    try {
+      setSubmitting(true);
+
+      // Supabase에 저장할 데이터 매핑
+      await createGroup({
+        group_title: formData.title,
+        group_region: formData.region,
+        group_short_intro: formData.summary,
+        group_content: formData.description,
+        group_start_day: formData.startDate,
+        group_end_day: formData.endDate,
+        group_kind:
+          formData.interestMajor === '운동/건강'
+            ? 'sports'
+            : formData.interestMajor === '스터디/학습'
+              ? 'study'
+              : formData.interestMajor === '취미/여가'
+                ? 'hobby'
+                : formData.interestMajor === '봉사/사회참여'
+                  ? 'volunteer'
+                  : 'etc',
+        group_capacity: formData.memberCount,
+        group_region_any: formData.regionFree,
+        status: 'recruiting', // 관리자 승인 기능 전까지는 즉시 모집중 상태로 (관리자 승인 로직은 나중에 status: 'pending'만 바꾸면 됨!!)
+      });
+
+      setOpen(true); // 성공 시 모달 오픈
+    } catch (error) {
+      console.error('모임 등록 실패:', error);
+      alert('모임 등록 중 오류가 발생했습니다.');
+    } finally {
+      setSubmitting(false);
+    }
   };
-
-  // 이미지 URL 변환 (최대 9장)
-  // const imageUrls = formData.images.slice(0, 9).map(file => URL.createObjectURL(file));
 
   // D-Day 계산
   const dday = calcDday(formData.startDate);
@@ -27,6 +60,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
     <div className="flex flex-col p-8 bg-white rounded shadow space-y-6">
       <h2 className="text-2xl font-bold">미리보기 / 확정</h2>
       <hr className="mb-6 pb-3 border-brand" />
+
       <div className="space-y-8">
         {/* 상단 MeetingHeader */}
         <MeetingHeader
@@ -69,6 +103,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           onPrev={onPrev!}
           onNext={onNext!}
           onSubmit={handleSubmit}
+          disableNext={submitting}
         />
       </div>
 
@@ -76,11 +111,11 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
       <Modal
         isOpen={open}
         onClose={() => setOpen(false)}
-        title="🎉 신청이 완료되었습니다."
-        message="관리자 승인 후 모임 생성이 완료됩니다."
+        title="🎉 모임이 등록되었습니다!"
+        message="이제 모임이 리스트에 바로 표시됩니다."
         actions={[
           {
-            label: '모임 페이지로',
+            label: '모임 리스트로 이동',
             onClick: () => navigate('/grouplist'),
             variant: 'primary',
           },

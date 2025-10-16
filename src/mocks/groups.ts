@@ -2,7 +2,7 @@
 export type Group = {
   id: number;
   title: string;
-  status: '모집중' | '모집예정' | '서비스종료';
+  status: '모집중' | '모집예정' | '모집종료';
   category: string; // 메인 카테고리
   subCategory: string; // 서브 카테고리
   desc: string;
@@ -136,7 +136,7 @@ export const dummyGroups: Group[] = [
   {
     id: 7,
     title: '재즈 공연 함께 보기',
-    status: '서비스종료',
+    status: '모집종료',
     category: '취미/여가',
     subCategory: '음악/공연/문화',
     desc: '지난달 성황리에 마친 재즈 공연 관람 모임입니다.',

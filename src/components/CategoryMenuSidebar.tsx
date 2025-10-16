@@ -57,7 +57,7 @@ function CategoryMenuSidebar() {
 
   return (
     <motion.aside
-      className="fixed top-[100px] left-[calc(50%-812px+24px)] w-[255px] z-40 hidden lg:block"
+      className="fixed top-[100px] left-[calc(50%-812px+24px)] w-[235px] z-40 hidden lg:block"
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}

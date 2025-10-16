@@ -11,7 +11,7 @@ export type FieldData = {
   errors?: any[];
 };
 
-function LoginPage() {
+function LoginPage() {  
   const [msg, setMsg] = useState<string>('');
 
   return (

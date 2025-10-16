@@ -1,11 +1,10 @@
 // 그룹 리스트 레이아웃
-
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import ArrayDropdown from '../common/ArrayDropdown';
 import BannerCardSwiper from '../common/BannerCardSwiper';
 import GroupListCard from '../common/GroupListCard';
-import { dummyGroups, type Group } from '../../mocks/groups';
+import { useGroup } from '../../contexts/GroupContext';
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -15,50 +14,35 @@ type GroupListLayoutProps = {
 
 function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps) {
   const [selectedSort, setSelectedSort] = useState('최신순');
-  // const sortOptions = ['최신순', '원데이', '장기', '단기'];
+  const { groups, loading, fetchGroups } = useGroup();
 
-  const [filteredGroups, setFilteredGroups] = useState<Group[]>([]);
-
-  // 카테고리 필터링
+  // Supabase에서 그룹 가져오기
   useEffect(() => {
-    if (activeCategory === '전체보기') {
-      setFilteredGroups(dummyGroups);
-    } else {
-      setFilteredGroups(
-        dummyGroups.filter(
-          group => group.subCategory === activeCategory || group.category === activeCategory,
-        ),
-      );
-    }
-  }, [activeCategory]);
+    fetchGroups();
+  }, [fetchGroups]);
 
   // 정렬 및 필터링
   const displayedGroups = useMemo(() => {
+    const data = [...groups];
     switch (selectedSort) {
       case '원데이':
-        return filteredGroups.filter(group => {
-          const [start, end] = group.duration.split('~').map(d => d.trim());
-          return start === end;
-        });
+        return data.filter(g => g.group_start_day === g.group_end_day);
       case '장기':
-        return filteredGroups.filter(group => {
-          const [start, end] = group.duration.split('~').map(d => d.trim());
-          return start !== end;
-        });
+        return data.filter(g => g.group_start_day !== g.group_end_day);
       case '단기':
-        return filteredGroups.filter(group => {
-          const [start, end] = group.duration.split('~').map(d => d.trim());
-          const diffDays =
-            (new Date(end).getTime() - new Date(start).getTime()) / (1000 * 60 * 60 * 24);
+        return data.filter(g => {
+          const start = new Date(g.group_start_day);
+          const end = new Date(g.group_end_day);
+          const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
           return diffDays > 1 && diffDays <= 30;
         });
       case '최신순':
       default:
-        return [...filteredGroups].sort(
-          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        return data.sort(
+          (a, b) => new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
         );
     }
-  }, [filteredGroups, selectedSort]);
+  }, [groups, selectedSort]);
 
   return (
     <div className="mx-auto flex w-[1024px] gap-10 px-1 py-[56px]">
@@ -85,7 +69,6 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
         {/* 리스트 */}
         <section>
           <div className="flex items-center justify-between mb-4 relative">
-            {/* 현재 카테고리 표시 */}
             <h2 className="text-lg font-bold">
               {mainCategory} &gt; {activeCategory}
             </h2>
@@ -97,8 +80,9 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
           </div>
 
           <div className="space-y-4">
-            {displayedGroups.length === 0 ? (
-              // 리스트가 없을 경우 안내 문구
+            {loading ? (
+              <div className="flex justify-center items-center h-60 text-gray-500">로딩 중...</div>
+            ) : displayedGroups.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -123,7 +107,7 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
                 </motion.p>
               </motion.div>
             ) : (
-              displayedGroups.map(group => <GroupListCard key={group.id} {...group} />)
+              displayedGroups.map(group => <GroupListCard key={group.group_id} {...group} />)
             )}
 
             {displayedGroups.length > 0 && (

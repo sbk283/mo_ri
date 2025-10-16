@@ -11,6 +11,7 @@ function MyPage() {
   const [nickname, setNickname] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [avatarUrl, setAvatarUrl] = useState<string>('/ham.png');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -25,6 +26,7 @@ function MyPage() {
         if (profile) {
           setNickname(profile.nickname || '사용자');
           setName(profile.name || '');
+          setAvatarUrl(profile.avatar_url || '/ham.png');
         } else {
           console.log('프로필 정보가 없습니다.');
         }
@@ -75,7 +77,7 @@ function MyPage() {
       {/* 하단 내용 부분 -상단 박스  */}
       <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[36px] px-[48px] flex gap-[48px] mb-[59px]">
         <div className="overflow-hidden bg-slate-300 w-full max-w-[192px] h-[192px] rounded-[50%] border-[5px] border-brand">
-          <img src="/ham.png" alt="이미지" className="w-full h-full object-cover" />
+          <img src={avatarUrl} alt="이미지" className="w-full h-full object-cover" />
         </div>
         <div className="w-full">
           <div className="flex items-center justify-between mb-[10px]">

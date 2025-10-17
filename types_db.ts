@@ -337,6 +337,50 @@ export type Database = {
           },
         ]
       }
+      user_careers: {
+        Row: {
+          career_id: string
+          career_image_url: string | null
+          company_name: string
+          created_at: string | null
+          end_date: string
+          position: string | null
+          profile_id: string | null
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          career_id?: string
+          career_image_url?: string | null
+          company_name: string
+          created_at?: string | null
+          end_date: string
+          position?: string | null
+          profile_id?: string | null
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          career_id?: string
+          career_image_url?: string | null
+          company_name?: string
+          created_at?: string | null
+          end_date?: string
+          position?: string | null
+          profile_id?: string | null
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_careers_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_interests: {
         Row: {
           category_sub_id: string | null

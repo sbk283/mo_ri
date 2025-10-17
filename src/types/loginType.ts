@@ -231,6 +231,7 @@ export type Database = {
       groups: {
         Row: {
           created_by: string | null;
+          curriculum: Json | null;
           group_capacity: number | null;
           group_content: string | null;
           group_created_at: string;
@@ -244,10 +245,12 @@ export type Database = {
           group_start_day: string;
           group_title: string;
           group_updated_at: string;
+          image_urls: string[] | null;
           status: Database['public']['Enums']['group_status_enum'];
         };
         Insert: {
           created_by?: string | null;
+          curriculum?: Json | null;
           group_capacity?: number | null;
           group_content?: string | null;
           group_created_at?: string;
@@ -261,10 +264,12 @@ export type Database = {
           group_start_day: string;
           group_title: string;
           group_updated_at?: string;
+          image_urls?: string[] | null;
           status?: Database['public']['Enums']['group_status_enum'];
         };
         Update: {
           created_by?: string | null;
+          curriculum?: Json | null;
           group_capacity?: number | null;
           group_content?: string | null;
           group_created_at?: string;
@@ -278,6 +283,7 @@ export type Database = {
           group_start_day?: string;
           group_title?: string;
           group_updated_at?: string;
+          image_urls?: string[] | null;
           status?: Database['public']['Enums']['group_status_enum'];
         };
         Relationships: [
@@ -335,6 +341,50 @@ export type Database = {
           {
             foreignKeyName: 'post_reports_user_id_fkey';
             columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      user_careers: {
+        Row: {
+          career_id: string;
+          career_image_url: string | null;
+          company_name: string;
+          created_at: string | null;
+          end_date: string;
+          position: string | null;
+          profile_id: string | null;
+          start_date: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          career_id?: string;
+          career_image_url?: string | null;
+          company_name: string;
+          created_at?: string | null;
+          end_date: string;
+          position?: string | null;
+          profile_id?: string | null;
+          start_date: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          career_id?: string;
+          career_image_url?: string | null;
+          company_name?: string;
+          created_at?: string | null;
+          end_date?: string;
+          position?: string | null;
+          profile_id?: string | null;
+          start_date?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_careers_profile_id_fkey';
+            columns: ['profile_id'];
             isOneToOne: false;
             referencedRelation: 'user_profiles';
             referencedColumns: ['user_id'];
@@ -424,7 +474,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      unaccent: {
+        Args: { '': string };
+        Returns: string;
+      };
+      unaccent_init: {
+        Args: { '': unknown };
+        Returns: unknown;
+      };
     };
     Enums: {
       group_kind_enum: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';

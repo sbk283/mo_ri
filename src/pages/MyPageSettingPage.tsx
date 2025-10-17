@@ -22,9 +22,6 @@ function MyPageSettingPage() {
           </div>
         </div>
       </div>
-      {/* 하단 영역부분 비밀번호 확인컴포넌트 삭제 할거임.*/}
-      {/* <PasswordCheck /> */}
-
       <PasswordEdit />
     </MyPageLayout>
   );

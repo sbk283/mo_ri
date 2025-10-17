@@ -4,7 +4,7 @@ import { Dayjs } from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
 export type CareerItem = {
-  id: number;
+  id: string;
   period: string;
   career: string;
   file: File | null;
@@ -14,13 +14,15 @@ type CareerModalProps = {
   open: boolean;
   onClose: () => void;
   careerList: CareerItem[];
-  setCareerList: React.Dispatch<React.SetStateAction<CareerItem[]>>;
-  onSave?: () => void;
+  // setCareerList: React.Dispatch<React.SetStateAction<CareerItem[]>>;
+  onSave?: (updatedList: CareerItem[], originalList: CareerItem[]) => void | Promise<void>;
 };
 
-function CareerModal({ open, onClose, careerList, setCareerList, onSave }: CareerModalProps) {
+function CareerModal({ open, onClose, careerList, onSave }: CareerModalProps) {
   // 모달 내부에서만 사용하는 임시 경력 목록
   const [tempCareerList, setTempCareerList] = useState<CareerItem[]>([]);
+  // 원본 리스트 저장 (변경사항 비교용)
+  const [originalList, setOriginalList] = useState<CareerItem[]>([]);
 
   const [careerInput, setCareerInput] = useState<{
     startDate: Dayjs | null;
@@ -34,7 +36,9 @@ function CareerModal({ open, onClose, careerList, setCareerList, onSave }: Caree
   // 모달이 열릴 때 현재 careerList를 복사해서 임시 목록으로 사용
   useEffect(() => {
     if (open) {
-      setTempCareerList([...careerList]);
+      const listCopy = [...careerList];
+      setTempCareerList(listCopy);
+      setOriginalList(listCopy);
     }
   }, [open, careerList]);
 
@@ -44,7 +48,7 @@ function CareerModal({ open, onClose, careerList, setCareerList, onSave }: Caree
 
     const period = `${careerInput.startDate.format('YYYY/MM/DD')} ~ ${careerInput.endDate.format('YYYY/MM/DD')}`;
     const newCareer: CareerItem = {
-      id: Date.now(),
+      id: Date.now().toString(),
       period,
       career: careerInput.career,
       file: careerInput.file,
@@ -60,23 +64,22 @@ function CareerModal({ open, onClose, careerList, setCareerList, onSave }: Caree
       setCareerInput(prev => ({ ...prev, file: e.target.files![0] }));
     }
   };
-  // 파일 버튼 클릭
-  // const handleFileButtonClick = () => {
-  //   fileInputRef.current?.click();
-  // };
+
+  // 경력 삭제 (임시 목록에서만 삭제)
+  const handleDeleteCareer = (careerId: string) => {
+    setTempCareerList(prev => prev.filter(c => c.id !== careerId));
+  };
 
   // 저장
   const handleSave = () => {
-    setCareerList(tempCareerList); // 임시 목록을 실제 목록에 반영
-    console.log('경력 목록:', tempCareerList);
-    // TODO: 서버 업로드 로직
-    // 저장 완료 콜백 호출 (선택사항)
-    onSave?.();
+    // 부모 컴포넌트에 변경사항 전달 (DB 작업은 부모에서 수행)
+    onSave?.(tempCareerList, originalList);
     // 모달 닫기
     onClose();
     // 입력 필드 초기화
     setCareerInput({ startDate: null, endDate: null, career: '', file: null });
   };
+
   // 변경사항이 있는지 확인
   const hasChanges =
     tempCareerList.length !== careerList.length ||
@@ -172,11 +175,11 @@ function CareerModal({ open, onClose, careerList, setCareerList, onSave }: Caree
         <div className="border-b border-gray-300 opacity-30 my-[27px]" />
 
         {/* 추가된 경력 리스트 */}
-        <div className="text-md font-semibold text-gray-400">추가된 경력 리스트</div>
+        <div className="text-md font-semibold text-gray-400">등록된 경력 리스트</div>
         <div className="mt-2">
           {tempCareerList.length === 0 ? (
             <div className="text-sm text-black">
-              추가된 경력이 없습니다. 경력추가를 눌러 경력을 추가해 보세요.
+              등록된 경력이 없습니다. 경력추가를 눌러 경력을 추가해 보세요.
             </div>
           ) : (
             tempCareerList.map(item => (
@@ -197,7 +200,7 @@ function CareerModal({ open, onClose, careerList, setCareerList, onSave }: Caree
                   </span>
                 </div>
                 <button
-                  onClick={() => setTempCareerList(prev => prev.filter(c => c.id !== item.id))}
+                  onClick={() => handleDeleteCareer(item.id)}
                   className="bg-brand-red py-1 px-3 rounded-[5px] text-white"
                 >
                   삭제

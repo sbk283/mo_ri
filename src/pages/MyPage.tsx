@@ -105,8 +105,8 @@ function MyPage() {
         </div>
       </div>
       {/* 하단 내용 부분 -상단 박스  */}
-      <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[36px] px-[48px] flex gap-[48px] mb-[59px]">
-        <div className="overflow-hidden bg-slate-300 w-full max-w-[192px] h-[192px] rounded-[50%] border-[5px] border-brand">
+      <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[30px] px-[40px] flex gap-[48px] mb-[59px]">
+        <div className="overflow-hidden bg-slate-300 w-full max-w-[192px] h-[192px] rounded-[50%] border-[1px] border-gray-200">
           <img src={avatarUrl} alt="이미지" className="w-full h-full object-cover" />
         </div>
         <div className="w-full">

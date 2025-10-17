@@ -19,12 +19,6 @@ function CreateGroupNavigation({
   const isFirst = step === 1;
   const isLast = step === totalSteps;
 
-  // 클릭 가드
-  const handleNextClick = () => {
-    if (disableNext) return;
-    (isLast ? (onSubmit ?? onNext) : onNext)();
-  };
-
   return (
     <div className="mt-8 flex justify-end gap-5">
       <button

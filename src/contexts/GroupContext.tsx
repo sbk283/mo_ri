@@ -77,7 +77,8 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
           .from('groups')
           .insert({
             group_title: formData.title,
-            group_region: formData.regionFree ? null : formData.region,
+            group_region: formData.group_region_any ? null : formData.group_region,
+            group_region_any: formData.group_region_any,
             group_short_intro: formData.summary,
             group_content: formData.description,
             group_start_day: formData.startDate,
@@ -93,7 +94,6 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
                       ? 'volunteer'
                       : 'etc',
             group_capacity: formData.memberCount,
-            group_region_any: formData.regionFree,
             status: 'recruiting',
             created_by: user.id,
           })

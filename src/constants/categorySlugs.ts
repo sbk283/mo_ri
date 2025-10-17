@@ -22,3 +22,12 @@ export const categorySlugMap: Record<string, string> = {
   // 전체보기
   전체보기: 'all',
 };
+
+// 역매핑 (슬러그 → 한글)
+export const slugToCategoryMap: Record<string, string> = Object.entries(categorySlugMap).reduce(
+  (acc, [k, v]) => {
+    acc[v] = k;
+    return acc;
+  },
+  {} as Record<string, string>,
+);

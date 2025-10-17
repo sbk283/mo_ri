@@ -1,7 +1,7 @@
 // 모임 생성 - StepOne 카테고리 설정
 
+import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import interestOptions from '../../constants/interestOptions';
 
 type InterestSelectorProps = {
@@ -12,7 +12,7 @@ type InterestSelectorProps = {
 
 function InterestSelector({ major, sub, onChange }: InterestSelectorProps) {
   const [majorOpen, setMajorOpen] = useState(false);
-  const [subOpen, setSubOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false)
 
   return (
     <section className="flex gap-[58px]">

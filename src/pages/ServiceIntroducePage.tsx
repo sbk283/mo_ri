@@ -4,6 +4,28 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
 
 function ServiceIntroducePage() {
+  const swiperData = [
+    {
+      src: './bannerdesign1.jpg',
+      alt: '관심사를 통한 모임찾기',
+      to: '/grouplist/all',
+    },
+    {
+      src: './bannerdesign2.jpg',
+      alt: '찜리스트 가능',
+      to: '/groupwish',
+    },
+    {
+      src: './bannerdesign3.jpg',
+      alt: '쳬계적인 모임생성',
+      to: '/creategroup',
+    },
+    {
+      src: './bruce.jpg',
+      alt: '설명4',
+      to: '/grouplist',
+    },
+  ];
   return (
     <div>
       {/* 상단배너 */}
@@ -31,7 +53,7 @@ function ServiceIntroducePage() {
             </div>
             <div className="ml-[65px]">
               <div>
-                <p className="text-xxl font-bold">"취미부터 자기개발까지,</p>
+                <p className="text-xxl font-bold">"취미부터 자기계발까지,</p>
                 <p className="text-xxl font-bold">
                   <span className="text-brand">원하는 모임을 한 곳에서 해결</span>하세요.”
                 </p>
@@ -54,56 +76,36 @@ function ServiceIntroducePage() {
             <div>
               <Swiper
                 slidesPerView={2}
-                spaceBetween={30}
+                spaceBetween={20}
                 pagination={{
                   clickable: true,
                 }}
                 modules={[Pagination]}
-                className="mySwiper"
+                className="mySwiperServiceIt w-full h-[230]"
               >
-                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
-                  <img
-                    className="w-full h-full overflow-hidden object-cover rounded-[5px]"
-                    src="./bruce.jpg"
-                    alt="설명1"
-                  />
-                </SwiperSlide>
-                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
-                  <img
-                    className="w-full h-full object-cover rounded-[5px]"
-                    src="./bruce.jpg"
-                    alt="설명1"
-                  />
-                </SwiperSlide>
-                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
-                  <img
-                    className="w-full h-full object-cover rounded-[5px]"
-                    src="./bruce.jpg"
-                    alt="설명1"
-                  />
-                </SwiperSlide>
-                <SwiperSlide className="w-[540px] h-[290px] shadow-card">
-                  <img
-                    className="w-full h-full object-cover rounded-[5px]"
-                    src="./bruce.jpg"
-                    alt="설명1"
-                  />
-                </SwiperSlide>
+                {swiperData.map((banner, idx) => (
+                  <SwiperSlide key={idx}>
+                    <Link to={banner.to ?? '/default'}>
+                      <img src={banner.src} alt={banner.alt} />
+                    </Link>
+                  </SwiperSlide>
+                ))}
               </Swiper>
             </div>
           </div>
           {/* 믿고사용할수있는 최적환경제공 */}
           <div className="flex items-center justify-center mb-[100px]">
-            <div className="mr-12">
+            <div className="mr-[90px]">
               <div>
                 <p className="text-xxl font-bold">"믿고 사용할 수 있는</p>
                 <p className="text-xxl font-bold">최적의 환경을 제공합니다."</p>
                 <p className="text-lg font-bold pt-3">
-                  <span className="text-brand">안전한 약속, 투명한 운영,</span>개인정보 보호까지!”
+                  <span className="text-brand">안전한 약속, 투명한 운영</span>, 개인정보 보호까지!”
                 </p>
-                <p className="pt-1">
-                  위치 기반 서비스와 청소년 보호 정책을 통해 누구나 안심하고 이용할 수 있습니다.
+                <p className="pt-2">
+                  모임은 <span className="font-bold">커리큘럼 기반</span>으로 엄격하게 관리되며,
                 </p>
+                <p>관리자 승인을 통해 신뢰할 수 있는 모임만 제공합니다.</p>
               </div>
             </div>
             <div className="w-[345px] h-[287px]">
@@ -123,13 +125,13 @@ function ServiceIntroducePage() {
               </p>
               <div className="flex gap-4 pt-6">
                 <Link
-                  to={'/signup'}
+                  to={'/login'}
                   className="border border-brand px-[60px] py-[10px] rounded-[5px] bg-brand text-white text-lg font-bold"
                 >
-                  회원 가입 하기
+                  회원 가입하기
                 </Link>
                 <Link
-                  to={'/grouplist'}
+                  to={'/grouplist/all'}
                   className="border border-brand px-[60px] py-[10px] rounded-[5px] bg-white text-brand text-lg font-bold"
                 >
                   모임 둘러보기

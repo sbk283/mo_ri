@@ -7,7 +7,7 @@ import type { profileInsert } from '../types/profileType';
 import { createProfile } from '../lib/profile';
 
 function AuthCallback() {
-  const [msg, setMsg] = useState<string>('인증 처리 중...');
+  const [msg, setMsg] = useState<string>('로딩중');
   const [countDown, setCountDown] = useState(0);
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [hasProfile, setHasProfile] = useState(false);
@@ -83,11 +83,11 @@ function AuthCallback() {
         }
 
         if (!interestsList || interestsList.length === 0) {
-          setMsg('회원가입을 축하합니다! 다음 단계로 이동합니다.');
-          setShouldRedirect(true);
+          setMsg('회원가입을 축하합니다! 다음단계로 이동해주세요.');
+          // setShouldRedirect(true);
           setHasProfile(false); // 관심사 없을 때
         } else {
-          setMsg('로그인 완료! 홈으로 이동합니다.');
+          navigate('/');
           setShouldRedirect(true);
           setHasProfile(true); // 관심사 있음
         }
@@ -103,7 +103,7 @@ function AuthCallback() {
   useEffect(() => {
     const timer = setTimeout(() => {
       handleAuthCallback();
-    }, 1000);
+    }, 500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -134,20 +134,20 @@ function AuthCallback() {
         <SignUpBanner />
         <div className="y-full py-[40px] px-[107px]">
           <div className="flex items-center gap-4 mb-[180px]">
-            <div className="text-xxl font-bold text-brand whitespace-nowrap">회원가입</div>
+            <div className="text-xxl font-bold text-brand whitespace-nowrap">시작하기</div>
             <div className="flex items-center gap-3 whitespace-nowrap">
-              <span className="text-brand font-bold text-lg">01_ 기본 정보 작성</span>
-              <img className="w-[15px] h-[15px]" src="/arrow_sm.svg" alt="화살표" />
-              <span className="font-bold text-lg text-gray-600">02_ 관심사 선택</span>
+              <span className="text-brand font-bold text-lg"></span>
+              <span className="font-bold text-lg text-gray-600"></span>
             </div>
           </div>
           <div className="text-center mb-[200px]">
             <p className="font-bold mb-3 text-xl">{msg}</p>
-            {shouldRedirect && <p className="text-lg font-bold">로딩중{countDown}초 후</p>}
+            {shouldRedirect && <p className="text-lg font-bold">{countDown}</p>}
           </div>
           <Button
             htmlType="submit"
             onClick={handleClick}
+            disabled={msg === '로딩중'}
             className="w-[450px] h-[48px] bg-brand text-white text-xl font-bold rounded-[5px]"
           >
             다음단계

@@ -35,12 +35,20 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
   const [selected, setSelected] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const { subCategories, loading, error } = useCategorySubs();
-  const categorySubs = useCategorySubs();
+  const MAX_SELECTION = 5;
 
   console.log('subCategories:', subCategories, loading, error);
 
   const toggleSelect = (item: string) => {
-    setSelected(prev => (prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]));
+    if (selected.includes(item)) {
+      setSelected(prev => prev.filter(i => i !== item));
+    } else {
+      // 5개 미만일 때만 추가
+      if (selected.length < MAX_SELECTION) {
+        setSelected(prev => [...prev, item]);
+      }
+      // 5개를 이미 선택한 상태에서 더 추가하면 무시(아무 동작 없음)
+    }
   };
 
   const handleNext = async () => {
@@ -76,12 +84,7 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
   return (
     <div className="py-[40px] px-[90px]">
       <div className="flex items-center gap-4 mb-5">
-        <div className="text-xxl font-bold text-brand whitespace-nowrap">회원가입</div>
-        <div className="flex items-center gap-3 whitespace-nowrap">
-          <span className=" font-bold text-gray-600 text-lg">01_ 기본 정보 작성</span>
-          <img className="w-[15px] h-[15px]" src="/arrow_sm.svg" alt="화살표" />
-          <span className=" font-bold text-lg  text-brand">02_ 관심사 선택</span>
-        </div>
+        <div className="text-xxl font-bold text-brand whitespace-nowrap">관심사 선택</div>
       </div>
 
       <div>
@@ -95,11 +98,12 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
               {items.map(item => (
                 <button
                   key={item}
-                  className={`border rounded-[5px] py-1 px-3 cursor-pointer hover:bg-brand hover:text-white hover:border-brand ${
-                    selected.includes(item) ? 'bg-brand text-white border-brand' : ''
-                  }`}
+                  className={`border rounded-[5px] py-1 px-3 cursor-pointer hover:bg-brand hover:text-white hover:border-brand ${selected.includes(item) ? 'bg-brand text-white border-brand' : ''}
+    ${selected.length >= MAX_SELECTION && !selected.includes(item) ? 'opacity-50 pointer-events-none cursor-not-allowed' : ''}
+  `}
                   onClick={() => toggleSelect(item)}
                   type="button"
+                  disabled={selected.length >= MAX_SELECTION && !selected.includes(item)}
                 >
                   {item}
                 </button>
@@ -110,7 +114,7 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
 
         {selected.length === 0 && (
           <div className="mb-3 text-red-600 relative">
-            <p className="absolute">최소 1개 이상 선택해 주세요.</p>
+            <p className="absolute">관심사는 최대 5개까지 선택하실 수 있습니다.</p>
           </div>
         )}
 

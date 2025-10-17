@@ -18,8 +18,8 @@ export type GroupItem = {
 export type Duration = 'oneday' | 'short' | 'long';
 
 const STATUS_BG: Record<GroupItem['status'], string> = {
-  모집중: 'bg-[#FF5252]',
-  모집예정: 'bg-[#2A91E5]',
+  모집중: 'bg-brand',
+  모집예정: 'bg-brand-red',
 };
 
 function StatusBadge({ text }: { text: GroupItem['status'] }) {

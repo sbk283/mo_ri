@@ -1,34 +1,41 @@
+// src/pages/GroupContentPage.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useRef, useState, useMemo } from 'react';
 import DashboardDetail from '../components/dashboard/DashboardDetail';
 import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
+import { useParams } from 'react-router-dom';
 
 function GroupContentPage() {
+  const { id: groupId } = useParams<{ id: string }>();
+
   // 각 탭별 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 탭 데이터 (기존 구조 유지)
-  const tabs = [
-    {
-      label: '공지사항',
-      content: (
-        <div>
-          <DashboardNotice />
-        </div>
-      ),
-    },
-    {
-      label: '모임일상',
-      content: (
-        <div>
-          <GroupDailyContent />
-        </div>
-      ),
-    },
-  ];
+  // 탭 데이터 (DB 연동: 각 컴포넌트에 groupId 전달)
+  const tabs = useMemo(
+    () => [
+      {
+        label: '공지사항',
+        content: (
+          <div>
+            <DashboardNotice groupId={groupId} />
+          </div>
+        ),
+      },
+      {
+        label: '모임일상',
+        content: (
+          <div>
+            <GroupDailyContent groupId={groupId} />
+          </div>
+        ),
+      },
+    ],
+    [groupId],
+  );
 
   // 선택된 탭 상태
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
@@ -53,7 +60,7 @@ function GroupContentPage() {
     const onResize = () => measure();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [selectedTab]);
+  }, [selectedTab, tabs]);
 
   // 상단 "작성하기" 버튼
   const handleCreateClick = () => {
@@ -65,7 +72,7 @@ function GroupContentPage() {
     <div>
       <GroupDashboardLayout>
         <div className="flex flex-col gap-3">
-          {/* 상단 그룹 정보 */}
+          {/* 상단 그룹 정보 (DashboardDetail 내부에서 useParams로 group 불러옴) */}
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
@@ -125,11 +132,10 @@ function GroupContentPage() {
                     exit={{ y: -10, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {/* 선택된 탭에 맞는 최신 props로 렌더링 */}
                     {selectedTab.label === '공지사항' ? (
-                      <DashboardNotice createRequestKey={noticeCreateTick} />
+                      <DashboardNotice groupId={groupId} createRequestKey={noticeCreateTick} />
                     ) : (
-                      <GroupDailyContent createRequestKey={dailyCreateTick} />
+                      <GroupDailyContent groupId={groupId} createRequestKey={dailyCreateTick} />
                     )}
                   </motion.div>
                 </AnimatePresence>

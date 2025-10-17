@@ -17,7 +17,7 @@ const Pill = ({
 
   const toneMap = {
     gray: 'bg-[#8C8C8C] border-[#8c8c8c] text-white leading-none text-[17px]',
-    blue: 'bg-white text-[#0689E8] border-[#0689E8] leading-none text-[17px]',
+    blue: 'bg-white text-brand border-brand leading-none text-[17px]',
     amber: 'text-[#6C6C6C] border-[#6C6C6C] leading-none text-[16px]',
   } as const;
 

@@ -1,34 +1,30 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 function GroupDashboardSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>(); // ✅ 현재 페이지의 그룹 id 가져오기
 
   const categories = [
-    // {
-    //   name: '전체보기',
-    //   icon: '/images/list_all_dark.svg',
-    //   path: '/groupdashboard/:id',
-    // },
     {
       name: '게시판',
       icon: '/grouplist_dark.svg',
-      path: '/groupcontent/:id',
+      path: `/groupcontent/${id}`, // ✅ 실제 id로 대체
     },
     {
       name: '모임 일정',
       icon: '/schedule_dark.svg',
-      path: '/groupschedule/:id',
+      path: `/groupschedule/${id}`,
     },
     {
       name: '모임 멤버',
       icon: '/people_dark.svg',
-      path: '/groupmember/:id',
+      path: `/groupmember/${id}`,
     },
     {
       name: '채팅/문의',
       icon: '/talk_dark.svg',
-      path: '/chat',
+      path: `/chat/${id}`, // ✅ (채팅도 그룹별이면 id 붙여줘)
     },
   ];
 
@@ -37,7 +33,7 @@ function GroupDashboardSidebar() {
       <nav className="border border-brand w-[207px] h-[100%] rounded-[5px]">
         <div className="flex border-b border-brand items-center gap-[8px] text-xl py-[17px] px-[23px] font-semibold text-brand">
           <span>
-            <img src="/groupmeeting.svg" />
+            <img src="/groupmeeting.svg" alt="모임 아이콘" />
           </span>
           모임
         </div>
@@ -48,7 +44,6 @@ function GroupDashboardSidebar() {
 
             return (
               <li key={cat.name} className="text-lg font-semibold">
-                {/* 메인 클릭 시 처리 */}
                 <button
                   onClick={() => navigate(cat.path)}
                   className={`flex items-center gap-[10px] py-[8px] text-lg w-full text-left ${
@@ -60,7 +55,7 @@ function GroupDashboardSidebar() {
                     alt={cat.name}
                     className="w-4 h-4"
                   />
-                  <span className="font-semibold ">{cat.name}</span>
+                  <span className="font-semibold">{cat.name}</span>
                 </button>
               </li>
             );
@@ -70,4 +65,5 @@ function GroupDashboardSidebar() {
     </aside>
   );
 }
+
 export default GroupDashboardSidebar;

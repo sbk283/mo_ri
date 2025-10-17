@@ -1,4 +1,3 @@
-
 import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import GroupContentBox from './GroupContentBox';
@@ -91,7 +90,7 @@ function GroupMenu() {
       </nav>
 
       {/* 콘텐츠 */}
-      <main className="flex justify-center items-center min-h-[300px]">
+      <main className="flex justify-center items-center mt-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={selectedTab.label}

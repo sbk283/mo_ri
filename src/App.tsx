@@ -116,7 +116,7 @@ function App() {
           <Route path="/groupdetail/:id" element={<GroupDetailPage />} />
           {/* 채팅 */}
           <Route
-            path="/chat"
+            path="/chat/:id"
             element={
               <Protected>
                 <DirectChatPage />
@@ -125,12 +125,12 @@ function App() {
           />
           {/* 모임 상세대시보드 */}
           <Route path="/groupdashboard/:id" element={<GroupDashBoardPage />} />
+          {/* 모임 게시판 */}
+          <Route path="/groupcontent/:id" element={<GroupContentPage />} />
           {/* 모임 멤버 */}
           <Route path="/groupmember/:id" element={<GroupMemberPage />} />
           {/* 모임 일정 */}
           <Route path="/groupschedule/:id" element={<GroupSchedulePage />} />
-          {/* 모임 게시판 */}
-          <Route path="/groupcontent/:id" element={<GroupContentPage />} />
           {/* 마이페이지 회원설정 */}
           <Route
             path="/mypagesetting"

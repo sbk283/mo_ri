@@ -1,69 +1,139 @@
 // src/components/dashboard/GroupContentDetail.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { Notice } from '../../types/notice';
-import { loadArray, saveArray, LS_KEYS } from '../../utils/storage';
+import { supabase } from '../../lib/supabase';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
+import type { Notice } from '../../types/notice';
 
-type Props =
-  | { id: number; onBack: () => void } // 라우팅 없이 사용
-  | { id?: never; onBack?: never }; // 라우팅으로 사용
-
-export default function GroupContentDetail(props: Props) {
-  const params = useParams<{ id: string }>();
+export default function GroupContentDetail() {
+  const { id: groupId } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // 라우팅/프롭스로부터 id 해석
-  const resolvedId =
-    (('id' in props && props.id) as number | undefined) ??
-    (params.id ? Number(params.id) : undefined);
-
-  const goBack = 'onBack' in props && props.onBack ? props.onBack : () => navigate(-1);
-
-  // noticeMock 대신 항상 localStorage에서 읽어옴
-  const current = useMemo(() => {
-    const list = loadArray<Notice>(LS_KEYS.notices, []);
-    return list.find(n => n.id === Number(resolvedId));
-  }, [resolvedId]);
-
+  const [notice, setNotice] = useState<Notice | null>(null);
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [postId, setPostId] = useState<string | null>(null);
 
-  if (!resolvedId || !current) {
-    return (
-      <div className="p-8 text-center">
-        <p>⚠️ 해당 공지를 찾을 수 없습니다.</p>
-        <button
-          onClick={goBack}
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          돌아가기
-        </button>
-      </div>
-    );
-  }
+  // 게시글 불러오기 (그룹의 최신 공지 1건)
+  useEffect(() => {
+    if (!groupId) return;
 
-  const handleSave = (next: Notice) => {
-    const list = loadArray<Notice>(LS_KEYS.notices, []);
-    const idx = list.findIndex(n => n.id === next.id);
-    const updated = [...list];
-    if (idx >= 0) updated[idx] = { ...list[idx], ...next };
-    else updated.unshift(next);
-    saveArray(LS_KEYS.notices, updated);
+    let ignore = false;
+    (async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('group_posts')
+        .select('post_id, post_title, post_body_md, post_created_at')
+        .eq('group_id', groupId)
+        .eq('board_type', 'notice')
+        .order('post_created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (ignore) return;
+
+      if (error || !data) {
+        console.error('[GroupContentDetail] load error', {
+          message: error?.message,
+          details: (error as any)?.details,
+          hint: (error as any)?.hint,
+          code: error?.code,
+        });
+        setNotice(null);
+      } else {
+        setNotice({
+          id: 1,
+          title: data.post_title ?? '',
+          content: data.post_body_md ?? '',
+          date: (data.post_created_at ?? '').slice(0, 10),
+          isRead: false,
+        });
+        setPostId(data.post_id);
+      }
+      setLoading(false);
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [groupId]);
+
+  // 저장 (수정/신규)
+  const handleSave = async (next: Notice) => {
+    if (!groupId) return;
+
+    const { data: userRes, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !userRes?.user?.id) {
+      console.error('[GroupContentDetail] auth error', authErr);
+      return;
+    }
+    const userId = userRes.user.id;
+
+    if (postId) {
+      const { error } = await supabase
+        .from('group_posts')
+        .update({
+          post_title: next.title,
+          post_body_md: next.content,
+        })
+        .eq('post_id', postId);
+
+      if (error) {
+        console.error('[GroupContentDetail] update error', {
+          message: error.message,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: error.code,
+        });
+        return;
+      }
+    } else {
+      const { data, error } = await supabase
+        .from('group_posts')
+        .insert({
+          user_id: userId, // ✅ RLS with_check 통과
+          group_id: groupId,
+          board_type: 'notice',
+          post_title: next.title,
+          post_body_md: next.content,
+        })
+        .select('post_id')
+        .single();
+
+      if (error) {
+        console.error('[GroupContentDetail] insert error', {
+          message: error.message,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: error.code,
+        });
+        return;
+      }
+      if (data?.post_id) setPostId(data.post_id);
+    }
+
+    setNotice(next);
     setEditMode(false);
   };
 
-  const handleDelete = () => {
-    if (!resolvedId) return;
+  // 삭제
+  const handleDelete = async () => {
+    if (!postId) return;
     const ok = window.confirm('정말 삭제할까요? 삭제 후 되돌릴 수 없어요.');
     if (!ok) return;
 
-    const list = loadArray<Notice>(LS_KEYS.notices, []);
-    const updated = list.filter(n => n.id !== resolvedId);
-    saveArray(LS_KEYS.notices, updated);
-
-    goBack();
-    window.location.reload();
+    const { error } = await supabase.from('group_posts').delete().eq('post_id', postId);
+    if (error) {
+      console.error('[GroupContentDetail] delete error', {
+        message: error.message,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: error.code,
+      });
+      return;
+    }
+    navigate(-1);
   };
 
   const cardVariants = {
@@ -72,8 +142,25 @@ export default function GroupContentDetail(props: Props) {
     exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -24 : 24 }),
   };
 
-  // 디테일→수정: 오른쪽에서 슬라이드 인, 수정→디테일: 반대
   const dir = editMode ? 1 : -1;
+
+  if (loading) {
+    return <div className="p-10 text-center text-gray-500">게시글을 불러오는 중...</div>;
+  }
+
+  if (!notice) {
+    return (
+      <div className="p-8 text-center">
+        <p>⚠️ 해당 공지를 찾을 수 없습니다.</p>
+        <button
+          onClick={() => navigate(-1)}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          돌아가기
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full">
@@ -90,7 +177,7 @@ export default function GroupContentDetail(props: Props) {
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
             <GroupContentDetailEdit
-              notice={current}
+              notice={notice}
               onCancel={() => setEditMode(false)}
               onSave={handleSave}
             />
@@ -111,19 +198,18 @@ export default function GroupContentDetail(props: Props) {
               <header className="px-8 pt-6">
                 <div className="flex">
                   <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
-                    {current.title}
+                    {notice.title}
                   </h1>
                   <span
                     className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
                       flex items-center justify-center ml-4 leading-none
-                      ${current.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
+                      ${notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
                   >
-                    {current.isRead ? '읽음' : '안읽음'}
+                    {notice.isRead ? '읽음' : '안읽음'}
                   </span>
                 </div>
                 <div className="flex items-center text-[#8C8C8C] text-sm gap-3">
-                  <span>{current.date}</span>
-                  <span>조회수 {current.views ?? 0}</span>
+                  <span>{notice.date}</span>
                 </div>
               </header>
 
@@ -131,22 +217,18 @@ export default function GroupContentDetail(props: Props) {
                 <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
               </div>
 
-              {/* 본문 내용 (HTML도 그대로 렌더) */}
-              <section className="px-8 py-10 text-gray-800 leading-relaxed">
-                {typeof current.content === 'string' && current.content.trim().startsWith('<') ? (
-                  <div
-                    className="prose max-w-none"
-                    dangerouslySetInnerHTML={{ __html: current.content as string }}
-                  />
-                ) : (
-                  <div className="whitespace-pre-wrap">{current.content as string}</div>
-                )}
+              {/* 본문 */}
+              <section className="px-8 py-10 text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {notice.content}
               </section>
             </article>
 
             {/* 목록/수정/삭제 */}
             <footer className="py-6 flex text-left justify-start">
-              <button onClick={goBack} className="text-[#8C8C8C] py-2 transition text-md">
+              <button
+                onClick={() => navigate(-1)}
+                className="text-[#8C8C8C] py-2 transition text-md"
+              >
                 &lt; 목록으로
               </button>
               <div className="ml-auto flex py-2">

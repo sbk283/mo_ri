@@ -2,242 +2,97 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import GroupPagination from '../common/GroupPagination';
-import GroupContentDetail from './GroupContentDetail';
-import type { Notice } from '../../types/notice';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
-import { loadArray, saveArray, LS_KEYS } from '../../utils/storage';
-
-export const noticeMock: Notice[] = [
-  {
-    id: 1,
-    title: '[공지] 신규 모임 시스템 업데이트 안내',
-    content:
-      '안녕하세요! 모임 시스템이 새롭게 개선되었습니다. 검색 속도와 추천 정확도가 향상되었으니 많은 이용 바랍니다.',
-    date: '2025-06-01',
-    isRead: false,
-  },
-  {
-    id: 2,
-    title: '서버 점검 공지 (6월 10일 새벽)',
-    content:
-      '6월 10일 새벽 2시부터 4시까지 서버 점검이 진행됩니다. 점검 시간 동안 로그인 및 글쓰기 기능이 제한됩니다.',
-    date: '2025-06-08',
-    isRead: true,
-  },
-  {
-    id: 3,
-    title: '🔥 여름 한정 이벤트 시작!',
-    content:
-      '이벤트 기간 동안 모임에 참여하면 포인트가 두 배로 적립됩니다. 자세한 내용은 이벤트 페이지를 참고해주세요.',
-    date: '2025-07-01',
-    isRead: false,
-  },
-  {
-    id: 4,
-    title: '[필독] 회원정보 보호 정책 변경 안내',
-    content:
-      '개인정보 보호를 위해 보안 정책이 강화되었습니다. 비밀번호를 변경해주시면 더 안전하게 이용하실 수 있습니다.',
-    date: '2025-07-05',
-    isRead: true,
-  },
-  {
-    id: 5,
-    title: '🌟 신규 취미 카테고리 오픈 안내',
-    content: '요리, 그림, 코딩 등 다양한 취미 모임이 새로 추가되었습니다. 지금 바로 참여해보세요!',
-    date: '2025-07-07',
-    isRead: false,
-  },
-  {
-    id: 6,
-    title: '7월 인기 모임 TOP 10 공개',
-    content:
-      '7월 한 달간 가장 많은 참여를 기록한 모임을 소개합니다! 당신의 모임도 포함되어 있을까요?',
-    date: '2025-07-31',
-    isRead: true,
-  },
-  {
-    id: 7,
-    title: '[업데이트] 프로필 커버 이미지 기능 추가',
-    content: '이제 프로필 페이지에서 커버 이미지를 설정할 수 있습니다. 나만의 개성을 표현해보세요!',
-    date: '2025-08-03',
-    isRead: false,
-  },
-  {
-    id: 8,
-    title: '시스템 오류 복구 안내',
-    content: '일시적으로 발생한 알림 지연 현상이 복구되었습니다. 이용에 불편을 드려 죄송합니다.',
-    date: '2025-08-07',
-    isRead: true,
-  },
-  {
-    id: 9,
-    title: '📢 8월 모임 리더 모집 공고',
-    content: '리더로 선정되면 포인트와 배지를 지급합니다. 당신의 열정으로 모임을 이끌어주세요!',
-    date: '2025-08-10',
-    isRead: false,
-  },
-  {
-    id: 10,
-    title: '[점검 완료] 채팅 기능 안정화 안내',
-    content:
-      '8월 12일 새벽 점검이 완료되었습니다. 채팅 기능이 더 빠르고 안정적으로 개선되었습니다.',
-    date: '2025-08-12',
-    isRead: true,
-  },
-  {
-    id: 11,
-    title: '✨ 신규 유저 환영 이벤트 진행 중',
-    content:
-      '지금 회원가입하면 1,000포인트가 즉시 지급됩니다! 친구 초대 시 추가 보너스도 받아가세요.',
-    date: '2025-08-15',
-    isRead: false,
-  },
-  {
-    id: 12,
-    title: '[공지] 모바일 앱 알림 기능 개선',
-    content: '이제 앱에서도 댓글, 좋아요 알림을 실시간으로 받을 수 있습니다.',
-    date: '2025-08-18',
-    isRead: true,
-  },
-  {
-    id: 13,
-    title: '⚙️ 서비스 이용 약관 개정 안내',
-    content:
-      '8월 25일부터 새로운 이용 약관이 적용됩니다. 주요 변경 사항은 약관 페이지에서 확인해주세요.',
-    date: '2025-08-20',
-    isRead: false,
-  },
-  {
-    id: 14,
-    title: '서버 유지보수 작업 안내',
-    content: '9월 1일 오전 3시부터 5시까지 서비스가 일시 중단됩니다. 이용에 참고해주세요.',
-    date: '2025-08-30',
-    isRead: true,
-  },
-  {
-    id: 15,
-    title: '🎉 추석 맞이 포인트 이벤트!',
-    content: '추석 연휴 기간 동안 모임 활동 시 보너스 포인트가 두 배로 적립됩니다.',
-    date: '2025-09-10',
-    isRead: false,
-  },
-  {
-    id: 16,
-    title: '[안내] 신고 기능 강화 및 정책 변경',
-    content: '악성 유저 제재를 강화하기 위해 신고 시스템이 개선되었습니다.',
-    date: '2025-09-13',
-    isRead: true,
-  },
-  {
-    id: 17,
-    title: '9월 인기 글 선정 이벤트 결과 발표',
-    content: '가장 많은 공감을 받은 글을 공개합니다! 당첨자는 포인트 보상과 함께 소개됩니다.',
-    date: '2025-09-20',
-    isRead: false,
-  },
-  {
-    id: 18,
-    title: '🎁 신규 뱃지 시스템 도입 안내',
-    content: '활동 레벨에 따라 뱃지가 자동으로 지급됩니다. 나의 뱃지를 프로필에서 확인해보세요!',
-    date: '2025-09-25',
-    isRead: true,
-  },
-  {
-    id: 19,
-    title: '[공지] 게시글 신고 처리 지연 안내',
-    content: '최근 신고량 증가로 인해 일부 처리에 지연이 발생하고 있습니다. 빠르게 개선하겠습니다.',
-    date: '2025-09-30',
-    isRead: true,
-  },
-  {
-    id: 20,
-    title: '🍂 가을 시즌 테마 적용 안내',
-    content: 'UI 색상이 가을 감성으로 변경되었습니다. 따뜻한 분위기를 느껴보세요.',
-    date: '2025-10-01',
-    isRead: false,
-  },
-  {
-    id: 21,
-    title: '[업데이트] 댓글 수정 기능 추가',
-    content: '작성한 댓글을 5분 이내에 수정할 수 있는 기능이 추가되었습니다.',
-    date: '2025-10-05',
-    isRead: false,
-  },
-  {
-    id: 22,
-    title: '📱 모바일 UI 개선 공지',
-    content: '모바일 환경에서 리스트 가독성이 향상되었습니다. 또한 스크롤 성능이 최적화되었습니다.',
-    date: '2025-10-07',
-    isRead: true,
-  },
-  {
-    id: 23,
-    title: '🔒 보안 강화 업데이트 완료',
-    content: '비밀번호 암호화 수준이 상향되었습니다. 더 안전한 환경에서 서비스를 이용하세요.',
-    date: '2025-10-09',
-    isRead: true,
-  },
-  {
-    id: 24,
-    title: '🧩 커뮤니티 기능 정식 오픈!',
-    content: '이제 모임원끼리 자유롭게 글을 작성하고 댓글을 달 수 있습니다. 첫 글을 작성해보세요!',
-    date: '2025-10-10',
-    isRead: false,
-  },
-  {
-    id: 25,
-    title: '🎈 1주년 기념 감사 이벤트 진행 중',
-    content: '1년 동안 함께 해주신 여러분 감사합니다! 풍성한 혜택이 준비되어 있습니다.',
-    date: '2025-10-15',
-    isRead: true,
-  },
-];
+import type { Notice } from '../../types/notice';
+import { supabase } from '../../lib/supabase';
 
 const ITEMS_PER_PAGE = 10;
-
 const today = () => new Date().toISOString().slice(0, 10);
 
-export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: number }) {
+// DB행과 매핑한 로컬 표시 타입 (post_id 포함)
+type NoticeRow = Notice & { post_id: string };
+
+export function DashboardNotice({
+  groupId,
+  boardType = 'notice',
+  createRequestKey = 0,
+}: {
+  groupId?: string;
+  boardType?: string;
+  createRequestKey?: number;
+}) {
   const [isCreating, setIsCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
 
   useEffect(() => {
-    if (createRequestKey > prevKey.current) {
-      setIsCreating(true);
-    }
+    if (createRequestKey > prevKey.current) setIsCreating(true);
     prevKey.current = createRequestKey;
   }, [createRequestKey]);
 
-  useEffect(() => {
-    const existing = loadArray<Notice>(LS_KEYS.notices, []);
-    if (!existing || existing.length === 0) {
-      saveArray(LS_KEYS.notices, noticeMock);
+  // ===== 목록 로드 =====
+  const [items, setItems] = useState<NoticeRow[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const reload = async () => {
+    if (!groupId) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('group_posts')
+      .select('post_id, post_title, post_body_md, post_created_at')
+      .eq('group_id', groupId)
+      .eq('board_type', boardType)
+      .order('post_created_at', { ascending: false });
+
+    if (error) {
+      console.error('[DashboardNotice] load error', {
+        message: error.message,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: error.code,
+      });
+      setItems([]);
+      setLoading(false);
+      return;
     }
-  }, []);
 
-  const [items, setItems] = useState<Notice[]>(() =>
-    loadArray<Notice>(LS_KEYS.notices, noticeMock),
-  );
+    const mapped: NoticeRow[] =
+      (data ?? []).map((row, idx) => ({
+        id: idx + 1, // 화면용 일련번호
+        post_id: row.post_id,
+        title: row.post_title ?? '',
+        content: row.post_body_md ?? '',
+        date: (row.post_created_at ?? '').slice(0, 10),
+        isRead: false,
+      })) ?? [];
+
+    setItems(mapped);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    saveArray(LS_KEYS.notices, items);
-  }, [items]);
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId, boardType]);
 
-  const [detailId, setDetailId] = useState<number | null>(null);
-
+  // ===== 페이지네이션 =====
   const [page, setPage] = useState(1);
+  useEffect(() => setPage(1), [items.length]); // 목록 바뀌면 1페이지로
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(items.length / ITEMS_PER_PAGE)),
     [items.length],
   );
   const pageItems = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
-    const end = start + ITEMS_PER_PAGE;
-    return items.slice(start, end);
+    return items.slice(start, start + ITEMS_PER_PAGE);
   }, [page, items]);
 
-  const openDetail = (id: number) => setDetailId(id);
-  const closeDetail = () => setDetailId(null);
+  // ===== 상세/작성 모드 =====
+  const [detailIdx, setDetailIdx] = useState<number | null>(null);
+  const openDetail = (localListId: number) => {
+    const idx = items.findIndex(n => n.id === localListId);
+    if (idx >= 0) setDetailIdx(idx);
+  };
+  const closeDetail = () => setDetailIdx(null);
 
   // 새 글 기본값
   const emptyNotice: Notice = {
@@ -248,22 +103,97 @@ export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: n
     isRead: false,
   };
 
-  // 작성 저장 (prepend + 1페이지 이동)
-  const handleCreateSave = (next: Notice) => {
-    const nextId = (items.length ? Math.max(...items.map(n => n.id)) : 0) + 1;
-    const toInsert: Notice = {
-      ...next,
-      id: nextId,
-      date: next.date || today(),
-      isRead: false,
-    };
-    setItems(prev => [toInsert, ...prev]);
-    {
-      /* 변경: setItems 후 useEffect가 자동 저장됨 */
+  // ===== 작성 저장: DB insert → 재조회 → 방금 생성한 글 상세로 =====
+  const handleCreateSave = async (next: Notice) => {
+    if (!groupId) return;
+
+    const { data: userRes, error: authErr } = await supabase.auth.getUser();
+    if (authErr || !userRes?.user?.id) {
+      console.error('[DashboardNotice] auth error', authErr);
+      return;
     }
+    const userId = userRes.user.id;
+
+    const { error } = await supabase.from('group_posts').insert({
+      user_id: userId, // ✅ RLS with_check 통과
+      group_id: groupId,
+      board_type: boardType, // 'notice'
+      post_title: next.title,
+      post_body_md: next.content,
+    });
+
+    if (error) {
+      console.error('[DashboardNotice] insert error', {
+        message: error.message,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: error.code,
+      });
+      return;
+    }
+
+    await reload();
     setIsCreating(false);
     setPage(1);
-    setDetailId(nextId); // 저장 직후 상세페이지 이동
+    setDetailIdx(0);
+  };
+
+  // ===== 수정 저장: DB update → 목록 반영 =====
+  const handleDetailSave = async (next: Notice) => {
+    if (detailIdx == null) return;
+    const target = items[detailIdx];
+    if (!target) return;
+
+    const { error } = await supabase
+      .from('group_posts')
+      .update({
+        post_title: next.title,
+        post_body_md: next.content,
+      })
+      .eq('post_id', target.post_id);
+
+    if (error) {
+      console.error('[DashboardNotice] update error', {
+        message: error.message,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: error.code,
+      });
+      return;
+    }
+
+    // 로컬 반영
+    const copy = [...items];
+    copy[detailIdx] = { ...copy[detailIdx], title: next.title, content: next.content };
+    setItems(copy);
+  };
+
+  // ===== 삭제: DB delete → 목록/상세 갱신 =====
+  const handleDetailDelete = async () => {
+    if (detailIdx == null) return;
+    const target = items[detailIdx];
+    if (!target) return;
+
+    const ok = window.confirm('정말 삭제할까요? 삭제 후 되돌릴 수 없어요.');
+    if (!ok) return;
+
+    const { error } = await supabase.from('group_posts').delete().eq('post_id', target.post_id);
+    if (error) {
+      console.error('[DashboardNotice] delete error', {
+        message: error.message,
+        details: (error as any).details,
+        hint: (error as any).hint,
+        code: error.code,
+      });
+      return;
+    }
+
+    // 목록에서 제거 후 일련번호 재부여
+    const rest = items
+      .filter((_, i) => i !== detailIdx)
+      .map((row, idx) => ({ ...row, id: idx + 1 }));
+    setItems(rest);
+    setDetailIdx(null);
   };
 
   return (
@@ -284,7 +214,7 @@ export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: n
               onSave={handleCreateSave}
             />
           </motion.div>
-        ) : detailId == null ? (
+        ) : detailIdx == null ? (
           // ===== 리스트 뷰 =====
           <motion.div
             key="notice-list"
@@ -293,47 +223,57 @@ export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: n
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            {/* 헤더 */}
-            <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
-              <div className="w-[700px] truncate font-semibold pl-7 text-md">제목</div>
-              <div className="w-[150px] text-center text-md">작성일자</div>
-              <div className="w-[50px] text-center mr-7 text-sm">상태</div>
-            </div>
+            {loading ? (
+              <div className="p-6 text-center text-gray-500">불러오는 중...</div>
+            ) : items.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">등록된 공지가 없습니다.</div>
+            ) : (
+              <>
+                {/* 헤더 */}
+                <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
+                  <div className="w-[700px] truncate font-semibold pl-7 text-md">제목</div>
+                  <div className="w-[150px] text-center text-md">작성일자</div>
+                  <div className="w-[50px] text-center mr-7 text-sm">상태</div>
+                </div>
 
-            {/* 목록 */}
-            <div className="flex flex-col divide-y divide-dashed divide-gray-300">
-              {pageItems.map(notice => (
-                <button
-                  key={notice.id}
-                  type="button"
-                  onClick={() => openDetail(notice.id)}
-                  className="flex justify-between items-center py-3 hover:bg-gray-50 text-left focus:outline-none"
-                >
-                  <span
-                    className="w-[700px] truncate font-semibold pl-7 transition text-[#111]"
-                    title={notice.title}
-                  >
-                    {notice.title}
-                  </span>
+                {/* 목록 */}
+                <div className="flex flex-col divide-y divide-dashed divide-gray-300">
+                  {pageItems.map(notice => (
+                    <button
+                      key={notice.post_id}
+                      type="button"
+                      onClick={() => openDetail(notice.id)}
+                      className="flex justify-between items-center py-3 hover:bg-gray-50 text-left focus:outline-none"
+                    >
+                      <span
+                        className="w-[700px] truncate font-semibold pl-7 transition text-[#111]"
+                        title={notice.title}
+                      >
+                        {notice.title}
+                      </span>
 
-                  <span className="w-[150px] text-center text-gray-400 text-sm">{notice.date}</span>
+                      <span className="w-[150px] text-center text-gray-400 text-sm">
+                        {notice.date}
+                      </span>
 
-                  <span
-                    className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
-                    flex items-center justify-center mr-7
-                    ${notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
-                  >
-                    {notice.isRead ? '읽음' : '안읽음'}
-                  </span>
-                </button>
-              ))}
-            </div>
+                      <span
+                        className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
+                        flex items-center justify-center mr-7
+                        ${notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
+                      >
+                        {notice.isRead ? '읽음' : '안읽음'}
+                      </span>
+                    </button>
+                  ))}
+                </div>
 
-            {/* 페이지네이션 */}
-            <GroupPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+                {/* 페이지네이션 */}
+                <GroupPagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              </>
+            )}
           </motion.div>
         ) : (
-          // ===== 상세 뷰 =====
+          // ===== 상세 뷰 (컴포넌트 내부에서 직접 렌더/수정/삭제) =====
           <motion.div
             key="notice-detail"
             initial={{ y: 10, opacity: 0 }}
@@ -341,8 +281,60 @@ export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: n
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            {/* 변경: 상세 컴포넌트는 localStorage에서 다시 찾아 렌더링하도록 구현됨 */}
-            <GroupContentDetail id={detailId} onBack={closeDetail} />
+            {/* 상세 화면 */}
+            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
+              {/* 제목 + 날짜 + 읽음상태 */}
+              <header className="px-8 pt-6">
+                <div className="flex">
+                  <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
+                    {items[detailIdx]?.title}
+                  </h1>
+                  <span
+                    className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
+                      flex items-center justify-center ml-4 leading-none
+                      ${items[detailIdx]?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
+                  >
+                    {items[detailIdx]?.isRead ? '읽음' : '안읽음'}
+                  </span>
+                </div>
+                <div className="flex items-center text-[#8C8C8C] text-sm gap-3">
+                  <span>{items[detailIdx]?.date}</span>
+                </div>
+              </header>
+
+              <div className="text-center">
+                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
+              </div>
+
+              {/* 본문 */}
+              <section className="px-8 py-10 text-gray-800 leading-relaxed whitespace-pre-wrap">
+                {items[detailIdx]?.content}
+              </section>
+            </article>
+
+            {/* 목록/수정/삭제 */}
+            <footer className="py-6 flex text-left justify-start">
+              <button onClick={closeDetail} className="text-[#8C8C8C] py-2 transition text-md">
+                &lt; 목록으로
+              </button>
+
+              <div className="ml-auto flex py-2">
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
+                  onClick={handleDetailDelete}
+                >
+                  삭제
+                </motion.button>
+
+                <EditAsInline
+                  notice={items[detailIdx]}
+                  onSave={async next => {
+                    await handleDetailSave(next);
+                  }}
+                />
+              </div>
+            </footer>
           </motion.div>
         )}
       </AnimatePresence>
@@ -351,3 +343,34 @@ export function DashboardNotice({ createRequestKey = 0 }: { createRequestKey?: n
 }
 
 export default DashboardNotice;
+
+/** 내부: 상세 화면에서 '수정' 눌렀을 때 같은 자리에서 에디터 렌더 */
+function EditAsInline({
+  notice,
+  onSave,
+}: {
+  notice: Notice | null | undefined;
+  onSave: (next: Notice) => Promise<void>;
+}) {
+  const [editing, setEditing] = useState(false);
+  if (!notice) return null;
+
+  return editing ? (
+    <GroupContentDetailEdit
+      notice={notice}
+      onCancel={() => setEditing(false)}
+      onSave={async next => {
+        await onSave(next);
+        setEditing(false);
+      }}
+    />
+  ) : (
+    <motion.button
+      whileTap={{ scale: 0.96 }}
+      className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm transition"
+      onClick={() => setEditing(true)}
+    >
+      수정
+    </motion.button>
+  );
+}

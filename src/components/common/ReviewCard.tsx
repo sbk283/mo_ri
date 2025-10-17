@@ -42,7 +42,7 @@ export function ReviewCard({
         <p className="text-white font-semibold text-md mb-1 line-clamp-1" title={item.title}>
           {item.title}
         </p>
-        <span className="border border-[#FF5252] bg-white text-[#FF5252] font-semibold text-sm px-[4px] py-[1px] rounded-sm">
+        <span className="border border-brand-red bg-white text-brand-red font-semibold text-sm px-[4px] py-[1px] rounded-sm">
           {item.category}
         </span>
         <img

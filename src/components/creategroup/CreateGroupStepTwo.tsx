@@ -131,6 +131,21 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
         ))}
       </div>
 
+      {/* 모임장 정보 */}
+      <div className="flex flex-col gap-4">
+        <h3 className="text-lg font-semibold">모임장 정보</h3>
+
+        <div className="flex gap-4">
+          <input
+            type="text"
+            value={formData.leaderLocation || ''}
+            onChange={e => onChange('leaderLocation', e.target.value)}
+            placeholder="활동 지역"
+            className="border border-gray-300 rounded px-3 py-2 w-1/3"
+          />
+        </div>
+      </div>
+
       <CreateGroupNavigation
         step={2}
         totalSteps={3}

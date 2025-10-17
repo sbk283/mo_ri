@@ -3,7 +3,11 @@ import type { CurriculumItem } from '../../types/group';
 interface CurriculumCardProps {
   index: number;
   item: CurriculumItem;
-  onChange: (index: number, field: string, value: any) => void;
+  onChange: <K extends keyof CurriculumItem>(
+    index: number,
+    field: K,
+    value: CurriculumItem[K],
+  ) => void;
   onRemove: (index: number) => void;
   onFileChange: (index: number, files: File[]) => void;
   onAdd: (index: number) => void;
@@ -17,7 +21,7 @@ function CurriculumCard({
   onFileChange,
   onAdd,
 }: CurriculumCardProps) {
-  const MAX_PICK = 3;
+  const MAX_PICK = 3; 
 
   const handleFileChange = (files: FileList | null) => {
     if (!files) return;

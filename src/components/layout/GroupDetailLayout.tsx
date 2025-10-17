@@ -1,51 +1,101 @@
-// src/components/layout/GroupDetailLayout.tsx
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
+import type { groups } from '../../types/group';
 
-interface GroupData {
-  group_id: string;
-  group_title: string;
-  group_region: string | null;
-  group_short_intro: string | null;
-  group_content: string | null;
-  group_start_day: string;
-  group_end_day: string;
-  group_kind: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
-  status: 'recruiting' | 'closed' | 'finished';
-  group_capacity: number | null;
-  group_region_any: boolean;
-  created_by: string | null;
-  group_created_at: string;
-  group_updated_at: string;
-}
-
+// 모임 상세 페이지
 function GroupDetailLayout() {
   const { id } = useParams<{ id: string }>();
-  const [group, setGroup] = useState<GroupData | null>(null);
+  const [group, setGroup] = useState<groups | null>(null);
+  const [leaderName, setLeaderName] = useState('');
+  const [leaderCareer, setLeaderCareer] = useState('');
+  const [curriculum, setCurriculum] = useState<
+    { title: string; detail: string; files: string[] }[]
+  >([]);
   const [loading, setLoading] = useState(true);
 
-  // 데이터 불러오기
+  // 그룹 + 모임장 정보 + 커리큘럼
   useEffect(() => {
     const fetchGroup = async () => {
       if (!id) return;
       setLoading(true);
-      const { data, error } = await supabase.from('groups').select('*').eq('group_id', id).single();
-      if (error) {
-        console.error('그룹 불러오기 실패:', error);
-      } else {
+
+      try {
+        const { data, error } = await supabase
+          .from('groups')
+          .select('*')
+          .eq('group_id', id)
+          .single();
+
+        if (error) throw error;
         setGroup(data);
+
+        // 커리큘럼 JSON 파싱
+        if (data?.curriculum) {
+          try {
+            const parsed = Array.isArray(data.curriculum)
+              ? data.curriculum
+              : JSON.parse(data.curriculum as string);
+
+            const formatted = parsed.map((item: any) => ({
+              title: item.title ?? '',
+              detail: item.detail ?? '',
+              files: Array.isArray(item.files)
+                ? item.files.map((f: string) =>
+                    f.startsWith('http')
+                      ? f
+                      : supabase.storage.from('group-images').getPublicUrl(f).data?.publicUrl || '',
+                  )
+                : [],
+            }));
+
+            setCurriculum(formatted);
+          } catch (err) {
+            console.warn('커리큘럼 파싱 실패:', err);
+            setCurriculum([]);
+          }
+        }
+
+        // 모임장 정보 가져오기
+        if (data?.created_by) {
+          const { data: profileData } = await supabase
+            .from('user_profiles')
+            .select('name')
+            .eq('user_id', data.created_by)
+            .single();
+
+          if (profileData?.name) setLeaderName(profileData.name);
+
+          const { data: careerData } = await supabase
+            .from('career')
+            .select('title, description')
+            .eq('user_id', data.created_by)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single();
+
+          if (careerData) {
+            setLeaderCareer(
+              [careerData.title, careerData.description].filter(Boolean).join(' - ') ||
+                '등록된 커리어 없음',
+            );
+          }
+        }
+      } catch (err) {
+        console.error('그룹 불러오기 실패:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
+
     fetchGroup();
   }, [id]);
 
+  // 로딩,에러 처리
   if (loading)
     return <div className="flex justify-center items-center h-80 text-gray-500">로딩 중...</div>;
-
   if (!group)
     return (
       <div className="flex justify-center items-center h-80 text-gray-500">
@@ -53,7 +103,7 @@ function GroupDetailLayout() {
       </div>
     );
 
-  // d-day 계산
+  // D-day 계산
   const calcDday = (end: string) => {
     const today = new Date();
     const endDate = new Date(end);
@@ -75,7 +125,7 @@ function GroupDetailLayout() {
         </div>
       </header>
 
-      {/* MeetingHeader 연결 */}
+      {/* 상단 헤더 (대표 이미지, 제목, 상태) */}
       <MeetingHeader
         title={group.group_title}
         status={
@@ -91,29 +141,21 @@ function GroupDetailLayout() {
         dday={calcDday(group.group_end_day)}
         duration={`${group.group_start_day} ~ ${group.group_end_day}`}
         participants={`0/${group.group_capacity ?? 0}`}
-        images={[
-          `https://picsum.photos/seed/${group.group_id}/640/360`,
-          `https://picsum.photos/seed/${group.group_id}-2/640/360`,
-          `https://picsum.photos/seed/${group.group_id}-3/640/360`,
-        ]}
+        images={group.image_urls ?? []}
         isFavorite={false}
         mode="detail"
         onFavoriteToggle={() => console.log('찜')}
         onApply={() => console.log('신청')}
       />
 
-      {/* MeetingTabs 연결 */}
+      {/* 상세 탭 (소개, 커리큘럼, 리더 정보) */}
       <MeetingTabs
         intro={group.group_content ?? ''}
-        curriculum={[
-          { title: '1주차 OT', detail: '모임 오리엔테이션 및 자기소개', files: [] },
-          { title: '2주차', detail: '팀 빌딩 및 기초 실습', files: [] },
-          { title: '3주차', detail: '중간 프로젝트 진행', files: [] },
-        ]}
+        curriculum={curriculum}
         leader={{
-          name: '홍길동',
+          name: leaderName || '이름 정보 없음',
           location: group.group_region ?? '미정',
-          career: '해당 모임의 호스트 정보는 곧 연결됩니다.',
+          career: leaderCareer || '커리어 정보 없음',
         }}
       />
     </div>

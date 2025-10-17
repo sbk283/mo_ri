@@ -1,18 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGroup } from '../../contexts/GroupContext';
+import { getProfile } from '../../lib/profile';
+import type { StepTwoProps } from '../../types/group';
 import { calcDday } from '../../utils/date';
 import Modal from '../common/modal/Modal';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
-import CreateGroupNavigation from './CreateGroupNavigation';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
-import { useGroup } from '../../contexts/GroupContext';
-import type { StepTwoProps } from '../../types/group';
+import CreateGroupNavigation from './CreateGroupNavigation';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
+  const [leaderName, setLeaderName] = useState('');
+  const [leaderCareer, setLeaderCareer] = useState('');
   const navigate = useNavigate();
   const { createGroup } = useGroup();
 
@@ -28,6 +34,34 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
       setSubmitting(false);
     }
   };
+
+  // 프로필 정보
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      if (!user) return;
+      const profile = await getProfile(user.id);
+      if (profile?.name) setLeaderName(profile.name);
+    };
+    fetchProfileData();
+  }, [user]);
+
+  // 대표 커리어
+  useEffect(() => {
+    const fetchCareerData = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('career')
+        .select('title, description')
+        .eq('user_id', user.id)
+        .limit(1)
+        .single();
+      if (!error && data) {
+        const summary = [data.title, data.description].filter(Boolean).join(' - ');
+        setLeaderCareer(summary);
+      }
+    };
+    fetchCareerData();
+  }, [user]);
 
   // D-Day 계산
   const dday = calcDday(formData.startDate);
@@ -64,9 +98,9 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
             files: c.files ? c.files.map(f => URL.createObjectURL(f)) : [],
           }))}
           leader={{
-            name: formData.leaderName,
-            location: formData.leaderLocation,
-            career: formData.leaderCareer,
+            name: leaderName || '이름 정보 없음',
+            location: formData.leaderLocation || '활동 지역 미입력',
+            career: leaderCareer || '커리어 정보 없음',
           }}
         />
       </div>

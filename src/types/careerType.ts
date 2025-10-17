@@ -1,8 +1,9 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-export type profile = Database['public']['Tables']['user_profiles']['Row'];
-export type profileInsert = Database['public']['Tables']['user_profiles']['Insert'];
-export type profileUpdate = Database['public']['Tables']['user_profiles']['Update'];
+export type careers = Database['public']['Tables']['user_careers']['Row'];
+export type careersInsert = Database['public']['Tables']['user_careers']['Insert'];
+export type careersUpdate = Database['public']['Tables']['user_careers']['Update'];
+export type careersRelationships = Database['public']['Tables']['user_careers']['Relationships'];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options

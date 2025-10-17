@@ -22,6 +22,8 @@ type AuthContextType = {
   unlinkGoogleAccount: () => Promise<{ error?: string; success?: boolean; message?: string }>;
   // 회원 로그아웃
   signOut: () => Promise<void>;
+  // 회원정보 로딩 상태
+  loading: boolean;
   //  회원탈퇴기능
   // deleteAccount: () => Promise<{ error?: string; success?: boolean; message?: string }>;
 };
@@ -35,9 +37,27 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [session, setSession] = useState<Session | null>(null);
   // 현재 로그인한 사용자 정보
   const [user, setUser] = useState<User | null>(null);
+  // 로딩 상태 추가 : 초기 실행시 로딩 시킴, true
+  const [loading, setLoading] = useState<boolean>(true);
 
   // 초기 세션 로드 및 인증 상태 변경 감시
   useEffect(() => {
+    // 세션을 초기에 로딩을 한 후 처리 한다.
+    const loadSession = async () => {
+      try {
+        setLoading(true); // 로딩중
+        const { data } = await supabase.auth.getSession();
+        setSession(data.session ? data.session : null);
+        setUser(data.session?.user ?? null);
+      } catch (error) {
+        console.log(error);
+      } finally {
+        // 로딩완료
+        setLoading(false);
+      }
+    };
+    loadSession();
+
     // 기존 세션이 있는지 확인
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session ? data.session : null);
@@ -239,6 +259,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         signOut,
         user,
         session,
+        loading,
         signInWithKakao,
         signInWithGoogle,
         unlinKakaoAccount,

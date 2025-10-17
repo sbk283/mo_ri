@@ -118,6 +118,7 @@ function GroupMemberPage() {
           onPageChange={newPage => setPage(newPage)}
         />
       </div>
+
       {/* 추방 확인 모달 */}
       <Modal
         isOpen={kickModalOpen}

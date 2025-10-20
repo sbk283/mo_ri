@@ -213,7 +213,7 @@ function InquiryPage() {
             <div className=" text-gray-400 text-lg font-medium mb-[11px]">문의 내용</div>
             <textarea
               placeholder="선택하신 문의 유형에 맞는 문의사항을 자세히 적어주세요."
-              className="border-[1px] w-[850px] h-[235px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
+              className="resize-none border-[1px] w-[850px] h-[235px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
               value={inquiryContent}
               onChange={e => setInquiryContent(e.target.value)}
             />
@@ -270,6 +270,7 @@ function InquiryPage() {
           <div className="border borer-b-[1px] mb-[35px]" />
           <div className=" text-gray-400 text-lg font-medium mb-[17px]">안내사항</div>
           <div className="text-md font-normal text-gray-400 mb-[63px]">
+            <p>· 한 번 등록한 첨부파일은 수정이 어려우니, 등록 전 파일을 꼭 확인해 주세요.</p>
             <p>· 로그인 후 등록한 문의는 고객센터 페이지 1:1 문의 내역에서 확인 할 수 있습니다.</p>
             <p>· 남겨주신 문의는 담당자가 확인 후 업무시간 내 순차적 답변 드리니 기다려주세요.</p>
           </div>

@@ -1,13 +1,12 @@
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
+import Protected from './components/Protected';
 import ScrollToTop from './components/ScrollToTop';
 import AuthCallback from './pages/AuthCallback';
 import CreateGroupPage from './pages/CreateGroupPage';
 import DeleteAccountPage from './pages/DeleteAccountPage';
 import DirectChatPage from './pages/DirectChatPage';
-import FindIdPage from './pages/FindIdPage';
-import FindPwPage from './pages/FindPwPage';
 import GroupContentPage from './pages/GroupContentPage';
 import GroupDashBoardPage from './pages/GroupDashBoardPage';
 import GroupDetailPage from './pages/GroupDetailPage';
@@ -24,7 +23,6 @@ import LoginPage from './pages/LoginPage';
 import MyInquiriesPage from './pages/MyInquiriesPage';
 import MyPage from './pages/MyPage';
 import MyPageFAQPage from './pages/MyPageFAQPage';
-import MyPagePaymentsPage from './pages/MyPagePaymentsPage';
 import MyPageSettingPage from './pages/MyPageSettingPage';
 import NotFoundPage from './pages/NotFoundPage';
 import LocationServicePage from './pages/policies/LocationServicePage';
@@ -35,9 +33,6 @@ import TermsPage from './pages/policies/TermsPage';
 import YouthPolicyPage from './pages/policies/YouthPolicyPage';
 import ReviewListPage from './pages/ReviewsListPage';
 import ServiceIntroducePage from './pages/ServiceIntroducePage';
-import SignUpPage from './pages/SignUpPage';
-import { useAuth } from './contexts/AuthContext';
-import Protected from './components/Protected';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)

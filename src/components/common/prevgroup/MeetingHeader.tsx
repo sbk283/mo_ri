@@ -9,6 +9,7 @@ import SuccessModal from '../modal/SuccessModal';
 import MeetingCard from './MeetingCard';
 
 export interface MeetingHeaderProps {
+  group_id: string;
   title: string;
   status: '모집중' | '모집종료' | '모임종료';
   category: string;
@@ -17,7 +18,7 @@ export interface MeetingHeaderProps {
   dday: string;
   duration: string;
   participants: string; // "2/10"
-  images: string[];
+  images?: string[];
   isFavorite: boolean;
   mode: 'detail' | 'preview';
   onFavoriteToggle: () => void;
@@ -25,6 +26,7 @@ export interface MeetingHeaderProps {
 }
 
 function MeetingHeader({
+  group_id,
   title,
   status,
   category,
@@ -44,7 +46,7 @@ function MeetingHeader({
 
   const [shareOpen, setShareOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [joinModalOpen, setJoinModalOpen] = useState(false); // ✅ 변수명 변경 (open → joinModalOpen)
   const [joinSuccess, setJoinSuccess] = useState(false);
 
   const shareUrl = window.location.href;
@@ -75,7 +77,18 @@ function MeetingHeader({
 
   const handleJoinClick = () => {
     if (mode === 'preview') return;
-    setOpen(true);
+    setJoinModalOpen(true);
+  };
+
+  // 참가 완료 시 자동 갱신 이벤트 발송
+  const handleJoinSubmit = (intro: string) => {
+    console.log('참가신청 완료:', intro);
+
+    // 참가 완료 후 → 해당 group_id를 detail 페이지에 전달
+    window.dispatchEvent(new CustomEvent('refresh-group-members', { detail: group_id }));
+
+    setJoinModalOpen(false);
+    setJoinSuccess(true);
   };
 
   return (
@@ -169,15 +182,14 @@ function MeetingHeader({
 
       {/* 모달들 */}
       <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
+
+      {/* JoinGroupModal */}
       <JoinGroupModal
-        isOpen={open}
-        onClose={() => setOpen(false)}
-        onSubmit={intro => {
-          console.log('참가신청 완료:', intro);
-          setOpen(false);
-          setJoinSuccess(true);
-        }}
+        isOpen={joinModalOpen}
+        onClose={() => setJoinModalOpen(false)}
+        onSubmit={handleJoinSubmit}
         group={{
+          group_id,
           title,
           status,
           category,
@@ -187,11 +199,13 @@ function MeetingHeader({
           duration,
         }}
       />
+
       <SuccessModal
         isOpen={joinSuccess}
         onClose={() => setJoinSuccess(false)}
-        message="참가 신청 완료!"
+        message="참가 완료!"
       />
+
       <ConfirmModal
         open={confirmOpen}
         title="찜을 해제하시겠습니까?"

@@ -5,11 +5,21 @@ export interface CurriculumItem {
   files?: File[];
 }
 
+// groups + 조인된 카테고리 포함 타입
+export interface GroupWithCategory extends groups {
+  categories_major?: Pick<categoryMajor, 'category_major_name' | 'category_major_slug'>;
+  categories_sub?: Pick<categorySub, 'category_sub_name' | 'category_sub_slug'>;
+}
+
 // 모임 생성 전체 폼 데이터
 export interface GroupFormData {
   // 카테고리
   interestMajor: string; // 대분류
   interestSub: string; // 중분류
+
+  // DB 저장용 FK 연결됨
+  major_id: string;
+  sub_id: string;
 
   // 일정
   startDate: string; // 시작일
@@ -46,10 +56,11 @@ export interface GroupInsertPayload {
   group_content?: string | null;
   group_start_day: string;
   group_end_day: string;
-  group_kind: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
   status?: 'recruiting' | 'closed' | 'finished';
   group_capacity?: number | null;
   group_region_any?: boolean;
+  major_id: string;
+  sub_id: string;
 }
 
 // ===== supabase 연동 props 타입 =====

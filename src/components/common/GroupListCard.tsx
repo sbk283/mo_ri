@@ -1,13 +1,13 @@
+// GroupListCard.tsx
 import { motion } from 'framer-motion';
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../../lib/supabase';
 
 export type GroupListCardProps = {
   group_id: string;
   group_title: string;
   group_short_intro?: string | null;
-  group_kind: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
+  category_major_name: string;
+  category_sub_name: string;
   status: 'recruiting' | 'closed' | 'finished';
   image_urls?: string[] | null;
   member_count?: number;
@@ -20,7 +20,8 @@ function GroupListCard({
   group_id,
   group_title,
   group_short_intro,
-  group_kind,
+  category_major_name,
+  category_sub_name,
   status,
   image_urls,
   member_count,
@@ -30,7 +31,6 @@ function GroupListCard({
 }: GroupListCardProps) {
   const navigate = useNavigate();
 
-  // 그룹의 첫번째 사진 받아오기
   const mainImage =
     image_urls && image_urls.length > 0
       ? image_urls[0]
@@ -42,15 +42,20 @@ function GroupListCard({
     finished: '모임종료',
   } as const;
 
-  const kindLabel = {
-    study: '스터디/학습',
-    hobby: '취미/여가',
-    sports: '운동/건강',
-    volunteer: '봉사/사회참여',
-    etc: '기타',
-  } as const;
+  // 모임 유형 계산
+  const calcGroupType = () => {
+    const start = new Date(group_start_day);
+    const end = new Date(group_end_day);
+    const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
-  // d-day
+    if (diffDays === 0) return '원데이';
+    if (diffDays <= 14) return '단기모임';
+    return '장기모임';
+  };
+
+  const groupType = calcGroupType();
+
+  // D-day 계산
   const dday = Math.ceil(
     (new Date(group_end_day).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
   );
@@ -72,7 +77,8 @@ function GroupListCard({
 
       {/* 텍스트 */}
       <div className="flex-1 p-4 flex flex-col justify-between">
-        <div className="">
+        {/* 상단 */}
+        <div>
           <div className="flex items-center gap-2">
             <span
               className={`flex w-[54px] h-[23px] text-xs font-bold text-white rounded-2xl items-center justify-center ${
@@ -80,7 +86,7 @@ function GroupListCard({
                   ? 'bg-brand'
                   : status === 'closed'
                     ? 'bg-brand-red'
-                    : 'bg-gray-200'
+                    : 'bg-gray-300'
               }`}
             >
               {statusLabel[status]}
@@ -90,26 +96,37 @@ function GroupListCard({
             <span className="bg-[#BEC0C4] text-[11px] px-2 py-[2px] rounded-sm text-white font-bold">
               D-{dday}
             </span>
+
+            {/* 모임 유형 배지 추가 */}
+            <span className="text-[11px] font-semibold text-white bg-brand-orange px-2 py-[2px] rounded-sm">
+              {groupType}
+            </span>
           </div>
 
-          <p className="mt-3 text-sm text-gray-600 line-clamp-1">
+          <p className="mt-3 text-sm text-base text-gray-400 line-clamp-1">
             {group_short_intro ?? '소개글이 없습니다.'}
           </p>
         </div>
 
+        {/* 하단 */}
         <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-          <div className="flex items-center gap-2">
-            <p className="text-[#FF5252] font-semibold">
-              {kindLabel[group_kind]}
-              {'>'}
+          <div className="flex items-center gap-1">
+            <p className="text-[#FF5252] font-semibold text-base whitespace-nowrap">
+              <span>{category_major_name}</span>
+              <span className="text-gray-300 mx-1">{'>'}</span>
+              <span className="text-gray-200">{category_sub_name}</span>
             </p>
-            <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
-            <span className="font-semibold text-gray-700">
+            <img
+              src="/images/group_member.svg"
+              alt="그룹멤버"
+              className="ml-11 w-[15px] h-[15px]"
+            />
+            <span className="font-semibold text-gray-200">
               {member_count ?? 0} / {group_capacity ?? 0}명
             </span>
           </div>
 
-          <span>
+          <span className="text-[#777] text-base">
             {group_start_day} ~ {group_end_day}
           </span>
         </div>

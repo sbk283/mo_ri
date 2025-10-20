@@ -3,12 +3,12 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
-import type { groups } from '../../types/group';
+import type { GroupWithCategory } from '../../types/group';
 
 // 모임 상세 페이지
 function GroupDetailLayout() {
   const { id } = useParams<{ id: string }>();
-  const [group, setGroup] = useState<groups | null>(null);
+  const [group, setGroup] = useState<GroupWithCategory | null>(null);
   const [leaderName, setLeaderName] = useState('');
   const [leaderCareer, setLeaderCareer] = useState('');
   const [curriculum, setCurriculum] = useState<
@@ -25,7 +25,13 @@ function GroupDetailLayout() {
       try {
         const { data, error } = await supabase
           .from('groups')
-          .select('*')
+          .select(
+            `
+            *,
+            categories_major (category_major_name),
+            categories_sub (category_sub_name)
+          `,
+          )
           .eq('group_id', id)
           .single();
 
@@ -125,7 +131,7 @@ function GroupDetailLayout() {
         </div>
       </header>
 
-      {/* 상단 헤더 (대표 이미지, 제목, 상태) */}
+      {/* 상단 헤더 */}
       <MeetingHeader
         title={group.group_title}
         status={
@@ -135,8 +141,8 @@ function GroupDetailLayout() {
               ? '모집종료'
               : '모임종료'
         }
-        category={group.group_kind}
-        subCategory={group.group_region ?? '지역 무관'}
+        category={group.categories_major?.category_major_name ?? '카테고리 없음'}
+        subCategory={group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'}
         summary={group.group_short_intro ?? ''}
         dday={calcDday(group.group_end_day)}
         duration={`${group.group_start_day} ~ ${group.group_end_day}`}
@@ -148,7 +154,6 @@ function GroupDetailLayout() {
         onApply={() => console.log('신청')}
       />
 
-      {/* 상세 탭 (소개, 커리큘럼, 리더 정보) */}
       <MeetingTabs
         intro={group.group_content ?? ''}
         curriculum={curriculum}

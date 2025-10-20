@@ -16,7 +16,7 @@ function PasswordEdit() {
   const [nickname, setNickname] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [avatarUrl, setAvatarUrl] = useState<string>('/ham.png');
+  const [avatarUrl, setAvatarUrl] = useState<string>('/profile_bg.png');
 
   // 프로필 불러오기
   useEffect(() => {
@@ -31,7 +31,7 @@ function PasswordEdit() {
         if (profile) {
           setNickname(profile.nickname || '사용자');
           setName(profile.name || '');
-          const avatar = profile.avatar_url || '/ham.png';
+          const avatar = profile.avatar_url || '/profile_bg.png';
           setAvatarUrl(avatar);
         }
       } catch (err) {

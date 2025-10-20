@@ -361,6 +361,7 @@ export type Database = {
           company_name: string
           created_at: string | null
           end_date: string
+          original_file_name: string | null
           profile_id: string | null
           start_date: string
           updated_at: string | null
@@ -371,6 +372,7 @@ export type Database = {
           company_name: string
           created_at?: string | null
           end_date: string
+          original_file_name?: string | null
           profile_id?: string | null
           start_date: string
           updated_at?: string | null
@@ -381,6 +383,7 @@ export type Database = {
           company_name?: string
           created_at?: string | null
           end_date?: string
+          original_file_name?: string | null
           profile_id?: string | null
           start_date?: string
           updated_at?: string | null
@@ -525,6 +528,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_group_host: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      is_group_member: {
+        Args: { p_group_id: string; p_user_id: string }
+        Returns: boolean
+      }
       unaccent: {
         Args: { "": string }
         Returns: string

@@ -13,7 +13,7 @@ interface ProfileImageEditProps {
 function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditProps) {
   // 프로필 이미지 업로드 상태
   const [profileFile, setProfileFile] = useState<File | null>(null);
-  const [profilePreview, setProfilePreview] = useState<string>(avatarUrl || '/ham.png'); // 초기 이미지
+  const [profilePreview, setProfilePreview] = useState<string>(avatarUrl || '/profile_bg.png'); // 초기 이미지
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 미리보기 URL 관리 (메모리 누수 방지)
@@ -43,7 +43,7 @@ function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditPro
       const filePath = `${fileName}`;
 
       // 기존 이미지 삭제(있다면!)
-      if (avatarUrl && avatarUrl !== '/ham.png') {
+      if (avatarUrl && avatarUrl !== '/profile_bg.png') {
         const oldFileName = avatarUrl.split('/').pop();
         await supabase.storage.from('avatars').remove([`avatars/${oldFileName}`]);
       }
@@ -87,7 +87,7 @@ function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditPro
       if (!user) return;
 
       // avatarUrl이 기본 이미지가 아닐 때만 스토리지 파일 삭제
-      if (avatarUrl && avatarUrl !== '/ham.png') {
+      if (avatarUrl && avatarUrl !== '/profile_bg.png') {
         try {
           const url = new URL(avatarUrl);
           const parts = url.pathname.split('/');
@@ -119,8 +119,8 @@ function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditPro
       }
 
       // UI 기본 이미지로 변경
-      setAvatarUrl('/ham.png');
-      setProfilePreview('/ham.png');
+      setAvatarUrl('/profile_bg.png');
+      setProfilePreview('/profile_bg.png');
 
       console.log('프로필 이미지 삭제 완료');
     } catch (err) {
@@ -151,7 +151,7 @@ function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditPro
         </button>
 
         {/* 우상단 제거 버튼 */}
-        {avatarUrl !== '/ham.png' && (
+        {avatarUrl !== '/profile_bg.png' && (
           <button
             type="button"
             onClick={clearImage}

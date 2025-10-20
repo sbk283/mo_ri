@@ -57,16 +57,49 @@ function MyInquiriesPage() {
   // 삭제하기
   const handleDelete = async (id: string) => {
     if (!window.confirm('정말로 이 문의를 삭제하시겠습니까?')) return;
-    const { error } = await supabase.from('user_inquiries').delete().eq('inquiry_id', id);
-    if (error) {
-      alert('삭제 중 오류가 발생했습니다.');
-      console.error(error.message);
-      return;
-    }
-    setInquiries(prev => prev.filter(item => item.inquiry_id !== id));
-    setDetailInquiries(null);
-  };
 
+    try {
+      // 삭제할 문의 정보 가져오기
+      const { data: inquiryData, error: fetchError } = await supabase
+        .from('user_inquiries')
+        .select('inquiry_file_urls')
+        .eq('inquiry_id', id)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      let files: { path: string; originalName: string }[] = [];
+      // 파일 삭제
+      if (inquiryData?.inquiry_file_urls) {
+        try {
+          const parsed = JSON.parse(inquiryData.inquiry_file_urls);
+          files = Array.isArray(parsed) ? parsed : [parsed];
+        } catch {
+          files = [{ path: inquiryData.inquiry_file_urls, originalName: '파일' }];
+        }
+
+        for (const file of files) {
+          if (!file?.path) continue; // 안전하게 체크
+          const { error: storageError } = await supabase.storage
+            .from('inquiry-images') // 실제 버킷 이름
+            .remove([file.path]);
+
+          if (storageError) console.error('파일 삭제 실패:', storageError);
+        }
+      }
+
+      // DB에서 삭제
+      const { error } = await supabase.from('user_inquiries').delete().eq('inquiry_id', id);
+      if (error) throw error;
+
+      // 로컬 상태 동기화
+      setInquiries(prev => prev.filter(item => item.inquiry_id !== id));
+      setDetailInquiries(null);
+    } catch (err: any) {
+      console.error('삭제 처리 중 오류:', err.message || err);
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
   // 해당 내용 찾기
   const selectedInquiry = inquiries.find(item => item.inquiry_id === detailInquiries);
 
@@ -305,6 +338,33 @@ function MyInquiriesPage() {
                 />
               ) : (
                 selectedInquiry.inquiry_detail
+              )}
+
+              {/* 첨부 파일 영역 */}
+              {selectedInquiry.inquiry_file_urls && (
+                <div className="mt-[12px] flex flex-wrap gap-2">
+                  {(() => {
+                    let files: { path: string; originalName: string }[] = [];
+                    try {
+                      const parsed = JSON.parse(String(selectedInquiry.inquiry_file_urls));
+                      files = Array.isArray(parsed) ? parsed : [parsed];
+                    } catch {
+                      files = [];
+                    }
+                    return files.map((file, idx) => (
+                      <a
+                        key={idx}
+                        href={`https://eetunrwteziztszaezhd.supabase.co/storage/v1/object/public/inquiry-images/${file.path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center bg-white border border-gray-300 p-1 rounded-[5px] text-sm text-gray-700"
+                      >
+                        <img src="/images/file_blue.svg" alt="파일" className="mr-1 w-4 h-4" />
+                        <span className="truncate max-w-[200px]">{file.originalName}</span>
+                      </a>
+                    ));
+                  })()}
+                </div>
               )}
             </div>
           </div>

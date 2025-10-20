@@ -74,7 +74,7 @@ function MyPage() {
   if (loading) {
     return (
       <MyPageLayout>
-        <div className="text-center text-gray-400">불러오는 중...</div>
+        <div className="text-center text-gray-400 h-[1080px]">불러오는 중...</div>
       </MyPageLayout>
     );
   }
@@ -82,7 +82,7 @@ function MyPage() {
   if (!user) {
     return (
       <MyPageLayout>
-        <div className="text-center text-gray-400">로그인이 필요합니다.</div>
+        <div className="text-center text-gray-400  h-[1080px]">로그인이 필요합니다.</div>
       </MyPageLayout>
     );
   }
@@ -142,16 +142,6 @@ function MyPage() {
               ) : (
                 <div className="text-gray-300">선택된 관심사가 없습니다.</div>
               )}
-
-              {/* <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
-                봉사 / 사회 참여
-              </div>
-              <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
-                스터디 / 학습
-              </div>
-              <div className="inline-block bg-brand py-[5px] px-[25px] rounded-[5px] text-white font-medium">
-                운동 / 건강
-              </div> */}
             </div>
           </div>
         </div>

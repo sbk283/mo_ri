@@ -1,18 +1,23 @@
 import { useEffect, useState } from 'react';
+import ConfirmModal from '../components/common/modal/ConfirmModal';
 import InquirySelectorEdit from '../components/InquirySelectorEdit';
 import MyPageLayout from '../components/layout/MyPageLayout';
-import { mockInquiries } from '../mocks/myInquiriesMock';
-import ConfirmModal from '../components/common/modal/ConfirmModal';
+import { useAuth } from '../contexts/AuthContext';
+import type { inquirie } from '../types/inquiriesType';
+import { supabase } from '../lib/supabase';
 
 // 1:1 문의 내역 페이지 입니다.
 function MyInquiriesPage() {
+  const { user } = useAuth(); // 현재 로그인된 유저
   // 상태
-  const [inquiries, setInquiries] = useState(mockInquiries);
+  const [inquiries, setInquiries] = useState<inquirie[]>([]);
+  const [loading, setLoading] = useState(true);
+
   // 상세보기
-  const [detailInquiries, setDetailInquiries] = useState<number | null>(null);
+  const [detailInquiries, setDetailInquiries] = useState<string | null>(null);
 
   // 수정하기
-  const [editInquiry, setEditInquiry] = useState<number | null>(null);
+  const [editInquiry, setEditInquiry] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState('');
 
   // 문의 유형
@@ -22,7 +27,7 @@ function MyInquiriesPage() {
   // 모달 상태
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<'delete' | 'save' | 'cancel' | null>(null);
-  const [targetId, setTargetId] = useState<number | null>(null);
+  const [targetId, setTargetId] = useState<string | null>(null);
 
   // 문의 유형 선택
   const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
@@ -30,41 +35,80 @@ function MyInquiriesPage() {
     if (field === 'inquirySub') setInquirySub(value);
   };
 
+  // db 문의 내역 불러오기
+  useEffect(() => {
+    const fetchInquiries = async () => {
+      if (!user) return;
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('user_inquiries')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('inquiry_created_at', { ascending: false });
+
+      if (error) console.error('문의 불러오기 실패:', error.message);
+      else setInquiries(data || []);
+      setLoading(false);
+    };
+
+    fetchInquiries();
+  }, [user]);
+
   // 삭제하기
-  const handleDelete = (id: number) => {
-    if (window.confirm('정말로 이 문의를 삭제하시겠습니까?')) {
-      setInquiries(prev => prev.filter(item => item.id !== id));
-      setDetailInquiries(null);
-      // if (editInquiry === id) setEditInquiry(null);
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('정말로 이 문의를 삭제하시겠습니까?')) return;
+    const { error } = await supabase.from('user_inquiries').delete().eq('inquiry_id', id);
+    if (error) {
+      alert('삭제 중 오류가 발생했습니다.');
+      console.error(error.message);
+      return;
     }
+    setInquiries(prev => prev.filter(item => item.inquiry_id !== id));
+    setDetailInquiries(null);
   };
 
   // 해당 내용 찾기
-  const selectedInquiry = inquiries.find(item => item.id === detailInquiries);
+  const selectedInquiry = inquiries.find(item => item.inquiry_id === detailInquiries);
 
   // 모달 오픈 함수.
-  const openModal = (type: 'delete' | 'save' | 'cancel', id?: number) => {
+  const openModal = (type: 'delete' | 'save' | 'cancel', id?: string) => {
     setModalType(type);
     setTargetId(id || null);
     setModalOpen(true);
   };
+
   // 모달 확인 시 실행
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (modalType === 'delete' && targetId) {
-      setInquiries(prev => prev.filter(item => item.id !== targetId));
-      setDetailInquiries(null);
+      await handleDelete(targetId);
     }
 
     if (modalType === 'save' && selectedInquiry) {
+      // db 업데이트
+      const { error } = await supabase
+        .from('user_inquiries')
+        .update({
+          inquiry_detail: editedContent,
+          inquiry_main_type: inquiryMajor,
+          inquiry_sub_type: inquirySub,
+        })
+        .eq('inquiry_id', selectedInquiry.inquiry_id);
+
+      if (error) {
+        console.error('문의 수정 실패:', error.message);
+        alert('수정 중 오류가 발생했습니다.');
+        return;
+      }
+
+      // 로컬 상태도 동기화.
       setInquiries(prev =>
         prev.map(item =>
-          item.id === selectedInquiry.id
+          item.inquiry_id === selectedInquiry.inquiry_id
             ? {
                 ...item,
-                contentDetail: editedContent,
-                content: editedContent,
-                maincategory: inquiryMajor,
-                subcategory: inquirySub,
+                inquiry_detail: editedContent,
+                inquiry_main_type: inquiryMajor,
+                inquiry_sub_type: inquirySub,
               }
             : item,
         ),
@@ -75,69 +119,33 @@ function MyInquiriesPage() {
     if (modalType === 'cancel') {
       setEditInquiry(null);
       if (selectedInquiry) {
-        setEditedContent(selectedInquiry.contentDetail);
-        setInquiryMajor(selectedInquiry.maincategory);
-        setInquirySub(selectedInquiry.subcategory);
+        setEditedContent(selectedInquiry.inquiry_detail);
+        setInquiryMajor(selectedInquiry.inquiry_main_type);
+        setInquirySub(selectedInquiry.inquiry_sub_type);
       }
     }
 
     setModalOpen(false);
   };
   // 수정 버튼
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     setEditInquiry(id);
   };
-  // 수정저장
-  const handleSaveEdit = () => {
-    if (!selectedInquiry) return;
 
-    setInquiries(prev =>
-      prev.map(item =>
-        item.id === selectedInquiry.id
-          ? {
-              ...item,
-              contentDetail: editedContent,
-              content: editedContent,
-              maincategory: inquiryMajor,
-              subcategory: inquirySub,
-            }
-          : item,
-      ),
-    );
+  const handleSaveClick = () => openModal('save');
+  const handleCancelClick = () => openModal('cancel');
+  const handleDeleteClick = (id: string) => openModal('delete', id);
 
-    alert('수정이 저장되었습니다.');
-    setEditInquiry(null);
-  };
-
-  // 수정 취소
-  const handleEditCancel = () => {
-    if (window.confirm('수정을 취소하시겠습니까?')) {
-      setEditInquiry(null);
-      // 기존 상세보기 내용으로 복원
-      if (selectedInquiry) {
-        setEditedContent(selectedInquiry.contentDetail);
-        setInquiryMajor(selectedInquiry.maincategory);
-        setInquirySub(selectedInquiry.subcategory);
-      }
-    }
-  };
-
-  // 상세보기 버튼
-  const handleDetail = (id: number) => {
+  const handleDetail = (id: string) => {
     setDetailInquiries(id === detailInquiries ? null : id);
   };
 
-  // 기존 버튼 클릭을 모달로 변경
-  const handleDeleteClick = (id: number) => openModal('delete', id);
-  const handleSaveClick = () => openModal('save');
-  const handleCancelClick = () => openModal('cancel');
-
-  // 선택된 문의 변경 시 초기값 설정
+  // 선택 변경 시 초기화
   useEffect(() => {
     if (selectedInquiry) {
-      setEditedContent(selectedInquiry.contentDetail);
-      setInquiryMajor(selectedInquiry.maincategory || '');
-      setInquirySub(selectedInquiry.subcategory || '');
+      setEditedContent(selectedInquiry.inquiry_detail || '');
+      setInquiryMajor(selectedInquiry.inquiry_main_type || '');
+      setInquirySub(selectedInquiry.inquiry_sub_type || '');
     } else {
       setEditedContent('');
       setInquiryMajor('');
@@ -183,32 +191,41 @@ function MyInquiriesPage() {
 
             {/* 문의 항목 */}
             {inquiries.map((item, index) => (
-              <div key={item.id}>
+              <div key={item.inquiry_id}>
                 <div className="grid grid-cols-6 text-center pb-[14px] gap-[40px] items-center text-md text-gray-200 mt-[10px] font-normal">
-                  <div className="font-medium">{item.date}</div>
-                  <div className="truncate font-medium text-gray-400">{item.contentDetail}</div>
+                  <div className="font-medium">
+                    {new Date(item.inquiry_created_at).toLocaleDateString()}
+                  </div>
+                  <div className="truncate font-medium text-gray-400">{item.inquiry_detail}</div>
                   <div className="font-medium text-gray-400 text-sm">
-                    <b>{item.maincategory}</b>
+                    <b>{item.inquiry_main_type}</b>
                     <br />
-                    <span className=" text-gray-200">{item.subcategory}</span>
+                    <span className=" text-gray-200  whitespace-nowrap">
+                      {item.inquiry_sub_type}
+                    </span>
                   </div>
                   <div
                     className={`text-md ${
-                      item.status === '답변완료'
+                      item.inquiry_status === 'answered'
                         ? 'text-gray-400 font-semibold'
                         : 'text-gray-200 font-medium'
                     }`}
                   >
-                    {item.status}
+                    {item.inquiry_status === 'answered' ? '답변완료' : '답변대기'}
                   </div>
-                  <div className="font-medium">{item.replyDate}</div>
+                  <div className="font-medium">
+                    {' '}
+                    {item.inquiry_answered_at
+                      ? new Date(item.inquiry_answered_at).toLocaleDateString()
+                      : '-'}
+                  </div>
                   <button
                     className={`${
-                      detailInquiries === item.id
+                      detailInquiries === item.inquiry_id
                         ? 'font-bold text-brand'
                         : 'font-medium text-gray-200'
                     }`}
-                    onClick={() => handleDetail(item.id)}
+                    onClick={() => handleDetail(item.inquiry_id)}
                   >
                     [상세보기]
                   </button>
@@ -230,14 +247,14 @@ function MyInquiriesPage() {
           {/* 이름 */}
           <div className="flex gap-[95px] items-center mb-[16px]">
             <div className="text-gray-400 text-lg font-bold">이름</div>
-            <div className="text-gray-200 text-md">{selectedInquiry.name}</div>
+            <div className="text-gray-200 text-md">{user?.user_metadata?.name ?? '-'}</div>
           </div>
           <div className="border-b border-black opacity-30 my-[16px]" />
 
           {/* 이메일 */}
           <div className="flex gap-[80px] items-center mb-[16px]">
             <div className="text-gray-400 text-lg font-bold">이메일</div>
-            <div className="text-gray-200 text-md">{selectedInquiry.email}</div>
+            <div className="text-gray-200 text-md">{user?.email ?? '-'}</div>
           </div>
           <div className="border-b border-black opacity-30 my-[16px]" />
 
@@ -245,11 +262,19 @@ function MyInquiriesPage() {
           <div className="flex mb-[16px]">
             <div className="flex gap-[60px] items-center">
               <div className="text-gray-400 text-lg font-bold">문의 일자</div>
-              <div className="text-gray-200 text-md">{selectedInquiry.date}</div>
+              <div className="text-gray-200 text-md">
+                {new Date(selectedInquiry.inquiry_created_at).toLocaleString('ko-KR', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-[30px] ml-[160px]">
+            <div className="flex items-center gap-[30px] ml-[120px]">
               <div className="text-gray-400 text-lg font-bold">문의 유형</div>
-              {editInquiry === selectedInquiry.id ? (
+              {editInquiry === selectedInquiry.inquiry_id ? (
                 <InquirySelectorEdit
                   className="w-[100px]"
                   major={inquiryMajor}
@@ -258,7 +283,7 @@ function MyInquiriesPage() {
                 />
               ) : (
                 <div className="text-gray-200 text-md">
-                  {selectedInquiry.maincategory} {'>'} {selectedInquiry.subcategory}
+                  {selectedInquiry.inquiry_main_type} {'>'} {selectedInquiry.inquiry_sub_type}
                 </div>
               )}
             </div>
@@ -272,26 +297,20 @@ function MyInquiriesPage() {
               className="text-gray-200 text-md flex-1"
               style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}
             >
-              {editInquiry === selectedInquiry.id ? (
+              {editInquiry === selectedInquiry.inquiry_id ? (
                 <textarea
                   className="h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
                   value={editedContent}
                   onChange={e => setEditedContent(e.target.value)}
                 />
               ) : (
-                selectedInquiry.contentDetail.split('.').map((sentence, index) =>
-                  sentence.trim() ? (
-                    <span key={index}>
-                      {sentence.trim()}.<br />
-                    </span>
-                  ) : null,
-                )
+                selectedInquiry.inquiry_detail
               )}
             </div>
           </div>
 
           {/* 답변 완료 또는 수정/삭제 버튼 */}
-          {selectedInquiry.status === '답변완료' ? (
+          {selectedInquiry.inquiry_status === 'answered' ? (
             <>
               <div className="border-b border-black opacity-30 my-[16px]" />
               <div className="flex gap-[60px] items-start ">
@@ -300,19 +319,12 @@ function MyInquiriesPage() {
                   className="text-gray-200 text-md"
                   style={{ wordBreak: 'break-word', whiteSpace: 'normal' }}
                 >
-                  {selectedInquiry.replyContent?.split('.').map(
-                    (sentence, index) =>
-                      sentence.trim() && (
-                        <span key={index}>
-                          {sentence.trim()}.<br />
-                        </span>
-                      ),
-                  )}
+                  {selectedInquiry.inquiry_answer || '답변 내용이 없습니다.'}
                 </div>
               </div>
               <div className="flex justify-end mt-[16px]">
                 <button
-                  onClick={() => handleDelete(selectedInquiry.id)}
+                  onClick={() => handleDelete(selectedInquiry.inquiry_id)}
                   className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                 >
                   문의 삭제
@@ -321,7 +333,7 @@ function MyInquiriesPage() {
             </>
           ) : (
             <div className="flex justify-end gap-[14px]">
-              {editInquiry === selectedInquiry.id ? (
+              {editInquiry === selectedInquiry.inquiry_id ? (
                 <>
                   <div className="flex justify-end gap-[14px]">
                     <button
@@ -341,13 +353,13 @@ function MyInquiriesPage() {
               ) : (
                 <>
                   <button
-                    onClick={() => handleEdit(selectedInquiry.id)}
+                    onClick={() => handleEdit(selectedInquiry.inquiry_id)}
                     className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
                   >
                     문의 수정
                   </button>
                   <button
-                    onClick={() => handleDeleteClick(selectedInquiry.id)}
+                    onClick={() => handleDeleteClick(selectedInquiry.inquiry_id)}
                     className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                   >
                     문의 삭제

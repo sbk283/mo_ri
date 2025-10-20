@@ -395,6 +395,53 @@ export type Database = {
           },
         ]
       }
+      user_inquiries: {
+        Row: {
+          inquiry_answer: string | null
+          inquiry_answered_at: string | null
+          inquiry_created_at: string
+          inquiry_detail: string
+          inquiry_file_urls: Json | null
+          inquiry_id: string
+          inquiry_main_type: string
+          inquiry_status: Database["public"]["Enums"]["inquiry_status_enum"]
+          inquiry_sub_type: string
+          user_id: string
+        }
+        Insert: {
+          inquiry_answer?: string | null
+          inquiry_answered_at?: string | null
+          inquiry_created_at?: string
+          inquiry_detail: string
+          inquiry_file_urls?: Json | null
+          inquiry_id?: string
+          inquiry_main_type: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status_enum"]
+          inquiry_sub_type: string
+          user_id: string
+        }
+        Update: {
+          inquiry_answer?: string | null
+          inquiry_answered_at?: string | null
+          inquiry_created_at?: string
+          inquiry_detail?: string
+          inquiry_file_urls?: Json | null
+          inquiry_id?: string
+          inquiry_main_type?: string
+          inquiry_status?: Database["public"]["Enums"]["inquiry_status_enum"]
+          inquiry_sub_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_inquiries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_interests: {
         Row: {
           category_sub_id: string | null
@@ -490,6 +537,7 @@ export type Database = {
     Enums: {
       group_kind_enum: "study" | "hobby" | "sports" | "volunteer" | "etc"
       group_status_enum: "recruiting" | "closed" | "finished"
+      inquiry_status_enum: "pending" | "answered" | "closed"
       member_role_enum: "host" | "member"
       member_status_enum: "applied" | "approved" | "rejected" | "left"
       report_reason_enum:
@@ -628,6 +676,7 @@ export const Constants = {
     Enums: {
       group_kind_enum: ["study", "hobby", "sports", "volunteer", "etc"],
       group_status_enum: ["recruiting", "closed", "finished"],
+      inquiry_status_enum: ["pending", "answered", "closed"],
       member_role_enum: ["host", "member"],
       member_status_enum: ["applied", "approved", "rejected", "left"],
       report_reason_enum: [

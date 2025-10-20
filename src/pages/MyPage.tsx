@@ -12,7 +12,7 @@ function MyPage() {
   const [nickname, setNickname] = useState<string>('');
   const [name, setName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
-  const [avatarUrl, setAvatarUrl] = useState<string>('/ham.png');
+  const [avatarUrl, setAvatarUrl] = useState<string>('/profile_bg.png');
 
   const [interests, setInterests] = useState<string[]>([]);
 
@@ -29,7 +29,7 @@ function MyPage() {
         if (profile) {
           setNickname(profile.nickname || '사용자');
           setName(profile.name || '');
-          setAvatarUrl(profile.avatar_url || '/ham.png');
+          setAvatarUrl(profile.avatar_url || 'profile_bg.png');
         }
 
         //  유저 관심사 id만 가져오기
@@ -106,7 +106,7 @@ function MyPage() {
       </div>
       {/* 하단 내용 부분 -상단 박스  */}
       <div className="w-[1024px] border border-gray-300 rounded-[5px] py-[30px] px-[40px] flex gap-[48px] mb-[59px]">
-        <div className="overflow-hidden bg-slate-300 w-full max-w-[192px] h-[192px] rounded-[50%] border-[1px] border-gray-200">
+        <div className="overflow-hidden bg-slate-300 w-full max-w-[192px] h-[192px] rounded-[50%] border-[1px] border-brand">
           <img src={avatarUrl} alt="이미지" className="w-full h-full object-cover" />
         </div>
         <div className="w-full">

@@ -3,31 +3,75 @@
 import { Checkbox, Switch } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
+import { supabase } from '../../../lib/supabase';
 
 function ProfileMarketingEdit() {
+  const { user } = useAuth();
+
   const [emailChecked, setEmailChecked] = useState(false);
   const [kakaoChecked, setKakaoChecked] = useState(false);
   const [allChecked, setAllChecked] = useState(false);
 
-  // 마케팅 동의(전체)
+  // 프로필 불러오기
   useEffect(() => {
-    if (allChecked) {
-      setEmailChecked(true);
-      setKakaoChecked(true);
-    } else {
-      setEmailChecked(false);
-      setKakaoChecked(false);
-    }
-  }, [allChecked]);
+    if (!user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('agree_email, agree_sms, agree_push')
+        .eq('user_id', user.id)
+        .single();
 
-  // 개별 체크박스 상태 변경 / 전체 동의 동기화
-  useEffect(() => {
-    if (emailChecked && kakaoChecked) {
-      setAllChecked(true);
-    } else {
-      setAllChecked(false);
-    }
-  }, [emailChecked, kakaoChecked]);
+      if (!error && data) {
+        setEmailChecked(!!data.agree_email);
+        setKakaoChecked(!!data.agree_sms);
+        setAllChecked(!!data.agree_push);
+      } else if (error) {
+        console.error('프로필 불러오기 실패:', error);
+      }
+    })();
+  }, [user]);
+
+  // DB 업데이트 함수
+  const updateMarketingAgreement = async (email: boolean, kakao: boolean, all: boolean) => {
+    if (!user) return;
+
+    const { error } = await supabase
+      .from('user_profiles')
+      .update({
+        agree_email: email,
+        agree_sms: kakao,
+        agree_push: all,
+        agree_updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id);
+
+    if (error) console.error('업데이트 실패:', error);
+  };
+
+  //  전체 동의 스위치 변경 시
+  const handleAllChange = async (value: boolean) => {
+    setAllChecked(value);
+    setEmailChecked(value);
+    setKakaoChecked(value);
+    await updateMarketingAgreement(value, value, value);
+  };
+
+  //  개별 체크 변경 시 (즉시 DB 반영)
+  const handleEmailChange = async (checked: boolean) => {
+    setEmailChecked(checked);
+    const newAll = checked && kakaoChecked;
+    setAllChecked(newAll);
+    await updateMarketingAgreement(checked, kakaoChecked, newAll);
+  };
+
+  const handleKakaoChange = async (checked: boolean) => {
+    setKakaoChecked(checked);
+    const newAll = emailChecked && checked;
+    setAllChecked(newAll);
+    await updateMarketingAgreement(emailChecked, checked, newAll);
+  };
 
   return (
     <div>
@@ -39,12 +83,12 @@ function ProfileMarketingEdit() {
         </div>
         <div className="flex gap-[32px] mb-[34px]">
           <div className="flex gap-[10px] text-md text-gray-200">
-            <Checkbox checked={emailChecked} onChange={e => setEmailChecked(e.target.checked)}>
+            <Checkbox checked={emailChecked} onChange={e => handleEmailChange(e.target.checked)}>
               이메일
             </Checkbox>
           </div>
           <div className="flex gap-[10px] text-md text-gray-200">
-            <Checkbox checked={kakaoChecked} onChange={e => setKakaoChecked(e.target.checked)}>
+            <Checkbox checked={kakaoChecked} onChange={e => handleKakaoChange(e.target.checked)}>
               카카오톡
             </Checkbox>
           </div>
@@ -56,7 +100,7 @@ function ProfileMarketingEdit() {
           </Link>
           <div className="flex gap-[10px] ml-auto">
             <div>전체 동의</div>
-            <Switch checked={allChecked} onChange={value => setAllChecked(value)} />
+            <Switch checked={allChecked} onChange={value => handleAllChange(value)} />
           </div>
         </div>
       </div>

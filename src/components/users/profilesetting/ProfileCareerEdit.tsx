@@ -13,6 +13,7 @@ function ProfileCareerEdit() {
   // 경력 불러오기
   useEffect(() => {
     if (!user) return;
+
     const fetchCareers = async () => {
       try {
         const { data, error } = await supabase
@@ -20,13 +21,16 @@ function ProfileCareerEdit() {
           .select('*')
           .eq('profile_id', user.id)
           .order('created_at', { ascending: false });
+
         if (error) throw error;
 
         const formatted = data.map((item: Tables<'user_careers'>) => ({
           id: item.career_id,
           period: `${item.start_date} ~ ${item.end_date}`,
-          career: `${item.company_name} `,
-          file: item.career_image_url ? ({ name: item.career_image_url } as File) : null,
+          career: item.company_name,
+          file: item.career_image_url
+            ? ({ name: item.original_file_name || item.career_image_url.split('/').pop() } as File)
+            : null,
         }));
 
         setCareerList(formatted);
@@ -46,61 +50,93 @@ function ProfileCareerEdit() {
         orig => !updatedList.some(updated => updated.id === orig.id),
       );
 
-      // 2. 추가된 항목 찾기 (updatedList에는 있지만 originalList에는 없는 항목)
+      // 추가된 항목 찾기
       const addedItems = updatedList.filter(
         updated => !originalList.some(orig => orig.id === updated.id),
       );
-
-      // 3. 삭제 작업 수행
+      // 삭제 처리
       for (const item of deletedItems) {
-        const { error } = await supabase.from('user_careers').delete().eq('career_id', item.id);
+        try {
+          // DB에서 실제 경로 먼저 조회
+          const { data: careerData } = await supabase
+            .from('user_careers')
+            .select('career_image_url')
+            .eq('career_id', item.id)
+            .single();
 
-        if (error) {
-          console.error('경력 삭제 실패:', error);
-          alert('경력 삭제 중 오류가 발생했습니다.');
-          return;
+          // db 삭제
+          const { error } = await supabase.from('user_careers').delete().eq('career_id', item.id);
+          if (error) throw error;
+
+          // Storage 삭제 (DB에 저장된 실제 경로 사용)
+          if (careerData?.career_image_url) {
+            const { error: storageError } = await supabase.storage
+              .from('career-images')
+              .remove([careerData.career_image_url]);
+            if (storageError) console.error('파일 삭제 실패:', storageError);
+          }
+        } catch (err) {
+          console.error('삭제 처리 중 오류:', err);
         }
       }
-
-      // 4. 추가 작업 수행
+      // 추가 작업 수행
       for (const item of addedItems) {
         const start = item.period.split('~')[0].trim();
         const end = item.period.split('~')[1].trim();
 
+        let fileUrl: string | null = null;
+        let originalFileName: string | null = null;
+
+        if (item.file) {
+          originalFileName = item.file.name; // 원본 파일명 저장
+          // Storage 업로드 한글/특수문자 처리
+          const ext = item.file.name.split('.').pop();
+          // 랜덤 8자리 문자열 생성
+          const randomStr = Math.random().toString(36).substring(2, 10);
+          const safeFileName = `${randomStr}.${ext}`;
+          const path = `${user.id}/${safeFileName}`;
+
+          const { data: storageData, error: storageError } = await supabase.storage
+            .from('career-images')
+            .upload(path, item.file, {
+              cacheControl: '3600',
+              upsert: true,
+            });
+          if (storageError) throw storageError;
+          fileUrl = path;
+        }
+
+        // DB 삽입
         const { error } = await supabase.from('user_careers').insert({
+          profile_id: user.id,
           company_name: item.career,
           start_date: start,
           end_date: end,
-          profile_id: user.id,
+          career_image_url: fileUrl,
+          original_file_name: originalFileName, // 원본 파일명 저장
         });
-
-        if (error) {
-          console.error('경력 추가 실패:', error);
-          alert('경력 추가 중 오류가 발생했습니다.');
-          return;
-        }
+        if (error) throw error;
       }
-
-      // 5. 화면 갱신 (DB에서 다시 불러오기)
+      // 화면 갱신
       const { data, error } = await supabase
         .from('user_careers')
         .select('*')
         .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
-
       if (error) throw error;
 
       const formatted = data.map((item: Tables<'user_careers'>) => ({
         id: item.career_id,
         period: `${item.start_date} ~ ${item.end_date}`,
-        career: `${item.company_name}`,
-        file: item.career_image_url ? ({ name: item.career_image_url } as File) : null,
+        career: item.company_name,
+        file: item.career_image_url
+          ? ({ name: item.original_file_name || item.career_image_url.split('/').pop() } as File)
+          : null,
       }));
 
       setCareerList(formatted);
-      //   alert('경력사항이 저장되었습니다.');
     } catch (error) {
-      console.error('경력 저장 중 오류 발생:', error);
+      console.error(error);
       alert('경력 저장 중 오류가 발생했습니다.');
     }
   };
@@ -129,7 +165,7 @@ function ProfileCareerEdit() {
                       </span>
                       <span>
                         <b> 첨부파일 : </b>
-                        {item.file ? `${item.file.name}` : '없음'}
+                        {item.file ? item.file.name : '없음'}
                       </span>
                     </div>
                   </div>

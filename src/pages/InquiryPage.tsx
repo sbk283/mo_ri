@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import InquirySelector from '../components/InquirySelector';
 import MyPageLayout from '../components/layout/MyPageLayout';
 import { Modal } from 'antd';
+import { supabase } from '../lib/supabase';
+import { type inquirieInsert, type Json } from '../types/inquiriesType';
 
 // 1:1 문의하기 페이지입니다.
 function InquiryPage() {
@@ -12,6 +14,33 @@ function InquiryPage() {
   const [fileName, setFileName] = useState<string[]>([]);
   // 문의하기 모달창
   const [inquiryBtn, setInquiryBtn] = useState(false);
+  // 유저 정보
+  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
+  // 문의 내용
+  const [inquiryContent, setInquiryContent] = useState('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session) {
+        const user = session.user;
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('name')
+          .eq('user_id', user.id)
+          .single();
+
+        setUserInfo({
+          name: profile?.name || '이름 없음',
+          email: user.email ?? '',
+        });
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   // 문의 유형 선택
   const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
@@ -32,6 +61,39 @@ function InquiryPage() {
   // 첨부파일 삭제 하기
   const handleFileRemove = (name: string) => {
     setFileName(prev => prev.filter(f => f !== name));
+  };
+
+  //문의 유형 /  문의 내용 작성 안했을때 문의하기 버튼 비활성화
+  const isFormValid = inquiryMajor && inquirySub && inquiryContent.trim() !== '';
+
+  // db 저장 함수 만들기
+  const handleInquirySubmit = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const user = session?.user;
+    if (!user) return;
+
+    const newInquiry: inquirieInsert = {
+      user_id: user.id,
+      inquiry_main_type: inquiryMajor,
+      inquiry_sub_type: inquirySub,
+      inquiry_detail: inquiryContent,
+      inquiry_file_urls: fileName as Json,
+    };
+
+    const { error } = await supabase.from('user_inquiries').insert([newInquiry]);
+
+    if (error) {
+      console.error('문의 등록 실패:', error.message);
+      Modal.error({
+        title: '오류 발생',
+        content: '문의 등록에 실패했습니다. 다시 시도해주세요.',
+      });
+      return;
+    }
+
+    setInquiryBtn(true);
   };
 
   return (
@@ -57,25 +119,25 @@ function InquiryPage() {
       <div className="mt-[56px] ">
         <div className=" text-brand text-xxl font-semibold mb-[38px]">1:1 문의 하기</div>
         <form className="w-[1024px] rounded-[5px] border border-gray-300 py-[90px] px-[87px]">
-          <div className="mb-[44px]">
-            <div className=" text-gray-400 text-lg font-medium mb-[11px]">이름</div>
-            <input
-              type="text"
-              placeholder="이름을 입력해 주세요."
-              className="border w-[850px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] placeholder:text-md focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
-            />
-          </div>
-          <div className="mb-[44px]">
-            <div className=" text-gray-400 text-lg font-medium mb-[11px]">
-              답변 알림 이메일 주소
+          <div className="mb-[34px] flex items-center gap-[70px] ">
+            <div className="flex items-center gap-[8px]">
+              <div className=" text-gray-400 text-lg font-medium ">이름 :</div>
+              <div className="text-lg ml-[10px] font-medium text-brand">
+                {userInfo?.name ?? '이름 불러오는중 ...'}
+              </div>
             </div>
-            <input
-              type="email"
-              placeholder="답변 받을 이메일 주소를 입력해 주세요."
-              className="border-[1px] w-[850px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
-            />
+            <div className="flex items-center gap-[8px]">
+              <div className=" text-gray-400 text-lg font-medium">답변 알림 이메일 주소 :</div>
+              <div
+                className="text-lg ml-[10px] font-medium text-brand
+              "
+              >
+                {userInfo?.email ?? '이메일 불러오는중'}
+              </div>
+            </div>
           </div>
-          <div className="mb-[44px]">
+
+          <div className="mb-[34px]">
             <div className=" text-gray-400 text-lg font-medium mb-[11px]">문의 유형</div>
             <InquirySelector major={inquiryMajor} sub={inquirySub} onChange={handleChange} />
           </div>
@@ -84,6 +146,8 @@ function InquiryPage() {
             <textarea
               placeholder="선택하신 문의 유형에 맞는 문의사항을 자세히 적어주세요."
               className="border-[1px] w-[850px] h-[235px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
+              value={inquiryContent}
+              onChange={e => setInquiryContent(e.target.value)}
             />
           </div>
           <div>
@@ -134,8 +198,11 @@ function InquiryPage() {
 
           <button
             type="button"
-            onClick={() => setInquiryBtn(true)}
-            className="block mx-auto  w-[190px] py-[12px] px-[52px] bg-brand rounded-[5px] font-semibold text-white text-xl items-center"
+            onClick={handleInquirySubmit}
+            disabled={!isFormValid}
+            className={`block mx-auto w-[190px] py-[12px] px-[52px] rounded-[5px] font-semibold text-xl items-center ${
+              isFormValid ? 'bg-brand text-white' : 'bg-gray-300 text-white cursor-not-allowed'
+            }`}
           >
             문의하기
           </button>

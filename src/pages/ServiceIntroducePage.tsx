@@ -21,9 +21,9 @@ function ServiceIntroducePage() {
       to: '/creategroup',
     },
     {
-      src: './bruce.jpg',
-      alt: '설명4',
-      to: '/grouplist',
+      src: './bannerdesign4.jpg',
+      alt: '모임 후기',
+      to: '/reviews',
     },
   ];
   return (

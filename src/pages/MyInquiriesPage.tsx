@@ -305,7 +305,7 @@ function MyInquiriesPage() {
                 })}
               </div>
             </div>
-            <div className="flex items-center gap-[30px] ml-[120px]">
+            <div className="flex items-center gap-[30px] ml-[80px]">
               <div className="text-gray-400 text-lg font-bold">문의 유형</div>
               {editInquiry === selectedInquiry.inquiry_id ? (
                 <InquirySelectorEdit
@@ -315,7 +315,7 @@ function MyInquiriesPage() {
                   onChange={handleChange}
                 />
               ) : (
-                <div className="text-gray-200 text-md">
+                <div className="text-gray-200 text-md whitespace-nowrap overflow-hidden">
                   {selectedInquiry.inquiry_main_type} {'>'} {selectedInquiry.inquiry_sub_type}
                 </div>
               )}
@@ -332,7 +332,7 @@ function MyInquiriesPage() {
             >
               {editInquiry === selectedInquiry.inquiry_id ? (
                 <textarea
-                  className="h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
+                  className="resize-none h-[150px] w-full border border-gray-300 bg-transparent rounded-[8px] text-gray-200 text-md p-[12px]"
                   value={editedContent}
                   onChange={e => setEditedContent(e.target.value)}
                 />

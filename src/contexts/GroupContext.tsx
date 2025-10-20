@@ -30,11 +30,28 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const fetchGroups = useCallback(async (slug?: string) => {
     try {
       setLoading(true);
-      let query = supabase.from('groups').select('*');
-      if (slug && slug !== 'all') query = query.eq('group_kind', slug);
+
+      // categories_major/sub 조인
+      let query = supabase.from('groups').select(`
+        *,
+        categories_major (category_major_name, category_major_slug),
+        categories_sub (category_sub_name, category_sub_slug)
+      `);
+
+      if (slug && slug !== 'all') {
+        query = query.eq('categories_major.category_major_slug', slug);
+      }
+
       const { data, error } = await query;
       if (error) throw error;
-      setGroups(data ?? []);
+
+      const mapped = (data ?? []).map(g => ({
+        ...g,
+        category_major_name: g.categories_major?.category_major_name ?? '카테고리 없음',
+        category_sub_name: g.categories_sub?.category_sub_name ?? '',
+      }));
+
+      setGroups(mapped);
     } catch (err: any) {
       setError(err.message);
       console.error('fetchGroups error:', err.message);
@@ -83,16 +100,8 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
             group_content: formData.description,
             group_start_day: formData.startDate,
             group_end_day: formData.endDate,
-            group_kind:
-              formData.interestMajor === '운동/건강'
-                ? 'sports'
-                : formData.interestMajor === '스터디/학습'
-                  ? 'study'
-                  : formData.interestMajor === '취미/여가'
-                    ? 'hobby'
-                    : formData.interestMajor === '봉사/사회참여'
-                      ? 'volunteer'
-                      : 'etc',
+            major_id: formData.major_id,
+            sub_id: formData.sub_id,
             group_capacity: formData.memberCount,
             status: 'recruiting',
             created_by: user.id,
@@ -192,6 +201,36 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     },
     [user, fetchGroups],
   );
+  // 그룹 상세 조회
+  const fetchGroupById = useCallback(async (groupId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { data, error } = await supabase
+        .from('groups')
+        .select(
+          `
+        *,
+        categories_major (category_major_name, category_major_slug),
+        categories_sub (category_sub_name, category_sub_slug)
+      `,
+        )
+        .eq('group_id', groupId)
+        .single();
+
+      if (error) throw error;
+
+      // 조인된 결과를 currentGroup에 저장
+      _setCurrentGroup(data);
+      console.log('그룹 상세 데이터:', data);
+    } catch (err: any) {
+      setError(err.message);
+      console.error('fetchGroupById error:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   return (
     <GroupContext.Provider
@@ -202,7 +241,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         error,
         fetchGroups,
         createGroup,
-        fetchGroupById: async () => {},
+        fetchGroupById,
         updateGroup: async () => {},
         deleteGroup: async () => {},
       }}

@@ -75,6 +75,8 @@ npm install @uiw/react-md-editor @uiw/react-markdown-preview
 
 ```bash
 npm install @supabase/supabase-js
+
+npx supabase login
 ```
 
 - supabase 로그인 -> 유비님

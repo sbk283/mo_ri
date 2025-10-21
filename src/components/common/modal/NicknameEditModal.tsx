@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../../../lib/supabase';
 
 interface NicknameEditModalProps {
   currentNickname: string;
@@ -33,17 +34,38 @@ function NicknameEditModal({ currentNickname, onClose, onSave }: NicknameEditMod
 
   // 중복 확인 (서버와 연결 시 fetch로 대체)
   const handleCheckDuplicate = async () => {
+    const errMsg = validateNickname(tempNickname);
+    if (errMsg) return setError(errMsg);
+
     setIsChecking(true);
-    setTimeout(() => {
-      if (tempNickname === '홍길동') {
+    setError('');
+    setIsAvailable(false);
+
+    try {
+      const { data, error: dbError } = await supabase
+        .from('user_profiles')
+        .select('nickname')
+        .eq('nickname', tempNickname.trim())
+        .neq('nickname', currentNickname) // 자신의 닉네임은 제외
+        .maybeSingle();
+
+      if (dbError) throw dbError;
+
+      if (data) {
+        // 이미 존재하는 닉네임
         setError('이미 사용 중인 닉네임입니다.');
         setIsAvailable(false);
       } else {
+        // 사용 가능
         setError('');
         setIsAvailable(true);
       }
+    } catch (err) {
+      console.error(err);
+      setError('닉네임 중복 확인 중 오류가 발생했습니다.');
+    } finally {
       setIsChecking(false);
-    }, 800);
+    }
   };
 
   //  저장

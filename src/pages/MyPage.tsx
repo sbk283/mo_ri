@@ -58,7 +58,7 @@ function MyPage() {
             return cat?.category_sub_name || '이름없음';
           });
           setInterests(interestNames);
-          console.log('userInterests mapped:', interestNames);
+          // console.log('userInterests mapped:', interestNames);
         }
       } catch (err) {
         console.error('프로필 로드 실패:', err);

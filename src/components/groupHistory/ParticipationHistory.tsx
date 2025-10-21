@@ -5,7 +5,8 @@ import { userCareers, type userCareersType } from '../../mocks/userCareers';
 import { Link } from 'react-router-dom';
 
 interface ParticipationHistoryProps {
-  onCheckChange: (count: number) => void;
+  onCheckChange: (items: any[]) => void;
+  ref: React.Ref<{ selectAll: () => void }>;
 }
 
 //전체 선택을 위한 forwardRef 사용
@@ -20,9 +21,9 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
           item.id === id ? { ...item, isChecked: !item.isChecked } : item,
         );
 
-        // ✅ 체크된 개수를 부모에게 전달
-        const checkedCount = updated.filter(item => item.isChecked).length;
-        onCheckChange(checkedCount);
+        //체크된 개수를 부모에게 전달
+        const checkedItems = updated.filter(item => item.isChecked);
+        onCheckChange(checkedItems);
         return updated;
       });
     };
@@ -32,8 +33,8 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
       setCareerItems(prev => {
         const allChecked = prev.every(item => item.isChecked);
         const updated = prev.map(item => ({ ...item, isChecked: !allChecked }));
-        const checkedCount = updated.filter(item => item.isChecked).length;
-        onCheckChange(checkedCount);
+        const checkedItems = updated.filter(item => item.isChecked);
+        onCheckChange(checkedItems);
         return updated;
       });
     };

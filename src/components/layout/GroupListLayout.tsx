@@ -49,12 +49,12 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
       <main className="flex-1">
         {/* 헤더 */}
         <header className="mb-10">
-          <h1 className="text-xl font-bold">모임리스트</h1>
+          <h1 className="text-xl font-bold text-gray-400 mb-[21px]">모임리스트</h1>
           <div className="mt-2 border-l-4 border-brand pl-3">
-            <p className="text-m font-bold text-gray-800">
+            <p className="text-lg font-semibold text-gray-800">
               카테고리와 설정 지역에 맞는 모임을 한눈에 볼 수 있습니다.
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-md text-gray-600">
               관심 있는 모임을 쉽고 빠르게 찾아 다양한 활동을 즐겨보세요.
             </p>
           </div>

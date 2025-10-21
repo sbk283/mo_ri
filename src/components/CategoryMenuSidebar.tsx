@@ -57,7 +57,7 @@ function CategoryMenuSidebar() {
 
   return (
     <motion.aside
-      className="fixed top-[100px] left-[calc(50%-812px+24px)] w-[235px] z-40 hidden lg:block"
+      className="fixed top-[120px] left-[calc(50%-812px+24px)] w-[235px] z-40 hidden lg:block"
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
@@ -84,10 +84,13 @@ function CategoryMenuSidebar() {
       <div className="mt-2 relative w-full h-[45px]">
         <input
           type="text"
-          placeholder="모임명이나 카테고리를 입력해 주세요."
-          className="w-full rounded-[5px] border-2 border-brand px-3 py-[10px] placeholder:text-sm placeholder:text-gray-400"
+          placeholder="모임명, 카테고리 검색"
+          className="w-full rounded-sm border-2 border-brand px-3 pr-9 py-[10px] placeholder:text-sm placeholder:text-gray-400"
         />
-        <button className="absolute right-3 top-1/2 -translate-y-1/2">
+        <button
+          type="button"
+          className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center"
+        >
           <img src="/images/search.svg" alt="검색" className="w-[24px] h-[24px]" />
         </button>
       </div>

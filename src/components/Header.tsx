@@ -19,16 +19,33 @@ const Header: React.FC = () => {
 
       if (session?.user) {
         setUser(session.user);
+
         const profile = await getProfile(session.user.id);
+
+        // 비활성화 계정일 경우 즉시 로그아웃 처리
+        if (profile && profile.is_active === false) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setNickname('');
+          setLoading(false);
+          return;
+        }
+
+        // 닉네임
+        const metadata = session.user.user_metadata;
+        const socialName = metadata.full_name || metadata.name || metadata.nickname || '';
+        const fallback = session.user.email?.split('@')[0] || '';
+
         if (profile?.nickname) setNickname(profile.nickname);
-        else setNickname(session.user.email?.split('@')[0] || '');
+        else if (socialName) setNickname(socialName);
+        else setNickname(fallback);
       } else {
         setUser(null);
         setNickname('');
       }
+
       setLoading(false);
     };
-
     fetchUserAndProfile();
 
     // 로그인 / 로그아웃 / 프로필 변경 시 자동 업데이트
@@ -53,7 +70,7 @@ const Header: React.FC = () => {
           table: 'user_profiles',
           filter: `user_id=eq.${user.id}`,
         },
-        async payload => {
+        async _payload => {
           const updated = await getProfile(user.id);
           if (updated?.nickname) setNickname(updated.nickname);
         },

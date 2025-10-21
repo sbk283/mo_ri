@@ -75,18 +75,21 @@ function GroupDetailLayout() {
           if (profileData?.name) setLeaderName(profileData.name);
 
           const { data: careerData } = await supabase
-            .from('career')
-            .select('title, description')
-            .eq('user_id', data.created_by)
+            .from('user_careers')
+            .select('company_name')
+            .eq('profile_id', data.created_by)
             .order('created_at', { ascending: true })
             .limit(1)
             .single();
 
           if (careerData) {
-            setLeaderCareer(
-              [careerData.title, careerData.description].filter(Boolean).join(' - ') ||
-                '등록된 커리어 없음',
-            );
+            // setLeaderCareer(
+            //   [careerData.title, careerData.description].filter(Boolean).join(' - ') ||
+            //     '등록된 커리어 없음',
+            // );
+            const summary = [careerData.company_name].filter(Boolean).join(' | ');
+
+            setLeaderCareer(summary || '등록된 커리어 없음');
           }
         }
       } catch (err) {

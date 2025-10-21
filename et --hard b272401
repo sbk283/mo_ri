@@ -1,0 +1,100 @@
+[33mb272401[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32myubi[m[33m)[m [docs] 수정중
+[33m807bbb4[m Merge pull request #125 from maintainline/js
+[33ma0f51aa[m [docs] 경력사항 db 연동완료
+[33mc8327b0[m Merge pull request #124 from devyubi/yubi
+[33m8bb2b72[m[33m ([m[1;31morigin/yubi[m[33m)[m [fix] DB 테이블 구조 변경 및 GroupContext 로직 수정
+[33m99a1f22[m Merge pull request #123 from sbk283/sbk-12
+[33m4f96301[m [feat] 그룹 상세페이지 db 연동중
+[33m201b7b2[m Merge pull request #121 from devyubi/yubi
+[33ma5cf2d0[m Merge pull request #120 from yachea/yachea
+[33mbff8676[m Merge pull request #122 from maintainline/js
+[33m4ae6721[m [docs] 경력사항 DB 연동 완료
+[33md77db9d[m [fix] 그룹 생성 시 지역(boolean) 타입 오류 수정
+[33m8cdf441[m [docs] 서비스소개 페이지 디자인 작업
+[33m6132562[m [style] 수정
+[33ma0b8a45[m Merge pull request #119 from maintainline/js
+[33m1e6d700[m [docs] Protected 설정.
+[33me86bb1b[m Merge pull request #118 from devyubi/yubi
+[33mcea9eb1[m [fix] 이미지 업로드 수정
+[33mcb130c5[m Merge pull request #117 from devyubi/yubi
+[33m9b4dcf0[m [feat] 데이터베이스 연동중
+[33mf134a27[m Merge pull request #116 from maintainline/js
+[33mc3967ba[m Merge pull request #115 from sbk283/sbk-11
+[33mb1036b5[m [docs]관심사 연결 완료!
+[33ma1b93c7[m [feat] 삭제기능 ㄱㄱㄱㄱㄱ
+[33m8c5c81e[m Merge pull request #114 from maintainline/js
+[33m1285a70[m [docs] db 마이페이지 이미지 연동 완료..?
+[33m0dd9322[m Merge pull request #113 from maintainline/js
+[33m550301f[m [docs] db 연동중.. 마이페이지
+[33mbe081ec[m Merge pull request #111 from devyubi/yubi
+[33m4837b81[m Merge pull request #110 from sbk283/sbk-10
+[33m943a2e2[m Merge branch 'main' into yubi
+[33m2348bc7[m Merge pull request #112 from yachea/yachea2
+[33m18d5fbb[m [docs] 유저에 관심사 넣기 성공
+[33m8810c41[m [feat] supabase 연동
+[33m32743d0[m [feat] 공지사항 모임일상 게시글 등록 수정 (수정 좀 버그있음)
+[33m98e1c9a[m Merge pull request #109 from maintainline/js
+[33md2bd864[m [docs] 마이페이지 ui 작업 완료.
+[33m2ca466f[m Merge pull request #108 from devyubi/yubi
+[33m105b3a3[m [fix] 이중 작성된 type 합침, props 전달 오류 수정
+[33m372e9c3[m Merge pull request #107 from yachea/yachea
+[33mb213cee[m [docs] 테이블 타입 정의
+[33mfb62624[m Merge pull request #106 from sbk283/sbk-9
+[33me324aac[m [feat] 수정폼 작업
+[33m27f4f10[m Merge pull request #105 from yachea/yachea
+[33m8c88831[m Merge pull request #104 from maintainline/js
+[33m2cab10c[m Merge pull request #103 from devyubi/yubi
+[33mf0b2d60[m [docs] 마이페이지 참여이력 ui 작업중.
+[33mb56d951[m [style] 문구 수정
+[33mb1bcdab[m [docs] 테이블작업만한것같음
+[33m183b7d3[m Merge pull request #101 from yachea/yachea
+[33mf115ed8[m Merge pull request #102 from maintainline/js
+[33m31819d4[m Merge pull request #100 from devyubi/yubi
+[33md531e0c[m [fit] header.tsx 기능 수정
+[33m3093969[m [docs]db연동 해보기
+[33mcbd46b3[m [docs]로그인작업중
+[33m31e3850[m Merge pull request #99 from maintainline/js
+[33m2441b54[m Merge pull request #98 from yachea/yachea2
+[33m94ffdc0[m [docs] 프로필 연동하기..
+[33m97ae7ff[m [docs] 로그인으로 프로필생성은 성공
+[33mf772fea[m Merge pull request #97 from maintainline/js
+[33m325a689[m [docs]마이페이지 작업중.
+[33mf6648f4[m Merge pull request #96 from yachea/yachea
+[33mf829f3e[m [docs] 카카오로그인 구글로그인 연동
+[33mdb537de[m Merge pull request #95 from devyubi/yubi
+[33m9685cd4[m Merge pull request #94 from sbk283/sbk-9
+[33m6fd6cec[m [fix] step one, two, three 로직 버그 수정 및 개선
+[33m2a795fd[m [feat] 공지사항 상세페이지 및 모임일상 리스트페이지 작업
+[33m82e9bbb[m Merge pull request #93 from devyubi/yubi
+[33m868c472[m [docs] .
+[33me941243[m [refactor] 그룹 멤버 페이지 구조 개선
+[33mdc0af77[m Merge pull request #92 from devyubi/yubi
+[33m394ad0f[m [feat] 파일 첨부 기능 추가 및 InterestModal.tsx MAX 기능 추가
+[33m2c4bc93[m Merge branch 'main' of https://github.com/maintainline/Join_up
+[33mc4e284c[m Merge branch 'main' of https://github.com/maintainline/Join_up
+[33mc12f915[m Merge pull request #91 from maintainline/new
+[33m3ec684e[m Merge branch 'main' into new
+[33mecc9eef[m [docs]문의내역 작업중
+[33m0979cde[m [docs] 문의내역 모달 작업 시작해야함.
+[33mbfa7aa3[m Merge pull request #90 from sbk283/sbk-9
+[33mfacb0dd[m [feat] 공지사항 상세페이지 라우터 변경 없이 구현
+[33m2321fb1[m Merge branch 'main' of https://github.com/sbk283/mo_ri into sbk-9
+[33m06b6157[m [test] 죄송합니다
+[33mcd7ef4b[m Merge pull request #88 from devyubi/yubi
+[33m44a067a[m [feat] 기능 수정
+[33m850d9ec[m Merge pull request #87 from maintainline/js
+[33m656e676[m Merge pull request #86 from devyubi/yubi
+[33m3a0cf99[m [style] 스타일 수정
+[33m81eb0cd[m [docs] 문의 유형 편집중...
+[33m939f2fd[m Merge branch 'main' of https://github.com/sbk283/mo_ri
+[33mc6feac8[m Merge pull request #85 from devyubi/yubi
+[33m775645c[m [feat] 페이지네이션 컴포넌트 분리
+[33m5be6efb[m Merge pull request #84 from yachea/yachea
+[33mfd652bc[m [docs] 게시판 ui바탕 작업 완료
+[33me2f941d[m Merge pull request #82 from devyubi/yubi
+[33mb8e57ac[m Merge branch 'main' into yubi
+[33mac496b1[m [feat] 일정 로직 추가
+[33m8ca1f1a[m Merge pull request #83 from yachea/yachea3
+[33m9130b05[m [docs]게시판탭 만드는중 오류발생
+[33m0d4c978[m [style] 스케쥴 모달 및 스케쥴페이지 컴포넌트 분리, 스타일 수정 완료
+[33mf1ae14d[m [style] 스케쥴페이지 스타일 작업 완료

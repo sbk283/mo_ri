@@ -7,6 +7,7 @@ import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';
 import SuccessModal from '../modal/SuccessModal';
 import MeetingCard from './MeetingCard';
+import { supabase } from '../../../lib/supabase';
 
 export interface MeetingHeaderProps {
   group_id: string;
@@ -40,18 +41,58 @@ function MeetingHeader({
   mode,
   onFavoriteToggle,
 }: MeetingHeaderProps) {
-  const [selectedImage, setSelectedImage] = useState<string>(
-    images.length > 0 ? images[0] : '/images/no_image.png',
-  );
+  const [selectedImage, setSelectedImage] = useState<string | undefined>();
+  const [imageList, setImageList] = useState<string[]>([]);
 
   const [shareOpen, setShareOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [joinModalOpen, setJoinModalOpen] = useState(false); // ✅ 변수명 변경 (open → joinModalOpen)
+  const [joinModalOpen, setJoinModalOpen] = useState(false); // 변수명 변경 (open → joinModalOpen)
   const [joinSuccess, setJoinSuccess] = useState(false);
 
   const shareUrl = window.location.href;
   const swiperRef = useRef<SwiperClass | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
+
+  // 이미지 props가 변경될 때마다 업데이트
+  useEffect(() => {
+    const fetchStorageImage = async () => {
+      try {
+        if (Array.isArray(images) && images.length > 0) {
+          setImageList(images);
+          setSelectedImage(images[0]); // 첫 번째 이미지로 세팅
+          return;
+        }
+
+        const { data, error } = await supabase.storage
+          .from('group-images')
+          .list(`groups/${group_id}`, { limit: 1, sortBy: { column: 'name', order: 'asc' } });
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const filePath = `${group_id}/${data[0].name}`;
+          const { data: publicUrlData } = supabase.storage
+            .from('group-images')
+            .getPublicUrl(filePath);
+
+          if (publicUrlData?.publicUrl) {
+            setImageList([publicUrlData.publicUrl]);
+            setSelectedImage(publicUrlData.publicUrl);
+            return;
+          }
+        }
+
+        setImageList([]);
+        setSelectedImage('/images/no_image.png');
+      } catch (err) {
+        console.error('대표 이미지 불러오기 실패:', err);
+        setImageList([]);
+        setSelectedImage('/images/no_image.png');
+      }
+    };
+
+    fetchStorageImage();
+  }, [group_id, images]);
 
   useEffect(() => {
     if (joinSuccess) {
@@ -96,16 +137,16 @@ function MeetingHeader({
       {/* 좌측 이미지 */}
       <div className="relative w-full">
         <img
-          src={selectedImage}
+          src={selectedImage || '/images/no_image.png'}
           alt="대표 이미지"
           className="w-full aspect-[32/29] object-cover rounded"
         />
 
         {/* 썸네일 */}
-        {images.length > 1 && (
+        {imageList.length > 1 && (
           <div className="mt-2 w-full relative">
             <Swiper
-              key={images.join('|')}
+              key={imageList.join('|')}
               breakpoints={{
                 0: { slidesPerView: 3, spaceBetween: 8 },
                 640: { slidesPerView: 4, spaceBetween: 10 },
@@ -114,7 +155,7 @@ function MeetingHeader({
               className="w-full"
               onSwiper={sw => (swiperRef.current = sw)}
             >
-              {images.map((img, idx) => (
+              {imageList.map((img, idx) => (
                 <SwiperSlide key={idx} className="!w-auto">
                   <div
                     className="w-[72px] h-[72px] rounded overflow-hidden cursor-pointer"

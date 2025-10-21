@@ -33,6 +33,10 @@ import TermsPage from './pages/policies/TermsPage';
 import YouthPolicyPage from './pages/policies/YouthPolicyPage';
 import ReviewListPage from './pages/ReviewsListPage';
 import ServiceIntroducePage from './pages/ServiceIntroducePage';
+<<<<<<< HEAD
+=======
+import SignUpPage from './pages/SignUpPage';
+>>>>>>> 4de6c09775ecb459d24e8cbc4029f89cbdc79450
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -93,7 +97,7 @@ function App() {
           {/* 로그인 */}
           <Route path="/login" element={<LoginPage />} />
           {/* 회원가입 */}
-          {/* <Route path="/signup" element={<SignUpPage />} /> */}
+          <Route path="/signup" element={<SignUpPage />} />
           {/* 이메일인증 */}
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* 마이페이지 */}

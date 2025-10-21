@@ -72,7 +72,7 @@ function InquirySelectorEdit({ major, sub, onChange, className }: InquirySelecto
             onClick={() => setSubOpen(prev => !prev)}
             disabled={!major}
             className={[
-              'border border-gray-300 h-10 w-full rounded-sm text-md p-[12px] flex justify-between items-center',
+              'border border-gray-300 h-10 w-full rounded-sm text-md p-[12px] flex justify-between items-center whitespace-nowrap overflow-hidden truncate',
               'focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand',
               !major
                 ? 'bg-gray-100 text-[#A6A6A6] cursor-not-allowed'

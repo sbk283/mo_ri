@@ -106,7 +106,7 @@ function IntroSection() {
                 <div className="flex transform -translate-x-[-65px] pt-[22px]">
                   <div>
                     <img
-                      src={profile.avatar_url || './ham.png'}
+                      src={profile.avatar_url || './profile_bg.png'}
                       alt="프로필 이미지"
                       className="w-[140px] h-[175px] rounded-[5px] object-cover "
                     />

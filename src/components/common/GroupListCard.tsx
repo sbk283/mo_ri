@@ -8,6 +8,7 @@ export type GroupListCardProps = {
   group_short_intro?: string | null;
   category_major_name: string;
   category_sub_name: string;
+  group_region: string;
   status: 'recruiting' | 'closed' | 'finished';
   image_urls?: string[] | null;
   member_count?: number;
@@ -23,6 +24,7 @@ function GroupListCard({
   category_major_name,
   category_sub_name,
   status,
+  group_region,
   image_urls,
   member_count,
   group_capacity,
@@ -49,7 +51,7 @@ function GroupListCard({
     const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return '원데이';
-    if (diffDays <= 14) return '단기모임';
+    if (diffDays <= 31) return '단기모임';
     return '장기모임';
   };
 
@@ -57,7 +59,7 @@ function GroupListCard({
 
   // D-day 계산
   const dday = Math.ceil(
-    (new Date(group_end_day).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
+    (new Date(group_start_day).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
   );
 
   return (
@@ -110,20 +112,21 @@ function GroupListCard({
 
         {/* 하단 */}
         <div className="flex items-center justify-between text-xs text-gray-500 mt-2">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-6">
             <p className="text-[#FF5252] font-semibold text-base whitespace-nowrap">
               <span>{category_major_name}</span>
               <span className="text-gray-300 mx-1">{'>'}</span>
               <span className="text-gray-200">{category_sub_name}</span>
             </p>
-            <img
-              src="/images/group_member.svg"
-              alt="그룹멤버"
-              className="ml-11 w-[15px] h-[15px]"
-            />
-            <span className="font-semibold text-gray-200">
-              {member_count ?? 0} / {group_capacity ?? 0}명
-            </span>
+            <div>
+              <p className="text-md text-gray-200">{group_region}</p>
+            </div>
+            <div className="flex gap-1">
+              <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
+              <span className="font-semibold text-gray-200">
+                {member_count ?? 0} / {group_capacity ?? 0}명
+              </span>
+            </div>
           </div>
 
           <span className="text-[#777] text-base">

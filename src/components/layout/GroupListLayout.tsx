@@ -1,10 +1,10 @@
-// 그룹 리스트 레이아웃
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import ArrayDropdown from '../common/ArrayDropdown';
 import BannerCardSwiper from '../common/BannerCardSwiper';
 import GroupListCard from '../common/GroupListCard';
 import { useGroup } from '../../contexts/GroupContext';
+import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -16,30 +16,43 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
   const [selectedSort, setSelectedSort] = useState('최신순');
   const { groups, loading, fetchGroups } = useGroup();
 
-  // Supabase에서 그룹 가져오기
+  // 그룹 불러오기
   useEffect(() => {
     fetchGroups();
   }, [fetchGroups]);
 
-  // 정렬 및 필터링
+  // 정렬 + 필터링 처리
   const displayedGroups = useMemo(() => {
     const data = [...groups];
+
+    // 날짜 기반 필터링 로직
     switch (selectedSort) {
       case '원데이':
-        return data.filter(g => g.group_start_day === g.group_end_day);
-      case '장기':
-        return data.filter(g => g.group_start_day !== g.group_end_day);
+        return data.filter(g => {
+          const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
+          const type = toGroupTypeByRange(diff);
+          return type === 'oneday';
+        });
+
       case '단기':
         return data.filter(g => {
-          const start = new Date(g.group_start_day);
-          const end = new Date(g.group_end_day);
-          const diffDays = (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-          return diffDays > 1 && diffDays <= 30;
+          const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
+          const type = toGroupTypeByRange(diff);
+          return type === 'short';
         });
+
+      case '장기':
+        return data.filter(g => {
+          const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
+          const type = toGroupTypeByRange(diff);
+          return type === 'long';
+        });
+
       case '최신순':
       default:
         return data.sort(
-          (a, b) => new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
+          (a, b) =>
+            new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
         );
     }
   }, [groups, selectedSort]);
@@ -73,7 +86,7 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
               {mainCategory} &gt; {activeCategory}
             </h2>
             <ArrayDropdown
-              options={['최신순', '원데이', '장기', '단기']}
+              options={['최신순', '원데이', '단기', '장기']}
               value={selectedSort}
               onChange={setSelectedSort}
             />

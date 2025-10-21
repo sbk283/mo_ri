@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { useGroup } from '../../contexts/GroupContext';
+import { useGroupMember } from '../../contexts/GroupMemberContext';
 import { getProfile } from '../../lib/profile';
 import type { StepTwoProps } from '../../types/group';
 import { calcDday } from '../../utils/date';
@@ -8,9 +10,6 @@ import Modal from '../common/modal/Modal';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
 import CreateGroupNavigation from './CreateGroupNavigation';
-import { useAuth } from '../../contexts/AuthContext';
-import { supabase } from '../../lib/supabase';
-import { useGroupMember } from '../../contexts/GroupMemberContext';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
@@ -101,7 +100,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           }))}
           leader={{
             name: leaderName || '이름 정보 없음',
-            location: formData.leaderLocation || '활동 지역 미입력',
+            location: formData.group_region || '활동 지역 미입력',
             career: leaderCareer || '커리어 정보 없음',
           }}
         />

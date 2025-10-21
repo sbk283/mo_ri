@@ -14,12 +14,10 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   // 카카오 로그인 함수
   signInWithKakao: () => Promise<{ error?: string }>;
-  // 카카오 계정 연동 해제 함수
-  unlinKakaoAccount: () => Promise<{ error?: string; success?: boolean; message?: string }>;
+
   // 구글 로그인 함수
   signInWithGoogle: () => Promise<{ error?: string }>;
-  // 구글 계정 연동 해제 함수
-  unlinkGoogleAccount: () => Promise<{ error?: string; success?: boolean; message?: string }>;
+
   // 회원 로그아웃
   signOut: () => Promise<void>;
   // 회원정보 로딩 상태
@@ -117,35 +115,6 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     // console.log('카카오 로그인 성공 :', data);
     return {};
   };
-  // 카카오 계정 연동 해제 함수
-  const unlinKakaoAccount: AuthContextType['unlinKakaoAccount'] = async () => {
-    try {
-      // 카카오 로그인 사용자인지 확인
-      if (user?.app_metadata.provider !== 'kakao') {
-        return { error: '카카오 로그인 사용자가 아닙니다.' };
-      }
-      // supabase 에서 카카오 계정 연동 해제
-      // 사용자의 카카오 identity 찾기
-      const kakaoIdentity = user.identities?.find(item => item.provider === 'kakao');
-      if (!kakaoIdentity) {
-        return { error: '카카오계정연동 정보를 찾을 수 없습니다.' };
-      }
-      // 사용자의 카카오 identity 찾기 성공
-      const { error } = await supabase.auth.unlinkIdentity(kakaoIdentity);
-      if (error) {
-        console.log('카카오 계정 연동 해제 실패:', error.message);
-        return { error: '카카오 계정 연동 해제에 실패하였습니다.' };
-      }
-      // 계정 해제에 성공했다면
-      return {
-        success: true,
-        message: '카카오 계정 연동이 해제되었습니다. 다시 로그인해주세요.',
-      };
-    } catch (err) {
-      console.log(`카카오 계정 연동 해제 오류:`, err);
-      return { error: '카카오 계정 연동 해제 중 오류가 발생했습니다.' };
-    }
-  };
 
   // 구글 로그인 함수
   const signInWithGoogle: AuthContextType['signInWithGoogle'] = async () => {
@@ -162,36 +131,6 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
     console.log('구글 로그인 성공 :', data);
     return {};
-  };
-
-  // 구글 계정 연동 해제 함수
-  const unlinkGoogleAccount: AuthContextType['unlinkGoogleAccount'] = async () => {
-    try {
-      // 카카오 로그인 사용자인지 확인
-      if (user?.app_metadata.provider !== 'google') {
-        return { error: '구글 로그인 사용자가 아닙니다.' };
-      }
-      // supabase 에서 카카오 계정 연동 해제
-      // 사용자의 카카오 identity 찾기
-      const googleIdentity = user.identities?.find(item => item.provider === 'google');
-      if (!googleIdentity) {
-        return { error: '구글 정보를 찾을 수 없습니다.' };
-      }
-      // 사용자의 카카오 identity 찾기 성공
-      const { error } = await supabase.auth.unlinkIdentity(googleIdentity);
-      if (error) {
-        console.log('구글 계정 연동 해제 실패:', error.message);
-        return { error: '구글 계정 연동 해제에 실패하였습니다.' };
-      }
-      // 계정 해제에 성공했다면
-      return {
-        success: true,
-        message: '구글 계정 연동이 해제되었습니다. 다시 로그인해주세요.',
-      };
-    } catch (err) {
-      console.log(`구글 계정 연동 해제 오류:`, err);
-      return { error: '구글 계정 연동 해제 중 오류가 발생했습니다.' };
-    }
   };
 
   // 회원 로그아웃
@@ -262,9 +201,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
         loading,
         signInWithKakao,
         signInWithGoogle,
-        unlinKakaoAccount,
         // deleteAccount,
-        unlinkGoogleAccount,
       }}
     >
       {children}

@@ -1,6 +1,7 @@
-import type { PropsWithChildren } from 'react';
+import { useEffect, type PropsWithChildren } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 /**
  * 로그인 한 사용자가 접근할 수 있는 페이지
@@ -11,6 +12,38 @@ import { Navigate } from 'react-router-dom';
  */
 const Protected: React.FC<PropsWithChildren> = ({ children }) => {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function checkUserStatus() {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
+
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) {
+        console.error('프로필 조회 오류:', error);
+        // 필요에 따라 에러 처리
+        return;
+      }
+
+      if (!profile?.is_active) {
+        await supabase.auth.signOut();
+        navigate('/login');
+        return;
+      }
+    }
+
+    if (!loading) {
+      checkUserStatus();
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     // 사용자 정보가 로딩중이라면

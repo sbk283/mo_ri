@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SignUpBanner from '../components/layout/signup/SignUpBanner';
 import GoogleLoginButton from '../components/login/GoogleLoginButton';
 import KakaoLoginButton from '../components/login/KakaoLoginButton';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 export type FieldData = {
   name: (string | number)[];
@@ -11,8 +13,40 @@ export type FieldData = {
   errors?: any[];
 };
 
-function LoginPage() {  
+function LoginPage() {
   const [msg, setMsg] = useState<string>('');
+
+  const checkUserStatus = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      // 프로필 조회
+      const { data: profile, error } = await supabase
+        .from('user_profiles')
+        .select('is_active')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+
+      // 탈퇴한 계정이면 로그아웃
+      if (!profile.is_active) {
+        await supabase.auth.signOut();
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('사용자 상태 확인 오류:', error);
+    }
+  };
+
+  const handleLoginSuccess = async (message: string) => {
+    setMsg(message);
+    await checkUserStatus();
+  };
 
   return (
     <div>
@@ -34,10 +68,13 @@ function LoginPage() {
                 </div>
               </div>
               <div className="border-t py-12 flex flex-col gap-7">
-                <KakaoLoginButton onError={error => setMsg(`카카오 로그인 오류 : ${error}`)} />
+                <KakaoLoginButton
+                  onSuccess={handleLoginSuccess}
+                  onError={error => setMsg(`카카오 로그인 오류 : ${error}`)}
+                />
                 <GoogleLoginButton
                   onError={error => setMsg(`구글 로그인 오류 : ${error}`)}
-                  onSuccess={message => setMsg(message)}
+                  onSuccess={handleLoginSuccess}
                 />
               </div>
               {msg && (

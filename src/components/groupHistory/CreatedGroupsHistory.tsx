@@ -5,7 +5,8 @@ import { Link } from 'react-router-dom';
 import { userCareers, type userCareersType } from '../../mocks/userCareers';
 
 interface CreatedGroupsHistoryProps {
-  onCheckChange: (count: number) => void;
+  onCheckChange: (items: any[]) => void;
+  ref: React.Ref<{ selectAll: () => void }>;
 }
 
 const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroupsHistoryProps>(
@@ -22,8 +23,8 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
           item.id === id ? { ...item, isChecked: !item.isChecked } : item,
         );
         // 체크된 개수를 부모에게 전달
-        const checkedCount = updated.filter(item => item.isChecked).length;
-        onCheckChange(checkedCount);
+        const checkedItems = updated.filter(item => item.isChecked);
+        onCheckChange(checkedItems);
         return updated;
       });
     };
@@ -33,8 +34,8 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
       setCareerItems(prev => {
         const allChecked = prev.every(item => item.isChecked); // 모두 체크된 상태인지 확인
         const updated = prev.map(item => ({ ...item, isChecked: !allChecked })); // 전체 토글
-        const checkedCount = updated.filter(item => item.isChecked).length;
-        onCheckChange(checkedCount);
+        const checkedItems = updated.filter(item => item.isChecked);
+        onCheckChange(checkedItems);
         return updated;
       });
     };

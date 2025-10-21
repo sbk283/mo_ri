@@ -2,9 +2,21 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import CreatedGroupsHistory from './groupHistory/CreatedGroupsHistory';
 import ParticipationHistory from './groupHistory/ParticipationHistory';
+import { usePDFPrintHandler } from '../utils/print/PDFPrintHandler';
+import PDFPreview from '../utils/print/PDFPreview';
 
 function MypageMyGroupMenu() {
   const [checkedCount, setCheckedCount] = useState(0);
+  // 프린트 설정할거임
+  const [checkedItems, setCheckedItems] = useState<any[]>([]);
+
+  // 프린트 테스트
+  const { printSelectedItems, isPrinting } = usePDFPrintHandler();
+  const handleCheckChange = (items: any[]) => {
+    setCheckedItems(items);
+    setCheckedCount(items.length);
+  };
+
   //전체 선택을 위한 ref 저장
   const participationRef = useRef<{ selectAll: () => void }>(null);
   const createdRef = useRef<{ selectAll: () => void }>(null);
@@ -16,7 +28,7 @@ function MypageMyGroupMenu() {
         label: '모임 참여 이력',
         content: (
           <div>
-            <ParticipationHistory onCheckChange={setCheckedCount} ref={participationRef} />
+            <ParticipationHistory onCheckChange={handleCheckChange} ref={participationRef} />
           </div>
         ),
         ref: participationRef,
@@ -25,7 +37,7 @@ function MypageMyGroupMenu() {
         label: '모임 생성 이력',
         content: (
           <div>
-            <CreatedGroupsHistory onCheckChange={setCheckedCount} ref={createdRef} />
+            <CreatedGroupsHistory onCheckChange={handleCheckChange} ref={createdRef} />
           </div>
         ),
         ref: createdRef,
@@ -74,8 +86,10 @@ function MypageMyGroupMenu() {
       alert('출력할 항목을 선택해주세요.');
       return;
     }
-    console.log('출력 실행, 체크된 개수:', checkedCount);
-    // 실제 출력 로직 구현
+    const allMeetings = checkedItems; // 선택된 모임 배열
+    const selectedIds = checkedItems.map(item => item.id); // id 배열
+
+    printSelectedItems(allMeetings, selectedIds);
   };
 
   return (
@@ -143,9 +157,9 @@ function MypageMyGroupMenu() {
       <div className="flex justify-end ">
         <button
           onClick={handlePrint}
-          disabled={checkedCount === 0}
+          disabled={checkedCount === 0 || isPrinting}
           className={`text-xl mt-[10px] py-[8px] px-[28px] rounded-[5px] font-bold transition-colors ${
-            checkedCount === 0
+            checkedCount === 0 || isPrinting
               ? 'bg-gray-300 text-white cursor-not-allowed'
               : 'bg-brand text-white hover:bg-blue-600'
           }`}
@@ -153,6 +167,10 @@ function MypageMyGroupMenu() {
           참여 이력 출력하기
         </button>
       </div>
+      {/* <div>
+        미리보기
+        <PDFPreview items={checkedItems} />
+      </div> */}
     </div>
   );
 }

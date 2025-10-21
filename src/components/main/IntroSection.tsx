@@ -1,42 +1,113 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import type { profile } from '../../types/profileType';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
-import { getProfile } from '../../lib/profile';
+import type { profile } from '../../types/profileType';
+import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
+
+// 그룹 데이터 타입 정의
+type GroupMemberData = {
+  group_id: string;
+  groups: {
+    group_title: string;
+    group_start_day: string;
+    group_end_day: string;
+  };
+};
 
 function IntroSection() {
+  const { user } = useAuth();
   // 로그인 상태관리
-  const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<profile | null>(null);
+  // 참여중인 그룹 확인하기.
+  const [joinedGroups, setJoinedGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  // const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
+
   // 로그인 상태 감지 및 프로필 불러오기
   useEffect(() => {
-    const fetchUserAndProfile = async () => {
+    const fetchProfileAndGroups = async () => {
       setLoading(true);
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        setUser(session.user);
-        const profileData = await getProfile(session.user.id);
-        setProfile(profileData);
+      // 로그인한 사용자 있는경우
+      if (user) {
+        // 프로필 불러오기
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error || !data) {
+          console.error('프로필 조회 실패:', error);
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        if (!data.is_active) {
+          // 탈퇴 회원이면 즉시 로그아웃 및 리다이렉트
+          await supabase.auth.signOut();
+          alert('탈퇴한 계정입니다.');
+          navigate('/');
+          return;
+        }
+        setProfile(data);
+
+        //  참여 중인 그룹 불러오기
+        const { data: groupData, error: groupError } = await supabase
+          .from('group_members')
+          .select(
+            `
+            group_id,
+            groups (
+              group_title,
+              group_start_day,
+              group_end_day
+            )
+          `,
+          )
+          .eq('user_id', user.id)
+          .eq('member_status', 'approved'); // 승인된 모임만
+
+        if (groupError) {
+          console.error('참여 모임 조회 실패:', groupError);
+        } else if (groupData) {
+          // 날짜 계산을 통해 group_kind 추가
+          const groupsWithKind = groupData.map((item: any) => {
+            const totalDays = diffDaysInclusive(
+              item.groups.group_start_day,
+              item.groups.group_end_day,
+            );
+            const groupType = toGroupTypeByRange(totalDays);
+
+            // 한글 변환
+            let groupKind = '기타';
+            if (groupType === 'oneday') groupKind = '원데이';
+            else if (groupType === 'short') groupKind = '단기';
+            else if (groupType === 'long') groupKind = '장기';
+
+            return {
+              ...item,
+              groups: {
+                ...item.groups,
+                group_kind: groupKind,
+              },
+            };
+          });
+
+          setJoinedGroups(groupsWithKind);
+        }
       } else {
-        setUser(null);
+        // 비로그인 상태
         setProfile(null);
+        setJoinedGroups([]);
       }
+
       setLoading(false);
     };
-    fetchUserAndProfile();
-    // 로그인 상태가 변경될때 자동 업데이트
-    const { data: subscription } = supabase.auth.onAuthStateChange(() => {
-      fetchUserAndProfile();
-    });
-    return () => {
-      subscription.subscription.unsubscribe();
-    };
-  }, []);
+
+    fetchProfileAndGroups();
+  }, [user, navigate]);
 
   if (loading) {
     return <div>로딩중...</div>;
@@ -132,10 +203,16 @@ function IntroSection() {
                         더보기
                       </Link>
                     </div>
-                    <div className="space-y-[4px]  text-sm">
-                      <div>· [장기]추후 연동 예정</div>
-                      <div>· [원데이]추후 연동 예정</div>
-                      <div>· [원데이]추후 연동 예정</div>
+                    <div className="space-y-[4px] text-sm h-[65px]">
+                      {joinedGroups.length > 0 ? (
+                        joinedGroups.slice(0, 3).map((item, index) => (
+                          <div key={index}>
+                            · [{item.groups.group_kind}] {item.groups.group_title}
+                          </div>
+                        ))
+                      ) : (
+                        <div>참여 중인 모임이 없습니다.</div>
+                      )}
                     </div>
                     <div className=" flex justify-between mt-[9px] items-center gap-[8px]">
                       <div className="font-bold text-md text-brand">바로가기</div>

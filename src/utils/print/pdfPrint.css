@@ -1,0 +1,102 @@
+/* 전체 컨테이너 */
+#pdf-print-container {
+  font-family: 'Pretendard', 'Arial', sans-serif;
+  color: #111827;
+  background: #fff;
+  padding: 20px;
+}
+
+/* 헤더 영역 */
+.pdf-header {
+  text-align: center;
+  border-bottom: 2px solid #3b82f6;
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+}
+.pdf-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #2563eb;
+  margin: 0;
+}
+.pdf-header .pdf-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* 카드 목록 */
+.pdf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pdf-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 16px 20px;
+  background: #f9fafb;
+  page-break-inside: avoid;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 카드 헤더 */
+.pdf-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pdf-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pdf-status {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-weight: 600;
+  font-size: 12px;
+}
+.pdf-status.ongoing {
+  background-color: #f97316;
+}
+.pdf-status.ended {
+  background-color: #ef4444;
+}
+
+/* 메타 정보 */
+.pdf-meta {
+  font-size: 13px;
+  color: #374151;
+  margin: 10px 0;
+}
+.pdf-meta p {
+  margin: 0;
+}
+
+/* 설명 */
+.pdf-desc {
+  font-size: 13px;
+  color: #111827;
+  margin-bottom: 10px;
+}
+
+/* 푸터 */
+.pdf-footer {
+  text-align: right;
+  font-size: 11px;
+  color: #6b7280;
+}
+
+/* 서명 영역 */
+.pdf-signature {
+  margin-top: 40px;
+  border-top: 1px dashed #9ca3af;
+  padding-top: 12px;
+  text-align: right;
+  font-size: 12px;
+  color: #4b5563;
+}

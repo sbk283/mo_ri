@@ -92,11 +92,11 @@ function AuthCallback() {
           setHasProfile(true); // 관심사 있음
         }
       } else {
-        setMsg('✨ 인증 정보가 존재하지 않습니다. 다시 가입해주세요.');
+        setMsg('인증 정보가 존재하지 않습니다. 다시 가입해주세요.');
       }
     } catch (err) {
       console.error('인증 콜백 처리 중 오류:', err);
-      setMsg('✨ 인증 처리 중 오류가 발생했습니다.');
+      setMsg('인증 처리 중 오류가 발생했습니다.');
     }
   };
 
@@ -115,9 +115,9 @@ function AuthCallback() {
           if (prev <= 1) {
             clearInterval(timer);
             if (hasProfile) {
-              navigate('/'); // 관심사 있을 때 홈으로 이동
+              navigate('/'); // 관심사 있을 때
             } else {
-              navigate('/signup?step=3'); // 관심사 없을 때 관심사 선택 페이지로 이동
+              navigate('/signup?step=3'); // 관심사 없을 때
             }
             return 0;
           }

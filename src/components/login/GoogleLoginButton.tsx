@@ -22,7 +22,7 @@ const GoogleLoginButton = ({ onError, onSuccess }: GoogleLoginButtonProps) => {
       } else {
         console.log('구글 로그인 성공');
         if (onSuccess) {
-          onSuccess('구글 로그인이 성공하였습니다.');
+          onSuccess('');
         }
       }
     } catch (err) {

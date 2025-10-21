@@ -2,11 +2,8 @@
 
 import { useState } from 'react';
 import MeetingCard from '../prevgroup/MeetingCard';
-import SuccessModal from './SuccessModal';
-import { useGroupMember } from '../../../contexts/GroupMemberContext';
 
 export type JoinGroupData = {
-  group_id: string;
   title: string;
   status: '모집중' | '모집종료' | '모임종료';
   category: string;
@@ -26,36 +23,10 @@ interface JoinGroupModalProps {
   group: JoinGroupData;
 }
 
-function JoinGroupModal({ isOpen, onClose, group }: JoinGroupModalProps) {
+function JoinGroupModal({ isOpen, onClose, onSubmit }: JoinGroupModalProps) {
   const [intro, setIntro] = useState('');
-  const [successOpen, setSuccessOpen] = useState(false);
-  const { joinGroup } = useGroupMember();
 
   if (!isOpen) return null;
-
-  // 참가하기 로직
-  const handleJoin = async () => {
-    if (!group?.group_id) {
-      console.error('group_id가 없습니다.');
-      return;
-    }
-
-    const result = await joinGroup(group.group_id);
-
-    if (result === 'success') {
-      // 참가 성공 시 완료 모달 띄움.
-      setSuccessOpen(true);
-      setTimeout(() => {
-        setSuccessOpen(false);
-        onClose();
-      }, 1500);
-    } else if (result === 'already') {
-      // 이미 가입된 경우 — 별도 알림 모달 띄우거나 그냥 무시
-      console.log('이미 가입된 모임입니다.');
-    } else {
-      console.error('참가 실패');
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -77,14 +48,14 @@ function JoinGroupModal({ isOpen, onClose, group }: JoinGroupModalProps) {
         {/* 요약 카드 (모달 전용) */}
         <div className="p-5">
           <MeetingCard
-            title={group.title}
-            status={group.status}
-            dday={group.dday ?? 'D-0'}
-            summary={group.desc ?? ''}
-            category={group.category}
-            subCategory={group.subCategory}
-            participants={`${group.memberCount}/${group.memberLimit}`}
-            duration={group.duration}
+            title="[4주차] 마비노기 던전 공파 모집"
+            status="모집중"
+            dday="D-30"
+            summary="혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요. 마비노기 모바일 아닙니다."
+            category="취미/여가"
+            subCategory="게임/오락"
+            participants="2/10"
+            duration="2025.02.12 ~ 2025.05.12"
             width="100%"
             height="auto"
           />
@@ -111,7 +82,7 @@ function JoinGroupModal({ isOpen, onClose, group }: JoinGroupModalProps) {
               취소하기
             </button>
             <button
-              onClick={handleJoin}
+              onClick={() => onSubmit(intro)}
               className="px-6 py-2 rounded-sm bg-brand hover:bg-blue-600 text-white font-semibold"
             >
               참가하기
@@ -119,13 +90,6 @@ function JoinGroupModal({ isOpen, onClose, group }: JoinGroupModalProps) {
           </div>
         </div>
       </div>
-
-      {/* 참가 성공 모달 */}
-      <SuccessModal
-        isOpen={successOpen}
-        message="참가 완료!"
-        onClose={() => setSuccessOpen(false)}
-      />
     </div>
   );
 }

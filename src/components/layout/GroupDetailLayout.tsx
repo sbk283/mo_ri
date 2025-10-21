@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
 import type { GroupWithCategory } from '../../types/group';
-import MeetingHeader from '../common/prevgroup/MeetingHeader';
 
 // 모임 상세 페이지
 function GroupDetailLayout() {
@@ -16,110 +16,93 @@ function GroupDetailLayout() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // 그룹 + 멤버 count + 리더 정보 조회 함수
-  const fetchGroup = async () => {
-    if (!id) return;
-    setLoading(true);
+  // 그룹 + 모임장 정보 + 커리큘럼
+  useEffect(() => {
+    const fetchGroup = async () => {
+      if (!id) return;
+      setLoading(true);
 
-    try {
-      // 그룹 + 카테고리 조회
-      const { data, error } = await supabase
-        .from('groups')
-        .select(
-          `
-          *,
-          categories_major (category_major_name),
-          categories_sub (category_sub_name)
-        `,
-        )
-        .eq('group_id', id)
-        .single();
-
-      if (error) throw error;
-
-      // 승인된 멤버 수(count) 조회
-      const { count, error: countError } = await supabase
-        .from('group_members')
-        .select('*', { count: 'exact', head: true })
-        .eq('group_id', id)
-        .eq('member_status', 'approved');
-
-      if (countError) console.warn('멤버 수 조회 실패:', countError.message);
-
-      setGroup({ ...data, member_count: count ?? 0 });
-
-      if (data?.curriculum) {
-        try {
-          const parsed = Array.isArray(data.curriculum)
-            ? data.curriculum
-            : JSON.parse(data.curriculum as string);
-
-          const formatted = parsed.map((item: any) => ({
-            title: item.title ?? '',
-            detail: item.detail ?? '',
-            files: Array.isArray(item.files)
-              ? item.files.map((f: string) =>
-                  f.startsWith('http')
-                    ? f
-                    : supabase.storage.from('group-images').getPublicUrl(f).data?.publicUrl || '',
-                )
-              : [],
-          }));
-
-          setCurriculum(formatted);
-        } catch (err) {
-          console.warn('커리큘럼 파싱 실패:', err);
-          setCurriculum([]);
-        }
-      }
-
-      if (data?.created_by) {
-        const { data: profileData } = await supabase
-          .from('user_profiles')
-          .select('name')
-          .eq('user_id', data.created_by)
+      try {
+        const { data, error } = await supabase
+          .from('groups')
+          .select(
+            `
+            *,
+            categories_major (category_major_name),
+            categories_sub (category_sub_name)
+          `,
+          )
+          .eq('group_id', id)
           .single();
 
-        if (profileData?.name) setLeaderName(profileData.name);
+        if (error) throw error;
+        setGroup(data);
 
-        const { data: careerData, error: careerError } = await supabase
-          .from('user_careers')
-          .select('company_name, start_date, end_date')
-          .eq('profile_id', data.created_by)
-          .order('start_date', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        // 커리큘럼 JSON 파싱
+        if (data?.curriculum) {
+          try {
+            const parsed = Array.isArray(data.curriculum)
+              ? data.curriculum
+              : JSON.parse(data.curriculum as string);
 
-        if (careerError) {
-          console.warn('커리어 조회 실패:', careerError.message);
+            const formatted = parsed.map((item: any) => ({
+              title: item.title ?? '',
+              detail: item.detail ?? '',
+              files: Array.isArray(item.files)
+                ? item.files.map((f: string) =>
+                    f.startsWith('http')
+                      ? f
+                      : supabase.storage.from('group-images').getPublicUrl(f).data?.publicUrl || '',
+                  )
+                : [],
+            }));
+
+            setCurriculum(formatted);
+          } catch (err) {
+            console.warn('커리큘럼 파싱 실패:', err);
+            setCurriculum([]);
+          }
         }
 
-        if (careerData) {
-          const { company_name, start_date, end_date } = careerData;
-          setLeaderCareer(`${company_name} (${start_date} ~ ${end_date})`);
-        } else {
-          setLeaderCareer('등록된 커리어 없음');
+        // 모임장 정보 가져오기
+        if (data?.created_by) {
+          const { data: profileData } = await supabase
+            .from('user_profiles')
+            .select('name')
+            .eq('user_id', data.created_by)
+            .single();
+
+          if (profileData?.name) setLeaderName(profileData.name);
+
+          const { data: careerData } = await supabase
+            .from('user_careers')
+            .select('company_name')
+            .eq('profile_id', data.created_by)
+            .order('created_at', { ascending: true })
+            .limit(1)
+            .single();
+
+          if (careerData) {
+            // setLeaderCareer(
+            //   [careerData.title, careerData.description].filter(Boolean).join(' - ') ||
+            //     '등록된 커리어 없음',
+            // );
+            const summary = [careerData.company_name].filter(Boolean).join(' | ');
+
+            setLeaderCareer(summary || '등록된 커리어 없음');
+          }
         }
+      } catch (err) {
+        console.error('그룹 불러오기 실패:', err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('그룹 불러오기 실패:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGroup();
-
-    const handleRefresh = (e: any) => {
-      if (e.detail === id) fetchGroup(); // 참가한 그룹만 갱신
     };
 
-    window.addEventListener('refresh-group-members', handleRefresh);
-    return () => window.removeEventListener('refresh-group-members', handleRefresh);
+    fetchGroup();
   }, [id]);
 
-  // 로딩/에러 처리
+  // 로딩,에러 처리
   if (loading)
     return <div className="flex justify-center items-center h-80 text-gray-500">로딩 중...</div>;
   if (!group)
@@ -153,7 +136,6 @@ function GroupDetailLayout() {
 
       {/* 상단 헤더 */}
       <MeetingHeader
-        group_id={group.group_id}
         title={group.group_title}
         status={
           group.status === 'recruiting'
@@ -167,14 +149,14 @@ function GroupDetailLayout() {
         summary={group.group_short_intro ?? ''}
         dday={calcDday(group.group_end_day)}
         duration={`${group.group_start_day} ~ ${group.group_end_day}`}
-        participants={`${group.member_count ?? 0}/${group.group_capacity ?? 0}`}
+        participants={`0/${group.group_capacity ?? 0}`}
+        images={group.image_urls ?? []}
         isFavorite={false}
         mode="detail"
         onFavoriteToggle={() => console.log('찜')}
         onApply={() => console.log('신청')}
       />
 
-      {/* 상세 탭 */}
       <MeetingTabs
         intro={group.group_content ?? ''}
         curriculum={curriculum}

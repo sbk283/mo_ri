@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import type { careers } from '../types/careerType';
 
 // 타입 정의
 export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left';
@@ -29,8 +30,8 @@ interface GroupMemberContextType {
    * - 'error' : 오류 발생
    */
   joinGroup: (groupId: string) => Promise<'success' | 'already' | 'error'>;
-
   leaveGroup: (groupId: string) => Promise<'success' | 'error'>;
+  fetchUserCareer: (userId: string) => Promise<careers | null>;
 }
 
 // Context 생성
@@ -41,6 +42,25 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  //유저 커리어 조회
+  const fetchUserCareer = useCallback(async (userId: string): Promise<careers | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('user_careers')
+        .select('*')
+        .eq('profile_id', userId)
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      return data || null;
+    } catch (err: any) {
+      console.error('유저 커리어 조회 실패:', err.message);
+      return null;
+    }
+  }, []);
 
   // 멤버 목록 조회
   const fetchMembers = useCallback(async (groupId: string) => {
@@ -143,6 +163,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         members,
         loading,
         error,
+        fetchUserCareer,
         fetchMembers,
         joinGroup,
         leaveGroup,

@@ -10,15 +10,17 @@ import MeetingTabs from '../common/prevgroup/MeetingTabs';
 import CreateGroupNavigation from './CreateGroupNavigation';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import { useGroupMember } from '../../contexts/GroupMemberContext';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
+  const { user } = useAuth();
+  const { fetchUserCareer } = useGroupMember();
+  const [leaderCareer, setLeaderCareer] = useState('');
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const { user } = useAuth();
   const [leaderName, setLeaderName] = useState('');
-  const [leaderCareer, setLeaderCareer] = useState('');
   const navigate = useNavigate();
   const { createGroup } = useGroup();
 
@@ -49,19 +51,19 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   useEffect(() => {
     const fetchCareerData = async () => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from('career')
-        .select('title, description')
-        .eq('user_id', user.id)
-        .limit(1)
-        .single();
-      if (!error && data) {
-        const summary = [data.title, data.description].filter(Boolean).join(' - ');
+
+      const data = await fetchUserCareer(user.id);
+      if (data) {
+        const summary = [data.company_name, `${data.start_date} ~ ${data.end_date}`]
+          .filter(Boolean)
+          .join(' - ');
+
         setLeaderCareer(summary);
       }
     };
+
     fetchCareerData();
-  }, [user]);
+  }, [user, fetchUserCareer]);
 
   // D-Day 계산
   const dday = calcDday(formData.startDate);

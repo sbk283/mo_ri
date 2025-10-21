@@ -4,15 +4,12 @@ import './index.css';
 import React from 'react';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { GroupProvider } from './contexts/GroupContext.tsx';
-import { GroupMemberProvider } from './contexts/GroupMemberContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <GroupProvider>
-        <GroupMemberProvider>
-          <App />
-        </GroupMemberProvider>
+        <App />
       </GroupProvider>
     </AuthProvider>
   </React.StrictMode>,

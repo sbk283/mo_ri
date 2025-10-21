@@ -33,10 +33,8 @@ function GroupListCard({
 
   const mainImage =
     image_urls && image_urls.length > 0
-      ? image_urls[0].startsWith('http')
-        ? image_urls[0] // 이미 완전한 URL이면 그대로 사용
-        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/group-images/${image_urls[0]}`
-      : '/images/no_image.png'; // 로컬 기본 이미지로 fallback
+      ? image_urls[0]
+      : 'https://i.ibb.co/s5cD7JG/default-group-thumb.jpg';
 
   const statusLabel = {
     recruiting: '모집중',

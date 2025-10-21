@@ -4,9 +4,39 @@ import { Checkbox } from 'antd';
 import DeleteAccountselector from '../components/DeleteAccountselector';
 import MyPageLayout from '../components/layout/MyPageLayout';
 import { useState } from 'react';
+import { supabase } from '../lib/supabase';
 
 function DeleteAccountPage() {
   const [reason, setReason] = useState('');
+
+  const handleDeleteAccount = async () => {
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      // is_active를 false로 변경
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({
+          is_active: false,
+        })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // 로그아웃
+      await supabase.auth.signOut();
+
+      alert('회원 탈퇴가 완료되었습니다.');
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('회원 탈퇴 중 오류:', error);
+      alert('회원 탈퇴 중 오류가 발생했습니다.');
+    }
+  };
 
   return (
     <MyPageLayout>
@@ -84,7 +114,10 @@ function DeleteAccountPage() {
         <button className="text-white bg-brand py-[8px] px-[65px] rounded-[5px] text-xl">
           이전페이지
         </button>
-        <button className="text-brand border border-brand bg-white py-[8px] px-[65px] rounded-[5px] text-xl">
+        <button
+          onClick={handleDeleteAccount}
+          className="text-brand border border-brand bg-white py-[8px] px-[65px] rounded-[5px] text-xl"
+        >
           회원탈퇴
         </button>
       </div>

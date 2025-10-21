@@ -4,9 +4,10 @@ import { useAuth } from '../../contexts/AuthContext';
 interface kakaoLoginButtonProps {
   children?: React.ReactNode;
   onError?: (error: string) => void;
+  onSuccess?: (message: string) => Promise<void>;
 }
 
-function KakaoLoginButton({ onError }: kakaoLoginButtonProps) {
+function KakaoLoginButton({ onError, onSuccess }: kakaoLoginButtonProps) {
   // 카카오 로그인 사용
   const { signInWithKakao } = useAuth();
   // 카카오 로그인 실행
@@ -16,6 +17,8 @@ function KakaoLoginButton({ onError }: kakaoLoginButtonProps) {
       if (error && onError) {
         console.log('카카오로그인 에러 메시지:', error);
         onError(error);
+      } else if (onSuccess) {
+        await onSuccess('');
       }
     } catch (err) {
       console.log('카카오 로그인 오류 : ', err);

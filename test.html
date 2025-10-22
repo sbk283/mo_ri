@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div
+      style="
+        padding: 2.5rem;
+        background-color: #fff;
+        width: 100%;
+        max-width: 210mm;
+        box-sizing: border-box;
+        color: #111;
+      "
+    >
+      <!-- 첫 페이지 - 기본 정보 -->
+      <div style="page-break-inside: avoid">
+        <div style="margin-bottom: 2rem">
+          <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 0.5rem">
+            모임 참여 이력 증명서
+          </h1>
+          <p style="font-size: 0.875rem; color: #555">출력일: ${currentDate}</p>
+        </div>
+
+        <!-- 프로필 정보 -->
+        <div style="padding-bottom: 60px">
+          <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 1rem">프로필 정보</h2>
+          <div style="border-bottom: 2px solid #e5e7eb; margin-bottom: 7px"></div>
+
+          <div style="display: flex; gap: 3rem">
+            <div style="display: flex; gap: 0.5rem">
+              <span style="font-weight: 600">성명:</span>
+              <span>${profile?.name ?? '-'}</span>
+            </div>
+            <div style="display: flex; gap: 0.5rem">
+              <span style="font-weight: 600">이메일:</span>
+              <span>${profile?.email ?? '-'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 모임 참여 이력 -->
+        <div>
+          <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 20px; color: #000">
+            모임 참여 이력
+          </div>
+          <div style="border-bottom: 2px solid #e5e7eb; margin-bottom: 7px"></div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 25% 50% 25%;
+              width: 100%;
+              margin-bottom: 7px;
+            "
+          >
+            <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000">
+              모임 기간
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000">
+              모임 이름
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000">
+              모임 분류
+            </div>
+          </div>
+          <div style="border-bottom: 1px solid #e5e7eb"></div>
+
+          <div style="display: flex; flex-direction: column">
+            ${selectedMeetings .map( item => `
+            <div
+              style="
+                display: flex;
+                width: 100%;
+                align-items: center;
+                border-bottom: 1px solid #e5e7eb;
+                padding-top: 0.5rem;
+                padding-bottom: 0.5rem;
+              "
+            >
+              <div
+                style="
+                  width: 25%;
+                  font-size: 0.875rem;
+                  font-weight: 400;
+                  text-align: center;
+                  color: #000;
+                "
+              >
+                ${item.group_start_day} ~ ${item.group_end_day}
+              </div>
+              <div
+                style="
+                  width: 50%;
+                  font-size: 1rem;
+                  font-weight: 600;
+                  text-align: center;
+                  color: #000;
+                "
+              >
+                ${item.group_title}
+              </div>
+              <div
+                style="
+                  width: 25%;
+                  font-size: 1rem;
+                  font-weight: 600;
+                  text-align: center;
+                  word-wrap: break-word;
+                  overflow-wrap: break-word;
+                  color: #000;
+                "
+              >
+                ${item.categories_major?.category_major_name ?? '-'} >
+                ${item.categories_sub?.category_sub_name ?? '-'}
+              </div>
+            </div>
+            `, ) .join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- 페이지 넘김 -->
+      <div style="page-break-after: always"></div>
+
+      <!-- 모임 세부 정보 -->
+      <div>
+        <div
+          style="
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            margin-left: 20px;
+            color: #000;
+          "
+        >
+          모임 세부 정보
+        </div>
+        <!-- ${selectedMeetings .map( item => ` -->
+        <div
+          style="
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem;
+            border-radius: 0.125rem;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+          "
+        >
+          <div style="display: flex; justify-content: space-between; padding-bottom: 20px">
+            <div style="display: flex">
+              <div
+                style="
+                  font-size: 1rem;
+                  font-weight: 600;
+                  margin-left: 20px;
+                  padding-left: 20px;
+                  color: #000;
+                "
+              >
+                모임기간
+              </div>
+              <div style="font-size: 1rem; font-weight: 600; margin-left: 60px; color: #000">
+                ${item.group_start_day} ~ ${item.group_end_day}
+              </div>
+            </div>
+            <div style="display: flex">
+              <div style="font-size: 1rem; font-weight: 600; color: #000">모임 분류</div>
+              <div
+                style="
+                  font-size: 1rem;
+                  font-weight: 600;
+                  margin-left: 40px;
+                  padding-right: 150px;
+                  color: #000;
+                "
+              >
+                ${item.categories_major?.category_major_name ?? '-'} >
+                ${item.categories_sub?.category_sub_name ?? '-'}
+              </div>
+            </div>
+          </div>
+
+          <div style="border-bottom: 1px solid #e5e7eb; margin-bottom: 10px"></div>
+          <div style="display: flex; padding-bottom: 20px">
+            <div
+              style="
+                font-size: 1rem;
+                font-weight: 600;
+                margin-left: 20px;
+                padding-left: 20px;
+                color: #000;
+              "
+            >
+              모임 이름
+            </div>
+            <div style="font-size: 1rem; font-weight: 600; margin-left: 56px; color: #000">
+              ${item.group_title}
+            </div>
+          </div>
+
+          <div style="border-bottom: 1px solid #e5e7eb; margin-bottom: 10px"></div>
+          <div style="display: flex; padding-bottom: 20px">
+            <div
+              style="
+                font-size: 1rem;
+                font-weight: 600;
+                margin-left: 20px;
+                padding-left: 20px;
+                color: #000;
+              "
+            >
+              커리큘럼
+            </div>
+            <div>
+              ${(() => { if (!item.curriculum) { return '
+              <div style="font-size: 1rem; font-weight: 400; margin-left: 56px; color: #9ca3af">
+                커리큘럼 없음
+              </div>
+              '; } let curriculumArray: { title?: string; detail?: string }[] = []; try { let parsed
+              = item.curriculum; if (typeof item.curriculum === 'string') { parsed =
+              JSON.parse(item.curriculum); } if (Array.isArray(parsed)) { curriculumArray = parsed
+              .filter(c => typeof c === 'object' && c !== null) .map(c => ({ title: c.title ?? '-',
+              detail: c.detail ?? '-', })); } } catch (e) { console.error('커리큘럼 파싱 에러:', e);
+              return '
+              <div style="font-size: 1rem; font-weight: 400; margin-left: 56px; color: #9ca3af">
+                커리큘럼 없음
+              </div>
+              '; } if (curriculumArray.length === 0) { return '
+              <div style="font-size: 1rem; font-weight: 400; margin-left: 56px; color: #9ca3af">
+                커리큘럼 없음
+              </div>
+              '; } curriculumArray.sort((a, b) => a.title!.localeCompare(b.title!)); return
+              curriculumArray .map( (c, idx) => `
+              <div
+                style="
+                  font-size: 1rem;
+                  font-weight: 400;
+                  margin-left: 56px;
+                  margin-bottom: 0.5rem;
+                  color: #000;
+                "
+              >
+                ${idx + 1}. ${c.title}
+                <div style="color: #4b5563; margin-left: 10px">${c.detail}</div>
+              </div>
+              `, ) .join(''); })()}
+            </div>
+          </div>
+        </div>
+        `, ) .join('')}
+      </div>
+    </div>
+  </body>
+</html>

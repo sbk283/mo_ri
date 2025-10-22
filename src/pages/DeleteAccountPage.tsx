@@ -8,6 +8,8 @@ import { supabase } from '../lib/supabase';
 
 function DeleteAccountPage() {
   const [reason, setReason] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [agreed, setAgreed] = useState(false);
 
   const handleDeleteAccount = async () => {
     try {
@@ -16,6 +18,22 @@ function DeleteAccountPage() {
       } = await supabase.auth.getUser();
 
       if (!user) throw new Error('사용자 정보를 찾을 수 없습니다.');
+
+      // 탈퇴테이블 저장 추가
+      const ipAddr = await fetch('https://api.ipify.org?format=json')
+        .then(res => res.json())
+        .then(data => data.ip)
+        .catch(() => null);
+      const logKey = `${user.id}-${Date.now()}`;
+      const { error: logError } = await supabase.from('user_delete_logs').insert({
+        user_id: user.id,
+        delete_reason: reason,
+        delete_feedback: feedback,
+        ip_addr: ipAddr,
+        user_agent: navigator.userAgent,
+        log_key: logKey,
+      });
+      if (logError) throw logError;
 
       // is_active를 false로 변경
       const { error } = await supabase
@@ -98,25 +116,33 @@ function DeleteAccountPage() {
       </div>
       <div className=" text-brand font-semibold mb-[21px] text-xl">설문조사</div>
       <div className="border border-gray-300 rounded-[5px] py-[57px] px-[107px] mb-[24px]">
-        <div className="mb-[13px] text-lg font-bold text-gray-400">탈퇴 사유를 선택해주세요.</div>
+        <div className="mb-[13px] text-lg font-bold text-gray-400">
+          탈퇴 사유를 선택해주세요. <span className="text-red-500">*</span>{' '}
+        </div>
         <DeleteAccountselector reasons={reason} onChange={setReason} />
 
         <div className="mb-[13px] mt-[19px] text-lg font-bold text-gray-400">
           탈퇴하고 싶은 사유나 건의사항을 적어주세요.
           <span className="text-[#8c8c8c] font-normal text-[13px] pl-[10px]">(선택사항)</span>
         </div>
-        <textarea className="w-full border border-gray-300 rounded-[5px] h-[166px] p-3" />
+        <textarea
+          className="w-full border border-gray-300 rounded-[5px] h-[166px] p-3"
+          value={feedback}
+          onChange={e => setFeedback(e.target.value)}
+        />
       </div>
-      <Checkbox className="mb-[43px]">
+      <Checkbox className="mb-[43px]" checked={agreed} onChange={e => setAgreed(e.target.checked)}>
         위의 내용, 회원 탈퇴 시 주의사항을 모두 확인했습니다.
       </Checkbox>
       <div className="flex gap-[27px] justify-center">
-        <button className="text-white bg-brand py-[8px] px-[65px] rounded-[5px] text-xl">
-          이전페이지
-        </button>
         <button
           onClick={handleDeleteAccount}
-          className="text-brand border border-brand bg-white py-[8px] px-[65px] rounded-[5px] text-xl"
+          disabled={!agreed || !reason}
+          className={`py-[8px] px-[65px] rounded-[5px] text-xl ${
+            !agreed || !reason
+              ? 'bg-gray-100 text-gray-300 cursor-not-allowed border border-gray-300'
+              : 'text-brand border border-brand bg-white hover:bg-brand hover:text-white'
+          }`}
         >
           회원탈퇴
         </button>

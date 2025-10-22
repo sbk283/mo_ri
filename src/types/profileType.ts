@@ -4,6 +4,10 @@ export type profile = Database['public']['Tables']['user_profiles']['Row'];
 export type profileInsert = Database['public']['Tables']['user_profiles']['Insert'];
 export type profileUpdate = Database['public']['Tables']['user_profiles']['Update'];
 
+export type deleteProfile = Database['public']['Tables']['user_delete_logs']['Row'];
+export type deleteProfileInsert = Database['public']['Tables']['user_delete_logs']['Insert'];
+export type deleteProfileUpdate = Database['public']['Tables']['user_delete_logs']['Update'];
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -225,7 +229,6 @@ export type Database = {
           group_created_at: string;
           group_end_day: string;
           group_id: string;
-          group_kind: Database['public']['Enums']['group_kind_enum'];
           group_region: string | null;
           group_region_any: boolean;
           group_short_intro: string | null;
@@ -234,7 +237,9 @@ export type Database = {
           group_title: string;
           group_updated_at: string;
           image_urls: string[] | null;
+          major_id: string | null;
           status: Database['public']['Enums']['group_status_enum'];
+          sub_id: string | null;
         };
         Insert: {
           created_by?: string | null;
@@ -244,7 +249,6 @@ export type Database = {
           group_created_at?: string;
           group_end_day: string;
           group_id?: string;
-          group_kind: Database['public']['Enums']['group_kind_enum'];
           group_region?: string | null;
           group_region_any?: boolean;
           group_short_intro?: string | null;
@@ -253,7 +257,9 @@ export type Database = {
           group_title: string;
           group_updated_at?: string;
           image_urls?: string[] | null;
+          major_id?: string | null;
           status?: Database['public']['Enums']['group_status_enum'];
+          sub_id?: string | null;
         };
         Update: {
           created_by?: string | null;
@@ -263,7 +269,6 @@ export type Database = {
           group_created_at?: string;
           group_end_day?: string;
           group_id?: string;
-          group_kind?: Database['public']['Enums']['group_kind_enum'];
           group_region?: string | null;
           group_region_any?: boolean;
           group_short_intro?: string | null;
@@ -272,7 +277,9 @@ export type Database = {
           group_title?: string;
           group_updated_at?: string;
           image_urls?: string[] | null;
+          major_id?: string | null;
           status?: Database['public']['Enums']['group_status_enum'];
+          sub_id?: string | null;
         };
         Relationships: [
           {
@@ -281,6 +288,20 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'user_profiles';
             referencedColumns: ['user_id'];
+          },
+          {
+            foreignKeyName: 'groups_major_id_fkey';
+            columns: ['major_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories_major';
+            referencedColumns: ['major_id'];
+          },
+          {
+            foreignKeyName: 'groups_sub_id_fkey';
+            columns: ['sub_id'];
+            isOneToOne: false;
+            referencedRelation: 'categories_sub';
+            referencedColumns: ['sub_id'];
           },
         ];
       };
@@ -342,7 +363,7 @@ export type Database = {
           company_name: string;
           created_at: string | null;
           end_date: string;
-          position: string | null;
+          original_file_name: string | null;
           profile_id: string | null;
           start_date: string;
           updated_at: string | null;
@@ -353,7 +374,7 @@ export type Database = {
           company_name: string;
           created_at?: string | null;
           end_date: string;
-          position?: string | null;
+          original_file_name?: string | null;
           profile_id?: string | null;
           start_date: string;
           updated_at?: string | null;
@@ -364,7 +385,7 @@ export type Database = {
           company_name?: string;
           created_at?: string | null;
           end_date?: string;
-          position?: string | null;
+          original_file_name?: string | null;
           profile_id?: string | null;
           start_date?: string;
           updated_at?: string | null;
@@ -373,6 +394,94 @@ export type Database = {
           {
             foreignKeyName: 'user_careers_profile_id_fkey';
             columns: ['profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      user_delete_logs: {
+        Row: {
+          delete_feedback: string | null;
+          delete_id: string;
+          delete_reason: string | null;
+          deleted_at: string;
+          ip_addr: unknown | null;
+          log_key: string;
+          user_agent: string | null;
+          user_id: string | null;
+        };
+        Insert: {
+          delete_feedback?: string | null;
+          delete_id?: string;
+          delete_reason?: string | null;
+          deleted_at?: string;
+          ip_addr?: unknown | null;
+          log_key: string;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          delete_feedback?: string | null;
+          delete_id?: string;
+          delete_reason?: string | null;
+          deleted_at?: string;
+          ip_addr?: unknown | null;
+          log_key?: string;
+          user_agent?: string | null;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_delete_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
+          },
+        ];
+      };
+      user_inquiries: {
+        Row: {
+          inquiry_answer: string | null;
+          inquiry_answered_at: string | null;
+          inquiry_created_at: string;
+          inquiry_detail: string;
+          inquiry_file_urls: Json | null;
+          inquiry_id: string;
+          inquiry_main_type: string;
+          inquiry_status: Database['public']['Enums']['inquiry_status_enum'];
+          inquiry_sub_type: string;
+          user_id: string;
+        };
+        Insert: {
+          inquiry_answer?: string | null;
+          inquiry_answered_at?: string | null;
+          inquiry_created_at?: string;
+          inquiry_detail: string;
+          inquiry_file_urls?: Json | null;
+          inquiry_id?: string;
+          inquiry_main_type: string;
+          inquiry_status?: Database['public']['Enums']['inquiry_status_enum'];
+          inquiry_sub_type: string;
+          user_id: string;
+        };
+        Update: {
+          inquiry_answer?: string | null;
+          inquiry_answered_at?: string | null;
+          inquiry_created_at?: string;
+          inquiry_detail?: string;
+          inquiry_file_urls?: Json | null;
+          inquiry_id?: string;
+          inquiry_main_type?: string;
+          inquiry_status?: Database['public']['Enums']['inquiry_status_enum'];
+          inquiry_sub_type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_inquiries_user_id_fkey';
+            columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'user_profiles';
             referencedColumns: ['user_id'];
@@ -462,6 +571,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      is_group_host: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: boolean;
+      };
+      is_group_member: {
+        Args: { p_group_id: string; p_user_id: string };
+        Returns: boolean;
+      };
       unaccent: {
         Args: { '': string };
         Returns: string;
@@ -474,6 +591,7 @@ export type Database = {
     Enums: {
       group_kind_enum: 'study' | 'hobby' | 'sports' | 'volunteer' | 'etc';
       group_status_enum: 'recruiting' | 'closed' | 'finished';
+      inquiry_status_enum: 'pending' | 'answered' | 'closed';
       member_role_enum: 'host' | 'member';
       member_status_enum: 'applied' | 'approved' | 'rejected' | 'left';
       report_reason_enum: 'spam' | 'abuse' | 'inappropriate' | 'advertisement' | 'etc';
@@ -605,6 +723,7 @@ export const Constants = {
     Enums: {
       group_kind_enum: ['study', 'hobby', 'sports', 'volunteer', 'etc'],
       group_status_enum: ['recruiting', 'closed', 'finished'],
+      inquiry_status_enum: ['pending', 'answered', 'closed'],
       member_role_enum: ['host', 'member'],
       member_status_enum: ['applied', 'approved', 'rejected', 'left'],
       report_reason_enum: ['spam', 'abuse', 'inappropriate', 'advertisement', 'etc'],

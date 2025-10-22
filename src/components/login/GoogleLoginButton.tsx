@@ -67,7 +67,7 @@ const GoogleLoginButton = ({ onError, onSuccess }: GoogleLoginButtonProps) => {
           fill="#EA4335"
         />
       </svg>
-      구글 로그인
+      구글 로그인/회원가입
     </button>
   );
 };

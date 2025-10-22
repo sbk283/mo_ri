@@ -92,7 +92,10 @@ function AuthCallback() {
           setHasProfile(true); // 관심사 있음
         }
       } else {
-        setMsg('인증 정보가 존재하지 않습니다. 다시 가입해주세요.');
+        setMsg('탈퇴한 계정입니다. 메인 홈페이지로 이동합니다.');
+        setTimeout(() => {
+          navigate('/');
+        }, 2000);
       }
     } catch (err) {
       console.error('인증 콜백 처리 중 오류:', err);
@@ -147,7 +150,7 @@ function AuthCallback() {
           <Button
             htmlType="submit"
             onClick={handleClick}
-            disabled={msg === '로딩중'}
+            disabled={msg === '로딩중' || msg === '탈퇴한 계정입니다. 메인 홈페이지로 이동합니다.'}
             className="w-[450px] h-[48px] bg-brand text-white text-xl font-bold rounded-[5px]"
           >
             다음단계

@@ -22,10 +22,8 @@ export default function AiGroupsSection() {
       title: '핸드드립 커피 원데이 클래스',
       desc: '싱글 오리진으로 핸드드립 처음부터 같이 배워요',
       dday: 'D-2',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: false,
     },
     {
       id: 2,
@@ -35,10 +33,8 @@ export default function AiGroupsSection() {
       title: '해운대 노을 출사 원데이',
       desc: '구도/노출 기본 잡고 인생사진 남기자',
       dday: 'D-5',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: true,
     },
     {
       id: 3,
@@ -48,10 +44,8 @@ export default function AiGroupsSection() {
       title: '도자기 머그컵 만들기',
       desc: '나만의 컵을 빚어보는 하루 체험',
       dday: 'D-1',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: false,
     },
     {
       id: 4,
@@ -61,10 +55,8 @@ export default function AiGroupsSection() {
       title: '보드게임 번개 모임(원데이)',
       desc: '룰 설명부터 바로 실전! 라운드 돌려봐요',
       dday: 'D-3',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: true,
     },
 
     // ===== 단기 (4) =====
@@ -76,10 +68,8 @@ export default function AiGroupsSection() {
       title: '4주 러닝 기초반',
       desc: '호흡/폼 교정으로 5km 완주 도전',
       dday: 'D-6',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: true,
     },
     {
       id: 6,
@@ -89,10 +79,8 @@ export default function AiGroupsSection() {
       title: '타입스크립트 스터디(2주 과정)',
       desc: '기본 타입부터 제네릭까지 핵심만 쫙',
       dday: 'D-9',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: false,
     },
     {
       id: 7,
@@ -102,10 +90,8 @@ export default function AiGroupsSection() {
       title: '3주 아침 요가 루틴',
       desc: '굿모닝 스트레칭으로 하루 시작',
       dday: 'D-4',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: true,
     },
     {
       id: 8,
@@ -115,10 +101,8 @@ export default function AiGroupsSection() {
       title: '4주 홈베이킹 클래스',
       desc: '스콘→쿠키→타르트→파운드까지',
       dday: 'D-8',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: false,
     },
 
     // ===== 장기 (4) =====
@@ -130,10 +114,8 @@ export default function AiGroupsSection() {
       title: '3개월 자전거 라이딩 크루',
       desc: '주 2회 코스 탐방 & 기록 공유',
       dday: 'D-10',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: true,
     },
     {
       id: 10,
@@ -143,10 +125,8 @@ export default function AiGroupsSection() {
       title: '12주 영어 회화 챌린지',
       desc: '롤플레이 & 발음 교정으로 자신감 업',
       dday: 'D-12',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: false,
     },
     {
       id: 11,
@@ -156,10 +136,8 @@ export default function AiGroupsSection() {
       title: '10주 반려동물 보호소 봉사',
       desc: '산책/청소/기록 프로젝트로 꾸준 봉사',
       dday: 'D-14',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: true,
     },
     {
       id: 12,
@@ -169,10 +147,8 @@ export default function AiGroupsSection() {
       title: '12주 클라이밍 중급반',
       desc: '볼더링 테크닉 & 코어 강화 프로그램',
       dday: 'D-11',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: false,
     },
     {
       id: 13,
@@ -182,10 +158,8 @@ export default function AiGroupsSection() {
       title: '핸드드립 커피 원데이 클래스',
       desc: '싱글 오리진으로 핸드드립 처음부터 같이 배워요',
       dday: 'D-2',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: true,
     },
     {
       id: 14,
@@ -195,10 +169,8 @@ export default function AiGroupsSection() {
       title: '해운대 노을 출사 원데이',
       desc: '구도/노출 기본 잡고 인생사진 남기자',
       dday: 'D-5',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: false,
     },
     {
       id: 15,
@@ -208,10 +180,8 @@ export default function AiGroupsSection() {
       title: '도자기 머그컵 만들기',
       desc: '나만의 컵을 빚어보는 하루 체험',
       dday: 'D-1',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: true,
     },
     {
       id: 16,
@@ -221,10 +191,8 @@ export default function AiGroupsSection() {
       title: '보드게임 번개 모임(원데이)',
       desc: '룰 설명부터 바로 실전! 라운드 돌려봐요',
       dday: 'D-3',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'oneday',
-      favorite: false,
     },
 
     // ===== 단기 (4) =====
@@ -236,10 +204,8 @@ export default function AiGroupsSection() {
       title: '4주 러닝 기초반',
       desc: '호흡/폼 교정으로 5km 완주 도전',
       dday: 'D-6',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: true,
     },
     {
       id: 18,
@@ -249,10 +215,8 @@ export default function AiGroupsSection() {
       title: '타입스크립트 스터디(2주 과정)',
       desc: '기본 타입부터 제네릭까지 핵심만 쫙',
       dday: 'D-9',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: false,
     },
     {
       id: 19,
@@ -262,10 +226,8 @@ export default function AiGroupsSection() {
       title: '3주 아침 요가 루틴',
       desc: '굿모닝 스트레칭으로 하루 시작',
       dday: 'D-4',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: true,
     },
     {
       id: 20,
@@ -275,10 +237,8 @@ export default function AiGroupsSection() {
       title: '4주 홈베이킹 클래스',
       desc: '스콘→쿠키→타르트→파운드까지',
       dday: 'D-8',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'short',
-      favorite: false,
     },
 
     // ===== 장기 (4) =====
@@ -290,10 +250,8 @@ export default function AiGroupsSection() {
       title: '3개월 자전거 라이딩 크루',
       desc: '주 2회 코스 탐방 & 기록 공유',
       dday: 'D-10',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: true,
     },
     {
       id: 22,
@@ -303,10 +261,8 @@ export default function AiGroupsSection() {
       title: '12주 영어 회화 챌린지',
       desc: '롤플레이 & 발음 교정으로 자신감 업',
       dday: 'D-12',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: false,
     },
     {
       id: 23,
@@ -316,10 +272,8 @@ export default function AiGroupsSection() {
       title: '10주 반려동물 보호소 봉사',
       desc: '산책/청소/기록 프로젝트로 꾸준 봉사',
       dday: 'D-14',
-      ad: true,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: true,
     },
     {
       id: 24,
@@ -329,10 +283,8 @@ export default function AiGroupsSection() {
       title: '12주 클라이밍 중급반',
       desc: '볼더링 테크닉 & 코어 강화 프로그램',
       dday: 'D-11',
-      ad: false,
       thumbnail: '/images/group_img.png',
       duration: 'long',
-      favorite: false,
     },
   ];
 
@@ -365,8 +317,6 @@ export default function AiGroupsSection() {
                     aria-pressed={isActive}
                     onClick={() => setActive(f.key)}
                     className={[
-
-
                       'py-1 rounded-[5px] font-bold border w-[128px]',
 
                       isActive
@@ -384,7 +334,7 @@ export default function AiGroupsSection() {
 
         <ul
           className="
-            grid gap-[12px] mb-[80px]
+            grid gap-4 mb-[80px]
             grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
             place-items-stretch overflow-x-auto pb-2 w-[1024px]
           "

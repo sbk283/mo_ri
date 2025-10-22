@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import ConfirmModal from './modal/ConfirmModal';
+// import { useEffect, useState } from 'react';
+// import ConfirmModal from './modal/ConfirmModal';
 
 export type GroupItem = {
   id: number;
@@ -9,10 +9,8 @@ export type GroupItem = {
   title: string;
   desc: string;
   dday: string;
-  ad?: boolean;
   thumbnail: string;
   duration?: Duration;
-  favorite: boolean;
 };
 
 export type Duration = 'oneday' | 'short' | 'long';
@@ -29,7 +27,7 @@ function StatusBadge({ text }: { text: GroupItem['status'] }) {
         'text-[14px] font-bold text-white px-2 py-1',
         'rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]',
         'relative z-[1] inline-block',
-        'translate-x-[0%] translate-y-[-60%]',
+        'translate-x-[-5%] translate-y-[-90%]',
         'h-[23px] p-[4px] flex items-center justify-center flex-shrink-0',
         STATUS_BG[text],
       ].join(' ')}
@@ -49,67 +47,67 @@ type GroupCardProps = {
 
 export function GroupCard({
   item,
-  onToggleFavorite,
-  confirmBeforeChange = true,
-  confirmMode,
+  // onToggleFavorite,
+  // confirmBeforeChange = true,
+  // confirmMode,
   as = 'li',
 }: GroupCardProps) {
-  const controlled = typeof onToggleFavorite === 'function';
-  const [localFav, setLocalFav] = useState<boolean>(item.favorite);
+  // const controlled = typeof onToggleFavorite === 'function';
+  // const [localFav, setLocalFav] = useState<boolean>(item.favorite);
 
-  useEffect(() => {
-    if (!controlled) setLocalFav(item.favorite);
-  }, [item.favorite, controlled]);
+  // useEffect(() => {
+  //   if (!controlled) setLocalFav(item.favorite);
+  // }, [item.favorite, controlled]);
 
-  const currentFav = controlled ? item.favorite : localFav;
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<'fav' | 'unfav' | null>(null);
+  // const currentFav = controlled ? item.favorite : localFav;
+  // const [confirmOpen, setConfirmOpen] = useState(false);
+  // const [pendingAction, setPendingAction] = useState<'fav' | 'unfav' | null>(null);
 
-  const mode: 'none' | 'add' | 'unfav' | 'both' =
-    confirmMode ?? (confirmBeforeChange ? 'unfav' : 'none');
+  // const mode: 'none' | 'add' | 'unfav' | 'both' =
+  //   confirmMode ?? (confirmBeforeChange ? 'unfav' : 'none');
 
-  const applyFavorite = (next: boolean) => {
-    if (controlled) onToggleFavorite!(item.id, next);
-    else setLocalFav(next);
-  };
+  // const applyFavorite = (next: boolean) => {
+  //   if (controlled) onToggleFavorite!(item.id, next);
+  //   else setLocalFav(next);
+  // };
 
-  const handleClickFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.stopPropagation();
-    if (!currentFav) {
-      if (mode === 'add' || mode === 'both') {
-        setPendingAction('fav');
-        setConfirmOpen(true);
-        return;
-      }
-      applyFavorite(true);
-    } else {
-      if (mode === 'unfav' || mode === 'both') {
-        setPendingAction('unfav');
-        setConfirmOpen(true);
-        return;
-      }
-      applyFavorite(false);
-    }
-  };
+  // const handleClickFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
+  //   e.stopPropagation();
+  //   if (!currentFav) {
+  //     if (mode === 'add' || mode === 'both') {
+  //       setPendingAction('fav');
+  //       setConfirmOpen(true);
+  //       return;
+  //     }
+  //     applyFavorite(true);
+  //   } else {
+  //     if (mode === 'unfav' || mode === 'both') {
+  //       setPendingAction('unfav');
+  //       setConfirmOpen(true);
+  //       return;
+  //     }
+  //     applyFavorite(false);
+  //   }
+  // };
 
-  const handleConfirmModal = () => {
-    if (pendingAction === 'unfav') applyFavorite(false);
-    if (pendingAction === 'fav') applyFavorite(true);
-    setConfirmOpen(false);
-    setPendingAction(null);
-  };
+  // const handleConfirmModal = () => {
+  //   if (pendingAction === 'unfav') applyFavorite(false);
+  //   if (pendingAction === 'fav') applyFavorite(true);
+  //   setConfirmOpen(false);
+  //   setPendingAction(null);
+  // };
 
-  const handleCloseModal = () => {
-    setConfirmOpen(false);
-    setPendingAction(null);
-  };
+  // const handleCloseModal = () => {
+  //   setConfirmOpen(false);
+  //   setPendingAction(null);
+  // };
 
   const Wrapper = as as keyof JSX.IntrinsicElements;
 
   return (
     <>
-      <Wrapper className="h-[290px] overflow-hidden relative cursor-pointer flex flex-col pt-5">
-        <article className="rounded-sm flex flex-col h-full border border-[#A3A3A3]">
+      <Wrapper className="overflow-hidden relative cursor-pointer flex flex-col pt-5">
+        <article className="overflow-hidden h-[290px] w-full rounded-sm flex flex-col border border-[#A3A3A3]">
           <span className="absolute left-2 z-10">
             <StatusBadge text={item.status} />
           </span>
@@ -120,54 +118,32 @@ export function GroupCard({
               alt={`${item.title} 썸네일`}
               className="w-full object-cover rounded-t-sm h-[133px]"
             />
-            <button
-              type="button"
-              aria-label="즐겨찾기"
-              aria-pressed={currentFav}
-              onClick={handleClickFavorite}
-              className="absolute top-2 right-2 w-[15px] h-[15px]"
-            >
-              {currentFav ? (
-                <img src="/images/fill_star.png" alt="즐겨찾기됨" />
-              ) : (
-                <img src="/images/unfill_star.png" alt="즐겨찾기 안됨" />
-              )}
-            </button>
           </div>
-
-          <div className="relative p-[15px] rounded-b-sm flex flex-col flex-1 pb-12 bg-white">
+          <div className="relative p-[15px] h-[157px] rounded-b-sm flex flex-col flex-1 pb-12 bg-white">
             <header className="flex justify-between text-sm mb-2">
               <span className="text-[#D83737] font-semibold">{item.category}</span>
               <span className="text-[#767676]">{item.region}</span>
             </header>
             <h3 className="flex items-center gap-1 text-lg font-bold hover:underline">
               <span className="truncate block max-w-[calc(100%-20px)]">{item.title}</span>
-              {item.ad && (
-                <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4 flex-shrink-0" />
-              )}
             </h3>
             <p className="text-[15px] h-[34px] text-[#979797] line-clamp-2 leading-[17px]">
               {item.desc}
             </p>
-            <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-2xl px-2 text-[12px]">
+            <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
               {item.dday}
             </time>
-            {item.ad && (
-              <span className="absolute right-3 bottom-3 bg-[#C5C5C5] text-white rounded-xl px-2 text-[9px]">
-                AD
-              </span>
-            )}
           </div>
         </article>
       </Wrapper>
 
-      <ConfirmModal
+      {/* <ConfirmModal
         open={confirmOpen}
         title={'찜을 해제하시겠습니까?'}
         message={'해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?'}
         onConfirm={handleConfirmModal}
         onClose={handleCloseModal}
-      />
+      /> */}
     </>
   );
 }

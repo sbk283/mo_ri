@@ -1,9 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { usePDFPrintHandler } from '../utils/print/PDFPrintHandler';
 import CreatedGroupsHistory from './groupHistory/CreatedGroupsHistory';
 import ParticipationHistory from './groupHistory/ParticipationHistory';
-import { usePDFPrintHandler } from '../utils/print/PDFPrintHandler';
-import PDFPreview from '../utils/print/PDFPreview';
 
 function MypageMyGroupMenu() {
   const [checkedCount, setCheckedCount] = useState(0);

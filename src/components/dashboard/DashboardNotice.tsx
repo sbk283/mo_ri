@@ -9,7 +9,6 @@ import { supabase } from '../../lib/supabase';
 const ITEMS_PER_PAGE = 10;
 const today = () => new Date().toISOString().slice(0, 10);
 
-// HTML → 텍스트 변환 (태그 제거)
 const stripHtml = (html: string) => {
   const div = document.createElement('div');
   div.innerHTML = html ?? '';
@@ -25,18 +24,26 @@ export function DashboardNotice({
   groupId,
   boardType = 'notice',
   createRequestKey = 0,
+  onCraftingChange, // ✅ 이 줄 추가
 }: {
   groupId?: string;
   boardType?: string;
   createRequestKey?: number;
+  onCraftingChange?: (v: boolean) => void; // ✅ 이 줄 추가
 }) {
   const [isCreating, setIsCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
 
+  // ✅ 작성 트리거 수신 → 작성모드 진입
   useEffect(() => {
     if (createRequestKey > prevKey.current) setIsCreating(true);
     prevKey.current = createRequestKey;
   }, [createRequestKey]);
+
+  // ✅ 작성 상태 변경 시 부모에게 알림
+  useEffect(() => {
+    onCraftingChange?.(isCreating);
+  }, [isCreating, onCraftingChange]);
 
   // ===== 목록 로드 =====
   const [items, setItems] = useState<NoticeRow[]>([]);
@@ -91,21 +98,22 @@ export function DashboardNotice({
 
   // ===== 상세/수정 모드 =====
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false); // ← 별도 수정 화면 전환용
+  const [isEditing, setIsEditing] = useState(false);
 
   const openDetail = (localListId: number) => {
     const idx = items.findIndex(n => n.id === localListId);
     if (idx >= 0) {
       setDetailIdx(idx);
-      setIsEditing(false); // 상세 진입 시 수정 모드 해제
+      setIsEditing(false);
+      setIsCreating(false); // ✅ 상세 진입 시 작성모드 아님
     }
   };
   const closeDetail = () => {
     setDetailIdx(null);
     setIsEditing(false);
+    setIsCreating(false); // ✅ 닫으면 작성모드 아님
   };
 
-  // 새 글 기본값
   const emptyNotice: Notice = {
     id: 0,
     title: '',
@@ -124,8 +132,6 @@ export function DashboardNotice({
       return;
     }
     const userId = userRes.user.id;
-
-    // HTML 제거
     const bodyPlain = stripHtml(next.content);
 
     const { error } = await supabase.from('group_posts').insert({
@@ -142,7 +148,7 @@ export function DashboardNotice({
     }
 
     await reload();
-    setIsCreating(false);
+    setIsCreating(false); // ✅ 저장 후 작성 종료
     setPage(1);
     setDetailIdx(0);
     setIsEditing(false);
@@ -172,9 +178,8 @@ export function DashboardNotice({
     const copy = [...items];
     copy[detailIdx] = { ...copy[detailIdx], title: next.title, content: bodyPlain };
     setItems(copy);
-
-    // 저장 후 상세 화면으로 복귀
     setIsEditing(false);
+    setIsCreating(false); // ✅ 수정 저장 후도 작성 아님
   };
 
   // ===== 삭제 =====
@@ -198,16 +203,16 @@ export function DashboardNotice({
     setItems(rest);
     setDetailIdx(null);
     setIsEditing(false);
+    setIsCreating(false); // ✅ 삭제 후도 작성 아님
   };
 
-  // ===== 현재 상세 대상 =====
   const current = detailIdx != null ? items[detailIdx] : null;
 
   return (
-    <div className="w-[970px] bg-white overflow-hidden ">
+    <div className="w-[975px] bg-white overflow-hidden ">
       <AnimatePresence mode="wait">
         {isCreating ? (
-          // ── 작성 화면 ──
+          // 작성 화면
           <motion.div
             key="notice-create"
             initial={{ y: 10, opacity: 0 }}
@@ -217,12 +222,12 @@ export function DashboardNotice({
           >
             <GroupContentDetailEdit
               notice={emptyNotice}
-              onCancel={() => setIsCreating(false)}
+              onCancel={() => setIsCreating(false)} // ✅ 취소 시 작성 종료
               onSave={handleCreateSave}
             />
           </motion.div>
         ) : detailIdx == null ? (
-          // ── 리스트 화면 ──
+          // 리스트 화면
           <motion.div
             key="notice-list"
             initial={{ y: 10, opacity: 0 }}
@@ -236,14 +241,12 @@ export function DashboardNotice({
               <div className="p-6 text-center text-gray-500">등록된 공지가 없습니다.</div>
             ) : (
               <>
-                {/* 헤더 */}
                 <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
                   <div className="w-[700px] truncate font-semibold pl-7 text-md">제목</div>
                   <div className="w-[150px] text-center text-md">작성일자</div>
                   <div className="w-[50px] text-center mr-7 text-sm">상태</div>
                 </div>
 
-                {/* 목록 */}
                 <div className="flex flex-col divide-y divide-dashed divide-gray-300">
                   {pageItems.map(notice => (
                     <button
@@ -272,13 +275,12 @@ export function DashboardNotice({
                   ))}
                 </div>
 
-                {/* 페이지네이션 */}
                 <GroupPagination page={page} totalPages={totalPages} onPageChange={setPage} />
               </>
             )}
           </motion.div>
         ) : isEditing ? (
-          // ── 수정 화면(별도) ──
+          // 수정 화면
           <motion.div
             key="notice-edit"
             initial={{ y: 10, opacity: 0 }}
@@ -295,7 +297,7 @@ export function DashboardNotice({
             )}
           </motion.div>
         ) : (
-          // ── 상세 화면 ──
+          // 상세 화면
           <motion.div
             key="notice-detail"
             initial={{ y: 10, opacity: 0 }}
@@ -303,8 +305,7 @@ export function DashboardNotice({
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
-              {/* 제목 + 날짜 + 읽음상태 */}
+            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[550px]">
               <header className="px-8 pt-6">
                 <div className="flex">
                   <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
@@ -324,17 +325,15 @@ export function DashboardNotice({
               </header>
 
               <div className="text-center">
-                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
+                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[910px]" />
               </div>
 
-              {/* 본문 */}
               <section className="px-8 py-10 text-gray-800 leading-relaxed whitespace-pre-wrap">
                 {current?.content}
               </section>
             </article>
 
-            {/* 목록/수정/삭제 */}
-            <footer className="py-6 flex text-left justify-start">
+            <footer className="pt-6 flex text-left justify-start">
               <button onClick={closeDetail} className="text-[#8C8C8C] py-2 transition text-md">
                 &lt; 목록으로
               </button>
@@ -351,7 +350,7 @@ export function DashboardNotice({
                 <motion.button
                   whileTap={{ scale: 0.96 }}
                   className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                  onClick={() => setIsEditing(true)} // ← 별도 수정 화면으로 전환
+                  onClick={() => setIsEditing(true)}
                 >
                   수정
                 </motion.button>

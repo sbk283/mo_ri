@@ -4,7 +4,11 @@ import { useMemo, useState } from 'react';
 import GroupDailyDetailEdit from './GroupDailyDetailEdit';
 import type { Daily } from '../types/daily';
 
-type DailyWithPostId = Daily & { postId: string };
+type DailyWithPostId = Daily & {
+  postId: string;
+  // 선택 필드: 좋아요한 유저들 (있으면 사용)
+  likedUsers?: Array<{ userId: string; nickname?: string | null; avatarUrl?: string | null }>;
+};
 
 type Props = {
   daily: DailyWithPostId;
@@ -36,10 +40,11 @@ const stripAllImages = (content?: string | null): string => {
   if (!content) return '';
   let out = content;
 
+  // HTML <img> 제거
   out = out.replace(/<img[^>]*>/gi, '');
-
+  // 마크다운 이미지 제거
   out = out.replace(/!\[[^\]]*]\([^)]*\)/g, '');
-
+  // 순수 이미지 URL 라인 제거
   out = out.replace(
     /(^|\n)\s*(https?:\/\/[^\s"'<>]+\.(?:png|jpe?g|gif|webp|avif|svg))\s*/gi,
     (m, p1) => (p1 ? p1 : ''),
@@ -73,6 +78,27 @@ export default function GroupDailyDetail({ daily, onBack, onSave, onDelete }: Pr
     () => stripAllImages(String(daily.content ?? '')),
     [daily.content],
   );
+
+  // ✅ 좋아요 아바타 계산
+  const likedAvatars = useMemo(() => {
+    const list = (daily.likedUsers ?? [])
+      .map(u => ({
+        src: u.avatarUrl ?? '',
+        nickname: u.nickname ?? '알 수 없음',
+        userId: u.userId,
+      }))
+      // 중복 유저 제거(안전)
+      .filter((u, i, arr) => arr.findIndex(x => x.userId === u.userId) === i)
+      // 빈 src는 제외
+      .filter(u => !!u.src);
+
+    return list;
+  }, [daily.likedUsers]);
+
+  const VISIBLE_MAX = 10;
+  const visibleAvatars = likedAvatars.slice(0, VISIBLE_MAX);
+  const totalCount = typeof daily.likedCount === 'number' ? daily.likedCount : likedAvatars.length;
+  const overflowCount = Math.max(totalCount - visibleAvatars.length, 0);
 
   const cardVariants = {
     initial: (dir: number) => ({ opacity: 0, x: dir > 0 ? 24 : -24 }),
@@ -112,7 +138,7 @@ export default function GroupDailyDetail({ daily, onBack, onSave, onDelete }: Pr
             exit="exit"
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
+            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[500px]">
               <header className="px-8 pt-6">
                 <div className="flex">
                   <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
@@ -146,7 +172,7 @@ export default function GroupDailyDetail({ daily, onBack, onSave, onDelete }: Pr
               </header>
 
               <div className="text-center">
-                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
+                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[910px]" />
               </div>
 
               <section className="px-8 py-8 text-gray-800 leading-relaxed">
@@ -202,33 +228,61 @@ export default function GroupDailyDetail({ daily, onBack, onSave, onDelete }: Pr
               </motion.button>
 
               <div className="text-center">
-                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
+                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[910px]" />
               </div>
+              {/* ✅ 좋아요한 유저 아바타 리스트 (본문 아래, 버튼/구분선 위) */}
+              {(visibleAvatars.length > 0 || overflowCount > 0) && (
+                <div className="px-8 pb-4">
+                  <div className="flex items-center">
+                    <div className="flex -space-x-2">
+                      {visibleAvatars.map(u => (
+                        <img
+                          key={u.userId}
+                          src={u.src}
+                          alt={u.nickname ?? '프로필'}
+                          title={u.nickname ?? '프로필'}
+                          className="w-9 h-9 rounded-full object-cover ring-2 ring-white border border-gray-200"
+                        />
+                      ))}
+                      {overflowCount > 0 && (
+                        <div
+                          className="w-9 h-9 rounded-full bg-gray-100 text-gray-600 text-sm font-medium
+                                     flex items-center justify-center ring-2 ring-white border border-gray-200"
+                          title={`외 ${overflowCount}명`}
+                        >
+                          +{overflowCount}
+                        </div>
+                      )}
+                    </div>
+                    <span className="ml-3 text-sm text-gray-500">좋아요를 눌렀어요</span>
+                  </div>
+                </div>
+              )}
+            </article>
 
-              <footer className="py-6 flex text-left justify-start mx-8">
-                <button onClick={onBack} className="text-[#8C8C8C] py-2 transition text-md">
-                  &lt; 목록으로
-                </button>
-                <div className="ml-auto flex py-2">
-                  {onDelete && (
-                    <motion.button
-                      whileTap={{ scale: 0.96 }}
-                      className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                      onClick={handleDelete}
-                    >
-                      삭제
-                    </motion.button>
-                  )}
+            <footer className="py-6 flex text-left justify-start">
+              <button onClick={onBack} className="text-[#8C8C8C] py-2 transition text-md">
+                &lt; 목록으로
+              </button>
+              <div className="ml-auto flex py-2">
+                {onDelete && (
                   <motion.button
                     whileTap={{ scale: 0.96 }}
-                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                    onClick={() => setEditMode(true)}
+                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
+                    onClick={handleDelete}
                   >
-                    수정
+                    삭제
                   </motion.button>
-                </div>
-              </footer>
-            </article>
+                )}
+                <motion.button
+                  whileTap={{ scale: 0.96 }}
+                  className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm transition"
+                  onClick={() => setEditMode(true)}
+                >
+                  수정
+                </motion.button>
+              </div>
+            </footer>
           </motion.div>
         )}
       </AnimatePresence>

@@ -13,9 +13,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: false,
       thumbnail: '/images/group_img.png',
-      favorite: false,
     },
     {
       id: 2,
@@ -25,9 +23,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 모바일 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: true,
     },
     {
       id: 3,
@@ -37,9 +33,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 영웅전 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: false,
     },
     {
       id: 4,
@@ -49,9 +43,7 @@ export default function PopularGroupsSection() {
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
       dday: 'D-7',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: true,
     },
     {
       id: 5,
@@ -61,9 +53,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: false,
     },
     {
       id: 6,
@@ -73,9 +63,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 모바일 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: true,
     },
     {
       id: 7,
@@ -85,9 +73,7 @@ export default function PopularGroupsSection() {
       title: '마비노기 영웅전 던전 공파 모집',
       desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
       dday: 'D-3',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: false,
     },
     {
       id: 8,
@@ -97,9 +83,7 @@ export default function PopularGroupsSection() {
       title: '카드라이더 하실분 모집',
       desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
       dday: 'D-7',
-      ad: true,
       thumbnail: '/images/group_img.png',
-      favorite: true,
     },
   ];
 
@@ -125,7 +109,7 @@ export default function PopularGroupsSection() {
         </header>
 
         <div className="mb-[80px]">
-          <SwiperGroupCard items={data} confirmMode="unfav" loop={false} spaceBetween={16} />
+          <SwiperGroupCard items={data} confirmMode="unfav" loop={false} spaceBetween={12} />
         </div>
       </div>
     </section>

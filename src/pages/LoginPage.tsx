@@ -1,8 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import SignUpBanner from '../components/layout/signup/SignUpBanner';
 import GoogleLoginButton from '../components/login/GoogleLoginButton';
 import KakaoLoginButton from '../components/login/KakaoLoginButton';
-import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export type FieldData = {

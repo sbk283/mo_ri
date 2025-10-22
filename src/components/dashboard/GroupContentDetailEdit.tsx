@@ -30,7 +30,7 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
       transition={{ duration: 0.22, ease: 'easeOut' }}
       className="w-full"
     >
-      <article className="mx-auto bg-white rounded-md border border-[#A3A3A3]">
+      <article className="mx-auto bg-white border border-[#A3A3A3]">
         <header className="px-8 pt-6">
           <div className="flex gap-3 items-center">
             <input
@@ -44,7 +44,6 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
         </header>
 
         <section className="px-8 py-4">
-          <label className="block text-sm text-gray-600 mb-2">내용</label>
           <div className="editor-wrapper">
             <NoticeDetailRichTextEditor
               key={`notice-content-${form.id}`}

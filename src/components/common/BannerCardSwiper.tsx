@@ -13,9 +13,7 @@ function BannerCardSwiper() {
       title: '마비노기 던전 공파 모집',
       desc: '혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요.',
       dday: 'D-3',
-      ad: true,
       thumbnail: 'https://picsum.photos/seed/1/300/160',
-      favorite: true,
     },
     {
       id: 2,
@@ -25,9 +23,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 3,
@@ -37,9 +33,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 4,
@@ -49,9 +43,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 5,
@@ -61,9 +53,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 6,
@@ -73,9 +63,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 7,
@@ -85,9 +73,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
     {
       id: 8,
@@ -97,9 +83,7 @@ function BannerCardSwiper() {
       title: '강남 클라이밍 모임',
       desc: '강남에서 클라이밍 함께할 분 찾습니다.',
       dday: 'D-5',
-      ad: false,
       thumbnail: 'https://picsum.photos/seed/2/300/160',
-      favorite: true,
     },
   ];
 
@@ -111,7 +95,7 @@ function BannerCardSwiper() {
           nextEl: '.swiper-button-next',
           prevEl: '.swiper-button-prev',
         }}
-        spaceBetween={16}
+        spaceBetween={12}
         slidesPerView={4}
       >
         {groupList.map(item => (

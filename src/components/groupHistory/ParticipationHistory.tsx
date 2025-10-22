@@ -1,8 +1,10 @@
 // 참여한 모임들 이력 (생성모임, 참여모임 포함.)
 
-import { forwardRef, useImperativeHandle, useState } from 'react';
-import { userCareers, type userCareersType } from '../../mocks/userCareers';
+import { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { fetchUserGroups } from '../../lib/fetchUserGroups';
+import type { GroupWithCategory } from '../../types/group';
 
 interface ParticipationHistoryProps {
   onCheckChange: (items: any[]) => void;
@@ -12,29 +14,51 @@ interface ParticipationHistoryProps {
 //전체 선택을 위한 forwardRef 사용
 const ParticipationHistory = forwardRef<{ selectAll: () => void }, ParticipationHistoryProps>(
   ({ onCheckChange }, ref) => {
-    const [careerItems, setCareerItems] = useState<userCareersType[]>(userCareers);
+    const { user } = useAuth();
+    const [groupItems, setGroupItems] = useState<(GroupWithCategory & { isChecked?: boolean })[]>(
+      [],
+    );
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      if (!user) return;
+
+      const loadGroups = async () => {
+        setLoading(true);
+        try {
+          const groups = await fetchUserGroups(user.id);
+          // isChecked 필드 추가
+          const groupsWithCheck = groups.map(g => ({ ...g, isChecked: false }));
+          setGroupItems(groupsWithCheck);
+        } catch (err) {
+          console.error('참여 모임 불러오기 실패:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      loadGroups();
+    }, [user]);
 
     // 체크박스 토글 함수
-    const handleCheckboxToggle = (id: number) => {
-      setCareerItems(prev => {
+    const handleCheckboxToggle = (groupId: string) => {
+      setGroupItems(prev => {
         const updated = prev.map(item =>
-          item.id === id ? { ...item, isChecked: !item.isChecked } : item,
+          item.group_id === groupId ? { ...item, isChecked: !item.isChecked } : item,
         );
 
         //체크된 개수를 부모에게 전달
-        const checkedItems = updated.filter(item => item.isChecked);
-        onCheckChange(checkedItems);
+        onCheckChange(updated.filter(item => item.isChecked));
         return updated;
       });
     };
 
     //  전체 선택 함수
     const selectAll = () => {
-      setCareerItems(prev => {
+      setGroupItems(prev => {
         const allChecked = prev.every(item => item.isChecked);
         const updated = prev.map(item => ({ ...item, isChecked: !allChecked }));
-        const checkedItems = updated.filter(item => item.isChecked);
-        onCheckChange(checkedItems);
+        onCheckChange(updated.filter(item => item.isChecked));
         return updated;
       });
     };
@@ -43,8 +67,8 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
     useImperativeHandle(ref, () => ({
       selectAll,
     }));
-
-    if (careerItems.length === 0) {
+    if (loading) return <div className="text-center py-20 text-gray-400">로딩 중...</div>;
+    if (groupItems.length === 0) {
       return (
         <div className="text-center py-20 text-gray-400 font-bold">참여한 모임이 없습니다.</div>
       );
@@ -53,46 +77,54 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
     return (
       <div>
         {/* 메뉴 클릭시 변경되는 부분 추후 데이터베이스 연동 해야함 */}
-        {careerItems.map(career => (
+        {groupItems.map(group => (
           <div
-            key={career.id}
+            key={group.group_id}
             className="flex border-[1px] border-gray-300 rounded-[5px] py-[23px] px-[26px] items-center mb-[10px]"
           >
             {/* 체크박스 영역 */}
             <button
-              onClick={() => handleCheckboxToggle(career.id)}
+              onClick={() => handleCheckboxToggle(group.group_id)}
               className={`flex items-center justify-center w-6 h-6 rounded transition-colors duration-200
-                  ${career.isChecked ? 'bg-[#0689E8]' : 'bg-white border-[2px] border-brand'}`}
+                  ${group.isChecked ? 'bg-[#0689E8]' : 'bg-white border-[2px] border-brand'}`}
             >
-              {career.isChecked && <span className="text-white text-sm">✔</span>}
+              {group.isChecked && <span className="text-white text-sm">✔</span>}
             </button>
 
             {/* 이름 영역 */}
             <div className="ml-[24px]">
-              <div className="font-bold text-xl text-gray-400">{career.title}</div>
+              <div className="font-bold text-xl text-gray-400">{group.group_title}</div>
               <div className="text-sm text-[#777777] font-bold">
-                모임 기간 : {career.period.start}~{career.period.end}
+                모임 기간 : {group.group_start_day}~{group.group_end_day}
               </div>
             </div>
 
             {/* 아이콘 영역 */}
             <div className="flex gap-[9px] ml-[30px] items-center">
               <div className="text-brand text-md font-semibold border border-brand py-[3px] px-[11px] rounded-[5px]">
-                {career.category}
+                {group.categories_major?.category_major_name ?? '기타'}
               </div>
               <div
                 className={`text-white text-md font-semibold py-[3px] px-[11px] rounded-[5px] ${
-                  career.status === '진행중' ? 'bg-brand-orange' : 'bg-brand-red'
+                  group.status === 'recruiting'
+                    ? 'bg-brand-orange'
+                    : group.status === 'closed'
+                      ? 'bg-gray-400'
+                      : 'bg-brand-red'
                 }`}
               >
-                {career.status}
+                {group.status === 'recruiting'
+                  ? '모집 중'
+                  : group.status === 'closed'
+                    ? '마감'
+                    : '종료'}
               </div>
               <div className="flex items-center justify-center">
-                {career.created_by ? (
+                {group.created_by === user?.id && (
                   <div className=" bg-brand py-[8px] px-[8px] rounded-2xl">
                     <img src="/images/group_crown.svg" alt="생성자" className="w-4" />
                   </div>
-                ) : null}
+                )}
               </div>
             </div>
 
@@ -101,7 +133,7 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
 
             {/* 상세보기 영역 */}
             <Link
-              to={career.detailLink}
+              to={`/groupdetail/${group.group_id}`}
               className="text-lg font-medium text-gray-200 hover:text-brand"
             >
               상세보기

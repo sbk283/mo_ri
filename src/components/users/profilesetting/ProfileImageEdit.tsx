@@ -12,7 +12,7 @@ interface ProfileImageEditProps {
 
 function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditProps) {
   // 프로필 이미지 업로드 상태
-  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [profileFile, _] = useState<File | null>(null);
   const [profilePreview, setProfilePreview] = useState<string>(avatarUrl || '/profile_bg.png'); // 초기 이미지
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,7 +74,7 @@ function ProfileImageEdit({ user, avatarUrl, setAvatarUrl }: ProfileImageEditPro
       // ui 반영하기
       setAvatarUrl(publicURL.publicUrl);
       setProfilePreview(publicURL.publicUrl);
-      alert('프로필 이미지가 업데이트 되었습니다.');
+      // alert('프로필 이미지가 업데이트 되었습니다.');
     } catch (err) {
       console.log('이미지 업로드 실패 : ', err);
       alert('이미지 업로드 중 오류가 발생했습니다.');

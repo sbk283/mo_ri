@@ -86,7 +86,7 @@ function MypageMyGroupMenu() {
       return;
     }
     const allMeetings = checkedItems; // 선택된 모임 배열
-    const selectedIds = checkedItems.map(item => item.id); // id 배열
+    const selectedIds = checkedItems.map(item => item.group_id); // id 배열
 
     printSelectedItems(allMeetings, selectedIds);
   };

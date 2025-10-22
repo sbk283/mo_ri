@@ -23,38 +23,54 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
 
   // 정렬 + 필터링 처리
   const displayedGroups = useMemo(() => {
-    const data = [...groups];
+    let filtered = [...groups];
+
+    // 상태 자동 보정 (종료된 모임은 finished로 덮어쓰기)
+    const now = new Date();
+    filtered = filtered.map(g => {
+      const end = new Date(g.group_end_day);
+      if (now > end) {
+        return { ...g, status: 'finished' };
+      }
+      return g;
+    });
 
     // 날짜 기반 필터링 로직
     switch (selectedSort) {
       case '원데이':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'oneday';
+          return toGroupTypeByRange(diff) === 'oneday';
         });
-
+        break;
       case '단기':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'short';
+          return toGroupTypeByRange(diff) === 'short';
         });
-
+        break;
       case '장기':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'long';
+          return toGroupTypeByRange(diff) === 'long';
         });
-
+        break;
       case '최신순':
       default:
-        return data.sort(
-          (a, b) =>
-            new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
+        filtered = filtered.sort(
+          (a, b) => new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
         );
+        break;
     }
+
+    // 종료된 모임은 리스트 맨 아래로 정렬
+    filtered.sort((a, b) => {
+      if (a.status === 'finished' && b.status !== 'finished') return 1;
+      if (a.status !== 'finished' && b.status === 'finished') return -1;
+      return 0;
+    });
+
+    return filtered;
   }, [groups, selectedSort]);
 
   return (
@@ -120,7 +136,27 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
                 </motion.p>
               </motion.div>
             ) : (
-              displayedGroups.map(group => <GroupListCard key={group.group_id} {...group} />)
+              displayedGroups.map(group => (
+                <GroupListCard
+                  key={group.group_id}
+                  group_id={group.group_id}
+                  group_title={group.group_title}
+                  group_short_intro={group.group_short_intro}
+                  category_major_name={
+                    group.categories_major?.category_major_name ?? '카테고리 없음'
+                  }
+                  category_sub_name={
+                    group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'
+                  }
+                  status={group.status}
+                  group_region={group.group_region}
+                  image_urls={group.image_urls}
+                  member_count={group.member_count}
+                  group_capacity={group.group_capacity}
+                  group_start_day={group.group_start_day}
+                  group_end_day={group.group_end_day}
+                />
+              ))
             )}
 
             {displayedGroups.length > 0 && (

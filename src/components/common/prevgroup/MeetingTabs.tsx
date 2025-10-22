@@ -148,9 +148,7 @@ function MeetingTabs({ intro, curriculum, leader }: MeetingTabsProps) {
           leaderLocation={leader.location}
           leaderCareer={
             Array.isArray(leader.career)
-              ? leader.career
-                  .map(c => `${c.company_name} (${c.start_date} ~ ${c.end_date})`)
-                  .join('\n')
+              ? leader.career.map(c => `${c.company_name}`).join('\n')
               : leader.career || '경력 정보 없음'
           }
         />

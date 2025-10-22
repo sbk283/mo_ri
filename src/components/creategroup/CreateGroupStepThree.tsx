@@ -68,6 +68,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
       <div className="space-y-8">
         {/* 상단 MeetingHeader */}
         <MeetingHeader
+          groupId="preview-temp-id" // 스텝3에는 임시값 (원래는 {group.groupId} 들어감~)
           title={formData.title}
           status="모집중"
           category={formData.interestMajor}

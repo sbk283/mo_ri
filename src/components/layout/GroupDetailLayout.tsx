@@ -10,7 +10,7 @@ function GroupDetailLayout() {
   const { id } = useParams<{ id: string }>();
   const [group, setGroup] = useState<GroupWithCategory | null>(null);
   const [leaderName, setLeaderName] = useState('');
-  const [leaderCareer, setLeaderCareer] = useState(''); // ✅ 여러 줄 문자열 저장
+  const [leaderCareer, setLeaderCareer] = useState('');
   const [curriculum, setCurriculum] = useState<
     { title: string; detail: string; files: string[] }[]
   >([]);
@@ -38,7 +38,7 @@ function GroupDetailLayout() {
         if (error) throw error;
         setGroup(data);
 
-        // ✅ 커리큘럼 파싱
+        // 커리큘럼 파싱
         if (data?.curriculum) {
           try {
             const parsed = Array.isArray(data.curriculum)
@@ -64,7 +64,7 @@ function GroupDetailLayout() {
           }
         }
 
-        // ✅ 모임장 정보
+        // 모임장 정보
         if (data?.created_by) {
           // 이름
           const { data: profileData } = await supabase
@@ -88,7 +88,7 @@ function GroupDetailLayout() {
                 c =>
                   `${c.company_name} (${c.start_date ?? '시작일 미정'} ~ ${c.end_date ?? '종료일 미정'})`,
               )
-              .join('\n'); // ✅ 줄바꿈으로 연결
+              .join('\n'); // 줄바꿈으로 연결
 
             setLeaderCareer(summary);
           } else {
@@ -115,7 +115,7 @@ function GroupDetailLayout() {
       </div>
     );
 
-  // ✅ D-day 계산
+  // D-day 계산
   const calcDday = (end: string) => {
     const today = new Date();
     const endDate = new Date(end);
@@ -148,6 +148,7 @@ function GroupDetailLayout() {
               ? '모집종료'
               : '모임종료'
         }
+        groupId={group.group_id}
         category={group.categories_major?.category_major_name ?? '카테고리 없음'}
         subCategory={group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'}
         summary={group.group_short_intro ?? ''}
@@ -168,7 +169,7 @@ function GroupDetailLayout() {
         leader={{
           name: leaderName || '이름 정보 없음',
           location: group.group_region || '활동 지역 미입력',
-          career: leaderCareer || '경력 정보 없음', // ✅ 줄바꿈 문자열 그대로 전달
+          career: leaderCareer || '경력 정보 없음',
         }}
       />
     </div>

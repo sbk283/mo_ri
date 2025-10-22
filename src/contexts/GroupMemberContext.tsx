@@ -89,31 +89,45 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
       setError(null);
 
       try {
-        // 중복 가입 확인
         const { data: existing } = await supabase
           .from('group_members')
-          .select('member_status')
+          .select('member_status, member_role')
           .eq('group_id', groupId)
           .eq('user_id', user.id)
           .maybeSingle();
 
         if (existing) {
-          console.log('이미 가입한 모임입니다.');
+          console.log('이미 가입한 멤버입니다:', existing.member_role);
           return 'already';
         }
 
-        // 자동 승인 insert
-        const { error: insertError } = await supabase.from('group_members').insert({
-          group_id: groupId,
-          user_id: user.id,
-          member_role: 'member',
-          member_status: 'approved',
-        });
+        const { error: insertError } = await supabase
+          .from('group_members')
+          .insert({
+            group_id: groupId,
+            user_id: user.id,
+            member_role: 'member',
+            member_status: 'approved',
+          })
+          .select('member_role, member_status')
+          .single();
 
         if (insertError) throw insertError;
 
-        console.log('모임 참가 완료 (자동 승인)');
-        await fetchMembers(groupId);
+        // 로컬 상태 즉시 반영 (DB insert 결과 반영)
+        setMembers(prev => [
+          ...prev,
+          {
+            member_id: crypto.randomUUID(),
+            user_id: user.id,
+            group_id: groupId,
+            member_role: 'member',
+            member_status: 'approved',
+            member_joined_at: new Date().toISOString(),
+          },
+        ]);
+
+        console.log('모임 참가 완료 (자동 승인, member로 등록)');
         return 'success';
       } catch (err: any) {
         console.error('참가 실패:', err.message);
@@ -123,7 +137,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         setLoading(false);
       }
     },
-    [user, fetchMembers],
+    [user],
   );
 
   // 탈퇴 (본인 탈퇴)

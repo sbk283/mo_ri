@@ -8,7 +8,7 @@ export type GroupListCardProps = {
   group_short_intro?: string | null;
   category_major_name: string;
   category_sub_name: string;
-  group_region: string;
+  group_region?: string | null;
   status: 'recruiting' | 'closed' | 'finished';
   image_urls?: string[] | null;
   member_count?: number;
@@ -105,7 +105,7 @@ function GroupListCard({
             </span>
           </div>
 
-          <p className="mt-3 text-sm text-base text-gray-400 line-clamp-1">
+          <p className="mt-3 text-md text-base text-gray-400 line-clamp-1">
             {group_short_intro ?? '소개글이 없습니다.'}
           </p>
         </div>

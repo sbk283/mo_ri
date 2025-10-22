@@ -51,8 +51,7 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
       case '최신순':
       default:
         return data.sort(
-          (a, b) =>
-            new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
+          (a, b) => new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
         );
     }
   }, [groups, selectedSort]);
@@ -120,7 +119,27 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
                 </motion.p>
               </motion.div>
             ) : (
-              displayedGroups.map(group => <GroupListCard key={group.group_id} {...group} />)
+              displayedGroups.map(group => (
+                <GroupListCard
+                  key={group.group_id}
+                  group_id={group.group_id}
+                  group_title={group.group_title}
+                  group_short_intro={group.group_short_intro}
+                  category_major_name={
+                    group.categories_major?.category_major_name ?? '카테고리 없음'
+                  }
+                  category_sub_name={
+                    group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'
+                  }
+                  status={group.status}
+                  group_region={group.group_region}
+                  image_urls={group.image_urls}
+                  member_count={group.member_count}
+                  group_capacity={group.group_capacity}
+                  group_start_day={group.group_start_day}
+                  group_end_day={group.group_end_day}
+                />
+              ))
             )}
 
             {displayedGroups.length > 0 && (

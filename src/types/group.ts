@@ -9,6 +9,10 @@ export interface CurriculumItem {
 export interface GroupWithCategory extends groups {
   categories_major?: Pick<categoryMajor, 'category_major_name' | 'category_major_slug'>;
   categories_sub?: Pick<categorySub, 'category_sub_name' | 'category_sub_slug'>;
+
+  member_count?: number; // 모임 참여 인원 수
+  category_major_name?: string; // 필수 표시용 문자열
+  category_sub_name?: string;
 }
 
 // 모임 생성 전체 폼 데이터

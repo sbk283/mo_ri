@@ -31,7 +31,7 @@ interface GroupMemberContextType {
    */
   joinGroup: (groupId: string) => Promise<'success' | 'already' | 'error'>;
   leaveGroup: (groupId: string) => Promise<'success' | 'error'>;
-  fetchUserCareer: (userId: string) => Promise<careers | null>;
+  fetchUserCareers: (userId: string) => Promise<careers[]>;
 }
 
 // Context 생성
@@ -44,21 +44,19 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
   const [error, setError] = useState<string | null>(null);
 
   //유저 커리어 조회
-  const fetchUserCareer = useCallback(async (userId: string): Promise<careers | null> => {
+  const fetchUserCareers = useCallback(async (userId: string): Promise<careers[]> => {
     try {
       const { data, error } = await supabase
         .from('user_careers')
         .select('*')
         .eq('profile_id', userId)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .single();
+        .order('start_date', { ascending: false }); // 최신순으로 정렬
 
       if (error) throw error;
-      return data || null;
+      return data || [];
     } catch (err: any) {
       console.error('유저 커리어 조회 실패:', err.message);
-      return null;
+      return [];
     }
   }, []);
 
@@ -163,7 +161,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         members,
         loading,
         error,
-        fetchUserCareer,
+        fetchUserCareers,
         fetchMembers,
         joinGroup,
         leaveGroup,

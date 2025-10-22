@@ -13,7 +13,14 @@ interface MeetingTabsProps {
   leader: {
     name: string;
     location?: string;
-    career?: string;
+    career?:
+      | string // 문자열도 가능 (GroupDetailLayout)
+      | {
+          company_name: string;
+          start_date: string;
+          end_date: string;
+          career_image_url: string | null;
+        }[]; // 배열도 가능 (Step3)
   };
 }
 
@@ -139,7 +146,13 @@ function MeetingTabs({ intro, curriculum, leader }: MeetingTabsProps) {
         <MeetingLeaderInfo
           leaderName={leader.name}
           leaderLocation={leader.location}
-          leaderCareer={leader.career}
+          leaderCareer={
+            Array.isArray(leader.career)
+              ? leader.career
+                  .map(c => `${c.company_name} (${c.start_date} ~ ${c.end_date})`)
+                  .join('\n')
+              : leader.career || '경력 정보 없음'
+          }
         />
       </motion.div>
     </div>

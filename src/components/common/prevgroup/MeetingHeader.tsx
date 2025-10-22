@@ -70,7 +70,6 @@ function MeetingHeader({
     const result = await joinGroup(groupId);
 
     if (result === 'success') {
-      console.log('참가 성공');
       setJoinSuccess(true);
     } else if (result === 'already') {
       alert('이미 참가한 모임입니다.');

@@ -3,13 +3,13 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 function GroupDashboardSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams<{ id: string }>(); // ✅ 현재 페이지의 그룹 id 가져오기
+  const { id } = useParams<{ id: string }>(); 
 
   const categories = [
     {
       name: '게시판',
       icon: '/grouplist_dark.svg',
-      path: `/groupcontent/${id}`, // ✅ 실제 id로 대체
+      path: `/groupcontent/${id}`,
     },
     {
       name: '모임 일정',
@@ -24,7 +24,7 @@ function GroupDashboardSidebar() {
     {
       name: '채팅/문의',
       icon: '/talk_dark.svg',
-      path: `/chat/${id}`, // ✅ (채팅도 그룹별이면 id 붙여줘)
+      path: `/chat/${id}`,
     },
   ];
 

@@ -23,37 +23,54 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
 
   // 정렬 + 필터링 처리
   const displayedGroups = useMemo(() => {
-    const data = [...groups];
+    let filtered = [...groups];
+
+    // 상태 자동 보정 (종료된 모임은 finished로 덮어쓰기)
+    const now = new Date();
+    filtered = filtered.map(g => {
+      const end = new Date(g.group_end_day);
+      if (now > end) {
+        return { ...g, status: 'finished' };
+      }
+      return g;
+    });
 
     // 날짜 기반 필터링 로직
     switch (selectedSort) {
       case '원데이':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'oneday';
+          return toGroupTypeByRange(diff) === 'oneday';
         });
-
+        break;
       case '단기':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'short';
+          return toGroupTypeByRange(diff) === 'short';
         });
-
+        break;
       case '장기':
-        return data.filter(g => {
+        filtered = filtered.filter(g => {
           const diff = diffDaysInclusive(g.group_start_day, g.group_end_day);
-          const type = toGroupTypeByRange(diff);
-          return type === 'long';
+          return toGroupTypeByRange(diff) === 'long';
         });
-
+        break;
       case '최신순':
       default:
-        return data.sort(
+        filtered = filtered.sort(
           (a, b) => new Date(b.group_created_at).getTime() - new Date(a.group_created_at).getTime(),
         );
+        break;
     }
+
+    // 종료된 모임은 리스트 맨 아래로 정렬
+    filtered.sort((a, b) => {
+      if (a.status === 'finished' && b.status !== 'finished') return 1;
+      if (a.status !== 'finished' && b.status === 'finished') return -1;
+      return 0;
+    });
+
+    return filtered;
   }, [groups, selectedSort]);
 
   return (

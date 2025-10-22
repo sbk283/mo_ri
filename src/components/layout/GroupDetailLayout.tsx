@@ -152,7 +152,7 @@ function GroupDetailLayout() {
         category={group.categories_major?.category_major_name ?? '카테고리 없음'}
         subCategory={group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'}
         summary={group.group_short_intro ?? ''}
-        dday={calcDday(group.group_end_day)}
+        dday={calcDday(group.group_start_day)}
         duration={`${group.group_start_day} ~ ${group.group_end_day}`}
         participants={`0/${group.group_capacity ?? 0}`}
         images={group.image_urls ?? []}

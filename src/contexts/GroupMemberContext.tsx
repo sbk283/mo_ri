@@ -127,7 +127,6 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
           },
         ]);
 
-        console.log('모임 참가 완료 (자동 승인, member로 등록)');
         return 'success';
       } catch (err: any) {
         console.error('참가 실패:', err.message);

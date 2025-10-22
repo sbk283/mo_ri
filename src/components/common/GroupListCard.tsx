@@ -57,10 +57,29 @@ function GroupListCard({
 
   const groupType = calcGroupType();
 
-  // D-day 계산
-  const dday = Math.ceil(
-    (new Date(group_start_day).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24),
-  );
+  // 종료 여부 계산
+  const now = new Date();
+  const start = new Date(group_start_day);
+  const end = new Date(group_end_day);
+
+  // D-day 계산 (시작 전일 때만)
+  let dday: number | null = null;
+  if (now < start) {
+    dday = Math.ceil((start.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
+
+  // 상태 계산
+  let computedStatus: 'recruiting' | 'closed' | 'finished' = status;
+
+  const isFull = (group_capacity ?? 0) > 0 && (member_count ?? 0) >= (group_capacity ?? 0);
+
+  if (now > end) {
+    computedStatus = 'finished'; // 종료됨
+  } else if (now >= start || isFull) {
+    computedStatus = 'closed'; // 시작했거나 인원 다 참
+  } else {
+    computedStatus = 'recruiting'; // 아직 모집 중
+  }
 
   return (
     <motion.div
@@ -84,20 +103,23 @@ function GroupListCard({
           <div className="flex items-center gap-2">
             <span
               className={`flex w-[54px] h-[23px] text-xs font-bold text-white rounded-2xl items-center justify-center ${
-                status === 'recruiting'
+                computedStatus === 'recruiting'
                   ? 'bg-brand'
                   : status === 'closed'
                     ? 'bg-brand-red'
                     : 'bg-gray-300'
               }`}
             >
-              {statusLabel[status]}
+              {statusLabel[computedStatus]}
             </span>
 
             <h3 className="text-lg font-semibold">{group_title}</h3>
-            <span className="bg-[#BEC0C4] text-[11px] px-2 py-[2px] rounded-sm text-white font-bold">
-              D-{dday}
-            </span>
+            {/* D-day는 시작 전일 때만 표시 */}
+            {dday !== null && (
+              <span className="bg-[#BEC0C4] text-[11px] px-2 py-[2px] rounded-sm text-white font-bold">
+                D-{dday}
+              </span>
+            )}
 
             {/* 모임 유형 배지 추가 */}
             <span className="text-[11px] font-semibold text-white bg-brand-orange px-2 py-[2px] rounded-sm">

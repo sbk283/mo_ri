@@ -71,40 +71,35 @@ export function usePDFPrintHandler() {
           const currentDate = new Date().toLocaleDateString();
 
           return `
-            <div style="padding: 2.5rem; background-color: #ffffff; width: 100%; max-width: 210mm; box-sizing: border-box; font-family: Arial, sans-serif;">
-              <!-- 첫 페이지 - 기본 정보 -->
+            <div style="padding: 2.5rem; background-color: #fff; width: 100%; max-width: 210mm; box-sizing: border-box;  color: #111;">
+             <!-- 첫 페이지 - 기본 정보 -->
               <div style="page-break-inside: avoid;">
-                <div style="margin-bottom: 30px;">
-                  <h1 style="font-size: 22px; font-weight: 600; color: #000;">모임 참여 이력 증명서</h1>
-                  <p style="font-size: 0.875rem; line-height: 1.25rem; color: #000;">출력일: ${currentDate}</p>
+                <div style="margin-bottom: 2rem;">
+                  <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 0.5rem;">모임 참여 이력 증명서</h1>
+                  <p style="font-size: 0.875rem; color: #555;">출력일: ${currentDate}</p>
                 </div>
 
-                <!-- 프로필 정보 -->
-                <div style="padding: 1rem;">
-                  <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 20px; margin-left: 20px; color: #000;">프로필 정보</div>
-                  <div style="border-bottom: 2px solid #e5e7eb; margin-bottom: 7px;"></div>
-                  <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center;">
-                      <div style="font-size: 1rem; font-weight: 600; margin-bottom: 20px; margin-left: 20px; padding-left: 20px; color: #000;">성 명</div>
-                      <div style="font-size: 1rem; font-weight: 600; margin-bottom: 20px; margin-left: 60px; color: #000;">
-                        ${profile?.name ?? '-'}
+                  <!-- 프로필 정보 -->
+                  <div style="padding-bottom: 60px">
+                    <h2 style="font-size: 18px; font-weight: 600; margin-bottom: 15px; margin-left: 15px;">프로필 정보</h2>
+                    <div style="border-bottom: 2px solid #e5e7eb; margin-bottom: 17px"></div>
+                    <div style="display: flex; gap: 3rem; margin-left: 15px;">
+                      <div style="display: flex; gap: 0.5rem;">
+                        <span style="font-weight: 600;">성명:</span>
+                        <span>${profile?.name ?? '-'}</span>
                       </div>
-                    </div>
-                    <div style="display: flex; align-items: center;">
-                      <div style="font-size: 1rem; font-weight: 600; margin-bottom: 20px; color: #000;">이메일</div>
-                      <div style="font-size: 1rem; font-weight: 600; margin-bottom: 20px; margin-left: 40px; padding-right: 150px; color: #000;">
-                        ${profile?.email ?? '-'}
+                      <div style="display: flex; gap: 0.5rem;">
+                        <span style="font-weight: 600;">이메일:</span>
+                        <span>${profile?.email ?? '-'}</span>
                       </div>
                     </div>
                   </div>
-                  <div style="border-bottom: 1px solid #e5e7eb; margin-bottom: 20px;"></div>
-                </div>
 
                 <!-- 모임 참여 이력 -->
-                <div style="padding: 1rem; width: 100%;">
-                  <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 20px; margin-left: 20px; color: #000;">모임 참여 이력</div>
+                <div>
+                  <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 15px; color: #000; margin-left: 15px;">모임 참여 이력</div>
                   <div style="border-bottom: 2px solid #e5e7eb; margin-bottom: 7px;"></div>
-                  <div style="display: grid; grid-template-columns: 25% 50% 25%; width: 100%; margin-bottom: 20px;">
+                  <div style="display: grid; grid-template-columns: 25% 50% 25%; width: 100%; margin-bottom: 7px;">
                     <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000;">모임 기간</div>
                     <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000;">모임 이름</div>
                     <div style="font-size: 1rem; font-weight: 600; text-align: center; color: #000;">모임 분류</div>
@@ -117,11 +112,15 @@ export function usePDFPrintHandler() {
                         item => `
                       <div style="display: flex; width: 100%; align-items: center; border-bottom: 1px solid #e5e7eb; padding-top: 0.5rem; padding-bottom: 0.5rem;">
                         <div style="width: 25%; font-size: 0.875rem; font-weight: 400; text-align: center; color: #000;">
-                          ${item.group_start_day} ~ ${item.group_end_day}
+                          ${item.group_start_day}
+                          <br/>
+                           ~ ${item.group_end_day}
                         </div>
                         <div style="width: 50%; font-size: 1rem; font-weight: 600; text-align: center; color: #000;">${item.group_title}</div>
-                        <div style="width: 25%; font-size: 1rem; font-weight: 600; text-align: center; word-wrap: break-word; overflow-wrap: break-word; color: #000;">
-                          ${item.categories_major?.category_major_name ?? '-'} > ${item.categories_sub?.category_sub_name ?? '-'}
+                        <div  style="width: 25%; font-size: 0.875rem; font-weight: 400; text-align: center; color: #000;">
+                          ${item.categories_major?.category_major_name ?? '-'} > 
+                          <br/>
+                          ${item.categories_sub?.category_sub_name ?? '-'}
                         </div>
                       </div>
                     `,
@@ -135,36 +134,40 @@ export function usePDFPrintHandler() {
               <div style="page-break-after: always;"></div>
 
               <!-- 모임 세부 정보 -->
-              <div style="padding: 1rem; width: 100%;">
-                <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 20px; margin-left: 20px; color: #000;">모임 세부 정보</div>
+              <div>
+                <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 15px; color: #000; margin-left: 15px;">모임 세부 정보</div>
                 ${selectedMeetings
                   .map(
                     item => `
                   <div style="border: 1px solid #e5e7eb; padding: 0.75rem; border-radius: 0.125rem; margin-bottom: 20px; page-break-inside: avoid;">
-                    <div style="display: flex; justify-content: space-between; padding-bottom: 20px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; padding-bottom: 20px;">
                       <div style="display: flex;">
-                        <div style="font-size: 1rem; font-weight: 600; margin-left: 20px; padding-left: 20px; color: #000;">모임기간</div>
-                        <div style="font-size: 1rem; font-weight: 600; margin-left: 60px; color: #000;">
-                          ${item.group_start_day} ~ ${item.group_end_day}
+                        <div style="font-size: 1rem; font-weight: 600; color: #000; width: 100px;">모임기간</div>
+                        <div style="font-size: 1rem; font-weight: 600; color: #000;">
+                          ${item.group_start_day}
+                          <br/>
+                          ~ ${item.group_end_day}
                         </div>
                       </div>
                       <div style="display: flex;">
-                        <div style="font-size: 1rem; font-weight: 600; color: #000;">모임 분류</div>
-                        <div style="font-size: 1rem; font-weight: 600; margin-left: 40px; padding-right: 150px; color: #000;">
+                        <div style="font-size: 1rem; font-weight: 600; color: #000; width: 100px;">모임 분류</div>
+                        <div style="font-size: 1rem; font-weight: 600; color: #000;">
                           ${item.categories_major?.category_major_name ?? '-'} > ${item.categories_sub?.category_sub_name ?? '-'}
                         </div>
                       </div>
                     </div>
 
                     <div style="border-bottom: 1px solid #e5e7eb; margin-bottom: 10px;"></div>
+
                     <div style="display: flex; padding-bottom: 20px;">
-                      <div style="font-size: 1rem; font-weight: 600; margin-left: 20px; padding-left: 20px; color: #000;">모임 이름</div>
-                      <div style="font-size: 1rem; font-weight: 600; margin-left: 56px; color: #000;">${item.group_title}</div>
+                      <div style="font-size: 1rem; font-weight: 600; color: #000; width: 100px;">모임 이름</div>
+                      <div style="font-size: 1rem; font-weight: 600; color: #000;">${item.group_title}</div>
                     </div>
 
                     <div style="border-bottom: 1px solid #e5e7eb; margin-bottom: 10px;"></div>
+
                     <div style="display: flex; padding-bottom: 20px;">
-                      <div style="font-size: 1rem; font-weight: 600; margin-left: 20px; padding-left: 20px; color: #000;">커리큘럼</div>
+                      <div style="font-size: 1rem; font-weight: 600; color: #000; width: 100px;">커리큘럼</div>
                       <div>
                         ${(() => {
                           if (!item.curriculum) {

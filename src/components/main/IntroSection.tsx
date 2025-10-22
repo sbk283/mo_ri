@@ -241,12 +241,13 @@ function IntroSection() {
               </>
             ) : (
               <>
-                <div className="flex items-center gap-[23px] transform -translate-x-[-170px] pt-[50px]">
-                  <img src="/images/mori_logo.svg" alt="" className="w-[75px] h-[24px]" />
+                <div className="flex items-center gap-[23px] transform -translate-x-[-155px] pt-[54px]">
+                  <img src="/images/mori_logo.svg" alt="" className="w-[80px] h-[29px]" />
                   <div>
-                    <p className=" text-md font-semibold text-gray-500 leading-tight">
+                    <p className=" text-[16px] font-medium text-gray-500 leading-snug">
                       참여와 기록을 통해 <br />
-                      성장과 커리어를 만들어 보세요.
+                      <span className=" text-brand font-semibold">성장과 커리어</span>를 만들어
+                      보세요.
                     </p>
                   </div>
                 </div>
@@ -254,8 +255,8 @@ function IntroSection() {
                   to={'/login'}
                   className="absolute transform -translate-x-[-570px] -translate-y-[-115px] "
                 >
-                  <p className="text-xxl font-bold text-white  bg-brand w-[385px] text-center py-[6px] rounded-[5px]">
-                    로그인
+                  <p className="text-xl font-semibold text-white  bg-brand w-[385px] text-center py-[6px] rounded-[5px]">
+                    로그인 / 회원가입
                   </p>
                 </Link>
               </>

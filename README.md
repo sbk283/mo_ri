@@ -66,6 +66,9 @@ npm install react-markdown remark-gfm rehype-highlight
 npm install @uiw/react-md-editor @uiw/react-markdown-preview
 npm install jspdf html2canvas
 
+# 프린트 출력
+npm install html2pdf.js
+npm install --save-dev @types/html2pdf.js
 
 ```
 

@@ -43,12 +43,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
           </div>
         </header>
 
-        <div className="text-center">
-          <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[904px]" />
-        </div>
-
         <section className="px-8 py-6">
-          <label className="block text-sm text-gray-600 mb-2">내용</label>
           <div className="editor-wrapper">
             <DetailRichTextEditor
               key={`daily-content-${form.id}`}

@@ -14,31 +14,48 @@ function GroupContentPage() {
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 탭 데이터 (DB 연동: 각 컴포넌트에 groupId 전달)
+  // 현재 탭 라벨만 보관 (객체 참조 꼬임 방지)
+  const [selectedTabLabel, setSelectedTabLabel] = useState<'공지사항' | '모임일상'>('공지사항');
+
+  // 탭별 작성중 상태 (상단 버튼 숨김 제어용)
+  const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);
+  const [isDailyCrafting, setIsDailyCrafting] = useState(false);
+
+  // 탭 데이터 (tick 포함해서 자식 프롭 갱신 보장)
   const tabs = useMemo(
     () => [
       {
-        label: '공지사항',
+        label: '공지사항' as const,
         content: (
           <div>
-            <DashboardNotice groupId={groupId} />
+            <DashboardNotice
+              groupId={groupId}
+              createRequestKey={noticeCreateTick}
+              onCraftingChange={setIsNoticeCrafting}
+            />
           </div>
         ),
       },
       {
-        label: '모임일상',
+        label: '모임일상' as const,
         content: (
           <div>
-            <GroupDailyContent groupId={groupId} />
+            <GroupDailyContent
+              groupId={groupId}
+              createRequestKey={dailyCreateTick}
+              onCraftingChange={setIsDailyCrafting}
+            />
           </div>
         ),
       },
     ],
-    [groupId],
+    [groupId, noticeCreateTick, dailyCreateTick],
   );
 
-  // 선택된 탭 상태
-  const [selectedTab, setSelectedTab] = useState(tabs[0]);
+  const currentTab = tabs.find(t => t.label === selectedTabLabel)!;
+
+  // 현재 탭 작성중 여부
+  const isCrafting = selectedTabLabel === '공지사항' ? isNoticeCrafting : isDailyCrafting;
 
   // 언더라인 위치 계산용
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -46,7 +63,7 @@ function GroupContentPage() {
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
 
   const measure = () => {
-    const idx = tabs.findIndex(t => t.label === selectedTab.label);
+    const idx = tabs.findIndex(t => t.label === selectedTabLabel);
     const el = tabRefs.current[idx];
     const parent = listRef.current;
     if (!el || !parent) return;
@@ -60,33 +77,38 @@ function GroupContentPage() {
     const onResize = () => measure();
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [selectedTab, tabs]);
+  }, [selectedTabLabel, tabs]);
 
   // 상단 "작성하기" 버튼
   const handleCreateClick = () => {
-    if (selectedTab.label === '공지사항') setNoticeCreateTick(t => t + 1);
-    else if (selectedTab.label === '모임일상') setDailyCreateTick(t => t + 1);
+    if (selectedTabLabel === '공지사항') setNoticeCreateTick(t => t + 1);
+    else setDailyCreateTick(t => t + 1);
   };
 
   return (
     <div>
       <GroupDashboardLayout>
         <div className="flex flex-col gap-3">
-          {/* 상단 그룹 정보 (DashboardDetail 내부에서 useParams로 group 불러옴) */}
+          {/* 상단 그룹 정보 */}
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
 
           {/* 게시판 */}
-          <div className="bg-white shadow-card min-h-[770px] rounded-sm p-6">
+          <div className="bg-white shadow-card min-h-[590px] rounded-sm p-6">
             <div className="flex justify-between items-center">
               <p className="text-xxl font-bold mb-4">게시판</p>
-              <button
-                onClick={handleCreateClick}
-                className="px-4 py-2 bg-brand text-white rounded hover:opacity-90 mb-4"
-              >
-                작성하기
-              </button>
+
+              {/* 작성중이면 버튼 숨김 */}
+              {!isCrafting && (
+                <button
+                  type="button"
+                  onClick={handleCreateClick}
+                  className="px-4 py-2 bg-brand text-white rounded hover:opacity-90 mb-4"
+                >
+                  작성하기
+                </button>
+              )}
             </div>
 
             {/* 탭 네비게이션 */}
@@ -98,11 +120,11 @@ function GroupContentPage() {
                       key={item.label}
                       ref={el => (tabRefs.current[i] = el)}
                       className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
-                      onClick={() => setSelectedTab(item)}
+                      onClick={() => setSelectedTabLabel(item.label)}
                     >
                       <p
                         className={`text-xl font-bold transition-colors duration-200 ${
-                          item.label === selectedTab.label
+                          item.label === selectedTabLabel
                             ? 'text-[#0689E8]'
                             : 'text-[#3c3c3c] hover:text-[#0689E8]'
                         }`}
@@ -126,17 +148,13 @@ function GroupContentPage() {
               <main className="flex justify-center min-h-[300px]">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={selectedTab.label}
+                    key={selectedTabLabel}
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {selectedTab.label === '공지사항' ? (
-                      <DashboardNotice groupId={groupId} createRequestKey={noticeCreateTick} />
-                    ) : (
-                      <GroupDailyContent groupId={groupId} createRequestKey={dailyCreateTick} />
-                    )}
+                    {currentTab.content}
                   </motion.div>
                 </AnimatePresence>
               </main>

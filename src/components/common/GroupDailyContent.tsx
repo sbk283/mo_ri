@@ -31,23 +31,38 @@ type DailyWithPostId = Daily & { postId: string };
 export default function GroupDailyContent({
   groupId,
   createRequestKey = 0,
+  onCraftingChange, // ✅ 이 줄 추가
 }: {
   groupId?: string;
   createRequestKey?: number;
+  onCraftingChange?: (v: boolean) => void; // ✅ 이 줄 추가
 }) {
   const user = useCurrentUser();
 
   const [isCreating, setIsCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
 
+  // 외부에서 "작성하기" 트리거 들어오면 작성 모드로 전환
   useEffect(() => {
     if (createRequestKey > prevKey.current) setIsCreating(true);
     prevKey.current = createRequestKey;
   }, [createRequestKey]);
 
+  // ✅ isCreating 변할 때마다 부모에 알림
+  useEffect(() => {
+    onCraftingChange?.(isCreating);
+  }, [isCreating, onCraftingChange]);
+
+  // ✅ 언마운트 시 안전하게 false로 알려두기
+  useEffect(() => {
+    return () => {
+      onCraftingChange?.(false);
+    };
+  }, [onCraftingChange]);
+
   const [items, setItems] = useState<DailyWithPostId[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  // ✅ postId → 작성자 avatar_url 매핑 (타입/프롭 변경 없이 별도 상태로 보관)
+  // postId → 작성자 avatar_url 매핑
   const [profileByPostId, setProfileByPostId] = useState<Record<string, string | null>>({});
 
   useEffect(() => {
@@ -103,7 +118,6 @@ export default function GroupDailyContent({
           };
         }) ?? [];
 
-      // 작성자 프로필 매핑 채우기
       const profiles: Record<string, string | null> = {};
       (data ?? []).forEach((row: any) => {
         profiles[row.post_id] = row.user_profiles?.avatar_url ?? null;
@@ -133,7 +147,10 @@ export default function GroupDailyContent({
   }, [page, items]);
 
   const [detailId, setDetailId] = useState<number | null>(null);
-  const openDetail = (id: number) => setDetailId(id);
+  const openDetail = (id: number) => {
+    setDetailId(id);
+    setIsCreating(false); // 상세로 들어가면 작성모드 해제(보호)
+  };
   const closeDetail = () => setDetailId(null);
 
   const selectedDaily = useMemo(
@@ -250,7 +267,6 @@ export default function GroupDailyContent({
       return;
     }
 
-    // 화면 갱신 (첫 이미지 다시 계산)
     const newThumb = getFirstImageUrl(next.content);
     setItems(prev =>
       prev.map(it =>
@@ -283,7 +299,7 @@ export default function GroupDailyContent({
   );
 
   return (
-    <div className="w-[970px] bg-white overflow-hidden">
+    <div className="w-[975px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
         {isCreating ? (
           // ===== 작성(에디트) 뷰 =====

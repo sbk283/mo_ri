@@ -1,7 +1,9 @@
+// (참고) src/components/notice/GroupContentDetailEdit.tsx
+// 그대로 사용 가능합니다.
 import { motion } from 'framer-motion';
-import { useState } from 'react';
-import NoticeDetailRichTextEditor from '../NoticeDetailRichTextEditor';
+import { useMemo, useState } from 'react';
 import type { Notice } from '../../types/notice';
+import NoticeDetailRichTextEditor from '../NoticeDetailRichTextEditor';
 
 type Props = {
   notice: Notice;
@@ -9,14 +11,27 @@ type Props = {
   onSave: (next: Notice) => void;
 };
 
+const TITLE_LIMIT = 50;
+
 export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Props) {
   const [form, setForm] = useState<Notice>({ ...notice });
+  const [isContentValid, setIsContentValid] = useState(false);
+
+  const titleLength = form.title?.length ?? 0;
+  const isTitleEmpty = (form.title ?? '').trim().length === 0;
+  const isTitleOver = titleLength > TITLE_LIMIT;
+
+  const isFormValid = useMemo(
+    () => !isTitleEmpty && !isTitleOver && isContentValid,
+    [isTitleEmpty, isTitleOver, isContentValid],
+  );
 
   const update = <K extends keyof Notice>(key: K, value: Notice[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isFormValid) return;
     onSave(form);
   };
 
@@ -35,24 +50,30 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
           <div className="flex gap-3 items-center">
             <input
               aria-label="제목"
-              value={form.title}
+              value={form.title ?? ''}
               onChange={e => update('title', e.target.value)}
-              className="flex-1 border border-gray-300 rounded px-3 py-2 text-lg font-semibold"
+              className={`flex-1 border rounded px-3 py-2 text-lg font-semibold ${
+                isTitleOver ? 'border-red-400' : 'border-gray-300'
+              }`}
               placeholder="제목을 입력해주세요."
+              maxLength={TITLE_LIMIT}
             />
+            <span className={`text-sm ${isTitleOver ? 'text-red-500' : 'text-gray-400'}`}>
+              {titleLength}/{TITLE_LIMIT}
+            </span>
           </div>
         </header>
 
         <section className="px-8 py-4">
-          <div className="editor-wrapper">
-            <NoticeDetailRichTextEditor
-              key={`notice-content-${form.id}`}
-              value={form.content ?? ''}
-              onChange={v => update('content', v)}
-              placeholder="내용을 입력해주세요."
-              disabled={false}
-            />
-          </div>
+          <NoticeDetailRichTextEditor
+            key={`notice-content-${form.id}`}
+            value={form.content ?? ''}
+            onChange={v => update('content', v)}
+            placeholder="내용을 입력해주세요."
+            disabled={false}
+            requireNotEmpty
+            onValidityChange={setIsContentValid}
+          />
         </section>
       </article>
 
@@ -65,10 +86,17 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
         >
           취소
         </motion.button>
+
         <motion.button
           type="submit"
           whileTap={{ scale: 0.96 }}
-          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm"
+          disabled={!isFormValid}
+          className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
+            ${
+              isFormValid
+                ? 'text-white bg-[#0689E8] border-[#0689E8] hover:opacity-90'
+                : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
+            }`}
         >
           저장
         </motion.button>

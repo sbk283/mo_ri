@@ -7,8 +7,10 @@ import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';
 import SuccessModal from '../modal/SuccessModal';
 import MeetingCard from './MeetingCard';
+import { useGroupMember } from '../../../contexts/GroupMemberContext';
 
 export interface MeetingHeaderProps {
+  groupId: string;
   title: string;
   status: '모집중' | '모집종료' | '모임종료';
   category: string;
@@ -25,6 +27,7 @@ export interface MeetingHeaderProps {
 }
 
 function MeetingHeader({
+  groupId,
   title,
   status,
   category,
@@ -51,12 +54,32 @@ function MeetingHeader({
   const swiperRef = useRef<SwiperClass | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
 
+  const { joinGroup } = useGroupMember();
+
   useEffect(() => {
     if (joinSuccess) {
       const timer = setTimeout(() => setJoinSuccess(false), 1500);
       return () => clearTimeout(timer);
     }
   }, [joinSuccess]);
+
+  // 참가 처리
+  const handleJoinSubmit = async (intro: string) => {
+    console.log('참가 신청 시도:', intro);
+
+    const result = await joinGroup(groupId);
+
+    if (result === 'success') {
+      console.log('참가 성공');
+      setJoinSuccess(true);
+    } else if (result === 'already') {
+      alert('이미 참가한 모임입니다.');
+    } else {
+      alert('참가에 실패했습니다. 다시 시도해주세요.');
+    }
+
+    setOpen(false);
+  };
 
   const handleConfirmModal = () => {
     onFavoriteToggle();
@@ -172,11 +195,7 @@ function MeetingHeader({
       <JoinGroupModal
         isOpen={open}
         onClose={() => setOpen(false)}
-        onSubmit={intro => {
-          console.log('참가신청 완료:', intro);
-          setOpen(false);
-          setJoinSuccess(true);
-        }}
+        onSubmit={handleJoinSubmit}
         group={{
           title,
           status,

@@ -10,13 +10,14 @@ import Modal from '../common/modal/Modal';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
 import CreateGroupNavigation from './CreateGroupNavigation';
+import type { careers } from '../../types/careerType';
 
 type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const { user } = useAuth();
-  const { fetchUserCareer } = useGroupMember();
-  const [leaderCareer, setLeaderCareer] = useState('');
+  const { fetchUserCareers } = useGroupMember();
+  const [leaderCareers, setLeaderCareers] = useState<careers[]>([]);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [leaderName, setLeaderName] = useState('');
@@ -50,19 +51,11 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   useEffect(() => {
     const fetchCareerData = async () => {
       if (!user) return;
-
-      const data = await fetchUserCareer(user.id);
-      if (data) {
-        const summary = [data.company_name, `${data.start_date} ~ ${data.end_date}`]
-          .filter(Boolean)
-          .join(' - ');
-
-        setLeaderCareer(summary);
-      }
+      const data = await fetchUserCareers(user.id);
+      setLeaderCareers(data);
     };
-
     fetchCareerData();
-  }, [user, fetchUserCareer]);
+  }, [user, fetchUserCareers]);
 
   // D-Day 계산
   const dday = calcDday(formData.startDate);
@@ -101,7 +94,15 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           leader={{
             name: leaderName || '이름 정보 없음',
             location: formData.group_region || '활동 지역 미입력',
-            career: leaderCareer || '커리어 정보 없음',
+            career:
+              leaderCareers.length > 0
+                ? leaderCareers.map(career => ({
+                    company_name: career.company_name,
+                    start_date: career.start_date,
+                    end_date: career.end_date,
+                    career_image_url: career.career_image_url,
+                  }))
+                : [],
           }}
         />
       </div>

@@ -38,7 +38,7 @@ function GroupDetailLayout() {
         if (error) throw error;
         setGroup(data);
 
-        // 커리큘럼 JSON 파싱
+        // 커리큘럼 파싱
         if (data?.curriculum) {
           try {
             const parsed = Array.isArray(data.curriculum)
@@ -64,8 +64,9 @@ function GroupDetailLayout() {
           }
         }
 
-        // 모임장 정보 가져오기
+        // 모임장 정보
         if (data?.created_by) {
+          // 이름
           const { data: profileData } = await supabase
             .from('user_profiles')
             .select('name')
@@ -74,22 +75,24 @@ function GroupDetailLayout() {
 
           if (profileData?.name) setLeaderName(profileData.name);
 
+          // 경력 여러 개 가져오기
           const { data: careerData } = await supabase
             .from('user_careers')
-            .select('company_name')
+            .select('company_name, start_date, end_date')
             .eq('profile_id', data.created_by)
-            .order('created_at', { ascending: true })
-            .limit(1)
-            .single();
+            .order('start_date', { ascending: false });
 
-          if (careerData) {
-            // setLeaderCareer(
-            //   [careerData.title, careerData.description].filter(Boolean).join(' - ') ||
-            //     '등록된 커리어 없음',
-            // );
-            const summary = [careerData.company_name].filter(Boolean).join(' | ');
+          if (careerData && careerData.length > 0) {
+            const summary = careerData
+              .map(
+                c =>
+                  `${c.company_name} (${c.start_date ?? '시작일 미정'} ~ ${c.end_date ?? '종료일 미정'})`,
+              )
+              .join('\n'); // 줄바꿈으로 연결
 
-            setLeaderCareer(summary || '등록된 커리어 없음');
+            setLeaderCareer(summary);
+          } else {
+            setLeaderCareer('등록된 커리어 없음');
           }
         }
       } catch (err) {
@@ -102,7 +105,7 @@ function GroupDetailLayout() {
     fetchGroup();
   }, [id]);
 
-  // 로딩,에러 처리
+  // 로딩 / 에러 처리
   if (loading)
     return <div className="flex justify-center items-center h-80 text-gray-500">로딩 중...</div>;
   if (!group)
@@ -122,6 +125,7 @@ function GroupDetailLayout() {
 
   return (
     <div className="mx-auto w-[1024px] py-10 space-y-8">
+      {/* 상단 안내 */}
       <header className="mb-10">
         <h1 className="text-xl font-bold">모임리스트 &gt; 상세보기</h1>
         <div className="mt-2 border-l-4 border-brand pl-3">
@@ -144,6 +148,7 @@ function GroupDetailLayout() {
               ? '모집종료'
               : '모임종료'
         }
+        groupId={group.group_id}
         category={group.categories_major?.category_major_name ?? '카테고리 없음'}
         subCategory={group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'}
         summary={group.group_short_intro ?? ''}
@@ -157,13 +162,14 @@ function GroupDetailLayout() {
         onApply={() => console.log('신청')}
       />
 
+      {/* 모임 탭 */}
       <MeetingTabs
-        intro={group.group_content ?? ''}
+        intro={group.group_content || ''}
         curriculum={curriculum}
         leader={{
           name: leaderName || '이름 정보 없음',
-          location: group.group_region ?? '미정',
-          career: leaderCareer || '커리어 정보 없음',
+          location: group.group_region || '활동 지역 미입력',
+          career: leaderCareer || '경력 정보 없음',
         }}
       />
     </div>

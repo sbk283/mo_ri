@@ -1,20 +1,24 @@
-// 그룹 리스트 헤더에 있는 카드. 모달에서도 재사용 할거라 컴포넌트 분리
+import { useEffect } from 'react';
+import { useGroupMember } from '../../../contexts/GroupMemberContext';
 
 interface MeetingCardProps {
+  groupId: string;
+  groupCapacity: number;
   title: string;
   status: string;
   dday: string;
   summary?: string;
   category: string;
   subCategory: string;
-  participants: string;
+  participants?: string;
   duration: string;
-  /** width, height 동적 조절 */
   width?: string;
   height?: string;
 }
 
 function MeetingCard({
+  groupId,
+  groupCapacity,
   title,
   status,
   dday,
@@ -26,25 +30,30 @@ function MeetingCard({
   width = '100%',
   height = 'auto',
 }: MeetingCardProps) {
-  // 날짜 파싱
+  // Context에서 memberCounts와 fetchMemberCount 가져오기
+  const { memberCounts, fetchMemberCount } = useGroupMember();
+
+  // Context의 실시간 멤버 수 사용 (GroupListCard와 동일한 패턴)
+  const currentCount = memberCounts[groupId] ?? 0;
+
+  // 컴포넌트 마운트 시 최신 멤버 수 가져오기
+  useEffect(() => {
+    if (!groupId) return;
+    fetchMemberCount(groupId);
+  }, [groupId, fetchMemberCount]);
+
+  // 날짜 계산
   const [startDateStr, endDateStr] = duration.split(' ~ ');
   const now = new Date();
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
 
-  // 종료일 기준으로 상태 자동 보정
   let computedStatus = status;
-  if (now > end) {
-    computedStatus = '모임종료';
-  } else if (now >= start && now <= end) {
-    computedStatus = '모집종료';
-  }
+  if (now > end) computedStatus = '모임종료';
+  else if (now >= start && now <= end) computedStatus = '모집종료';
 
-  // D-day 계산 (시작 전일 때만)
   let displayDday = dday;
-  if (now > end) {
-    displayDday = ''; // 종료 후엔 안 보여줌
-  }
+  if (now > end) displayDday = '';
 
   return (
     <div
@@ -67,10 +76,8 @@ function MeetingCard({
             {computedStatus}
           </span>
 
-          {/* 제목 */}
           <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">{title}</h2>
 
-          {/* D-day (시작 전만 표시) */}
           {displayDday && (
             <span className="text-white text-[15px] font-semibold bg-gray-700 rounded px-2">
               {displayDday}
@@ -78,7 +85,6 @@ function MeetingCard({
           )}
         </div>
 
-        {/* 소개 */}
         <p className="px-2 text-[15px] text-gray-800 leading-snug line-clamp-2 break-keep">
           {summary || '간략 소개가 없습니다.'}
         </p>
@@ -92,7 +98,8 @@ function MeetingCard({
           </span>
           <span className="flex items-center gap-1 text-gray-600">
             <img src="/images/group_member.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
-            {participants}
+            {/* Context의 실시간 멤버 수 사용 */}
+            {participants ?? `${currentCount}/${groupCapacity}`}
           </span>
         </div>
         <span className="text-gray-500 font-medium">{duration}</span>
@@ -100,4 +107,5 @@ function MeetingCard({
     </div>
   );
 }
+
 export default MeetingCard;

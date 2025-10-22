@@ -109,7 +109,7 @@ function MeetingTabs({ intro, curriculum, leader }: MeetingTabsProps) {
         className="mb-10"
       >
         <div
-          className="prose max-w-none border border-gray-300 p-4"
+          className="prose max-w-none rounded-sm border border-[#C0C0C0] p-4"
           dangerouslySetInnerHTML={{
             __html: intro || '<p>소개 내용이 없습니다.</p>',
           }}

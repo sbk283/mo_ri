@@ -1,12 +1,17 @@
 import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
 import { supabase } from '../lib/supabase';
-import type { GroupFormData, groups, groupsUpdate } from '../types/group';
+import type {
+  GroupFormData,
+  // groups,
+  groupsUpdate,
+  GroupWithCategory,
+} from '../types/group';
 import { useAuth } from './AuthContext';
 
 // 그룹 관련 컨텍스트 타입 정의
 interface GroupContextType {
-  groups: groups[];
-  currentGroup: groups | null;
+  groups: GroupWithCategory[];
+  currentGroup: GroupWithCategory | null;
   loading: boolean;
   error: string | null;
   fetchGroups: (slug?: string) => Promise<void>;
@@ -21,8 +26,8 @@ const GroupContext = createContext<GroupContextType | null>(null);
 
 export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { user } = useAuth();
-  const [groups, setGroups] = useState<groups[]>([]);
-  const [currentGroup, _setCurrentGroup] = useState<groups | null>(null);
+  const [groups, setGroups] = useState<GroupWithCategory[]>([]); // ✅ 타입 변경
+  const [currentGroup, _setCurrentGroup] = useState<GroupWithCategory | null>(null); // ✅ 타입 변경
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +36,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     try {
       setLoading(true);
 
-      // categories_major/sub 조인
+      // categories_major/sub 조인 포함
       let query = supabase.from('groups').select(`
         *,
         categories_major (category_major_name, category_major_slug),
@@ -45,6 +50,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
       const { data, error } = await query;
       if (error) throw error;
 
+      // category_major_name / category_sub_name 매핑
       const mapped = (data ?? []).map(g => ({
         ...g,
         category_major_name: g.categories_major?.category_major_name ?? '카테고리 없음',
@@ -191,7 +197,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         if (updateError) throw updateError;
 
         console.log('그룹 생성 성공:', groupId);
-        await fetchGroups();
+        await fetchGroups(); // 그룹 생성 후 목록 갱신
       } catch (err: any) {
         console.error('그룹 생성 실패:', err.message);
         setError(err.message);
@@ -201,6 +207,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     },
     [user, fetchGroups],
   );
+
   // 그룹 상세 조회
   const fetchGroupById = useCallback(async (groupId: string) => {
     try {
@@ -211,10 +218,10 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         .from('groups')
         .select(
           `
-        *,
-        categories_major (category_major_name, category_major_slug),
-        categories_sub (category_sub_name, category_sub_slug)
-      `,
+          *,
+          categories_major (category_major_name, category_major_slug),
+          categories_sub (category_sub_name, category_sub_slug)
+        `,
         )
         .eq('group_id', groupId)
         .single();
@@ -222,7 +229,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
       if (error) throw error;
 
       // 조인된 결과를 currentGroup에 저장
-      _setCurrentGroup(data);
+      _setCurrentGroup(data as GroupWithCategory);
       console.log('그룹 상세 데이터:', data);
     } catch (err: any) {
       setError(err.message);

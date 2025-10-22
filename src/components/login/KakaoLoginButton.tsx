@@ -50,7 +50,7 @@ function KakaoLoginButton({ onError, onSuccess }: kakaoLoginButtonProps) {
           fill="#371D1E"
         />
       </svg>
-      카카오 로그인
+      카카오 로그인/회원가입
     </button>
   );
 }

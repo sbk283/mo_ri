@@ -17,7 +17,7 @@ function GroupDetailLayout() {
   >([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Context에서 실시간 멤버 수 가져오기
+  // Context에서 실시간 멤버 수 가져오기
   const { memberCounts, fetchMemberCount } = useGroupMember();
   const currentCount = id ? (memberCounts[id] ?? 0) : 0;
 
@@ -43,7 +43,7 @@ function GroupDetailLayout() {
         if (error) throw error;
         setGroup(data);
 
-        // ✅ 멤버 수 가져오기
+        // 멤버 수 가져오기
         await fetchMemberCount(id);
 
         // 커리큘럼 파싱

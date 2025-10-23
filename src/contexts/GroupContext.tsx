@@ -1,4 +1,11 @@
-import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 import { supabase } from '../lib/supabase';
 import type {
   GroupFormData,
@@ -257,6 +264,85 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     );
   }, []);
 
+  // 그룹 수정 (업데이트)
+  const updateGroup = useCallback(async (groupId: string, updates: Partial<groupsUpdate>) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { error } = await supabase.from('groups').update(updates).eq('group_id', groupId);
+
+      if (error) throw error;
+
+      setGroups(prev =>
+        prev.map(group => (group.group_id === groupId ? { ...group, ...updates } : group)),
+      );
+
+      console.log('그룹 업데이트 성공:', groupId, updates);
+    } catch (err: any) {
+      console.error('updateGroup error:', err.message);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // 그룹 삭제
+  const deleteGroup = useCallback(
+    async (groupId: string) => {
+      try {
+        if (!user) throw new Error('로그인 후 이용해주세요.');
+        setLoading(true);
+        setError(null);
+
+        // 권한 확인 (본인이 만든 그룹만 삭제 가능)
+        const { data: group, error: fetchError } = await supabase
+          .from('groups')
+          .select('created_by')
+          .eq('group_id', groupId)
+          .single();
+
+        if (fetchError) throw fetchError;
+        if (group?.created_by !== user.id)
+          throw new Error('본인이 만든 모임만 삭제할 수 있습니다.');
+
+        // 연결된 group_members 먼저 삭제 (FK 문제 방지)
+        const { error: memberDeleteError } = await supabase
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId);
+        if (memberDeleteError) throw memberDeleteError;
+
+        // 그룹 삭제
+        const { error: groupDeleteError } = await supabase
+          .from('groups')
+          .delete()
+          .eq('group_id', groupId);
+        if (groupDeleteError) throw groupDeleteError;
+
+        // 스토리지 이미지 삭제 (있을 경우)
+        const folderPrefix = `groups/${groupId}`;
+        const { data: files, error: listError } = await supabase.storage
+          .from('group-images')
+          .list(folderPrefix, { limit: 100 });
+        if (!listError && files && files.length > 0) {
+          const pathsToRemove = files.map(f => `${folderPrefix}/${f.name}`);
+          await supabase.storage.from('group-images').remove(pathsToRemove);
+        }
+
+        // 프론트 상태 동기화
+        setGroups(prev => prev.filter(g => g.group_id !== groupId));
+        console.log(`그룹(${groupId}) 삭제 완료`);
+      } catch (err: any) {
+        console.error('deleteGroup error:', err.message);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user],
+  );
+
   return (
     <GroupContext.Provider
       value={{
@@ -268,8 +354,8 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         createGroup,
         fetchGroupById,
         updateMemberCount,
-        updateGroup: async () => {},
-        deleteGroup: async () => {},
+        updateGroup,
+        deleteGroup,
       }}
     >
       {children}

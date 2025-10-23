@@ -1,27 +1,79 @@
 // src/pages/GroupContentPage.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useLayoutEffect, useRef, useState, useMemo } from 'react';
+import { useLayoutEffect, useRef, useState, useMemo, useEffect } from 'react';
 import DashboardDetail from '../components/dashboard/DashboardDetail';
 import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
 import { useParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 function GroupContentPage() {
   const { id: groupId } = useParams<{ id: string }>();
 
-  // 각 탭별 작성 트리거
+  // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 현재 탭 라벨만 보관 (객체 참조 꼬임 방지)
+  // 탭 상태
   const [selectedTabLabel, setSelectedTabLabel] = useState<'공지사항' | '모임일상'>('공지사항');
 
-  // 탭별 작성중 상태 (상단 버튼 숨김 제어용)
+  // 각 탭 작성 중 여부 (버튼 숨김)
   const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);
   const [isDailyCrafting, setIsDailyCrafting] = useState(false);
 
-  // 탭 데이터 (tick 포함해서 자식 프롭 갱신 보장)
+  // 호스트 여부
+  const [roleLoaded, setRoleLoaded] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+
+  // 그룹 탭 진입 시 역할 확인
+  useEffect(() => {
+    let off = false;
+    (async () => {
+      setRoleLoaded(false);
+
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u?.user?.id;
+
+      if (!groupId || !userId) {
+        if (!off) {
+          setIsHost(false);
+          setRoleLoaded(true);
+        }
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('group_members')
+        .select('member_role, member_status')
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .eq('member_status', 'approved')
+        .maybeSingle();
+
+      if (error) {
+        if (!off) {
+          setIsHost(false);
+          setRoleLoaded(true);
+        }
+        return;
+      }
+
+      const role = String(data?.member_role ?? '').toLowerCase();
+      const host = role === 'host' || role === 'owner' || role === 'admin';
+
+      if (!off) {
+        setIsHost(host);
+        setRoleLoaded(true);
+      }
+    })();
+
+    return () => {
+      off = true;
+    };
+  }, [groupId]);
+
+  // 탭 데이터
   const tabs = useMemo(
     () => [
       {
@@ -54,10 +106,10 @@ function GroupContentPage() {
 
   const currentTab = tabs.find(t => t.label === selectedTabLabel)!;
 
-  // 현재 탭 작성중 여부
+  // 현재 탭의 작성 중 여부
   const isCrafting = selectedTabLabel === '공지사항' ? isNoticeCrafting : isDailyCrafting;
 
-  // 언더라인 위치 계산용
+  // 언더라인 위치
   const listRef = useRef<HTMLUListElement | null>(null);
   const tabRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
@@ -85,11 +137,18 @@ function GroupContentPage() {
     else setDailyCreateTick(t => t + 1);
   };
 
+  // 공지사항 탭에서만: 호스트일 때만 버튼 노출
+  const showCreateButton =
+    !isCrafting &&
+    (selectedTabLabel === '공지사항'
+      ? roleLoaded && isHost // 공지: 호스트만
+      : true); // 일상: 기존 로직 유지
+
   return (
     <div>
       <GroupDashboardLayout>
         <div className="flex flex-col gap-3">
-          {/* 상단 그룹 정보 */}
+          {/* 그룹 정보 */}
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
@@ -99,8 +158,7 @@ function GroupContentPage() {
             <div className="flex justify-between items-center">
               <p className="text-xxl font-bold mb-4">게시판</p>
 
-              {/* 작성중이면 버튼 숨김 */}
-              {!isCrafting && (
+              {showCreateButton && (
                 <button
                   type="button"
                   onClick={handleCreateClick}

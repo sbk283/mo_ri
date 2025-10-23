@@ -1,10 +1,9 @@
-// src/components/dashboard/DashboardNotice.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import GroupPagination from '../common/GroupPagination';
-import type { Notice } from '../../types/notice';
 import { supabase } from '../../lib/supabase';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
+import type { Notice } from '../../types/notice';
 
 const ITEMS_PER_PAGE = 10;
 const today = () => new Date().toISOString().slice(0, 10);
@@ -22,60 +21,110 @@ export function DashboardNotice({
   createRequestKey?: number;
   onCraftingChange?: (v: boolean) => void;
 }) {
-  const [isCreating, setIsCreating] = useState(false);
+  const [isHost, setIsHost] = useState(false);
+  const [roleLoaded, setRoleLoaded] = useState(false);
+
+  // 호스트 여부 확인
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setRoleLoaded(false);
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u?.user?.id;
+      if (!groupId || !userId) {
+        if (!ignore) {
+          setIsHost(false);
+          setRoleLoaded(true);
+        }
+        return;
+      }
+
+      const { data } = await supabase
+        .from('group_members')
+        .select('member_role')
+        .eq('group_id', groupId)
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const host = String(data?.member_role ?? '').toLowerCase() === 'host';
+      if (!ignore) {
+        setIsHost(host);
+        setRoleLoaded(true);
+      }
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, [groupId]);
+
+  // 작성 모드 관리
+  const [creating, setCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
-
-  // 작성 트리거 수신 → 작성모드 진입
   useEffect(() => {
-    if (createRequestKey > prevKey.current) setIsCreating(true);
+    if (createRequestKey > prevKey.current && isHost) setCreating(true);
     prevKey.current = createRequestKey;
-  }, [createRequestKey]);
-
-  // 작성 상태 변경 시 부모에게 알림
+  }, [createRequestKey, isHost]);
   useEffect(() => {
-    onCraftingChange?.(isCreating);
-  }, [isCreating, onCraftingChange]);
+    onCraftingChange?.(creating);
+  }, [creating, onCraftingChange]);
 
-  // ===== 목록 로드 =====
+  // 공지 목록 상태
   const [items, setItems] = useState<NoticeRow[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
 
+  // 목록 불러오기 (DB가 관리하는 view_count 사용)
   const reload = async () => {
     if (!groupId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from('group_posts')
-      .select('post_id, post_title, post_body_md, post_created_at')
-      .eq('group_id', groupId)
-      .eq('board_type', boardType)
-      .order('post_created_at', { ascending: false });
+    try {
+      const { data: posts, error: postsErr } = await supabase
+        .from('group_posts')
+        .select('post_id, post_title, post_body_md, post_created_at, view_count')
+        .eq('group_id', groupId)
+        .eq('board_type', boardType)
+        .order('post_created_at', { ascending: false });
+      if (postsErr) throw postsErr;
 
-    if (error) {
-      console.error('[DashboardNotice] load error', error);
-      setItems([]);
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u?.user?.id ?? null;
+
+      // 내 읽음 집합
+      let readSet = new Set<string>();
+      if (userId && posts?.length) {
+        const ids = posts.map(p => p.post_id);
+        const { data: reads } = await supabase
+          .from('group_post_reads')
+          .select('post_id')
+          .eq('user_id', userId)
+          .in('post_id', ids);
+        if (reads?.length) readSet = new Set(reads.map(r => r.post_id as string));
+      }
+
+      // 매핑
+      const mapped: NoticeRow[] =
+        (posts ?? []).map((r, i) => ({
+          id: i + 1,
+          post_id: r.post_id,
+          title: r.post_title ?? '',
+          content: r.post_body_md ?? '',
+          date: (r.post_created_at ?? '').slice(0, 10),
+          isRead: readSet.has(r.post_id),
+          views: Number(r.view_count ?? 0), // ✅ DB 카운터 그대로 사용
+        })) ?? [];
+
+      setItems(mapped);
+    } catch (e) {
+      console.error('reload error', e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const mapped: NoticeRow[] =
-      (data ?? []).map((row, idx) => ({
-        id: idx + 1,
-        post_id: row.post_id,
-        title: row.post_title ?? '',
-        content: row.post_body_md ?? '',
-        date: (row.post_created_at ?? '').slice(0, 10),
-        isRead: false,
-      })) ?? [];
-
-    setItems(mapped);
-    setLoading(false);
   };
 
   useEffect(() => {
     reload();
   }, [groupId, boardType]);
 
-  // ===== 페이지네이션 =====
+  // 페이지네이션
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [items.length]);
   const totalPages = useMemo(
@@ -87,22 +136,52 @@ export function DashboardNotice({
     return items.slice(start, start + ITEMS_PER_PAGE);
   }, [page, items]);
 
-  // ===== 상세/수정 모드 =====
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
+  const [editing, setEditing] = useState(false);
 
-  const openDetail = (localListId: number) => {
-    const idx = items.findIndex(n => n.id === localListId);
-    if (idx >= 0) {
-      setDetailIdx(idx);
-      setIsEditing(false);
-      setIsCreating(false);
+  // 상세 진입 시: 읽음 upsert만 하고, 처음 읽는 경우에만 로컬에서 views +1 (DB 트리거도 +1)
+  const openDetail = async (localId: number) => {
+    const idx = items.findIndex(n => n.id === localId);
+    if (idx < 0) return;
+
+    const t = items[idx];
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u?.user?.id;
+    if (!groupId || !userId || !t?.post_id) return;
+
+    const wasRead = t.isRead;
+
+    // 읽음 upsert (group_id 넣지 말 것)
+    const { error } = await supabase
+      .from('group_post_reads')
+      .upsert({ post_id: t.post_id, user_id: userId }, { onConflict: 'post_id,user_id' });
+
+    if (error) {
+      console.error('upsert read error', error);
+    } else {
+      // 처음 읽는 경우에만 로컬 +1 (DB 트리거도 +1 되었음)
+      setItems(prev => {
+        const copy = [...prev];
+        const cur = copy[idx];
+        if (!cur) return prev;
+        copy[idx] = {
+          ...cur,
+          isRead: true,
+          views: wasRead ? cur.views : cur.views + 1,
+        };
+        return copy;
+      });
     }
+
+    setDetailIdx(idx);
+    setEditing(false);
+    setCreating(false);
   };
+
   const closeDetail = () => {
     setDetailIdx(null);
-    setIsEditing(false);
-    setIsCreating(false);
+    setEditing(false);
+    setCreating(false);
   };
 
   const emptyNotice: Notice = {
@@ -111,40 +190,35 @@ export function DashboardNotice({
     content: '',
     date: today(),
     isRead: false,
+    views: 0,
   };
 
-  // ===== 생성 =====
+  // 작성/수정/삭제
   const handleCreateSave = async (next: Notice) => {
-    if (!groupId) return;
-
-    const { data: userRes, error: authErr } = await supabase.auth.getUser();
-    if (authErr || !userRes?.user?.id) {
-      console.error('[DashboardNotice] auth error', authErr);
-      return;
-    }
-    const userId = userRes.user.id;
+    if (!groupId || !isHost) return;
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u?.user?.id;
+    if (!userId) return;
 
     const { error } = await supabase.from('group_posts').insert({
       user_id: userId,
       group_id: groupId,
       board_type: boardType,
       post_title: next.title,
-      post_body_md: next.content, // HTML 그대로 저장 (이미지 태그 포함)
+      post_body_md: next.content,
     });
-
     if (error) {
-      console.error('[DashboardNotice] insert error', error);
+      console.error('create error', error);
       return;
     }
 
     await reload();
-    setIsCreating(false);
+    setCreating(false);
     setPage(1);
     setDetailIdx(0);
-    setIsEditing(false);
+    setEditing(false);
   };
 
-  // ===== 수정 저장 =====
   const handleDetailSave = async (next: Notice) => {
     if (detailIdx == null) return;
     const target = items[detailIdx];
@@ -152,54 +226,46 @@ export function DashboardNotice({
 
     const { error } = await supabase
       .from('group_posts')
-      .update({
-        post_title: next.title,
-        post_body_md: next.content, // HTML 그대로 저장 (이미지 태그 포함)
-      })
+      .update({ post_title: next.title, post_body_md: next.content })
       .eq('post_id', target.post_id);
-
     if (error) {
-      console.error('[DashboardNotice] update error', error);
+      console.error('update error', error);
       return;
     }
 
     const copy = [...items];
     copy[detailIdx] = { ...copy[detailIdx], title: next.title, content: next.content };
     setItems(copy);
-    setIsEditing(false);
-    setIsCreating(false);
+    setEditing(false);
+    setCreating(false);
   };
 
-  // ===== 삭제 =====
   const handleDetailDelete = async () => {
     if (detailIdx == null) return;
     const target = items[detailIdx];
     if (!target) return;
-
-    const ok = window.confirm('정말 삭제하시겠습니까? 삭제 후에는 되돌릴 수 없습니다.');
-    if (!ok) return;
+    if (!window.confirm('삭제할까요?')) return;
 
     const { error } = await supabase.from('group_posts').delete().eq('post_id', target.post_id);
     if (error) {
-      console.error('[DashboardNotice] delete error', error);
+      console.error('delete error', error);
       return;
     }
 
-    const rest = items
-      .filter((_, i) => i !== detailIdx)
-      .map((row, idx) => ({ ...row, id: idx + 1 }));
+    const rest = items.filter((_, i) => i !== detailIdx).map((r, i) => ({ ...r, id: i + 1 }));
     setItems(rest);
     setDetailIdx(null);
-    setIsEditing(false);
-    setIsCreating(false);
+    setEditing(false);
+    setCreating(false);
   };
 
   const current = detailIdx != null ? items[detailIdx] : null;
 
+  // 렌더링
   return (
-    <div className="w-[975px] bg-white overflow-hidden ">
+    <div className="w-[975px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
-        {isCreating ? (
+        {creating ? (
           <motion.div
             key="notice-create"
             initial={{ y: 10, opacity: 0 }}
@@ -209,7 +275,7 @@ export function DashboardNotice({
           >
             <GroupContentDetailEdit
               notice={emptyNotice}
-              onCancel={() => setIsCreating(false)}
+              onCancel={() => setCreating(false)}
               onSave={handleCreateSave}
             />
           </motion.div>
@@ -222,43 +288,46 @@ export function DashboardNotice({
             transition={{ duration: 0.18 }}
           >
             {loading ? (
-              <div className="p-6 text-center text-gray-500">
-                불러오는 중입니다. 잠시만 기다려주세요.
-              </div>
+              <div className="p-6 text-center text-gray-500">불러오는 중…</div>
             ) : items.length === 0 ? (
               <div className="p-6 text-center text-gray-500">등록된 공지가 없습니다.</div>
             ) : (
               <>
+                {/* 헤더: 호스트면 상태 컬럼 숨김 */}
                 <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
-                  <div className="w-[700px] truncate font-semibold pl-7 text-md">제목</div>
-                  <div className="w-[150px] text-center text-md">작성일자</div>
-                  <div className="w-[50px] text-center mr-7 text-sm">상태</div>
+                  <div className="w-[600px] truncate font-semibold pl-7 text-md">제목</div>
+                  <div className="w-[120px] text-center text-md">작성일자</div>
+                  <div className="w-[100px] text-center text-md">조회수</div>
+                  {!isHost && <div className="w-[50px] text-center mr-7 text-sm">상태</div>}
                 </div>
 
                 <div className="flex flex-col divide-y divide-dashed divide-gray-300">
-                  {pageItems.map(notice => (
+                  {pageItems.map(n => (
                     <button
-                      key={notice.post_id}
+                      key={n.post_id}
                       type="button"
-                      onClick={() => openDetail(notice.id)}
+                      onClick={() => openDetail(n.id)}
                       className="flex justify-between items-center py-3 hover:bg-gray-50 text-left focus:outline-none"
                     >
                       <span
-                        className="w-[700px] truncate font-semibold pl-7 transition text-[#111]"
-                        title={notice.title}
+                        className="w-[600px] truncate font-semibold pl-7 text-[#111]"
+                        title={n.title}
                       >
-                        {notice.title}
+                        {n.title}
                       </span>
-                      <span className="w-[150px] text-center text-gray-400 text-sm">
-                        {notice.date}
+                      <span className="w-[120px] text-center text-gray-400 text-sm">{n.date}</span>
+                      <span className="w-[100px] text-center text-gray-400 text-sm">
+                        {n.views ?? 0}
                       </span>
-                      <span
-                        className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
-                        flex items-center justify-center mr-7
-                        ${notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
-                      >
-                        {notice.isRead ? '읽음' : '안읽음'}
-                      </span>
+                      {!isHost && (
+                        <span
+                          className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center mr-7 ${
+                            n.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
+                          }`}
+                        >
+                          {n.isRead ? '읽음' : '안읽음'}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -267,7 +336,7 @@ export function DashboardNotice({
               </>
             )}
           </motion.div>
-        ) : isEditing ? (
+        ) : editing ? (
           <motion.div
             key="notice-edit"
             initial={{ y: 10, opacity: 0 }}
@@ -278,7 +347,7 @@ export function DashboardNotice({
             {current && (
               <GroupContentDetailEdit
                 notice={current}
-                onCancel={() => setIsEditing(false)}
+                onCancel={() => setEditing(false)}
                 onSave={handleDetailSave}
               />
             )}
@@ -293,28 +362,29 @@ export function DashboardNotice({
           >
             <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[550px]">
               <header className="px-8 pt-6">
-                <div className="flex">
-                  <h1 className="text-xl font-bold text-gray-800 leading-snug mb-3">
-                    {current?.title}
-                  </h1>
-                  <span
-                    className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm
-                      flex items-center justify-center ml-4 leading-none
-                      ${current?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'}`}
-                  >
-                    {current?.isRead ? '읽음' : '안읽음'}
-                  </span>
+                <div className="flex items-center gap-3">
+                  <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>
+                  {/* 호스트면 읽음/안읽음 뱃지 숨김 */}
+                  {!isHost && (
+                    <span
+                      className={`w-[52px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center leading-none ${
+                        current?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
+                      }`}
+                    >
+                      {current?.isRead ? '읽음' : '안읽음'}
+                    </span>
+                  )}
                 </div>
                 <div className="flex items-center text-[#8C8C8C] text-sm gap-3">
                   <span>{current?.date}</span>
+                  <span>조회수 {current?.views ?? 0}</span>
                 </div>
               </header>
 
               <div className="text-center">
-                <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[910px]" />
+                <div className="inline-block border-b border-[#A3A3A3] w-[910px]" />
               </div>
 
-              {/* HTML 렌더링 (이미지 포함) */}
               <section className="px-8 py-10 text-gray-800 leading-relaxed">
                 <div
                   dangerouslySetInnerHTML={{ __html: current?.content || '' }}
@@ -324,28 +394,30 @@ export function DashboardNotice({
               </section>
             </article>
 
+            {/* 수정/삭제 버튼 */}
             <footer className="pt-6 flex text-left justify-start">
-              <button onClick={closeDetail} className="text-[#8C8C8C] py-2 transition text-md">
+              <button onClick={closeDetail} className="text-[#8C8C8C] py-2 text-md">
                 &lt; 목록으로
               </button>
 
-              <div className="ml-auto flex py-2">
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                  onClick={handleDetailDelete}
-                >
-                  삭제
-                </motion.button>
-
-                <motion.button
-                  whileTap={{ scale: 0.96 }}
-                  className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm transition"
-                  onClick={() => setIsEditing(true)}
-                >
-                  수정
-                </motion.button>
-              </div>
+              {(boardType !== 'notice' || isHost) && (
+                <div className="ml-auto flex py-2">
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm"
+                    onClick={handleDetailDelete}
+                  >
+                    삭제
+                  </motion.button>
+                  <motion.button
+                    whileTap={{ scale: 0.96 }}
+                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm"
+                    onClick={() => setEditing(true)}
+                  >
+                    수정
+                  </motion.button>
+                </div>
+              )}
             </footer>
           </motion.div>
         )}

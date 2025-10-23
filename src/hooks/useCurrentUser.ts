@@ -1,9 +1,8 @@
-// 임시파일입니다.
-// src/hooks/useCurrentUser.ts
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
 export type CurrentUser = {
+  id: string | null;
   nickname: string;
   profileImageUrl: string | null;
 };
@@ -30,13 +29,16 @@ export function useCurrentUser(): CurrentUser | undefined {
       const profileImageUrl = md.avatar_url || null;
 
       if (mounted) {
-        setMe({ nickname, profileImageUrl });
+        setMe({
+          id: user.id ?? null,
+          nickname,
+          profileImageUrl,
+        });
       }
     }
 
     loadUser();
 
-    // 세션 상태 변경에도 자동 갱신
     const { data: subscription } = supabase.auth.onAuthStateChange(() => loadUser());
 
     return () => {

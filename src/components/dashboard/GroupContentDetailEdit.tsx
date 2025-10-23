@@ -1,5 +1,4 @@
-// (참고) src/components/notice/GroupContentDetailEdit.tsx
-// 그대로 사용 가능합니다.
+// src/components/notice/GroupContentDetailEdit.tsx
 import { motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import type { Notice } from '../../types/notice';

@@ -79,6 +79,9 @@ function MeetingHeader({
     setIsAlreadyJoined(joined);
   }, [members, user]);
 
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   useEffect(() => {
     if (joinSuccess) {
       const timer = setTimeout(() => setJoinSuccess(false), 1500);
@@ -89,16 +92,17 @@ function MeetingHeader({
   // 참가 처리
   const handleJoinSubmit = async (intro: string) => {
     console.log('참가 신청 시도:', intro);
-
     const result = await joinGroup(groupId);
 
     if (result === 'success') {
       setJoinSuccess(true);
       setIsAlreadyJoined(true);
     } else if (result === 'already') {
-      alert('이미 참가한 모임입니다.');
+      setErrorMessage('이미 참가한 모임입니다.');
+      setErrorOpen(true);
     } else {
-      alert('참가에 실패했습니다. 다시 시도해주세요.');
+      setErrorMessage('참가에 실패했습니다. 다시 시도해주세요.');
+      setErrorOpen(true);
     }
 
     setOpen(false);
@@ -245,11 +249,12 @@ function MeetingHeader({
           desc: summary,
         }}
       />
-      <SuccessModal
+      {/* <SuccessModal
         isOpen={joinSuccess}
         onClose={() => setJoinSuccess(false)}
         message="참가 신청 완료!"
-      />
+      /> */}
+      <SuccessModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} message={errorMessage} />
       <ConfirmModal
         open={confirmOpen}
         title="찜을 해제하시겠습니까?"

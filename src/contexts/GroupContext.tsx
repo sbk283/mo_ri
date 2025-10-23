@@ -14,6 +14,7 @@ interface GroupContextType {
   currentGroup: GroupWithCategory | null;
   loading: boolean;
   error: string | null;
+  updateMemberCount: (groupId: string, delta: number) => void;
   fetchGroups: (slug?: string) => Promise<void>;
   fetchGroupById: (groupId: string) => Promise<void>;
   createGroup: (formData: GroupFormData) => Promise<void>;
@@ -26,8 +27,8 @@ const GroupContext = createContext<GroupContextType | null>(null);
 
 export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const { user } = useAuth();
-  const [groups, setGroups] = useState<GroupWithCategory[]>([]); // ✅ 타입 변경
-  const [currentGroup, _setCurrentGroup] = useState<GroupWithCategory | null>(null); // ✅ 타입 변경
+  const [groups, setGroups] = useState<GroupWithCategory[]>([]);
+  const [currentGroup, _setCurrentGroup] = useState<GroupWithCategory | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -239,6 +240,17 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     }
   }, []);
 
+  // 멤버 카운트 실시간 반영
+  const updateMemberCount = useCallback((groupId: string, delta: number) => {
+    setGroups(prev =>
+      prev.map(group =>
+        group.group_id === groupId
+          ? { ...group, member_count: Math.max((group.member_count ?? 0) + delta, 0) }
+          : group,
+      ),
+    );
+  }, []);
+
   return (
     <GroupContext.Provider
       value={{
@@ -249,6 +261,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         fetchGroups,
         createGroup,
         fetchGroupById,
+        updateMemberCount,
         updateGroup: async () => {},
         deleteGroup: async () => {},
       }}

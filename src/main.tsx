@@ -1,21 +1,15 @@
-import { createRoot } from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
 import React from 'react';
+import { createRoot } from 'react-dom/client';
+import AppWrapper from './AppWrapper.tsx';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { GroupProvider } from './contexts/GroupContext.tsx';
-import { GroupMemberProvider } from './contexts/GroupMemberContext.tsx';
-import { ScheduleProvider } from './contexts/ScheduleContext.tsx';
+import './index.css';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <GroupProvider>
-        <GroupMemberProvider>
-          <ScheduleProvider>
-            <App />
-          </ScheduleProvider>
-        </GroupMemberProvider>
+        <AppWrapper />
       </GroupProvider>
     </AuthProvider>
   </React.StrictMode>,

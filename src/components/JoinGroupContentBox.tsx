@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
-import type { GroupWithCategory } from '../types/group';
 import GroupContentNon from './GroupContentNon';
 
-interface GroupContentBoxProps {
-  groups: GroupWithCategory[];
+interface JoinGroupContentBoxProps {
+  groups: any[]; // 위 fetch에서 'groups' 배열 (동일 필드)
   loading: boolean;
 }
 
-export default function GroupContentBox({ groups, loading }: GroupContentBoxProps) {
+export default function JoinGroupContentBox({ groups, loading }: JoinGroupContentBoxProps) {
+  const today = new Date();
   const fmt = (d: string) => (d ? d.replace(/-/g, '.') : '');
 
   if (loading) {
@@ -39,9 +39,9 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
       {groups.map(group => {
         const startDate = new Date(group.group_start_day);
         const endDate = new Date(group.group_end_day);
-        const today = new Date();
-        const daysUntilOpen = Math.ceil(
-          (startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+        const daysUntilOpen = Math.max(
+          0,
+          Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
         );
         const daysUntilEnd = Math.max(
           0,
@@ -58,8 +58,8 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
               모임 종료까지 {daysUntilEnd}일
             </div>
           ) : group.status === 'closed' ? (
-            <div className="absolute rounded-[5px] bg-yellow-500 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-              모임종료
+            <div className="absolute rounded-[5px] bg-gray-400 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
+              모집종료
             </div>
           ) : (
             <div className="absolute rounded-[5px] bg-gray-400 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
@@ -68,17 +68,17 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
           );
 
         const category =
-          // group.categories_sub?.category_sub_name ||
-          group.categories_major?.category_major_name;
+          group.categories_sub?.category_sub_name ||
+          group.categories_major?.category_major_name ||
+          '기타';
 
         return (
           <Link
             key={group.group_id}
             to={`/groupcontent/${group.group_id}`}
-            className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[13px] relative flex"
+            className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
           >
             {badge}
-
             <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden">
               <img
                 src={group.image_urls?.[0] || '/default-img.jpg'}
@@ -86,11 +86,10 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
                 className="w-full h-full object-cover"
               />
             </div>
-
             <div className="px-4 flex flex-col justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-lg font-bold">{group.group_title}</p>
-                <span className="px-[6px] py-[2px] bg-[#FF5252] font-bold text-white rounded-[5px] text-sm">
+                <span className="px-[6px] py-[2px] bg-[#D83737] font-bold text-white rounded-[5px]">
                   {category}
                 </span>
               </div>
@@ -103,11 +102,10 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
                 </div>
                 <div className="flex gap-1">
                   <img src="/humen.svg" alt="모임 참여자 아이콘" />
-                  {group.member_count}/{group.group_capacity ?? '∞'}
+                  {group.member_count ?? 0}/{group.group_capacity ?? '∞'}
                 </div>
               </div>
             </div>
-
             <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
               <img src="/images/swiper_next.svg" alt="상세보기" />
             </div>

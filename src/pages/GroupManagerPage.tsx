@@ -17,7 +17,7 @@ function GroupManagerPage() {
           <div className="text-lg font-semibold">
             직접 만든 모임의 현황과 진행 상황을 한눈에 확인할 수 있습니다.
           </div>
-          <div className="text-md">생성한 모임들의 간략한 정보와 일정을 확인해보세요..</div>
+          <div className="text-md">생성한 모임들의 간략한 정보와 일정을 확인해보세요.</div>
         </div>
       </div>
       <main>

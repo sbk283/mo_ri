@@ -1,91 +1,15 @@
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Plus from '../../../public/images/plus.svg';
-import type { GroupItem } from '../common/GroupCard';
+import { useGroup } from '../../contexts/GroupContext';
 import SwiperGroupCard from '../common/SwiperGroupCard';
 
 export default function PopularGroupsSection() {
-  const data: GroupItem[] = [
-    {
-      id: 1,
-      status: '모집중',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 2,
-      status: '모집예정',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 모바일 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 3,
-      status: '모집중',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 영웅전 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 4,
-      status: '모집예정',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '카드라이더 하실분 모집',
-      desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D-7',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 5,
-      status: '모집중',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 6,
-      status: '모집예정',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 모바일 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 7,
-      status: '모집중',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 영웅전 던전 공파 모집',
-      desc: '던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구... 던전같이돌아요어쩌구저쩌구...',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-    },
-    {
-      id: 8,
-      status: '모집예정',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '카드라이더 하실분 모집',
-      desc: '카트라이더는 서비스 종료했는데... 어떻게 하죠? 카트라이더는 서비스 종료했는데... 어떻게 하죠?',
-      dday: 'D-7',
-      thumbnail: '/images/group_img.png',
-    },
-  ];
+  const { groups, fetchGroups, loading } = useGroup();
+
+  useEffect(() => {
+    fetchGroups(); // 모든 그룹 가져오기
+  }, [fetchGroups]);
 
   return (
     <section
@@ -109,7 +33,13 @@ export default function PopularGroupsSection() {
         </header>
 
         <div className="">
-          <SwiperGroupCard items={data} confirmMode="unfav" loop={false} spaceBetween={12} />
+          {loading ? (
+            <p>로딩 중...</p>
+          ) : groups.length === 0 ? (
+            <p>표시할 그룹이 없습니다.</p>
+          ) : (
+            <SwiperGroupCard loop={false} spaceBetween={12} />
+          )}
         </div>
       </div>
     </section>

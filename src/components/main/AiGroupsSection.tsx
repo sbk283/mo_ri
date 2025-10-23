@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Plus from '../../../public/images/plus.svg';
-import GroupCard, { type Duration, type GroupItem } from '../common/GroupCard';
+import { useGroup } from '../../contexts/GroupContext';
+import GroupCard from '../common/GroupCard';
+
+type Duration = 'oneday' | 'short' | 'long';
 
 const FILTERS: { key: Duration; label: string }[] = [
   { key: 'oneday', label: '원데이 모임' },
@@ -10,285 +13,28 @@ const FILTERS: { key: Duration; label: string }[] = [
 ];
 
 export default function AiGroupsSection() {
+  const { groups, fetchGroups } = useGroup();
   const [active, setActive] = useState<Duration>('oneday');
 
-  const data: GroupItem[] = [
-    // ===== 원데이 (4) =====
-    {
-      id: 1,
-      status: '모집중',
-      category: '요리/베이킹',
-      region: '서울',
-      title: '핸드드립 커피 원데이 클래스',
-      desc: '싱글 오리진으로 핸드드립 처음부터 같이 배워요',
-      dday: 'D-2',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 2,
-      status: '모집예정',
-      category: '사진/영상',
-      region: '부산',
-      title: '해운대 노을 출사 원데이',
-      desc: '구도/노출 기본 잡고 인생사진 남기자',
-      dday: 'D-5',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 3,
-      status: '모집중',
-      category: '공예/DIY',
-      region: '인천',
-      title: '도자기 머그컵 만들기',
-      desc: '나만의 컵을 빚어보는 하루 체험',
-      dday: 'D-1',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 4,
-      status: '모집중',
-      category: '취미/여가',
-      region: '온라인',
-      title: '보드게임 번개 모임(원데이)',
-      desc: '룰 설명부터 바로 실전! 라운드 돌려봐요',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
+  useEffect(() => {
+    fetchGroups();
+  }, [fetchGroups]);
 
-    // ===== 단기 (4) =====
-    {
-      id: 5,
-      status: '모집중',
-      category: '운동/건강',
-      region: '서울',
-      title: '4주 러닝 기초반',
-      desc: '호흡/폼 교정으로 5km 완주 도전',
-      dday: 'D-6',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 6,
-      status: '모집예정',
-      category: '스터디/자기개발',
-      region: '온라인',
-      title: '타입스크립트 스터디(2주 과정)',
-      desc: '기본 타입부터 제네릭까지 핵심만 쫙',
-      dday: 'D-9',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 7,
-      status: '모집중',
-      category: '운동/건강',
-      region: '대전',
-      title: '3주 아침 요가 루틴',
-      desc: '굿모닝 스트레칭으로 하루 시작',
-      dday: 'D-4',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 8,
-      status: '모집중',
-      category: '요리/베이킹',
-      region: '대구',
-      title: '4주 홈베이킹 클래스',
-      desc: '스콘→쿠키→타르트→파운드까지',
-      dday: 'D-8',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
+  const filtered = useMemo(() => {
+    return groups.filter(g => {
+      if (!g.group_start_day || !g.group_end_day) return false;
 
-    // ===== 장기 (4) =====
-    {
-      id: 9,
-      status: '모집중',
-      category: '스포츠',
-      region: '부산',
-      title: '3개월 자전거 라이딩 크루',
-      desc: '주 2회 코스 탐방 & 기록 공유',
-      dday: 'D-10',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 10,
-      status: '모집예정',
-      category: '스터디/자기개발',
-      region: '온라인',
-      title: '12주 영어 회화 챌린지',
-      desc: '롤플레이 & 발음 교정으로 자신감 업',
-      dday: 'D-12',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 11,
-      status: '모집중',
-      category: '봉사/사회참여',
-      region: '광주',
-      title: '10주 반려동물 보호소 봉사',
-      desc: '산책/청소/기록 프로젝트로 꾸준 봉사',
-      dday: 'D-14',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 12,
-      status: '모집중',
-      category: '운동/건강',
-      region: '제주',
-      title: '12주 클라이밍 중급반',
-      desc: '볼더링 테크닉 & 코어 강화 프로그램',
-      dday: 'D-11',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 13,
-      status: '모집중',
-      category: '요리/베이킹',
-      region: '서울',
-      title: '핸드드립 커피 원데이 클래스',
-      desc: '싱글 오리진으로 핸드드립 처음부터 같이 배워요',
-      dday: 'D-2',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 14,
-      status: '모집예정',
-      category: '사진/영상',
-      region: '부산',
-      title: '해운대 노을 출사 원데이',
-      desc: '구도/노출 기본 잡고 인생사진 남기자',
-      dday: 'D-5',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 15,
-      status: '모집중',
-      category: '공예/DIY',
-      region: '인천',
-      title: '도자기 머그컵 만들기',
-      desc: '나만의 컵을 빚어보는 하루 체험',
-      dday: 'D-1',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
-    {
-      id: 16,
-      status: '모집중',
-      category: '취미/여가',
-      region: '온라인',
-      title: '보드게임 번개 모임(원데이)',
-      desc: '룰 설명부터 바로 실전! 라운드 돌려봐요',
-      dday: 'D-3',
-      thumbnail: '/images/group_img.png',
-      duration: 'oneday',
-    },
+      const start = new Date(g.group_start_day);
+      const end = new Date(g.group_end_day);
+      const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
-    // ===== 단기 (4) =====
-    {
-      id: 17,
-      status: '모집중',
-      category: '운동/건강',
-      region: '서울',
-      title: '4주 러닝 기초반',
-      desc: '호흡/폼 교정으로 5km 완주 도전',
-      dday: 'D-6',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 18,
-      status: '모집예정',
-      category: '스터디/자기개발',
-      region: '온라인',
-      title: '타입스크립트 스터디(2주 과정)',
-      desc: '기본 타입부터 제네릭까지 핵심만 쫙',
-      dday: 'D-9',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 19,
-      status: '모집중',
-      category: '운동/건강',
-      region: '대전',
-      title: '3주 아침 요가 루틴',
-      desc: '굿모닝 스트레칭으로 하루 시작',
-      dday: 'D-4',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
-    {
-      id: 20,
-      status: '모집중',
-      category: '요리/베이킹',
-      region: '대구',
-      title: '4주 홈베이킹 클래스',
-      desc: '스콘→쿠키→타르트→파운드까지',
-      dday: 'D-8',
-      thumbnail: '/images/group_img.png',
-      duration: 'short',
-    },
+      let duration: Duration = 'long';
+      if (diffDays === 1) duration = 'oneday';
+      else if (diffDays <= 28) duration = 'short';
 
-    // ===== 장기 (4) =====
-    {
-      id: 21,
-      status: '모집중',
-      category: '스포츠',
-      region: '부산',
-      title: '3개월 자전거 라이딩 크루',
-      desc: '주 2회 코스 탐방 & 기록 공유',
-      dday: 'D-10',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 22,
-      status: '모집예정',
-      category: '스터디/자기개발',
-      region: '온라인',
-      title: '12주 영어 회화 챌린지',
-      desc: '롤플레이 & 발음 교정으로 자신감 업',
-      dday: 'D-12',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 23,
-      status: '모집중',
-      category: '봉사/사회참여',
-      region: '광주',
-      title: '10주 반려동물 보호소 봉사',
-      desc: '산책/청소/기록 프로젝트로 꾸준 봉사',
-      dday: 'D-14',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-    {
-      id: 24,
-      status: '모집중',
-      category: '운동/건강',
-      region: '제주',
-      title: '12주 클라이밍 중급반',
-      desc: '볼더링 테크닉 & 코어 강화 프로그램',
-      dday: 'D-11',
-      thumbnail: '/images/group_img.png',
-      duration: 'long',
-    },
-  ];
-
-  const filtered = useMemo(() => data.filter(d => d.duration === active), [active, data]);
+      return duration === active;
+    });
+  }, [active, groups]);
 
   return (
     <section className="mx-auto w-[1024px]" aria-labelledby="ai-groups-heading">
@@ -297,13 +43,26 @@ export default function AiGroupsSection() {
           <h2 id="popular-groups-heading" className="font-semibold text-lg">
             AI 가 선별한
           </h2>
-          <div className="mr-4">
+          <div className="mr-4 flex justify-between">
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">나만의 취향 맞춤 모임!</p>
               <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
                 <img src={Plus} alt="" aria-hidden="true" />
                 <span className="text-md">더보기</span>
               </Link>
+            </div>
+            <div className="flex gap-2 pt-4">
+              {FILTERS.map(f => (
+                <button
+                  key={f.key}
+                  className={`font-semibold text-md px-4 py-1 rounded-md  ${
+                    active === f.key ? 'bg-brand text-white' : 'border border-brand text-brand'
+                  }`}
+                  onClick={() => setActive(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
         </header>
@@ -317,7 +76,7 @@ export default function AiGroupsSection() {
           "
         >
           {filtered.length ? (
-            filtered.slice(0, 8).map(item => <GroupCard key={item.id} item={item} />)
+            filtered.slice(0, 8).map(item => <GroupCard key={item.group_id} item={item} />)
           ) : (
             <li className="text-sm text-gray-500 py-8 col-span-full">조건에 맞는 모임이 없어요.</li>
           )}

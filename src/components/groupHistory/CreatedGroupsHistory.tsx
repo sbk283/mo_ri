@@ -113,15 +113,15 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
                   group.status === 'recruiting'
                     ? 'bg-brand-orange'
                     : group.status === 'closed'
-                      ? 'bg-gray-400'
+                      ? 'bg-gray-200'
                       : 'bg-brand-red'
                 }`}
               >
                 {group.status === 'recruiting'
                   ? '모집 중'
                   : group.status === 'closed'
-                    ? '마감'
-                    : '종료'}
+                    ? '모임 종료'
+                    : '모집 마감'}
               </div>
 
               <div className="flex items-center justify-center">

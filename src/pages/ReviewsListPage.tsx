@@ -455,7 +455,18 @@ function ReviewsListPage() {
 
   return (
     <div className="mx-auto w-[1024px] pt-[120px] pb-[80px]">
-      <div className="text-xl font-bold text-gray-400 mb-[21px]">후기리뷰</div>
+      <div className="text-xl font-bold text-gray-400 mb-[17px]">후기리뷰</div>
+      <div className="flex mb-[43px] gap-[12px]">
+        <div className="border-r border-brand border-[3px]"></div>
+        <div>
+          <div className=" text-lg font-bold text-gray-400 mb-[5px]">
+            회원들이 남긴 모임 후기를 한곳에서 볼 수 있습니다.
+          </div>
+          <div className="text-md  text-gray-400">
+            다양한 경험과 생생한 이야기를 참고해 원하는 모임을 찾아보세요.
+          </div>
+        </div>
+      </div>
 
       {/* 베스트 리뷰 */}
       <div className="text-black text-xl font-semibold pb-[13px]">

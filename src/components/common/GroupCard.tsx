@@ -1,14 +1,78 @@
 import { useNavigate } from 'react-router-dom';
 import type { GroupWithCategory } from '../../types/group';
+import { useEffect, useState } from 'react';
+import ConfirmModal from './modal/ConfirmModal';
 
 interface GroupCardProps {
   item: GroupWithCategory;
   as?: 'li' | 'div';
+  onToggleFavorite?: (id: string, next: boolean) => void | Promise<void>;
+  confirmBeforeChange?: boolean;
+  confirmMode?: 'none' | 'add' | 'unfav' | 'both';
+  showFavoriteButton?: boolean; // ← 새 prop 추가
 }
 
-export function GroupCard({ item, as = 'li' }: GroupCardProps) {
+export function GroupCard({
+  item,
+  as = 'li',
+  onToggleFavorite,
+  confirmBeforeChange = true,
+  confirmMode,
+  showFavoriteButton = false,
+}: GroupCardProps) {
   const Wrapper = as as keyof JSX.IntrinsicElements;
   const navigate = useNavigate();
+
+  // 즐겨 찾기 상태
+  const controlled = typeof onToggleFavorite === 'function';
+  const [localFav, setLocalFav] = useState(item.favorite);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<'fav' | 'unfav' | null>(null);
+
+  const currentFav = controlled ? item.favorite : localFav;
+  const mode: 'none' | 'add' | 'unfav' | 'both' =
+    confirmMode ?? (confirmBeforeChange ? 'unfav' : 'none');
+
+  useEffect(() => {
+    if (!controlled) setLocalFav(item.favorite);
+  }, [item.favorite, controlled]);
+
+  const applyFavorite = (next: boolean) => {
+    if (controlled) onToggleFavorite!(item.group_id, next);
+    else setLocalFav(next);
+  };
+
+  const handleClickFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+
+    if (!currentFav) {
+      if (mode === 'add' || mode === 'both') {
+        setPendingAction('fav');
+        setConfirmOpen(true);
+        return;
+      }
+      applyFavorite(true);
+    } else {
+      if (mode === 'unfav' || mode === 'both') {
+        setPendingAction('unfav');
+        setConfirmOpen(true);
+        return;
+      }
+      applyFavorite(false);
+    }
+  };
+
+  const handleConfirmModal = () => {
+    if (pendingAction === 'fav') applyFavorite(true);
+    if (pendingAction === 'unfav') applyFavorite(false);
+    setConfirmOpen(false);
+    setPendingAction(null);
+  };
+
+  const handleCloseModal = () => {
+    setConfirmOpen(false);
+    setPendingAction(null);
+  };
 
   const calculateDday = (endDate: string) => {
     const today = new Date();
@@ -36,11 +100,29 @@ export function GroupCard({ item, as = 'li' }: GroupCardProps) {
             {item.status === 'recruiting' ? '모집중' : '모집예정'}
           </div>
           {/* 이미지 */}
-          <img
-            src={item.image_urls?.[0] ?? '/placeholder.jpg'}
-            alt={`${item.group_title} 썸네일`}
-            className="w-full object-cover h-[133px]"
-          />
+          <div className="relative">
+            <img
+              src={item.image_urls?.[0] ?? '/placeholder.jpg'}
+              alt={`${item.group_title} 썸네일`}
+              className="w-full object-cover h-[133px]"
+            />
+            {/* 즐겨찾기 버튼 */}
+            {showFavoriteButton && (
+              <button
+                type="button"
+                aria-label="즐겨찾기"
+                aria-pressed={!!currentFav}
+                onClick={handleClickFavorite}
+                className="absolute top-2 right-2 w-[20px] h-[20px]"
+              >
+                <img
+                  src={currentFav ? '/images/fill_star.svg' : '/images/unfill_star.svg'}
+                  alt={currentFav ? '즐겨찾기됨' : '즐겨찾기 안됨'}
+                />
+              </button>
+            )}
+          </div>
+
           {/*  텍스트 */}
           <div className="relative p-[15px] rounded-b-sm flex flex-col flex-1 bg-white">
             <header className="flex justify-between text-sm mb-2">
@@ -62,6 +144,15 @@ export function GroupCard({ item, as = 'li' }: GroupCardProps) {
           </div>
         </article>
       </Wrapper>
+
+      {/* 즐겨찾기 확인 모달 */}
+      <ConfirmModal
+        open={confirmOpen}
+        title={'찜을 변경하시겠습니까?'}
+        message={'찜 상태를 변경하면 언제든 다시 변경할 수 있습니다.'}
+        onConfirm={handleConfirmModal}
+        onClose={handleCloseModal}
+      />
     </>
   );
 }

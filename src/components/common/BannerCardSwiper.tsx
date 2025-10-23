@@ -1,113 +1,90 @@
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/swiper-bundle.css';
-import GroupCard, { type GroupItem } from './GroupCard';
+import GroupCard from './GroupCard';
+import type { GroupWithCategory } from '../../types/group';
+import { useMemo, useRef, useState } from 'react';
 
-function BannerCardSwiper() {
-  const groupList: GroupItem[] = [
-    {
-      id: 1,
-      status: '모집중',
-      category: '취미/여가',
-      region: '지역무관',
-      title: '마비노기 던전 공파 모집',
-      desc: '혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요.',
-      dday: 'D-3',
-      thumbnail: 'https://picsum.photos/seed/1/300/160',
-    },
-    {
-      id: 2,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 3,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 4,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 5,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 6,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 7,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-    {
-      id: 8,
-      status: '모집예정',
-      category: '스포츠',
-      region: '서울',
-      title: '강남 클라이밍 모임',
-      desc: '강남에서 클라이밍 함께할 분 찾습니다.',
-      dday: 'D-5',
-      thumbnail: 'https://picsum.photos/seed/2/300/160',
-    },
-  ];
+type BannerCardSwiperProps = {
+  groups: GroupWithCategory[];
+  spaceBetween?: number;
+  breakpoints?: NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>;
+  loop?: boolean;
+  className?: string;
+};
+
+function BannerCardSwiper({
+  groups,
+  spaceBetween = 12,
+  loop = false,
+  className = '',
+  breakpoints,
+}: BannerCardSwiperProps) {
+  const swiperRef = useRef<any>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
+    () => ({
+      0: { slidesPerView: 2, spaceBetween },
+      480: { slidesPerView: 2, spaceBetween },
+      768: { slidesPerView: 3, spaceBetween },
+      1024: { slidesPerView: 4, spaceBetween },
+      1280: { slidesPerView: 4, spaceBetween },
+    }),
+    [spaceBetween],
+  );
+
+  if (!groups || groups.length === 0) return null;
+
+  const bps = breakpoints ?? defaultBps;
+  const visibleGroups = groups.slice(0, 8);
+  const slidesPerView = swiperRef.current?.params?.slidesPerView || 4;
 
   return (
-    <div className="relative w-[1024px] mx-auto">
-      <Swiper
-        modules={[Navigation]}
-        navigation={{
-          nextEl: '.swiper-button-next',
-          prevEl: '.swiper-button-prev',
-        }}
-        spaceBetween={12}
-        slidesPerView={4}
-      >
-        {groupList.map(item => (
-          <SwiperSlide key={item.id}>
-            <GroupCard item={item} />
-          </SwiperSlide>
-        ))}
-      </Swiper>
-      {/* 화살표 버튼 */}
-      <button className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute !top-[54%] !-right-5 z-50">
-        <img src="/images/swiper_next.svg" />
-      </button>
+    <div className={['relative w-[1024px] mx-auto', className].join(' ')}>
+      <ul className="list-none p-0 m-0">
+        <Swiper
+          modules={[Navigation]}
+          onSwiper={swiper => (swiperRef.current = swiper)}
+          onSlideChange={swiper => setActiveIndex(swiper.activeIndex)}
+          navigation={{
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
+          }}
+          spaceBetween={12}
+          loop={loop}
+          grabCursor
+          breakpoints={bps}
+        >
+          {visibleGroups.map(item => (
+            <SwiperSlide key={item.group_id} tag="li">
+              <GroupCard as="div" item={item} />
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </ul>
+
+      {/* 이전 버튼: 첫 슬라이드에서는 숨김 */}
+      {activeIndex > 0 && (
+        <button
+          className="custom-prev flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] left-[-20px] z-20 bg-white shadow-card"
+          aria-label="이전 슬라이드"
+          onClick={() => swiperRef.current?.slidePrev()}
+        >
+          <img src="/images/swiper_next.svg" alt="" aria-hidden="true" className="rotate-180" />
+        </button>
+      )}
+
+      {/* 다음 버튼: 마지막 슬라이드에서는 숨김 */}
+      {activeIndex < visibleGroups.length - slidesPerView && (
+        <button
+          className="custom-next flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] right-[-20px] z-20 bg-white shadow-card"
+          aria-label="다음 슬라이드"
+          onClick={() => swiperRef.current?.slideNext()}
+        >
+          <img src="/images/swiper_next.svg" alt="" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

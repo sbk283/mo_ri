@@ -1,14 +1,12 @@
-// 참가하기 버튼 누르면 실행되는 모달임 - 그룹써머리카드랑 다름.
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import MeetingCard from '../prevgroup/MeetingCard';
 
 export type JoinGroupData = {
+  groupId: string;
   title: string;
   status: '모집중' | '모집종료' | '모임종료';
   category: string;
   subCategory: string;
-  memberCount: number;
   memberLimit: number;
   duration: string;
   dday?: string;
@@ -23,8 +21,13 @@ interface JoinGroupModalProps {
   group: JoinGroupData;
 }
 
-function JoinGroupModal({ isOpen, onClose, onSubmit }: JoinGroupModalProps) {
+function JoinGroupModal({ isOpen, onClose, onSubmit, group }: JoinGroupModalProps) {
   const [intro, setIntro] = useState('');
+
+  // 모달이 닫힐 때 입력 초기화 (UX 보완)
+  useEffect(() => {
+    if (!isOpen) setIntro('');
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -35,7 +38,6 @@ function JoinGroupModal({ isOpen, onClose, onSubmit }: JoinGroupModalProps) {
 
       {/* 모달 박스 */}
       <div className="relative z-10 w-[590px] rounded-lg bg-white p-6 shadow-lg">
-        {/* 제목 */}
         <h2 className="text-center text-[28px] font-bold text-[#0689E8] mb-2">
           모임에 참가하시겠습니까?
         </h2>
@@ -48,14 +50,16 @@ function JoinGroupModal({ isOpen, onClose, onSubmit }: JoinGroupModalProps) {
         {/* 요약 카드 (모달 전용) */}
         <div className="p-5">
           <MeetingCard
-            title="[4주차] 마비노기 던전 공파 모집"
-            status="모집중"
-            dday="D-30"
-            summary="혼자서 글렘 베르나 돌기 힘드네요. 같이 던전 도실 분 구해요. 마비노기 모바일 아닙니다."
-            category="취미/여가"
-            subCategory="게임/오락"
-            participants="2/10"
-            duration="2025.02.12 ~ 2025.05.12"
+            key={group.groupId}
+            groupId={group.groupId}
+            groupCapacity={group.memberLimit}
+            title={group.title}
+            status={group.status}
+            dday={group.dday ?? ''}
+            summary={group.desc}
+            category={group.category}
+            subCategory={group.subCategory}
+            duration={group.duration}
             width="100%"
             height="auto"
           />

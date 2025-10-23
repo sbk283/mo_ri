@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
 import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
+import { useGroupMember } from '../../contexts/GroupMemberContext';
 import type { GroupWithCategory } from '../../types/group';
 
 // 모임 상세 페이지
@@ -15,6 +16,10 @@ function GroupDetailLayout() {
     { title: string; detail: string; files: string[] }[]
   >([]);
   const [loading, setLoading] = useState(true);
+
+  // ✅ Context에서 실시간 멤버 수 가져오기
+  const { memberCounts, fetchMemberCount } = useGroupMember();
+  const currentCount = id ? (memberCounts[id] ?? 0) : 0;
 
   // 그룹 + 모임장 정보 + 커리큘럼
   useEffect(() => {
@@ -37,6 +42,9 @@ function GroupDetailLayout() {
 
         if (error) throw error;
         setGroup(data);
+
+        // ✅ 멤버 수 가져오기
+        await fetchMemberCount(id);
 
         // 커리큘럼 파싱
         if (data?.curriculum) {
@@ -103,7 +111,7 @@ function GroupDetailLayout() {
     };
 
     fetchGroup();
-  }, [id]);
+  }, [id, fetchMemberCount]);
 
   // 로딩 / 에러 처리
   if (loading)
@@ -154,7 +162,7 @@ function GroupDetailLayout() {
         summary={group.group_short_intro ?? ''}
         dday={calcDday(group.group_start_day)}
         duration={`${group.group_start_day} ~ ${group.group_end_day}`}
-        participants={`0/${group.group_capacity ?? 0}`}
+        participants={`${currentCount}/${group.group_capacity ?? 0}`}
         images={group.image_urls ?? []}
         isFavorite={false}
         mode="detail"

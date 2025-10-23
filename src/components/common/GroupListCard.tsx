@@ -1,6 +1,7 @@
-// GroupListCard.tsx
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useGroupMember } from '../../contexts/GroupMemberContext';
 
 export type GroupListCardProps = {
   group_id: string;
@@ -32,6 +33,16 @@ function GroupListCard({
   group_end_day,
 }: GroupListCardProps) {
   const navigate = useNavigate();
+
+  // Context 연결
+  const { memberCounts, fetchMemberCount } = useGroupMember();
+  const currentCount = memberCounts[group_id] ?? member_count ?? 0; // 실시간 멤버 수 표시
+
+  // 최신 모임 인원
+  useEffect(() => {
+    if (!group_id) return;
+    fetchMemberCount(group_id);
+  }, [group_id, fetchMemberCount]);
 
   const mainImage =
     image_urls && image_urls.length > 0
@@ -70,8 +81,7 @@ function GroupListCard({
 
   // 상태 계산
   let computedStatus: 'recruiting' | 'closed' | 'finished' = status;
-
-  const isFull = (group_capacity ?? 0) > 0 && (member_count ?? 0) >= (group_capacity ?? 0);
+  const isFull = (group_capacity ?? 0) > 0 && currentCount >= (group_capacity ?? 0);
 
   if (now > end) {
     computedStatus = 'finished'; // 종료됨
@@ -105,7 +115,7 @@ function GroupListCard({
               className={`flex w-[54px] h-[23px] text-xs font-bold text-white rounded-2xl items-center justify-center ${
                 computedStatus === 'recruiting'
                   ? 'bg-brand'
-                  : status === 'closed'
+                  : computedStatus === 'closed'
                     ? 'bg-brand-red'
                     : 'bg-gray-300'
               }`}
@@ -114,6 +124,7 @@ function GroupListCard({
             </span>
 
             <h3 className="text-lg font-semibold">{group_title}</h3>
+
             {/* D-day는 시작 전일 때만 표시 */}
             {dday !== null && (
               <span className="bg-[#BEC0C4] text-[11px] px-2 py-[2px] rounded-sm text-white font-bold">
@@ -121,7 +132,7 @@ function GroupListCard({
               </span>
             )}
 
-            {/* 모임 유형 배지 추가 */}
+            {/* 모임 유형 배지 */}
             <span className="text-[11px] font-semibold text-white bg-brand-orange px-2 py-[2px] rounded-sm">
               {groupType}
             </span>
@@ -140,13 +151,18 @@ function GroupListCard({
               <span className="text-gray-300 mx-1">{'>'}</span>
               <span className="text-gray-200">{category_sub_name}</span>
             </p>
-            <div>
-              <p className="text-md text-gray-200">{group_region}</p>
-            </div>
+
+            {group_region && (
+              <div>
+                <p className="text-md text-gray-200">{group_region}</p>
+              </div>
+            )}
+
+            {/* 멤버 수 */}
             <div className="flex gap-1">
               <img src="/images/group_member.svg" alt="그룹멤버" className="w-[15px] h-[15px]" />
               <span className="font-semibold text-gray-200">
-                {member_count ?? 0} / {group_capacity ?? 0}명
+                {currentCount} / {group_capacity ?? 0}명
               </span>
             </div>
           </div>

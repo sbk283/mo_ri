@@ -5,13 +5,16 @@ import React from 'react';
 import { AuthProvider } from './contexts/AuthContext.tsx';
 import { GroupProvider } from './contexts/GroupContext.tsx';
 import { GroupMemberProvider } from './contexts/GroupMemberContext.tsx';
+import { ScheduleProvider } from './contexts/ScheduleContext.tsx';
 
 createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <AuthProvider>
       <GroupProvider>
         <GroupMemberProvider>
-          <App />
+          <ScheduleProvider>
+            <App />
+          </ScheduleProvider>
         </GroupMemberProvider>
       </GroupProvider>
     </AuthProvider>

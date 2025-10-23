@@ -34,23 +34,38 @@ function CreateGroupPage() {
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
   const [formData, setFormData] = useState({
+    // 카테고리
     interestMajor: '',
     interestSub: '',
+
+    // FK
+    major_id: '',
+    sub_id: '',
+
+    // 일정
     startDate: '',
     endDate: '',
     groupType: '' as GroupFormData['groupType'],
-    region: '',
-    regionFree: false,
+
+    // 지역
+    group_region: '',
+    group_region_any: false,
+
+    // 기본 정보
     title: '',
     summary: '',
     memberCount: 0,
     images: [] as File[],
     description: '',
+
+    // 커리큘럼
     curriculum: [
       { title: '', detail: '' },
       { title: '', detail: '' },
     ],
     files: [] as File[][],
+
+    // 모임장 정보
     leaderName: '',
     leaderLocation: '',
     leaderCareer: '',

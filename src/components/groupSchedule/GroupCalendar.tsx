@@ -10,6 +10,7 @@ interface GroupCalendarProps {
   asideRef: React.RefObject<HTMLDivElement>;
   setMonthLabel: React.Dispatch<React.SetStateAction<string>>;
   setSelectedEventId: React.Dispatch<React.SetStateAction<string | null>>;
+  setMonthRange: React.Dispatch<React.SetStateAction<{ start: string; end: string } | null>>; // ✅ 부모에서 내려받기
 }
 
 /**
@@ -25,11 +26,12 @@ function GroupCalendar({
   asideRef,
   setMonthLabel,
   setSelectedEventId,
+  setMonthRange,
 }: GroupCalendarProps) {
-  const { schedules, fetchSchedules, clearSchedules } = useSchedule();
-  const prevMonthRef = useRef<string | null>(null);
+  const { schedules } = useSchedule();
+  // const prevMonthRef = useRef<string | null>(null);
 
-  // FullCalendar용 변환 데이터
+  // FullCalendar 표시용 이벤트 변환 로직
   const events = schedules.map(s => ({
     id: s.schedule_id,
     title: s.schedule_title || '[모임 일정]',
@@ -53,6 +55,16 @@ function GroupCalendar({
     };
   }, []);
 
+  // 월 변경 시 라벨과 월 범위 동기화
+  const handleDatesSet = (info: any) => {
+    const label = info.view.title.replace(/^\d+년\s*/, '');
+    setMonthLabel(label);
+
+    const start = dayjs(info.startStr).startOf('month').toISOString();
+    const end = dayjs(info.startStr).endOf('month').toISOString();
+    setMonthRange({ start, end });
+  };
+
   return (
     <section className="flex-1 flex justify-end items-stretch">
       <div className="w-full h-full flex justify-end">
@@ -68,25 +80,7 @@ function GroupCalendar({
           contentHeight="100%"
           expandRows
           events={events}
-          // 월 변경 시 라벨 + fetchSchedules 트리거
-          datesSet={async info => {
-            const label = info.view.title.replace(/^\d+년\s*/, '');
-            setMonthLabel(label);
-
-            // YYYY-MM-01 ~ YYYY-MM-말일 구간 계산
-            const start = dayjs(info.startStr).startOf('month').toISOString();
-            const end = dayjs(info.startStr).endOf('month').toISOString();
-            const monthKey = dayjs(info.startStr).format('YYYY-MM');
-
-            if (prevMonthRef.current !== monthKey) {
-              prevMonthRef.current = monthKey;
-              clearSchedules();
-              const groupId = window.location.pathname.split('/').pop();
-              if (groupId) {
-                await fetchSchedules(groupId, start, end);
-              }
-            }
-          }}
+          datesSet={handleDatesSet}
           eventDidMount={info => {
             const tooltip = document.createElement('div');
             tooltip.innerText = info.event.extendedProps.tooltip;

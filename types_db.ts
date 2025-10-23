@@ -79,6 +79,48 @@ export type Database = {
           },
         ]
       }
+      group_favorites: {
+        Row: {
+          created_at: string
+          favorite: boolean | null
+          group_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          favorite?: boolean | null
+          group_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          favorite?: boolean | null
+          group_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_favorites_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "group_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       group_members: {
         Row: {
           group_id: string
@@ -225,6 +267,7 @@ export type Database = {
         Row: {
           created_by: string | null
           curriculum: Json | null
+          favorite: boolean | null
           group_capacity: number | null
           group_content: string | null
           group_created_at: string
@@ -245,6 +288,7 @@ export type Database = {
         Insert: {
           created_by?: string | null
           curriculum?: Json | null
+          favorite?: boolean | null
           group_capacity?: number | null
           group_content?: string | null
           group_created_at?: string
@@ -265,6 +309,7 @@ export type Database = {
         Update: {
           created_by?: string | null
           curriculum?: Json | null
+          favorite?: boolean | null
           group_capacity?: number | null
           group_content?: string | null
           group_created_at?: string
@@ -572,6 +617,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_close_expired_groups: { Args: never; Returns: undefined }
       is_group_host: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: boolean

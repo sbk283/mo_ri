@@ -5,16 +5,6 @@ import { supabase } from '../../lib/supabase';
 import type { profile } from '../../types/profileType';
 import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
 
-// 그룹 데이터 타입 정의
-type GroupMemberData = {
-  group_id: string;
-  groups: {
-    group_title: string;
-    group_start_day: string;
-    group_end_day: string;
-  };
-};
-
 function IntroSection() {
   const { user } = useAuth();
   // 로그인 상태관리
@@ -23,6 +13,11 @@ function IntroSection() {
   const [joinedGroups, setJoinedGroups] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  // 검색 상태
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   // 로그인 상태 감지 및 프로필 불러오기
   useEffect(() => {
@@ -113,6 +108,13 @@ function IntroSection() {
     return <div>로딩중...</div>;
   }
 
+  // 검색 버튼 클릭시 db조회하기
+  const handleSearch = async () => {
+    if (!searchText.trim()) return;
+    // 검색 페이지로 이동 (쿼리스트링에 검색어 전달)
+    navigate(`/grouplist/${encodeURIComponent(searchText.trim())}`);
+  };
+
   return (
     <div>
       <div className="relative  mt-[70px]">
@@ -130,8 +132,14 @@ function IntroSection() {
             type="text"
             placeholder="모임명이나 카테고리를 입력해 주세요."
             className="w-[550px] p-[15px] rounded-[40px] placeholder:text-md placeholder:text-gray-200 px-8 border-brand border-[2px]"
+            value={searchText}
+            onChange={e => setSearchText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
           />
-          <button className="absolute right-6 top-1/2 transform -translate-y-1/2">
+          <button
+            className="absolute right-6 top-1/2 transform -translate-y-1/2"
+            onClick={handleSearch}
+          >
             <img src="./search.png" alt="검색" className="w-[30px] h-[30px] transform scale-75" />
           </button>
         </div>

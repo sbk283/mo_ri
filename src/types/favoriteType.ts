@@ -1,146 +1,10 @@
-// 개별 커리큘럼 단계
-export interface CurriculumItem {
-  title: string;
-  detail: string;
-  files?: File[];
-}
-
-// groups + 조인된 카테고리 포함 타입
-export interface GroupWithCategory extends groups {
-  categories_major?: Pick<categoryMajor, 'category_major_name' | 'category_major_slug'>;
-  categories_sub?: Pick<categorySub, 'category_sub_name' | 'category_sub_slug'>;
-
-  member_count?: number; // 모임 참여 인원 수
-  category_major_name?: string; // 필수 표시용 문자열
-  category_sub_name?: string;
-}
-
-// 모임 생성 전체 폼 데이터
-export interface GroupFormData {
-  // 카테고리
-  interestMajor: string; // 대분류
-  interestSub: string; // 중분류
-
-  // DB 저장용 FK 연결됨
-  major_id: string;
-  sub_id: string;
-
-  // 일정
-  startDate: string; // 시작일
-  endDate: string; // 종료일
-  groupType: 'oneday' | 'short' | 'long' | ''; // 모임 유형
-
-  // 지역
-  group_region: string;
-  group_region_any: boolean;
-
-  // 모임 기본 정보
-  title: string; // 모임 이름
-  memberCount: number; // 모집 인원
-  images: File[]; // 대표 + 서브 이미지
-  description: string; // 모임 소개 (RichText)
-  summary: string; // 간략 소개
-
-  // 커리큘럼
-  curriculum: CurriculumItem[]; // 단계별 커리큘럼
-  files: File[][]; // 단계별 첨부 이미지
-
-  // 모임장 정보 - 이거 추후 DB 테이블 네이밍대로 할거임!
-  leaderName: string; // 모임장 이름
-  leaderLocation: string; // 모임장 위치
-  leaderCareer: string; // 모임장 경력
-}
-
-// 모임 (groupsInsert 쪽 타입정의)
-export interface GroupInsertPayload {
-  group_title: string;
-  group_region: string | null;
-  created_by: string;
-  group_short_intro?: string | null;
-  group_content?: string | null;
-  group_start_day: string;
-  group_end_day: string;
-  status?: 'recruiting' | 'closed' | 'finished';
-  group_capacity?: number | null;
-  group_region_any?: boolean;
-  major_id: string;
-  sub_id: string;
-}
-
-// ===== supabase 연동 props 타입 =====
-
-// Step1 Props
-export interface StepOneProps {
-  formData: GroupFormData;
-  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
-
-// Step2 Props
-export interface StepTwoProps {
-  formData: GroupFormData;
-  onChange: <Field extends keyof GroupFormData>(field: Field, value: GroupFormData[Field]) => void;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
-
-// Step3 Props
-export interface StepThreeProps {
-  formData: GroupFormData;
-  onPrev?: () => void;
-  onNext?: () => void;
-}
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
-// 게시판 타입
-export type board_type = Database['public']['Tables']['board_type']['Row'];
-export type board_typeInsert = Database['public']['Tables']['board_type']['Row'];
-export type board_typeUpdate = Database['public']['Tables']['board_type']['Row'];
-
-// 그룹 멤버
-export type group_members = Database['public']['Tables']['group_members']['Row'];
-export type group_membersInsert = Database['public']['Tables']['group_members']['Row'];
-export type group_membersUpdate = Database['public']['Tables']['group_members']['Row'];
-
-// 그룹 게시글
-export type group_posts = Database['public']['Tables']['group_posts']['Row'];
-export type group_postsInsert = Database['public']['Tables']['group_posts']['Row'];
-export type group_postsUpdate = Database['public']['Tables']['group_posts']['Row'];
-
-// 그룹 일정 (스케쥴)
-export type group_schedule = Database['public']['Tables']['group_schedule']['Row'];
-export type group_scheduleInsert = Database['public']['Tables']['group_schedule']['Row'];
-export type group_scheduleUpdate = Database['public']['Tables']['group_schedule']['Row'];
-
-// 그룹 테이블
-export type groups = Database['public']['Tables']['groups']['Row'];
-export type groupsInsert = Database['public']['Tables']['groups']['Row'];
-export type groupsUpdate = Database['public']['Tables']['groups']['Row'];
-
-// 게시글 신고
-export type post_reports = Database['public']['Tables']['post_reports']['Row'];
-export type post_reportsInsert = Database['public']['Tables']['post_reports']['Row'];
-export type post_reportsUpdate = Database['public']['Tables']['post_reports']['Row'];
-
-// 카테고리 - 대분류
-export type categoryMajor = Database['public']['Tables']['categories_major']['Row'];
-export type categoryMajorInsert = Database['public']['Tables']['categories_major']['Insert'];
-export type categoryMajorUpdate = Database['public']['Tables']['categories_major']['Update'];
-
-// 카테고리 - 중분류
-export type categorySub = Database['public']['Tables']['categories_sub']['Row'];
-export type categorySubrInsert = Database['public']['Tables']['categories_sub']['Insert'];
-export type categorySubUpdate = Database['public']['Tables']['categories_sub']['Update'];
-export type categorySubRelationships =
-  Database['public']['Tables']['categories_sub']['Relationships'];
-
-// 유저 관심사
-export type interests = Database['public']['Tables']['user_interests']['Row'];
-export type interestsInsert = Database['public']['Tables']['user_interests']['Insert'];
-export type interestsUpdate = Database['public']['Tables']['user_interests']['Update'];
-export type interestsRelationships =
-  Database['public']['Tables']['user_interests']['Relationships'];
+export type favorites = Database['public']['Tables']['group_favorites']['Row'];
+export type favoritesInsert = Database['public']['Tables']['group_favorites']['Insert'];
+export type favoritesUpdate = Database['public']['Tables']['group_favorites']['Update'];
+export type favoritesRelationships =
+  Database['public']['Tables']['group_favorites']['Relationships'];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
@@ -212,6 +76,48 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: 'categories_major';
             referencedColumns: ['major_id'];
+          },
+        ];
+      };
+      group_favorites: {
+        Row: {
+          created_at: string;
+          favorite: boolean | null;
+          group_id: string;
+          id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          favorite?: boolean | null;
+          group_id: string;
+          id?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          favorite?: boolean | null;
+          group_id?: string;
+          id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_favorites_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['group_id'];
+          },
+          {
+            foreignKeyName: 'group_favorites_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'user_profiles';
+            referencedColumns: ['user_id'];
           },
         ];
       };
@@ -711,6 +617,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      auto_close_expired_groups: { Args: never; Returns: undefined };
       is_group_host: {
         Args: { p_group_id: string; p_user_id: string };
         Returns: boolean;

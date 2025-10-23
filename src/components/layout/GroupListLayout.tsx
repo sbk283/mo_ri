@@ -101,7 +101,7 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
         {/* 중앙 Swiper */}
         <section className="mb-12 w-[1024px]">
           <h2 className="text-lg font-bold mb-4">해당 카테고리의 인기있는 TOP8</h2>
-          <BannerCardSwiper />
+          <BannerCardSwiper groups={groups} />
         </section>
 
         {/* 리스트 */}

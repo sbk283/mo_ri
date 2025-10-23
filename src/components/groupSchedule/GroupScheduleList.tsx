@@ -1,35 +1,19 @@
-// 그룹 일정 리스트 컴포넌트
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { IoLocationSharp } from 'react-icons/io5';
+import type { group_schedule } from '../../types/group';
 import type { ScheduleForm } from './ScheduleModal';
 import ScheduleModal from './ScheduleModal';
 import RemoveModal from '../common/modal/RemoveModal';
 
 interface GroupScheduleListProps {
   monthLabel: string;
-  events: EventItem[];
+  events: group_schedule[];
   selectedEventId: string | null;
   asideRef: React.RefObject<HTMLDivElement>;
   onUpdateEvent: (updatedEvent: ScheduleForm & { id: string }) => void;
   onDeleteEvent: (id: string) => void;
 }
-
-// 일정 데이터 타입 (재사용함..)
-interface EventItem {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  location: string;
-}
-
-/**
- * 그룹 일정 리스트 컴포넌트
- * - 좌측 aside 영역 (월 표시 + 일정 타임라인)
- * - 클릭된 일정 하이라이트
- * - 세로 라인 + 날짜 + 카드 구성
- */
 
 function GroupScheduleList({
   monthLabel,
@@ -53,22 +37,21 @@ function GroupScheduleList({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  // 수정 버튼 클릭 시
-  const handleEditClick = (event: EventItem) => {
-    setEditingId(event.id);
+  // 수정 클릭 시
+  const handleEditClick = (event: group_schedule) => {
+    setEditingId(event.schedule_id);
     setEditForm({
-      title: event.title,
-      startDate: dayjs(event.start),
-      endDate: dayjs(event.end),
-      startTime: dayjs(event.start),
-      endTime: dayjs(event.end),
-      location: event.location,
-      noRegion: event.location === '지역 무관',
+      title: event.schedule_title ?? '',
+      startDate: dayjs(event.schedule_start_at),
+      endDate: dayjs(event.schedule_end_at),
+      startTime: dayjs(event.schedule_start_at),
+      endTime: dayjs(event.schedule_end_at),
+      location: event.schedule_place_name ?? '',
+      noRegion: event.schedule_place_name === '지역 무관',
     });
     setEditOpen(true);
   };
 
-  // 수정 완료 시 저장
   const handleEditSave = () => {
     if (!editingId) return;
     onUpdateEvent({ ...editForm, id: editingId });
@@ -98,18 +81,15 @@ function GroupScheduleList({
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(66,148,207,0.5) transparent',
       }}
-      className="w-[300px] pr-1 overflow-y-auto h-[670px] overflow-visible"
+      className="w-[300px] pr-1 overflow-y-auto h-[670px]"
     >
-      {/* 월 일정 제목 */}
       <h3 className="flex gap-1 justify-end mr-[18px] text-brand mb-3 text-3xl font-semibold">
         {monthLabel || dayjs().format('M월')}
         <span className="mt-[4.5px] text-black text-xl font-semibold">일정</span>
       </h3>
 
-      {/* 일정 타임라인 전체 */}
       <div className="space-y-6 relative pb-6 px-5">
         {events.length === 0 ? (
-          // 일정이 없을 때
           <div className="flex flex-col items-center justify-center h-[200px] text-gray-400">
             <img
               src="/images/empty_calendar.svg"
@@ -119,26 +99,23 @@ function GroupScheduleList({
             <p className="text-sm">일정이 없습니다.</p>
           </div>
         ) : (
-          // 일정이 있을 때
           events.map(s => {
-            const isSelected = selectedEventId === s.id;
+            const isSelected = selectedEventId === s.schedule_id;
             return (
               <div
-                key={s.id}
-                id={`event-${s.id}`}
-                className={`flex justify-between pb-[25px] transition-all duration-200`}
+                key={s.schedule_id}
+                id={`event-${s.schedule_id}`}
+                className="flex justify-between pb-[25px] transition-all duration-200"
               >
-                {/* 날짜 + 세로선 */}
+                {/* 날짜 */}
                 <div className="flex flex-col relative">
-                  <div>
-                    <p
-                      className={`font-bold transition-colors ${
-                        isSelected ? 'text-brand' : 'text-gray-200'
-                      }`}
-                    >
-                      {dayjs(s.start).format('DD일')}
-                    </p>
-                  </div>
+                  <p
+                    className={`font-bold transition-colors ${
+                      isSelected ? 'text-brand' : 'text-gray-200'
+                    }`}
+                  >
+                    {dayjs(s.schedule_start_at).format('DD일')}
+                  </p>
                   <div className="absolute w-[1px] h-[119px] bg-gray-300 left-[50%] top-[28px]" />
                 </div>
 
@@ -151,31 +128,30 @@ function GroupScheduleList({
                   <div>
                     <div className="flex items-center justify-between">
                       <p className="text-xs text-gray-500">
-                        {dayjs(s.start).format('HH:mm')} - {dayjs(s.end).format('HH:mm')}
+                        {dayjs(s.schedule_start_at).format('HH:mm')} -{' '}
+                        {dayjs(s.schedule_end_at).format('HH:mm')}
                       </p>
                       <button
                         onClick={() => handleEditClick(s)}
-                        className="text-[12px] text-brand font-medium hover:opacity-80 transition"
-                        aria-label="일정 수정"
+                        className="text-[12px] text-brand font-medium hover:opacity-80"
                       >
                         <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
                       </button>
                     </div>
 
-                    {/* 제목 */}
-                    <p className="font-medium text-gray-800 mt-1">{s.title}</p>
+                    <p className="font-medium text-gray-800 mt-1">
+                      {s.schedule_title ?? '[제목 없음]'}
+                    </p>
 
-                    {/* 위치 */}
                     <p className="flex items-center text-sm text-gray-500 mt-1">
                       <IoLocationSharp className="text-brand mr-1" />
-                      {s.location}
+                      {s.schedule_place_name ?? '장소 미정'}
                     </p>
                   </div>
 
-                  {/* 일정삭제 */}
                   <div className="flex justify-end">
                     <button
-                      onClick={() => handleDeleteClick(s.id)}
+                      onClick={() => handleDeleteClick(s.schedule_id)}
                       className="text-xs text-[#FF5252]"
                     >
                       일정삭제
@@ -188,7 +164,6 @@ function GroupScheduleList({
         )}
       </div>
 
-      {/* 일정 수정 모달 (재사용) */}
       <ScheduleModal
         open={editOpen}
         form={editForm}
@@ -199,7 +174,6 @@ function GroupScheduleList({
         submitText="저장"
       />
 
-      {/* 삭제 모달 (재사용) */}
       <RemoveModal
         open={deleteOpen}
         title="일정을 삭제하시겠습니까?"
@@ -208,7 +182,6 @@ function GroupScheduleList({
         cancelText="취소"
         onConfirm={handleDeleteConfirm}
         onClose={() => setDeleteOpen(false)}
-        preventBackdropClose={false}
       />
     </aside>
   );

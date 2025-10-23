@@ -4,7 +4,7 @@ import { useAuth } from './AuthContext';
 import type { careers } from '../types/careerType';
 
 // 타입 정의
-export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left';
+export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left'; // 신청|승인|거절|탈퇴
 export type MemberRole = 'host' | 'member';
 
 export interface GroupMember {
@@ -22,6 +22,7 @@ interface GroupMemberContextType {
   error: string | null;
 
   fetchMembers: (groupId: string) => Promise<void>;
+  fetchMemberCount: (groupId: string) => Promise<number>;
 
   /**
    * @returns {Promise<'success' | 'already' | 'error'>}
@@ -32,6 +33,8 @@ interface GroupMemberContextType {
   joinGroup: (groupId: string) => Promise<'success' | 'already' | 'error'>;
   leaveGroup: (groupId: string) => Promise<'success' | 'error'>;
   fetchUserCareers: (userId: string) => Promise<careers[]>;
+
+  memberCounts: Record<string, number>; // 그룹별 멤버 수 관리
 }
 
 // Context 생성
@@ -43,6 +46,9 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ 여러 그룹의 멤버 수를 각각 저장
+  const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
+
   //유저 커리어 조회
   const fetchUserCareers = useCallback(async (userId: string): Promise<careers[]> => {
     try {
@@ -50,7 +56,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         .from('user_careers')
         .select('*')
         .eq('profile_id', userId)
-        .order('start_date', { ascending: false }); // 최신순으로 정렬
+        .order('start_date', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -78,6 +84,30 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  }, []);
+
+  // 특정 그룹의 현재 멤버 수 (그룹별 저장)
+  const fetchMemberCount = useCallback(async (groupId: string): Promise<number> => {
+    try {
+      const { count, error } = await supabase
+        .from('group_members')
+        .select('member_id', { count: 'exact', head: true })
+        .eq('group_id', groupId)
+        .eq('member_status', 'approved');
+
+      if (error) throw error;
+
+      setMemberCounts(prev => ({
+        ...prev,
+        [groupId]: count ?? 0,
+      }));
+
+      return count ?? 0;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      console.error('멤버 카운트 조회 실패:', error.message);
+      return 0;
     }
   }, []);
 
@@ -114,7 +144,6 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
         if (insertError) throw insertError;
 
-        // 로컬 상태 즉시 반영 (DB insert 결과 반영)
         setMembers(prev => [
           ...prev,
           {
@@ -127,6 +156,14 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
           },
         ]);
 
+        // 그룹 카운트 증가
+        setMemberCounts(prev => ({
+          ...prev,
+          [groupId]: (prev[groupId] ?? 0) + 1,
+        }));
+
+        await fetchMemberCount(groupId);
+
         return 'success';
       } catch (err: any) {
         console.error('참가 실패:', err.message);
@@ -136,7 +173,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         setLoading(false);
       }
     },
-    [user],
+    [user, fetchMemberCount],
   );
 
   // 탈퇴 (본인 탈퇴)
@@ -154,7 +191,16 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
         if (error) throw error;
         console.log('모임 탈퇴 완료');
+
+        // 카운트 감소
+        setMemberCounts(prev => ({
+          ...prev,
+          [groupId]: Math.max((prev[groupId] ?? 1) - 1, 0),
+        }));
+
         await fetchMembers(groupId);
+        await fetchMemberCount(groupId);
+
         return 'success';
       } catch (err: any) {
         console.error('탈퇴 실패:', err.message);
@@ -164,7 +210,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         setLoading(false);
       }
     },
-    [user, fetchMembers],
+    [user, fetchMembers, fetchMemberCount],
   );
 
   // Provider
@@ -176,8 +222,10 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         error,
         fetchUserCareers,
         fetchMembers,
+        fetchMemberCount,
         joinGroup,
         leaveGroup,
+        memberCounts, // 그룹별 멤버 수 (객체)
       }}
     >
       {children}

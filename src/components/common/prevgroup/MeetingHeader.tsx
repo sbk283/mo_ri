@@ -8,6 +8,7 @@ import ShareModal from '../modal/ShareModal';
 import SuccessModal from '../modal/SuccessModal';
 import MeetingCard from './MeetingCard';
 import { useGroupMember } from '../../../contexts/GroupMemberContext';
+import { useAuth } from '../../../contexts/AuthContext';
 
 export interface MeetingHeaderProps {
   groupId: string;
@@ -49,12 +50,34 @@ function MeetingHeader({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const [joinSuccess, setJoinSuccess] = useState(false);
+  const [isAlreadyJoined, setIsAlreadyJoined] = useState(false);
 
   const shareUrl = window.location.href;
   const swiperRef = useRef<SwiperClass | null>(null);
   const nextRef = useRef<HTMLButtonElement | null>(null);
 
-  const { joinGroup } = useGroupMember();
+  const { joinGroup, members, fetchMembers } = useGroupMember();
+  const { user } = useAuth();
+
+  // 이미 참가한 모임인지 확인
+  useEffect(() => {
+    const checkMembership = async () => {
+      if (!user || !groupId) return;
+
+      await fetchMembers(groupId);
+    };
+
+    checkMembership();
+  }, [groupId, user, fetchMembers]);
+
+  // members 변경 시 참가 여부 체크
+  useEffect(() => {
+    if (!user) return;
+
+    const joined = members.some(m => m.user_id === user.id && m.member_status === 'approved');
+
+    setIsAlreadyJoined(joined);
+  }, [members, user]);
 
   useEffect(() => {
     if (joinSuccess) {
@@ -71,6 +94,7 @@ function MeetingHeader({
 
     if (result === 'success') {
       setJoinSuccess(true);
+      setIsAlreadyJoined(true);
     } else if (result === 'already') {
       alert('이미 참가한 모임입니다.');
     } else {
@@ -97,6 +121,13 @@ function MeetingHeader({
 
   const handleJoinClick = () => {
     if (mode === 'preview') return;
+
+    // 이미 참가한 경우
+    if (isAlreadyJoined) {
+      alert('이미 참가한 모임입니다.');
+      return;
+    }
+
     setOpen(true);
   };
 
@@ -153,6 +184,8 @@ function MeetingHeader({
       {/* 우측 정보 */}
       <div className="min-w-0">
         <MeetingCard
+          groupId={groupId}
+          groupCapacity={Number(participants.split('/')[1])}
           title={title}
           status={status}
           summary={summary ?? ''}
@@ -182,9 +215,14 @@ function MeetingHeader({
 
           <button
             onClick={handleJoinClick}
-            className="w-[210px] h-[50px] px-4 py-2 bg-brand text-white rounded-md"
+            disabled={isAlreadyJoined}
+            className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
+              isAlreadyJoined
+                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                : 'bg-brand text-white hover:bg-blue-600'
+            }`}
           >
-            참가하기
+            {isAlreadyJoined ? '참가완료' : '참가하기'}
           </button>
         </div>
       </div>
@@ -196,13 +234,15 @@ function MeetingHeader({
         onClose={() => setOpen(false)}
         onSubmit={handleJoinSubmit}
         group={{
+          groupId,
           title,
           status,
           category,
           subCategory,
-          memberCount: Number(participants.split('/')[0]),
           memberLimit: Number(participants.split('/')[1]),
           duration,
+          dday,
+          desc: summary,
         }}
       />
       <SuccessModal

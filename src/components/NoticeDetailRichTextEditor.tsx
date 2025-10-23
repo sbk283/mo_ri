@@ -1,5 +1,4 @@
-// (참고) src/components/NoticeDetailRichTextEditor.tsx
-// 그대로 사용 가능합니다. (Supabase Storage 업로드 + 여러 장 삽입/교체 처리)
+// src/components/NoticeDetailRichTextEditor.tsx
 import React, {
   useCallback,
   useRef,

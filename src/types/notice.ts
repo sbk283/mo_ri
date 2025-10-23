@@ -3,6 +3,6 @@ export type Notice = {
   title: string;
   content: string;
   date: string; // YYYY-MM-DD
-  views?: number;
   isRead: boolean;
+  views: number;
 };

@@ -1,8 +1,8 @@
 //  카테고리 메뉴 사이드바
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { categorySlugMap } from '../constants/categorySlugs';
+import { categorySlugMap, slugToCategoryMap } from '../constants/categorySlugs';
 
 function CategoryMenuSidebar() {
   const [activeMain, setActiveMain] = useState('');
@@ -28,24 +28,26 @@ function CategoryMenuSidebar() {
 
   // URL slug 홛ㄱ인 후 activeMain인지 activeSub인지 결정
   useEffect(() => {
-    const pathParts = location.pathname.split('/');
-    const slug = pathParts[pathParts.length - 1]; // /grouplist/:slug
+    const pathParts = location.pathname.split('/').filter(Boolean);
+    const slug = pathParts[pathParts.length - 1];
 
-    if (!slug) return;
+    // 전체보기 처리
+    if (slug === 'all') {
+      setActiveMain('전체보기');
+      setActiveSub('');
+      setOpenCategory('');
+      return;
+    }
 
-    const entry = Object.entries(categorySlugMap).find(([, value]) => value === slug);
-    if (!entry) return;
+    const korName = slugToCategoryMap[slug];
+    if (!korName) return;
 
-    const [korName] = entry;
-
-    // 메인 카테고리인지, 서브 카테고리인지 확인
     const main = categories.find(cat => cat.name === korName);
     if (main) {
       setActiveMain(main.name);
       if (main.sub?.length) setOpenCategory(main.name);
       setActiveSub('');
     } else {
-      // 서브 카테고리일 경우
       const parent = categories.find(cat => cat.sub?.includes(korName));
       if (parent) {
         setActiveMain(parent.name);

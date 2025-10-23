@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
+import { useGroup } from '../../contexts/GroupContext';
+import { useGroupMember } from '../../contexts/GroupMemberContext';
+import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
 import ArrayDropdown from '../common/ArrayDropdown';
 import BannerCardSwiper from '../common/BannerCardSwiper';
 import GroupListCard from '../common/GroupListCard';
-import { useGroup } from '../../contexts/GroupContext';
-import { useGroupMember } from '../../contexts/GroupMemberContext'; // ✅ 추가
-import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -13,15 +13,15 @@ type GroupListLayoutProps = {
   slug: string;
 };
 
-function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps) {
+function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayoutProps) {
   const [selectedSort, setSelectedSort] = useState('최신순');
   const { groups, loading, fetchGroups } = useGroup();
-  const { fetchMemberCount } = useGroupMember(); // ✅ subscribeToGroup 제거
+  const { fetchMemberCount } = useGroupMember();
 
   // 그룹 불러오기
   useEffect(() => {
-    fetchGroups();
-  }, [fetchGroups]);
+    fetchGroups(slug);
+  }, [fetchGroups, slug]);
 
   // 정렬 + 필터링 처리
   const displayedGroups = useMemo(() => {
@@ -75,7 +75,7 @@ function GroupListLayout({ mainCategory, activeCategory }: GroupListLayoutProps)
     return filtered;
   }, [groups, selectedSort]);
 
-  // ✅ 초기 카운트만 조회 (Realtime이 자동으로 업데이트 처리)
+  // 초기 카운트만 조회 (Realtime이 자동으로 업데이트 처리)
   useEffect(() => {
     displayedGroups.forEach(group => {
       fetchMemberCount(group.group_id);

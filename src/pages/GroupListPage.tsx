@@ -1,14 +1,13 @@
 import { useParams } from 'react-router-dom';
 import CategoryMenuSidebar from '../components/CategoryMenuSidebar';
 import GroupListLayout from '../components/layout/GroupListLayout';
-import { categorySlugMap } from '../constants/categorySlugs';
+import { slugToCategoryMap } from '../constants/categorySlugs';
 
 function GroupListPage(): JSX.Element {
   const { slug } = useParams<{ slug: string }>();
 
   // 한글 카테고리명 (메인/서브/전체)
-  const activeCategory =
-    Object.entries(categorySlugMap).find(([_kr, eng]) => eng === slug)?.[0] ?? '전체보기';
+  const activeCategory = slugToCategoryMap[slug ?? 'all'] ?? '전체보기';
 
   // 메인 카테고리
   const mainCategories = ['운동/건강', '스터디/학습', '취미/여가', '봉사/사회참여', '전체보기'];

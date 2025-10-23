@@ -7,6 +7,7 @@ import type {
   GroupWithCategory,
 } from '../types/group';
 import { useAuth } from './AuthContext';
+import { slugToCategoryMap } from '../constants/categorySlugs';
 
 // 그룹 관련 컨텍스트 타입 정의
 interface GroupContextType {
@@ -37,21 +38,26 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     try {
       setLoading(true);
 
-      // categories_major/sub 조인 포함
       let query = supabase.from('groups').select(`
-        *,
-        categories_major (category_major_name, category_major_slug),
-        categories_sub (category_sub_name, category_sub_slug)
-      `);
+  *,
+  categories_major:categories_major!inner (category_major_name, category_major_slug),
+  categories_sub:categories_sub!inner (category_sub_name, category_sub_slug)
+`);
 
       if (slug && slug !== 'all') {
-        query = query.eq('categories_major.category_major_slug', slug);
+        const korName = slugToCategoryMap[slug];
+        if (korName) {
+          if (['운동/건강', '스터디/학습', '취미/여가', '봉사/사회참여'].includes(korName)) {
+            query = query.eq('categories_major.category_major_name', korName);
+          } else {
+            query = query.eq('categories_sub.category_sub_name', korName);
+          }
+        }
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.order('group_created_at', { ascending: false });
       if (error) throw error;
 
-      // category_major_name / category_sub_name 매핑
       const mapped = (data ?? []).map(g => ({
         ...g,
         category_major_name: g.categories_major?.category_major_name ?? '카테고리 없음',
@@ -219,10 +225,10 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         .from('groups')
         .select(
           `
-          *,
-          categories_major (category_major_name, category_major_slug),
-          categories_sub (category_sub_name, category_sub_slug)
-        `,
+    *,
+    categories_major:major_id (category_major_name, category_major_slug),
+    categories_sub:sub_id (category_sub_name, category_sub_slug)
+  `,
         )
         .eq('group_id', groupId)
         .single();

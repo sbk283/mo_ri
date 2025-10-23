@@ -34,7 +34,7 @@ function MeetingCard({
   const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
 
   // Context의 실시간 멤버 수 사용 (GroupListCard와 동일한 패턴)
-  const currentCount = memberCounts[groupId] ?? 0;
+  const currentCount = memberCounts[groupId] !== undefined ? memberCounts[groupId] : 0;
 
   // 컴포넌트 마운트 시 최신 멤버 수 가져오기
   useEffect(() => {

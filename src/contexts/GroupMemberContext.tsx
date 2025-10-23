@@ -113,10 +113,10 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
       if (error) throw error;
 
       // Context 상태 업데이트
-      setMemberCounts(prev => ({
-        ...prev,
-        [groupId]: count ?? 0,
-      }));
+      setMemberCounts(prev => {
+        const next = { ...prev, [groupId]: count ?? 0 };
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
 
       return count ?? 0;
     } catch (err) {
@@ -204,8 +204,6 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
           .single();
 
         if (insertError) throw insertError;
-
-        console.log('모임 참가 성공 - Realtime이 카운트 업데이트 처리');
 
         return 'success';
       } catch (err) {

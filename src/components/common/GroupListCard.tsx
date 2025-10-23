@@ -36,7 +36,11 @@ function GroupListCard({
 
   // Context 연결
   const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
-  const currentCount = memberCounts[group_id] ?? member_count ?? 0; // 실시간 멤버 수 표시
+  const currentCount =
+    memberCounts[group_id] !== undefined ? memberCounts[group_id] : (member_count ?? 0);
+
+  useEffect(() => {
+  }, [memberCounts[group_id]]);
 
   // 최신 모임 인원
   useEffect(() => {

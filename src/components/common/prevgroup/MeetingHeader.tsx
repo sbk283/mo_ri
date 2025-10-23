@@ -222,7 +222,7 @@ function MeetingHeader({
             disabled={isAlreadyJoined}
             className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
               isAlreadyJoined
-                ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                ? 'bg-[#777] text-white cursor-not-allowed'
                 : 'bg-brand text-white hover:bg-blue-600'
             }`}
           >

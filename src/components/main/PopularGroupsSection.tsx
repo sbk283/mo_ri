@@ -89,26 +89,26 @@ export default function PopularGroupsSection() {
 
   return (
     <section
-      className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB]"
+      className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB] pb-[78px]"
       aria-labelledby="popular-groups-heading"
     >
       <div className="mx-auto w-[1024px]">
-        <header className="pt-[40px] pb-[18px]">
+        <header className="pt-[76px] pb-[22px]">
           <h2 id="popular-groups-heading" className="font-semibold text-lg">
             Mo:ri 가 엄선한 인기모임!
           </h2>
           <div className="mr-4">
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">지금 바로 확인하세요!</p>
-              <Link to="/grouplist" className="flex text-sm gap-1 pb-auto">
+              <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
                 <img src={Plus} alt="" aria-hidden="true" />
-                <span className="items-center">더보기</span>
+                <span className="text-md">더보기</span>
               </Link>
             </div>
           </div>
         </header>
 
-        <div className="mb-[80px]">
+        <div className="">
           <SwiperGroupCard items={data} confirmMode="unfav" loop={false} spaceBetween={12} />
         </div>
       </div>

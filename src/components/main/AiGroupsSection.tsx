@@ -293,50 +293,27 @@ export default function AiGroupsSection() {
   return (
     <section className="mx-auto w-[1024px]" aria-labelledby="ai-groups-heading">
       <div className="mx-auto">
-        <header className="pt-[40px] pb-[18px]">
-          <h2 id="ai-groups-heading" className="font-semibold text-lg mb-2">
-            AI가 선별한
+        <header className="pt-[75px] pb-[32px]">
+          <h2 id="popular-groups-heading" className="font-semibold text-lg">
+            AI 가 선별한
           </h2>
-
-          <div className="flex items-center justify-between">
+          <div className="mr-4">
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">나만의 취향 맞춤 모임!</p>
-              <Link to="/grouplist" className="flex items-center text-sm gap-1 pt-1">
+              <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
                 <img src={Plus} alt="" aria-hidden="true" />
-                더보기
+                <span className="text-md">더보기</span>
               </Link>
-            </div>
-
-            <div className="flex gap-2" role="tablist" aria-label="모임 기간 필터">
-              {FILTERS.map(f => {
-                const isActive = active === f.key;
-                return (
-                  <button
-                    key={f.key}
-                    aria-selected={isActive}
-                    aria-pressed={isActive}
-                    onClick={() => setActive(f.key)}
-                    className={[
-                      'py-1 rounded-[5px] font-bold border w-[128px]',
-
-                      isActive
-                        ? 'bg-brand text-white border-brand'
-                        : 'bg-white text-brand border-brand hover:bg-blue-50',
-                    ].join(' ')}
-                  >
-                    {f.label}
-                  </button>
-                );
-              })}
             </div>
           </div>
         </header>
 
         <ul
           className="
-            grid gap-4 mb-[80px]
+            grid gap-x-[12px] gap-y-[22px] mb-[64px]
             grid-cols-2 sm:grid-cols-3 lg:grid-cols-4
-            place-items-stretch overflow-x-auto pb-2 w-[1024px]
+            place-items-stretch overflow-x-auto  
+          
           "
         >
           {filtered.length ? (

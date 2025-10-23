@@ -106,33 +106,30 @@ export function GroupCard({
 
   return (
     <>
-      <Wrapper className="overflow-hidden relative cursor-pointer flex flex-col pt-5">
-        <article className="overflow-hidden h-[290px] w-full rounded-sm flex flex-col border border-[#A3A3A3]">
+      <Wrapper className="overflow-hidden relative cursor-pointer pt-5">
+        <article className="h-[290px] w-[245px] rounded-sm flex flex-col border border-gray-300">
           <span className="absolute left-2 z-10">
             <StatusBadge text={item.status} />
           </span>
 
-          <div className="relative overflow-hidden">
-            <img
-              src={item.thumbnail}
-              alt={`${item.title} 썸네일`}
-              className="w-full object-cover rounded-t-sm h-[133px]"
-            />
-          </div>
-          <div className="relative p-[15px] h-[157px] rounded-b-sm flex flex-col flex-1 pb-12 bg-white">
+          <img
+            src={item.thumbnail}
+            alt={`${item.title} 썸네일`}
+            className="w-full object-cover rounded-t-sm h-[133px]"
+          />
+
+          <div className="relative p-[15px] rounded-b-sm flex flex-col flex-1 bg-white">
             <header className="flex justify-between text-sm mb-2">
               <span className="text-[#D83737] font-semibold">{item.category}</span>
               <span className="text-[#767676]">{item.region}</span>
             </header>
-            <h3 className="flex items-center gap-1 text-lg font-bold hover:underline">
-              <span className="truncate block max-w-[calc(100%-20px)]">{item.title}</span>
+            <h3 className="items-center gap-1 text-lg truncate mb-[7px] font-bold ">
+              {item.title}
             </h3>
-            <p className="text-[15px] h-[34px] text-[#979797] line-clamp-2 leading-[17px]">
-              {item.desc}
-            </p>
-            <time className="absolute left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
+            <p className="text-[15px] text-gray-300 line-clamp-2 leading-[19px]">{item.desc}</p>
+            <span className="absolute font-semibold text-center left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
               {item.dday}
-            </time>
+            </span>
           </div>
         </article>
       </Wrapper>

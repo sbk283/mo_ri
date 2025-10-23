@@ -345,13 +345,36 @@ function MyInquiriesPage() {
                 <div className="mt-[12px] flex flex-wrap gap-2">
                   {(() => {
                     let files: { path: string; originalName: string }[] = [];
+
                     try {
-                      const parsed = JSON.parse(String(selectedInquiry.inquiry_file_urls));
-                      files = Array.isArray(parsed) ? parsed : [parsed];
-                    } catch {
+                      let parsed = selectedInquiry.inquiry_file_urls;
+
+                      // 문자열이면 한 번 파싱
+                      if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+
+                      // 파싱 결과가 여전히 문자열 배열이면 다시 파싱
+                      if (Array.isArray(parsed) && typeof parsed[0] === 'string') {
+                        parsed = (parsed as string[])
+                          .map((item: string) => {
+                            try {
+                              return JSON.parse(item);
+                            } catch {
+                              return null;
+                            }
+                          })
+                          .filter(Boolean);
+                      }
+
+                      files = (Array.isArray(parsed) ? parsed : [parsed]) as {
+                        path: string;
+                        originalName: string;
+                      }[];
+                    } catch (e) {
+                      console.warn('파일 파싱 오류:', e);
                       files = [];
                     }
-                    return files.map((file, idx) => (
+
+                    return files.slice(0, 2).map((file, idx) => (
                       <a
                         key={idx}
                         href={`https://eetunrwteziztszaezhd.supabase.co/storage/v1/object/public/inquiry-images/${file.path}`}

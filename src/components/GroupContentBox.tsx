@@ -1,80 +1,93 @@
-// src/components/GroupContentBox.tsx
-// import { useEffect, useMemo, useState } from 'react';
-// import { supabase } from '../lib/supabase';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import GroupContentNon from './GroupContentNon';
 
-// type GroupRow = {
-//   group_id: string;
-//   group_title: string;
-//   group_short_intro: string | null;
-//   group_start_day: string;
-//   group_end_day: string;
-//   group_capacity: number | null;
-//   group_region: string | null;
-//   image_urls: string[] | null;
-//   group_created_at: string;
-// };
+type GroupRow = {
+  group_id: string;
+  group_title: string;
+  group_short_intro: string | null;
+  group_start_day: string;
+  group_end_day: string;
+  group_capacity: number | null;
+  group_region: string | null;
+  image_urls: string[] | null;
+  group_created_at: string;
+  status: 'recruiting' | 'closed' | 'finished';
+  categories_major?: { category_major_name: string } | null;
+  categories_sub?: { category_sub_name: string } | null;
+  member_count?: number;
+};
 
 export default function GroupContentBox() {
-  // const [groups, setGroups] = useState<GroupRow[]>([]);
-  // const [memberCountMap, setMemberCountMap] = useState<Record<string, number>>({});
-  // const [loading, setLoading] = useState(true);
+  const [groups, setGroups] = useState<GroupRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // useEffect(() => {
-  //   let ignore = false;
-  //   (async () => {
-  //     setLoading(true);
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setLoading(true);
 
-  //     const { data: userRes, error: userErr } = await supabase.auth.getUser();
-  //     const userId = userRes?.user?.id;
-  //     if (userErr || !userId) {
-  //       if (!ignore) setGroups([]);
-  //       setLoading(false);
-  //       return;
-  //     }
+      const { data: userRes, error: userErr } = await supabase.auth.getUser();
+      const userId = userRes?.user?.id;
+      if (userErr || !userId) {
+        if (!ignore) setGroups([]);
+        setLoading(false);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('groups')
+        .select(
+          `
+          group_id,
+          group_title,
+          group_short_intro,
+          group_start_day,
+          group_end_day,
+          group_capacity,
+          group_region,
+          image_urls,
+          status,
+          group_created_at,
+          categories_major ( category_major_name ),
+          categories_sub ( category_sub_name ),
+          group_members!left ( member_id )
+        `,
+        )
+        .eq('created_by', userId)
+        .order('group_created_at', { ascending: false });
 
-  //     const { data, error } = await supabase
-  //       .from('groups')
-  //       .select(
-  //         'group_id, group_title, group_short_intro, group_start_day, group_end_day, group_capacity, group_region, image_urls, group_created_at',
-  //       )
-  //       .eq('created_by', userId)
-  //       .order('group_created_at', { ascending: false });
+      if (error || !data) {
+        if (!ignore) setGroups([]);
+        setLoading(false);
+        return;
+      }
 
-  //     if (error || !data) {
-  //       if (!ignore) setGroups([]);
-  //       setLoading(false);
-  //       return;
-  //     }
+      // 인원
+      const formattedGroups: GroupRow[] = data.map((g: any) => ({
+        ...g,
+        member_count: Array.isArray(g.group_members) ? g.group_members.length : 0,
+      }));
 
-  //     if (!ignore) setGroups(data);
+      if (!ignore) setGroups(formattedGroups);
+      setLoading(false);
+    })();
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
-  //     if (data.length) {
-  //       const ids = data.map(d => d.group_id);
-  //       const { data: members } = await supabase.from('group_members').select('group_id');
+  const today = useMemo(() => new Date(), []);
 
-  //       if (!ignore) {
-  //         const map: Record<string, number> = {};
-  //         for (const m of members ?? []) {
-  //           if (ids.includes(m.group_id)) {
-  //             map[m.group_id] = (map[m.group_id] ?? 0) + 1;
-  //           }
-  //         }
-  //         setMemberCountMap(map);
-  //         setLoading(false);
-  //       }
-  //     } else {
-  //       if (!ignore) setMemberCountMap({});
-  //       setLoading(false);
-  //     }
-  //   })();
-  //   return () => {
-  //     ignore = true;
-  //   };
-  // }, []);
+  const fmt = (d: string) => (d ? d.replaceAll('-', '.') : '');
 
-  // const today = useMemo(() => new Date(), []);
-  // const fmt = (d: string) => (d ? d.replaceAll('-', '.') : '');
+  // 남은 오픈일
+  const daysUntilOpen = (start: string) => {
+    const startDate = new Date(start);
+    const diff = startDate.getTime() - today.getTime();
+    const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    return days > 0 ? days : 0;
+  };
 
   // if (loading) {
   //   return (
@@ -96,60 +109,73 @@ export default function GroupContentBox() {
   //   );
   // }
 
-  // if (groups.length === 0) {
-  //   return (
-  //     <div className="w-[1024px] mx-auto h-[160px] flex items-center justify-center text-gray-500 border rounded-[5px]">
-  //       등록된 모임이 없습니다.
-  //     </div>
-  //   );
-  // }
+  if (groups.length === 0) {
+    return <GroupContentNon />;
+  }
 
   return (
-    <Link
-      to={'/groupcontent/:id'}
-      className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
-    >
-      {/* 3항연산자로 바꾸기 모집예정, 모집중으로 */}
-      <div className="absolute rounded-[5px] bg-gray-300 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-        모임 오픈까지 nn일
-      </div>
-      {/* <div className="absolute rounded-[5px] bg-brand px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-        모임 오픈까지 nn일
-      </div> */}
-      <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden">
-        <img className="w-full h-full  object-cover" src="/bruce.jpg" alt="모임사진" />
-      </div>
-      <div className="px-4 flex flex-col justify-between">
-        <div className="flex items-center gap-3">
-          <p className="text-lg font-bold">[모여라] 가라! 포켓몬스터 함께 잡아요. 친구들 모집</p>
-          <span className="px-[6px] py-[2px] bg-[#D83737] font-bold text-white rounded-[5px]">
-            취미/여가
-          </span>
-        </div>
-        <div>
-          <p>모임 설명을 적는 공간입니다.</p>
-        </div>
-        <div className="flex gap-12 text-sm text-[#6C6C6C]">
-          <div className="">2025.02.15 ~ 2025.05.12</div>
-          <div className="flex gap-1">
-            <img src="/humen.svg" alt="" />
-            2/10
-          </div>
-        </div>
-      </div>
-      <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
-        {/* 3항 연산자 모임자랑 참여자 먼저 3항연산한 후 모집종료 유무 화살표화 후기작성 */}
-        <div>
-          <img src="/images/swiper_next.svg" alt="상세보기" />
-        </div>
-        {/* 후기작성 유무로 3항연산자 후기작성과 후기작성완료 */}
-        {/* <button className="text-brand border border-brand rounded-[5px] px-[10px] py-[4px]">
-          후기작성
-        </button> */}
-        {/* <button className="text-[#6C6C6C] border border-[#6C6C6C] rounded-[5px] px-[10px] py-[4px]">
-          후기작성완료
-        </button> */}
-      </div>
-    </Link>
+    <div className="w-[1024px] mx-auto space-y-10">
+      {groups.map(g => {
+        const openCount = daysUntilOpen(g.group_start_day);
+        const badge =
+          openCount > 0
+            ? {
+                text: `모임 오픈까지 ${openCount}일`,
+                color: 'bg-gray-300',
+              }
+            : g.status === 'recruiting'
+              ? { text: '모임 종료까지${}일', color: 'bg-brand' }
+              : g.status === 'closed'
+                ? { text: '모집종료', color: 'bg-gray-300' }
+                : { text: '모임종료', color: 'bg-gray-300' };
+
+        const category =
+          g.categories_sub?.category_sub_name || g.categories_major?.category_major_name;
+
+        return (
+          <Link
+            key={g.group_id}
+            to={`/groupcontent/${g.group_id}`}
+            className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
+          >
+            <div
+              className={`absolute rounded-[5px] ${badge.color} px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]`}
+            >
+              {badge.text}
+            </div>
+
+            <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden">
+              <img className="w-full h-full object-cover" src={g.image_urls?.[0]} alt="모임사진" />
+            </div>
+
+            <div className="px-4 flex flex-col justify-between">
+              <div className="flex items-center gap-3">
+                <p className="text-lg font-bold">{g.group_title}</p>
+                <span className="px-[6px] py-[2px] bg-[#D83737] font-bold text-white rounded-[5px]">
+                  {category}
+                </span>
+              </div>
+              <div>
+                <p>{g.group_short_intro}</p>
+              </div>
+              <div className="flex gap-12 text-sm text-[#6C6C6C]">
+                <div>
+                  {fmt(g.group_start_day)} ~ {fmt(g.group_end_day)}
+                </div>
+                <div className="flex gap-1">
+                  <img src="/humen.svg" alt="인원" />
+                  {g.member_count}/{g.group_capacity}
+                </div>
+              </div>
+            </div>
+
+            {/* 우측 화살표 */}
+            <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
+              <img src="/images/swiper_next.svg" alt="상세보기" />
+            </div>
+          </Link>
+        );
+      })}
+    </div>
   );
 }

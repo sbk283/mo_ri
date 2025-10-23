@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useRef, useState } from 'react';
 import GroupContentBox from './GroupContentBox';
-import GroupContentNon from './GroupContentNon';
 
 function GroupMenu() {
   const tabs = [
@@ -25,15 +24,13 @@ function GroupMenu() {
       label: '종료',
       content: (
         <div>
-          <GroupContentNon />
+          <GroupContentBox />
         </div>
       ),
     },
   ];
 
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
-
-  // underline 위치/너비 계산용
   const listRef = useRef<HTMLUListElement | null>(null);
   const tabRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
@@ -78,8 +75,6 @@ function GroupMenu() {
               </p>
             </li>
           ))}
-
-          {/* underline: 항상 렌더링하고, 선택된 탭의 left/width로 이동 */}
           <motion.div
             className="absolute bottom-0 h-[4px] bg-[#0689E8] rounded"
             initial={false}

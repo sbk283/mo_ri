@@ -11,6 +11,16 @@ export default function PopularGroupsSection() {
     fetchGroups(); // 모든 그룹 가져오기
   }, [fetchGroups]);
 
+  // 모집 마감 그룹 가져오지않기.
+  // 오늘 날짜
+  const today = new Date();
+
+  // 마감되지 않은 그룹만 필터링
+  const activeGroups = groups.filter(group => {
+    const endDate = new Date(group.group_end_day);
+    return endDate >= today; // 오늘 이후면 포함
+  });
+
   return (
     <section
       className="bg-[#F9FBFF] border-t border-b border-solid border-[#DBDBDB] pb-[78px]"
@@ -38,7 +48,7 @@ export default function PopularGroupsSection() {
           ) : groups.length === 0 ? (
             <p>표시할 그룹이 없습니다.</p>
           ) : (
-            <SwiperGroupCard loop={false} spaceBetween={12} />
+            <SwiperGroupCard loop={false} spaceBetween={12} groups={activeGroups} />
           )}
         </div>
       </div>

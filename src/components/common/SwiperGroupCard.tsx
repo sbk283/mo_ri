@@ -2,10 +2,11 @@ import { useMemo, useRef, useState } from 'react';
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
-import { useGroup } from '../../contexts/GroupContext';
+import type { GroupWithCategory } from '../../types/group';
 import GroupCard from './GroupCard';
 
 type Props = {
+  groups: GroupWithCategory[];
   spaceBetween?: number;
   breakpoints?: NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>;
   loop?: boolean;
@@ -13,12 +14,12 @@ type Props = {
 };
 
 export default function SwiperGroupCard({
+  groups,
   spaceBetween = 12,
   loop = false,
   className = '',
   breakpoints,
 }: Props) {
-  const { groups } = useGroup();
   const swiperRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 

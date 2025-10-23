@@ -118,6 +118,14 @@ function MeetingHeader({
     }
   }, [joinSuccess]);
 
+  // "이미 참가한 모임입니다." 자동 닫기 (1.5초 후)
+  useEffect(() => {
+    if (errorOpen && errorMessage === '이미 참가한 모임입니다.') {
+      const timer = setTimeout(() => setErrorOpen(false), 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [errorOpen, errorMessage]);
+
   // 참가 처리
   const handleJoinSubmit = async (intro: string) => {
     console.log('참가 신청 시도:', intro);
@@ -157,7 +165,7 @@ function MeetingHeader({
 
     // 이미 참가한 경우
     if (isAlreadyJoined) {
-      alert('이미 참가한 모임입니다.');
+      // alert('이미 참가한 모임입니다.');
       return;
     }
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import dayjs, { Dayjs } from 'dayjs';
 import FullCalendar from '@fullcalendar/react';
 import GroupCalendar from '../components/groupSchedule/GroupCalendar';
@@ -24,13 +24,14 @@ interface ScheduleForm {
 }
 
 function GroupSchedulePage() {
+  const navigate = useNavigate();
   const { id: groupId } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const { schedules, fetchSchedules, addSchedule, updateSchedule, deleteSchedule, clearSchedules } =
-    useSchedule();
+  const { schedules, fetchSchedules, addSchedule, updateSchedule, deleteSchedule } = useSchedule();
   const { members, fetchMembers } = useGroupMember();
 
   const [isLeader, setIsLeader] = useState(false);
+  const [isMember, setIsMember] = useState(false);
   const [monthLabel, setMonthLabel] = useState('');
   const [monthRange, setMonthRange] = useState<{ start: string; end: string } | null>(null);
 
@@ -49,43 +50,76 @@ function GroupSchedulePage() {
     noRegion: false,
   });
 
-  // 현재 유저가 host인지 아닌지?
+  // 로그인 여부 확인 (비로그인 접근 차단)
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  // 그룹 멤버 목록 조회
   useEffect(() => {
     if (!groupId) return;
     fetchMembers(groupId);
   }, [groupId, fetchMembers]);
 
+  // 로그인한 사용자가 멤버인지 / 호스트인지
   useEffect(() => {
-    const host = members.find(m => m.group_id === groupId && m.member_role === 'host');
-    setIsLeader(!!host);
-  }, [members, groupId]);
+    if (!groupId || !user?.id) {
+      setIsLeader(false);
+      setIsMember(false);
+      return;
+    }
 
-  // 월 변경 시 일정 불러오기
+    const myMembership = members.find(m => m.group_id === groupId && m.user_id === user.id);
+
+    if (!myMembership) {
+      setIsMember(false);
+      setIsLeader(false);
+      return;
+    }
+
+    setIsMember(true);
+    setIsLeader(myMembership.member_role === 'host');
+  }, [members, groupId, user?.id]);
+
+  // 월 범위 변경 시 일정 조회
   useEffect(() => {
     if (groupId && monthRange) {
-      // clearSchedules();
       fetchSchedules(groupId, monthRange.start, monthRange.end);
     }
-  }, [groupId, monthRange, fetchSchedules, clearSchedules]);
+  }, [groupId, monthRange, fetchSchedules]);
 
   // 캘린더 이동
   const handlePrev = () => calendarRef.current?.getApi().prev();
   const handleNext = () => calendarRef.current?.getApi().next();
 
-  // 일정 등록
+  // 모달 열기: 모임장만 ㄱㄴ
+  const handleOpenModal = () => {
+    if (!isLeader) return;
+    setOpen(true);
+  };
+
+  // 일정 등록: 모임장만 ㄱㄴ
   const handleAddEvent = async () => {
-    if (!groupId || !form.startDate || !form.startTime) return;
+    if (!isLeader) return;
+    if (!groupId || !user?.id) return;
+    if (!form.title.trim()) return;
+    if (!form.startDate || !form.startTime) return;
 
     const start = dayjs(form.startDate).hour(form.startTime.hour()).minute(form.startTime.minute());
-    const end =
+
+    const computedEnd =
       form.endDate && form.endTime
         ? dayjs(form.endDate).hour(form.endTime.hour()).minute(form.endTime.minute())
         : start.add(2, 'hour');
 
+    const end = computedEnd.isBefore(start) ? start : computedEnd;
+
     await addSchedule({
       group_id: groupId,
-      user_id: user?.id ?? null,
-      schedule_title: form.title || '새 일정',
+      user_id: user.id,
+      schedule_title: form.title.trim(),
       schedule_place_name: form.noRegion ? '지역 무관' : form.location,
       schedule_start_at: start.toISOString(),
       schedule_end_at: end.toISOString(),
@@ -103,85 +137,92 @@ function GroupSchedulePage() {
     });
   };
 
-  // 일정 수정
+  // 일정 수정: 모임장만 ㄱㄴ
   const handleUpdateEvent = async (updated: ScheduleForm & { id: string }) => {
+    if (!isLeader) return;
+    if (!updated.title.trim()) return;
+    if (!updated.startDate || !updated.startTime) return;
+
+    const start = dayjs(updated.startDate)
+      .hour(updated.startTime.hour())
+      .minute(updated.startTime.minute());
+
+    const computedEnd =
+      updated.endDate && updated.endTime
+        ? dayjs(updated.endDate).hour(updated.endTime.hour()).minute(updated.endTime.minute())
+        : start.add(2, 'hour');
+
+    const end = computedEnd.isBefore(start) ? start : computedEnd;
+
     await updateSchedule(updated.id, {
-      schedule_title: updated.title,
+      schedule_title: updated.title.trim(),
       schedule_place_name: updated.noRegion ? '지역 무관' : updated.location,
-      schedule_start_at: dayjs(updated.startDate)
-        .hour(updated.startTime?.hour() || 0)
-        .minute(updated.startTime?.minute() || 0)
-        .toISOString(),
-      schedule_end_at: dayjs(updated.endDate)
-        .hour(updated.endTime?.hour() || 0)
-        .minute(updated.endTime?.minute() || 0)
-        .toISOString(),
+      schedule_start_at: start.toISOString(),
+      schedule_end_at: end.toISOString(),
     });
   };
 
-  // 일정 삭제
+  // 일정 삭제: 모임장만 ㄱㄴ
   const handleDeleteEvent = async (id: string) => {
+    if (!isLeader) return;
     await deleteSchedule(id);
   };
 
-  const styledEvents = schedules.map(s => ({
-    id: s.schedule_id,
-    title: s.schedule_title || '[모임 일정]',
-    start: s.schedule_start_at,
-    end: s.schedule_end_at,
-    location: s.schedule_place_name,
-    backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
-    textColor: '#fff',
-    extendedProps: {
-      tooltip: `${s.schedule_title ?? ''}\n${dayjs(s.schedule_start_at).format('HH:mm')} - ${dayjs(
-        s.schedule_end_at,
-      ).format('HH:mm')}\n${s.schedule_place_name ?? ''}`,
-    },
-  }));
-
+  // ---- 여기서 조건부 return → 조건부 렌더링으로 변경 ----
   return (
     <GroupDashboardLayout>
-      <div className="bg-white shadow-card rounded-sm p-6 flex flex-col h-[770px]">
-        <GroupScheduleHeader
-          monthLabel={monthLabel}
-          handlePrev={handlePrev}
-          handleNext={handleNext}
-          isLeader={isLeader}
-          onOpenModal={() => setOpen(true)}
-        />
-
-        <div className="flex gap-6 flex-1">
-          <GroupScheduleList
+      {!user ? (
+        // 멤버가 아닌 경우 접근 xxxx
+        <div className="flex justify-center items-center h-[600px] text-lg font-medium">
+          로그인 후 이용 가능합니다.
+        </div>
+      ) : !isMember ? (
+        // 멤버가 아닌 경우 접근 xxxx
+        <div className="flex justify-center items-center h-[600px] text-lg font-medium">
+          이 모임의 멤버만 접근할 수 있습니다.
+        </div>
+      ) : (
+        <div className="bg-white shadow-card rounded-sm p-6 flex flex-col h-[770px]">
+          <GroupScheduleHeader
             monthLabel={monthLabel}
-            events={schedules}
-            selectedEventId={selectedEventId}
-            asideRef={asideRef}
-            onUpdateEvent={handleUpdateEvent}
-            onDeleteEvent={handleDeleteEvent}
+            handlePrev={handlePrev}
+            handleNext={handleNext}
+            isLeader={isLeader}
+            onOpenModal={handleOpenModal}
           />
 
-          <section className="flex-1 flex justify-end items-stretch">
-            <div className="w-full h-full flex justify-end">
-              <GroupCalendar
-                setMonthRange={setMonthRange}
-                calendarRef={calendarRef}
-                asideRef={asideRef}
-                setMonthLabel={setMonthLabel}
-                setSelectedEventId={setSelectedEventId}
-              />
-            </div>
-          </section>
-        </div>
+          <div className="flex gap-6 flex-1">
+            <GroupScheduleList
+              monthLabel={monthLabel}
+              events={schedules}
+              selectedEventId={selectedEventId}
+              asideRef={asideRef}
+              onUpdateEvent={handleUpdateEvent}
+              onDeleteEvent={handleDeleteEvent}
+            />
 
-        <ScheduleModal
-          open={open}
-          form={form}
-          setForm={setForm}
-          onCancel={() => setOpen(false)}
-          onSubmit={handleAddEvent}
-        />
-      </div>
+            <section className="flex-1 flex justify-end items-stretch">
+              <div className="w-full h-full flex justify-end">
+                <GroupCalendar
+                  setMonthRange={setMonthRange}
+                  calendarRef={calendarRef}
+                  asideRef={asideRef}
+                  setMonthLabel={setMonthLabel}
+                  setSelectedEventId={setSelectedEventId}
+                />
+              </div>
+            </section>
+          </div>
+
+          <ScheduleModal
+            open={open}
+            form={form}
+            setForm={setForm}
+            onCancel={() => setOpen(false)}
+            onSubmit={handleAddEvent}
+          />
+        </div>
+      )}
     </GroupDashboardLayout>
   );
 }

@@ -1,26 +1,11 @@
-// 풀캘린더 (그룹 일정 달력 컴포넌트)
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import dayjs from 'dayjs';
-import { useEffect } from 'react';
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  start: string;
-  end: string;
-  location: string;
-  backgroundColor?: string;
-  borderColor?: string;
-  textColor?: string;
-  extendedProps?: {
-    tooltip: string;
-  };
-}
+import { useEffect, useRef } from 'react';
+import { useSchedule } from '../../contexts/ScheduleContext';
 
 interface GroupCalendarProps {
-  styledEvents: CalendarEvent[];
   calendarRef: React.RefObject<FullCalendar>;
   asideRef: React.RefObject<HTMLDivElement>;
   setMonthLabel: React.Dispatch<React.SetStateAction<string>>;
@@ -31,18 +16,37 @@ interface GroupCalendarProps {
  * 그룹 일정 달력 컴포넌트
  * - FullCalendar 기반 월별 캘린더
  * - 일정 hover → tooltip 표시
- * - 일정 클릭 → 왼쪽 리스트 스크롤 이동
- * - 같은 날짜 여러 일정 시 높이 자동 조절
- * - 일정이 많을 경우 (3개 이상) +n 더보기
+ * - 일정 클릭 → 왼쪽 리스트로 스크롤 이동
+ * - 월 변경 시 Supabase에서 fetchSchedules() 호출
  */
 
 function GroupCalendar({
-  styledEvents,
   calendarRef,
   asideRef,
   setMonthLabel,
   setSelectedEventId,
 }: GroupCalendarProps) {
+  const { schedules, fetchSchedules, clearSchedules } = useSchedule();
+  const prevMonthRef = useRef<string | null>(null);
+
+  // FullCalendar용 변환 데이터
+  const events = schedules.map(s => ({
+    id: s.schedule_id,
+    title: s.schedule_title || '[모임 일정]',
+    start: s.schedule_start_at,
+    end: s.schedule_end_at ?? undefined,
+    location: s.schedule_place_name || '',
+    backgroundColor: '#3B82F6',
+    borderColor: '#3B82F6',
+    textColor: '#fff',
+    extendedProps: {
+      tooltip: `${s.schedule_title ?? ''}\n${dayjs(s.schedule_start_at).format('HH:mm')} - ${dayjs(
+        s.schedule_end_at,
+      ).format('HH:mm')}\n${s.schedule_place_name ?? ''}`,
+    },
+  }));
+
+  // Tooltip 초기화 (클린업)
   useEffect(() => {
     return () => {
       document.querySelectorAll('.calendar-tooltip').forEach(el => el.remove());
@@ -59,14 +63,29 @@ function GroupCalendar({
           headerToolbar={false}
           locale="ko"
           fixedWeekCount={false}
-          showNonCurrentDates={true}
+          showNonCurrentDates
           height="100%"
           contentHeight="100%"
-          expandRows={true}
-          events={styledEvents}
-          datesSet={info => {
+          expandRows
+          events={events}
+          // 월 변경 시 라벨 + fetchSchedules 트리거
+          datesSet={async info => {
             const label = info.view.title.replace(/^\d+년\s*/, '');
             setMonthLabel(label);
+
+            // YYYY-MM-01 ~ YYYY-MM-말일 구간 계산
+            const start = dayjs(info.startStr).startOf('month').toISOString();
+            const end = dayjs(info.startStr).endOf('month').toISOString();
+            const monthKey = dayjs(info.startStr).format('YYYY-MM');
+
+            if (prevMonthRef.current !== monthKey) {
+              prevMonthRef.current = monthKey;
+              clearSchedules();
+              const groupId = window.location.pathname.split('/').pop();
+              if (groupId) {
+                await fetchSchedules(groupId, start, end);
+              }
+            }
           }}
           eventDidMount={info => {
             const tooltip = document.createElement('div');
@@ -107,20 +126,16 @@ function GroupCalendar({
               });
             }
           }}
-          // 일정이 많을 때 +N 더보기 기능 활성화
           dayMaxEventRows={3}
           moreLinkClick="popover"
-          // 동일 날짜 일정 수에 따라 높이 자동 조절
           eventDisplay="block"
           eventContent={arg => {
             const sameDayEvents = arg.view.calendar
               .getEvents()
               .filter(e => dayjs(e.start).isSame(arg.event.start, 'day'));
             const count = sameDayEvents.length;
-
             const baseHeight = 60;
             const height = Math.max(16, baseHeight / count);
-
             return (
               <div
                 style={{
@@ -131,7 +146,6 @@ function GroupCalendar({
                   padding: '2px 4px',
                   marginBottom: '2px',
                 }}
-                className="custom-event"
               >
                 {arg.event.title}
               </div>

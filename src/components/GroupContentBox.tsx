@@ -57,15 +57,7 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
             <div className="absolute rounded-[5px] bg-brand px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
               모임 종료까지 {daysUntilEnd}일
             </div>
-          ) : group.status === 'closed' ? (
-            <div className="absolute rounded-[5px] bg-yellow-500 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-              모임종료
-            </div>
-          ) : (
-            <div className="absolute rounded-[5px] bg-gray-400 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-              모임종료
-            </div>
-          );
+          ) : null;
 
         const category =
           // group.categories_sub?.category_sub_name ||

@@ -70,17 +70,20 @@ function JoinGroupMenu() {
         .from('group_members')
         .select(
           `
-          group_id,
-          groups (
-            *,
-            categories_major(category_major_name),
-            categories_sub(category_sub_name),
-            group_members!left(user_id, member_status)
-          )
-        `,
+    group_id,
+    groups (
+      *,
+      created_by,
+      categories_major(category_major_name),
+      categories_sub(category_sub_name),
+      group_members!left(user_id, member_status, member_role)
+    )
+  `,
         )
         .eq('user_id', userId)
-        .eq('member_status', 'approved');
+        .eq('member_status', 'approved')
+        .eq('member_role', 'member')
+        .neq('groups.created_by', userId);
 
       if (ignore) return;
 

@@ -11,6 +11,7 @@ import { useSchedule } from '../contexts/ScheduleContext';
 import { useGroupMember } from '../contexts/GroupMemberContext';
 import '../css/calendar.css';
 import '../index.css';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ScheduleForm {
   startDate: Dayjs | null;
@@ -24,6 +25,7 @@ interface ScheduleForm {
 
 function GroupSchedulePage() {
   const { id: groupId } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const { schedules, fetchSchedules, addSchedule, updateSchedule, deleteSchedule, clearSchedules } =
     useSchedule();
   const { members, fetchMembers } = useGroupMember();
@@ -61,7 +63,7 @@ function GroupSchedulePage() {
   // 월 변경 시 일정 불러오기
   useEffect(() => {
     if (groupId && monthRange) {
-      clearSchedules();
+      // clearSchedules();
       fetchSchedules(groupId, monthRange.start, monthRange.end);
     }
   }, [groupId, monthRange, fetchSchedules, clearSchedules]);
@@ -82,7 +84,7 @@ function GroupSchedulePage() {
 
     await addSchedule({
       group_id: groupId,
-      user_id: null,
+      user_id: user?.id ?? null,
       schedule_title: form.title || '새 일정',
       schedule_place_name: form.noRegion ? '지역 무관' : form.location,
       schedule_start_at: start.toISOString(),
@@ -162,6 +164,7 @@ function GroupSchedulePage() {
           <section className="flex-1 flex justify-end items-stretch">
             <div className="w-full h-full flex justify-end">
               <GroupCalendar
+                setMonthRange={setMonthRange}
                 calendarRef={calendarRef}
                 asideRef={asideRef}
                 setMonthLabel={setMonthLabel}

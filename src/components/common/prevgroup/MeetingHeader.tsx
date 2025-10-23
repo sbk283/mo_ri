@@ -9,6 +9,7 @@ import SuccessModal from '../modal/SuccessModal';
 import MeetingCard from './MeetingCard';
 import { useGroupMember } from '../../../contexts/GroupMemberContext';
 import { useAuth } from '../../../contexts/AuthContext';
+import { useGroupFavorite } from '../../../hooks/useGroupFavorite';
 
 export interface MeetingHeaderProps {
   groupId: string;
@@ -58,6 +59,34 @@ function MeetingHeader({
 
   const { joinGroup, members, fetchMembers } = useGroupMember();
   const { user } = useAuth();
+
+  const { addFavorite, removeFavorite, checkFavorite } = useGroupFavorite();
+  const [favorite, setFavorite] = useState(isFavorite);
+
+  // 초기 렌더 시, DB에서 찜 상태 불러오기
+  useEffect(() => {
+    const fetchFavoriteStatus = async () => {
+      if (!user || !groupId) return;
+      const isFav = await checkFavorite(groupId);
+      console.log('초기 찜 상태:', isFav);
+      setFavorite(isFav);
+    };
+
+    fetchFavoriteStatus();
+  }, [user, groupId, checkFavorite]);
+
+  // 찜 토글
+  const handleFavoriteToggle = async () => {
+    console.log('⭐ 찜 토글 클릭:', favorite ? '해제' : '추가');
+
+    if (favorite) {
+      await removeFavorite(groupId);
+      setFavorite(false);
+    } else {
+      await addFavorite(groupId);
+      setFavorite(true);
+    }
+  };
 
   // 이미 참가한 모임인지 확인
   useEffect(() => {
@@ -208,8 +237,8 @@ function MeetingHeader({
             <span className="text-md font-medium text-[#777]">공유하기</span>
           </button>
 
-          <button onClick={handleFavoriteClick} className="flex flex-col items-center gap-1">
-            {isFavorite ? (
+          <button onClick={handleFavoriteToggle} className="flex flex-col items-center gap-1">
+            {favorite ? (
               <img src="/images/star_gold.svg" alt="찜하기" className="w-6 h-6" />
             ) : (
               <img src="/images/star_dark.svg" alt="찜 해제" className="w-6 h-6" />

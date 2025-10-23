@@ -121,22 +121,29 @@ function GroupScheduleList({
 
                 {/* 일정 카드 */}
                 <div
-                  className={`rounded-sm p-2 shadow-sm w-[189px] h-[104px] flex flex-col justify-between border transition-all duration-200 ${
+                  className={`rounded-sm p-2 shadow-sm w-[189px] h-auto flex flex-col justify-between border transition-all duration-200 ${
                     isSelected ? 'border-brand/50 ring-1 ring-brand/50' : 'border-gray-300'
                   }`}
                 >
                   <div>
-                    <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-brand font-semibold">
+                          {dayjs(s.schedule_start_at).format('MM-DD')} ~{' '}
+                          {dayjs(s.schedule_end_at).format('MM-DD')}
+                        </p>
+                        <button
+                          onClick={() => handleEditClick(s)}
+                          className="font-medium hover:opacity-80"
+                        >
+                          <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
+                        </button>
+                      </div>
+
                       <p className="text-xs text-gray-500">
                         {dayjs(s.schedule_start_at).format('HH:mm')} -{' '}
                         {dayjs(s.schedule_end_at).format('HH:mm')}
                       </p>
-                      <button
-                        onClick={() => handleEditClick(s)}
-                        className="text-[12px] text-brand font-medium hover:opacity-80"
-                      >
-                        <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
-                      </button>
                     </div>
 
                     <p className="font-medium text-gray-800 mt-1">

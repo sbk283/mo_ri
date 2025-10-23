@@ -1,146 +1,67 @@
-// import { useEffect, useState } from 'react';
-// import ConfirmModal from './modal/ConfirmModal';
+import { useNavigate } from 'react-router-dom';
+import type { GroupWithCategory } from '../../types/group';
 
-export type GroupItem = {
-  id: number;
-  status: '모집중' | '모집예정';
-  category: string;
-  region: string;
-  title: string;
-  desc: string;
-  dday: string;
-  thumbnail: string;
-  duration?: Duration;
-};
-
-export type Duration = 'oneday' | 'short' | 'long';
-
-const STATUS_BG: Record<GroupItem['status'], string> = {
-  모집중: 'bg-brand',
-  모집예정: 'bg-brand-red',
-};
-
-function StatusBadge({ text }: { text: GroupItem['status'] }) {
-  return (
-    <span
-      className={[
-        'text-[14px] font-bold text-white px-2 py-1',
-        'rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]',
-        'relative z-[1] inline-block',
-        'translate-x-[-5%] translate-y-[-90%]',
-        'h-[23px] p-[4px] flex items-center justify-center flex-shrink-0',
-        STATUS_BG[text],
-      ].join(' ')}
-    >
-      {text}
-    </span>
-  );
+interface GroupCardProps {
+  item: GroupWithCategory;
+  as?: 'li' | 'div';
 }
 
-type GroupCardProps = {
-  item: GroupItem;
-  onToggleFavorite?: (id: number, next: boolean) => void;
-  confirmBeforeChange?: boolean;
-  confirmMode?: 'none' | 'add' | 'unfav' | 'both';
-  as?: 'li' | 'div';
-};
-
-export function GroupCard({
-  item,
-  // onToggleFavorite,
-  // confirmBeforeChange = true,
-  // confirmMode,
-  as = 'li',
-}: GroupCardProps) {
-  // const controlled = typeof onToggleFavorite === 'function';
-  // const [localFav, setLocalFav] = useState<boolean>(item.favorite);
-
-  // useEffect(() => {
-  //   if (!controlled) setLocalFav(item.favorite);
-  // }, [item.favorite, controlled]);
-
-  // const currentFav = controlled ? item.favorite : localFav;
-  // const [confirmOpen, setConfirmOpen] = useState(false);
-  // const [pendingAction, setPendingAction] = useState<'fav' | 'unfav' | null>(null);
-
-  // const mode: 'none' | 'add' | 'unfav' | 'both' =
-  //   confirmMode ?? (confirmBeforeChange ? 'unfav' : 'none');
-
-  // const applyFavorite = (next: boolean) => {
-  //   if (controlled) onToggleFavorite!(item.id, next);
-  //   else setLocalFav(next);
-  // };
-
-  // const handleClickFavorite = (e: React.MouseEvent<HTMLButtonElement>) => {
-  //   e.stopPropagation();
-  //   if (!currentFav) {
-  //     if (mode === 'add' || mode === 'both') {
-  //       setPendingAction('fav');
-  //       setConfirmOpen(true);
-  //       return;
-  //     }
-  //     applyFavorite(true);
-  //   } else {
-  //     if (mode === 'unfav' || mode === 'both') {
-  //       setPendingAction('unfav');
-  //       setConfirmOpen(true);
-  //       return;
-  //     }
-  //     applyFavorite(false);
-  //   }
-  // };
-
-  // const handleConfirmModal = () => {
-  //   if (pendingAction === 'unfav') applyFavorite(false);
-  //   if (pendingAction === 'fav') applyFavorite(true);
-  //   setConfirmOpen(false);
-  //   setPendingAction(null);
-  // };
-
-  // const handleCloseModal = () => {
-  //   setConfirmOpen(false);
-  //   setPendingAction(null);
-  // };
-
+export function GroupCard({ item, as = 'li' }: GroupCardProps) {
   const Wrapper = as as keyof JSX.IntrinsicElements;
+  const navigate = useNavigate();
+
+  const calculateDday = (endDate: string) => {
+    const today = new Date();
+    const end = new Date(endDate);
+    const diff = Math.ceil((end.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    return diff > 0 ? `D-${diff}` : '마감';
+  };
+
+  // 카드 선택 후 이동
+  const handleClick = () => {
+    navigate(`/groupdetail/${item.group_id}`);
+  };
 
   return (
     <>
-      <Wrapper className="overflow-hidden relative cursor-pointer pt-5">
-        <article className="h-[290px] w-[245px] rounded-sm flex flex-col border border-gray-300">
-          <span className="absolute left-2 z-10">
-            <StatusBadge text={item.status} />
-          </span>
-
+      <Wrapper className="overflow-hidden relative cursor-pointer pt-5" onClick={handleClick}>
+        <article className="h-[290px] w-[245px] rounded-sm border border-gray-300 bg-white overflow-hidden">
+          {/* 말풍선 */}
+          <div
+            className={`absolute left-2 top-[1px] z-10 px-2
+              rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]
+              text-white text-md font-semibold
+              ${item.status === 'recruiting' ? 'bg-brand' : 'bg-brand-red'}`}
+          >
+            {item.status === 'recruiting' ? '모집중' : '모집예정'}
+          </div>
+          {/* 이미지 */}
           <img
-            src={item.thumbnail}
-            alt={`${item.title} 썸네일`}
-            className="w-full object-cover rounded-t-sm h-[133px]"
+            src={item.image_urls?.[0] ?? '/placeholder.jpg'}
+            alt={`${item.group_title} 썸네일`}
+            className="w-full object-cover h-[133px]"
           />
-
+          {/*  텍스트 */}
           <div className="relative p-[15px] rounded-b-sm flex flex-col flex-1 bg-white">
             <header className="flex justify-between text-sm mb-2">
-              <span className="text-[#D83737] font-semibold">{item.category}</span>
-              <span className="text-[#767676]">{item.region}</span>
+              <span className="text-[#D83737] font-semibold">
+                {item.categories_major?.category_major_name}
+              </span>
+              <span className="text-[#767676]">{item.group_region}</span>
             </header>
             <h3 className="items-center gap-1 text-lg truncate mb-[7px] font-bold ">
-              {item.title}
+              {item.group_title}
             </h3>
-            <p className="text-[15px] text-gray-300 line-clamp-2 leading-[19px]">{item.desc}</p>
-            <span className="absolute font-semibold text-center left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
-              {item.dday}
-            </span>
+            <p className="text-[15px] text-gray-300 line-clamp-2 leading-[19px]">
+              {item.group_short_intro}
+            </p>
+          </div>
+          {/*  디데이 */}
+          <div className="absolute font-semibold text-center left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
+            {calculateDday(item.group_end_day)}
           </div>
         </article>
       </Wrapper>
-
-      {/* <ConfirmModal
-        open={confirmOpen}
-        title={'찜을 해제하시겠습니까?'}
-        message={'해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?'}
-        onConfirm={handleConfirmModal}
-        onClose={handleCloseModal}
-      /> */}
     </>
   );
 }

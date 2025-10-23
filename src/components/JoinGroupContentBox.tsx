@@ -57,26 +57,17 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
             <div className="absolute rounded-[5px] bg-brand px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
               모임 종료까지 {daysUntilEnd}일
             </div>
-          ) : group.status === 'closed' ? (
-            <div className="absolute rounded-[5px] bg-gray-400 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-              모집종료
-            </div>
-          ) : (
-            <div className="absolute rounded-[5px] bg-gray-400 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
-              모임종료
-            </div>
-          );
+          ) : null;
 
         const category =
-          group.categories_sub?.category_sub_name ||
-          group.categories_major?.category_major_name ||
-          '기타';
+          // group.categories_sub?.category_sub_name ||
+          group.categories_major?.category_major_name;
 
         return (
           <Link
             key={group.group_id}
             to={`/groupcontent/${group.group_id}`}
-            className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[10px] relative flex"
+            className="w-[1024px] h-[123px] border rounded-[5px] border-[#acacac] p-[13px] relative flex"
           >
             {badge}
             <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden">
@@ -89,7 +80,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
             <div className="px-4 flex flex-col justify-between">
               <div className="flex items-center gap-3">
                 <p className="text-lg font-bold">{group.group_title}</p>
-                <span className="px-[6px] py-[2px] bg-[#D83737] font-bold text-white rounded-[5px]">
+                <span className="px-[6px] py-[2px] bg-[#FF5252] text-sm font-bold text-white rounded-[5px]">
                   {category}
                 </span>
               </div>

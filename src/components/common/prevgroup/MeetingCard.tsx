@@ -31,7 +31,7 @@ function MeetingCard({
   height = 'auto',
 }: MeetingCardProps) {
   // Context에서 memberCounts와 fetchMemberCount 가져오기
-  const { memberCounts, fetchMemberCount } = useGroupMember();
+  const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
 
   // Context의 실시간 멤버 수 사용 (GroupListCard와 동일한 패턴)
   const currentCount = memberCounts[groupId] ?? 0;
@@ -39,8 +39,10 @@ function MeetingCard({
   // 컴포넌트 마운트 시 최신 멤버 수 가져오기
   useEffect(() => {
     if (!groupId) return;
+
     fetchMemberCount(groupId);
-  }, [groupId, fetchMemberCount]);
+    subscribeToGroup(groupId);
+  }, [groupId, fetchMemberCount, subscribeToGroup]);
 
   // 날짜 계산
   const [startDateStr, endDateStr] = duration.split(' ~ ');

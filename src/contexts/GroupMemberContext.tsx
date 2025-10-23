@@ -1,10 +1,19 @@
-import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useState,
+  useEffect,
+  type PropsWithChildren,
+} from 'react';
+import type { RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import type { careers } from '../types/careerType';
+import type { group_members } from '../types/group';
 
 // 타입 정의
-export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left'; // 신청|승인|거절|탈퇴
+export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left';
 export type MemberRole = 'host' | 'member';
 
 export interface GroupMember {
@@ -24,32 +33,35 @@ interface GroupMemberContextType {
   fetchMembers: (groupId: string) => Promise<void>;
   fetchMemberCount: (groupId: string) => Promise<number>;
 
-  /**
-   * @returns {Promise<'success' | 'already' | 'error'>}
-   * - 'success' : 참가 성공
-   * - 'already' : 이미 가입한 경우
-   * - 'error' : 오류 발생
-   */
   joinGroup: (groupId: string) => Promise<'success' | 'already' | 'error'>;
   leaveGroup: (groupId: string) => Promise<'success' | 'error'>;
   fetchUserCareers: (userId: string) => Promise<careers[]>;
 
-  memberCounts: Record<string, number>; // 그룹별 멤버 수 관리
+  memberCounts: Record<string, number>;
+  subscribeToGroup: (groupId: string) => void;
 }
 
-// Context 생성
 const GroupMemberContext = createContext<GroupMemberContextType | null>(null);
 
-export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) => {
+interface GroupMemberProviderProps extends PropsWithChildren {
+  // 그룹 멤버 수 변화 시 실행될 외부 콜백 (GroupContext가 넘겨줄 예정)
+  onMemberCountChange?: (groupId: string, delta: number) => void;
+}
+
+export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
+  children,
+  onMemberCountChange,
+}) => {
   const { user } = useAuth();
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // ✅ 여러 그룹의 멤버 수를 각각 저장
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
 
-  //유저 커리어 조회
+  // 실시간으로 구독 중인 그룹 ID 목록 추적
+  const [subscribedGroups, setSubscribedGroups] = useState<Set<string>>(new Set());
+
+  // 유저 커리어 조회
   const fetchUserCareers = useCallback(async (userId: string): Promise<careers[]> => {
     try {
       const { data, error } = await supabase
@@ -60,8 +72,9 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
       if (error) throw error;
       return data || [];
-    } catch (err: any) {
-      console.error('유저 커리어 조회 실패:', err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
+      console.error('유저 커리어 조회 실패:', errorMessage);
       return [];
     }
   }, []);
@@ -79,15 +92,16 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
       if (error) throw error;
       setMembers(data || []);
-    } catch (err: any) {
-      console.error('멤버 조회 실패:', err.message);
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '멤버 조회 실패';
+      console.error('멤버 조회 실패:', errorMessage);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 특정 그룹의 현재 멤버 수 (그룹별 저장)
+  // 특정 그룹의 현재 멤버 수 (DB에서 실시간 조회)
   const fetchMemberCount = useCallback(async (groupId: string): Promise<number> => {
     try {
       const { count, error } = await supabase
@@ -98,6 +112,7 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
       if (error) throw error;
 
+      // Context 상태 업데이트
       setMemberCounts(prev => ({
         ...prev,
         [groupId]: count ?? 0,
@@ -105,10 +120,56 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
       return count ?? 0;
     } catch (err) {
-      const error = err instanceof Error ? err : new Error(String(err));
-      console.error('멤버 카운트 조회 실패:', error.message);
+      const errorMessage = err instanceof Error ? err.message : '멤버 카운트 조회 실패';
+      console.error('멤버 카운트 조회 실패:', errorMessage);
       return 0;
     }
+  }, []);
+
+  // Realtime 구독 설정 (group_members 테이블 변경사항 감지)
+  useEffect(() => {
+    const channel = supabase
+      .channel('group_members_realtime')
+      .on<group_members>(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'group_members' },
+        (payload: RealtimePostgresChangesPayload<group_members>) => {
+          console.log('Realtime 변경 감지:', payload);
+
+          let groupId: string | undefined;
+
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            groupId = payload.new.group_id;
+          } else if (payload.eventType === 'DELETE') {
+            groupId = payload.old.group_id;
+          }
+
+          if (groupId) {
+            fetchMemberCount(groupId);
+
+            if (subscribedGroups.has(groupId)) {
+              fetchMembers(groupId);
+            }
+
+            // 그룹 멤버 수 변화를 외부(GroupContext)에 전달
+            if (payload.eventType === 'INSERT') {
+              onMemberCountChange?.(groupId, +1);
+            } else if (payload.eventType === 'DELETE') {
+              onMemberCountChange?.(groupId, -1);
+            }
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [subscribedGroups, fetchMemberCount, fetchMembers, onMemberCountChange]);
+
+  // 특정 그룹을 구독 목록에 추가
+  const subscribeToGroup = useCallback((groupId: string) => {
+    setSubscribedGroups(prev => new Set(prev).add(groupId));
   }, []);
 
   // 모임 참가 (자동 승인)
@@ -144,36 +205,19 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
 
         if (insertError) throw insertError;
 
-        setMembers(prev => [
-          ...prev,
-          {
-            member_id: crypto.randomUUID(),
-            user_id: user.id,
-            group_id: groupId,
-            member_role: 'member',
-            member_status: 'approved',
-            member_joined_at: new Date().toISOString(),
-          },
-        ]);
-
-        // 그룹 카운트 증가
-        setMemberCounts(prev => ({
-          ...prev,
-          [groupId]: (prev[groupId] ?? 0) + 1,
-        }));
-
-        await fetchMemberCount(groupId);
+        console.log('모임 참가 성공 - Realtime이 카운트 업데이트 처리');
 
         return 'success';
-      } catch (err: any) {
-        console.error('참가 실패:', err.message);
-        setError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '모임 참가 실패';
+        console.error('참가 실패:', errorMessage);
+        setError(errorMessage);
         return 'error';
       } finally {
         setLoading(false);
       }
     },
-    [user, fetchMemberCount],
+    [user],
   );
 
   // 탈퇴 (본인 탈퇴)
@@ -190,30 +234,21 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
           .eq('user_id', user.id);
 
         if (error) throw error;
-        console.log('모임 탈퇴 완료');
-
-        // 카운트 감소
-        setMemberCounts(prev => ({
-          ...prev,
-          [groupId]: Math.max((prev[groupId] ?? 1) - 1, 0),
-        }));
-
-        await fetchMembers(groupId);
-        await fetchMemberCount(groupId);
+        console.log('모임 탈퇴 완료 - Realtime이 카운트 업데이트 처리');
 
         return 'success';
-      } catch (err: any) {
-        console.error('탈퇴 실패:', err.message);
-        setError(err.message);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '모임 탈퇴 실패';
+        console.error('탈퇴 실패:', errorMessage);
+        setError(errorMessage);
         return 'error';
       } finally {
         setLoading(false);
       }
     },
-    [user, fetchMembers, fetchMemberCount],
+    [user],
   );
 
-  // Provider
   return (
     <GroupMemberContext.Provider
       value={{
@@ -225,7 +260,8 @@ export const GroupMemberProvider: React.FC<PropsWithChildren> = ({ children }) =
         fetchMemberCount,
         joinGroup,
         leaveGroup,
-        memberCounts, // 그룹별 멤버 수 (객체)
+        memberCounts,
+        subscribeToGroup,
       }}
     >
       {children}

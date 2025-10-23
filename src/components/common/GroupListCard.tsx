@@ -35,14 +35,16 @@ function GroupListCard({
   const navigate = useNavigate();
 
   // Context 연결
-  const { memberCounts, fetchMemberCount } = useGroupMember();
+  const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
   const currentCount = memberCounts[group_id] ?? member_count ?? 0; // 실시간 멤버 수 표시
 
   // 최신 모임 인원
   useEffect(() => {
     if (!group_id) return;
+
     fetchMemberCount(group_id);
-  }, [group_id, fetchMemberCount]);
+    subscribeToGroup(group_id);
+  }, [group_id, fetchMemberCount, subscribeToGroup]);
 
   const mainImage =
     image_urls && image_urls.length > 0

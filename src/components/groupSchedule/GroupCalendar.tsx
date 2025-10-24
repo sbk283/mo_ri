@@ -1,6 +1,12 @@
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
+import type {
+  DatesSetArg,
+  EventContentArg,
+  EventClickArg,
+  EventMountArg,
+} from '@fullcalendar/core';
 import dayjs from 'dayjs';
 import { useEffect } from 'react';
 import { useSchedule } from '../../contexts/ScheduleContext';
@@ -29,40 +35,116 @@ function GroupCalendar({
   setMonthRange,
 }: GroupCalendarProps) {
   const { schedules } = useSchedule();
-  // const prevMonthRef = useRef<string | null>(null);
 
   // FullCalendar 표시용 이벤트 변환 로직
-  const events = schedules.map(s => ({
-    id: s.schedule_id,
-    title: s.schedule_title || '[모임 일정]',
-    start: s.schedule_start_at,
-    end: s.schedule_end_at ?? undefined,
-    location: s.schedule_place_name || '',
+  const events = schedules.map(schedule => ({
+    id: schedule.schedule_id,
+    title: schedule.schedule_title || '[모임 일정]',
+    start: schedule.schedule_start_at,
+    end: schedule.schedule_end_at ?? undefined,
+    location: schedule.schedule_place_name || '',
     backgroundColor: '#3B82F6',
     borderColor: '#3B82F6',
     textColor: '#fff',
     extendedProps: {
-      tooltip: `${s.schedule_title ?? ''}\n${dayjs(s.schedule_start_at).format('HH:mm')} - ${dayjs(
-        s.schedule_end_at,
-      ).format('HH:mm')}\n${s.schedule_place_name ?? ''}`,
+      tooltip: `${schedule.schedule_title ?? ''}\n${dayjs(schedule.schedule_start_at).format('HH:mm')} - ${dayjs(
+        schedule.schedule_end_at,
+      ).format('HH:mm')}\n${schedule.schedule_place_name ?? ''}`,
     },
   }));
 
   // Tooltip 초기화 (클린업)
   useEffect(() => {
     return () => {
-      document.querySelectorAll('.calendar-tooltip').forEach(el => el.remove());
+      document
+        .querySelectorAll('.calendar-tooltip')
+        .forEach(tooltipElement => tooltipElement.remove());
     };
   }, []);
 
   // 월 변경 시 라벨과 월 범위 동기화
-  const handleDatesSet = (info: any) => {
-    const label = info.view.title.replace(/^\d+년\s*/, '');
-    setMonthLabel(label);
+  const handleDatesSet = (dateInfo: DatesSetArg) => {
+    const monthLabel = dateInfo.view.title.replace(/^\d+년\s*/, '');
+    setMonthLabel(monthLabel);
 
-    const start = dayjs(info.startStr).startOf('month').toISOString();
-    const end = dayjs(info.startStr).endOf('month').toISOString();
-    setMonthRange({ start, end });
+    // info.view.currentStart를 사용하여 현재 표시 중인 월의 정확한 범위 계산
+    const currentMonth = dayjs(dateInfo.view.currentStart);
+    const monthStartDate = currentMonth.startOf('month').toISOString();
+    const monthEndDate = currentMonth.endOf('month').toISOString();
+    setMonthRange({ start: monthStartDate, end: monthEndDate });
+  };
+
+  // 이벤트 마운트 시 툴팁 생성
+  const handleEventDidMount = (mountInfo: EventMountArg) => {
+    const tooltip = document.createElement('div');
+    tooltip.innerText = mountInfo.event.extendedProps.tooltip;
+    tooltip.classList.add('calendar-tooltip');
+    tooltip.style.position = 'absolute';
+    tooltip.style.background = 'rgba(0,0,0,0.75)';
+    tooltip.style.color = '#fff';
+    tooltip.style.fontSize = '12px';
+    tooltip.style.padding = '6px 8px';
+    tooltip.style.borderRadius = '6px';
+    tooltip.style.whiteSpace = 'pre-line';
+    tooltip.style.zIndex = '9999';
+    tooltip.style.pointerEvents = 'none';
+    tooltip.style.display = 'none';
+    document.body.appendChild(tooltip);
+
+    mountInfo.el.addEventListener('mouseenter', (mouseEvent: MouseEvent) => {
+      tooltip.style.display = 'block';
+      tooltip.style.left = mouseEvent.pageX + 10 + 'px';
+      tooltip.style.top = mouseEvent.pageY + 10 + 'px';
+    });
+
+    mountInfo.el.addEventListener('mousemove', (mouseEvent: MouseEvent) => {
+      tooltip.style.left = mouseEvent.pageX + 10 + 'px';
+      tooltip.style.top = mouseEvent.pageY + 10 + 'px';
+    });
+
+    mountInfo.el.addEventListener('mouseleave', () => {
+      tooltip.style.display = 'none';
+    });
+  };
+
+  // 이벤트 클릭 처리
+  const handleEventClick = (clickInfo: EventClickArg) => {
+    setSelectedEventId(clickInfo.event.id);
+    const targetElement = document.getElementById(`event-${clickInfo.event.id}`);
+    if (targetElement && asideRef.current) {
+      asideRef.current.scrollTo({
+        top:
+          targetElement.offsetTop -
+          asideRef.current.clientHeight / 2 +
+          targetElement.clientHeight / 2,
+        behavior: 'smooth',
+      });
+    }
+  };
+
+  // 이벤트 컨텐츠 렌더링
+  const renderEventContent = (eventArg: EventContentArg) => {
+    const sameDayEvents = eventArg.view.calendar
+      .getEvents()
+      .filter(calendarEvent => dayjs(calendarEvent.start).isSame(eventArg.event.start, 'day'));
+    const eventCount = sameDayEvents.length;
+    const baseHeight = 60;
+    const calculatedHeight = Math.max(16, baseHeight / eventCount);
+
+    return (
+      <div
+        style={{
+          height: `${calculatedHeight}px`,
+          lineHeight: '16px',
+          overflow: 'hidden',
+          borderRadius: '4px',
+          padding: '2px 4px',
+          marginBottom: '2px',
+        }}
+      >
+        {eventArg.event.title}
+      </div>
+    );
   };
 
   return (
@@ -83,68 +165,10 @@ function GroupCalendar({
           moreLinkClick="popover"
           events={events}
           datesSet={handleDatesSet}
-          eventDidMount={info => {
-            const tooltip = document.createElement('div');
-            tooltip.innerText = info.event.extendedProps.tooltip;
-            tooltip.classList.add('calendar-tooltip');
-            tooltip.style.position = 'absolute';
-            tooltip.style.background = 'rgba(0,0,0,0.75)';
-            tooltip.style.color = '#fff';
-            tooltip.style.fontSize = '12px';
-            tooltip.style.padding = '6px 8px';
-            tooltip.style.borderRadius = '6px';
-            tooltip.style.whiteSpace = 'pre-line';
-            tooltip.style.zIndex = '9999';
-            tooltip.style.pointerEvents = 'none';
-            tooltip.style.display = 'none';
-            document.body.appendChild(tooltip);
-
-            info.el.addEventListener('mouseenter', e => {
-              tooltip.style.display = 'block';
-              tooltip.style.left = e.pageX + 10 + 'px';
-              tooltip.style.top = e.pageY + 10 + 'px';
-            });
-            info.el.addEventListener('mousemove', e => {
-              tooltip.style.left = e.pageX + 10 + 'px';
-              tooltip.style.top = e.pageY + 10 + 'px';
-            });
-            info.el.addEventListener('mouseleave', () => {
-              tooltip.style.display = 'none';
-            });
-          }}
-          eventClick={info => {
-            setSelectedEventId(info.event.id);
-            const target = document.getElementById(`event-${info.event.id}`);
-            if (target && asideRef.current) {
-              asideRef.current.scrollTo({
-                top: target.offsetTop - asideRef.current.clientHeight / 2 + target.clientHeight / 2,
-                behavior: 'smooth',
-              });
-            }
-          }}
+          eventDidMount={handleEventDidMount}
+          eventClick={handleEventClick}
           eventDisplay="block"
-          eventContent={arg => {
-            const sameDayEvents = arg.view.calendar
-              .getEvents()
-              .filter(e => dayjs(e.start).isSame(arg.event.start, 'day'));
-            const count = sameDayEvents.length;
-            const baseHeight = 60;
-            const height = Math.max(16, baseHeight / count);
-            return (
-              <div
-                style={{
-                  height: `${height}px`,
-                  lineHeight: '16px',
-                  overflow: 'hidden',
-                  borderRadius: '4px',
-                  padding: '2px 4px',
-                  marginBottom: '2px',
-                }}
-              >
-                {arg.event.title}
-              </div>
-            );
-          }}
+          eventContent={renderEventContent}
         />
       </div>
     </section>

@@ -81,7 +81,7 @@ function GroupScheduleList({
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(66,148,207,0.5) transparent',
       }}
-      className="w-[300px] pr-1 overflow-y-auto min-h-[670px]"
+      className="w-[300px] pr-1 overflow-y-auto h-[670px]"
     >
       <h3 className="flex gap-1 justify-end mr-[18px] text-brand mb-3 text-3xl font-semibold">
         {monthLabel || dayjs().format('M월')}

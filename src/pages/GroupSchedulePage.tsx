@@ -168,7 +168,6 @@ function GroupSchedulePage() {
     await deleteSchedule(id);
   };
 
-  // ---- 여기서 조건부 return → 조건부 렌더링으로 변경 ----
   return (
     <GroupDashboardLayout>
       {!user ? (

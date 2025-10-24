@@ -81,7 +81,9 @@ export default function AiGroupsSection() {
           <ul className="grid gap-x-[12px] gap-y-[22px] mb-[64px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 place-items-stretch overflow-x-auto">
             {filtered.slice(0, 8).map(item => (
               <li key={item.group_id}>
-                <GroupCard item={item} />
+                <div>
+                  <GroupCard item={item} as='div' />
+                </div>
               </li>
             ))}
           </ul>

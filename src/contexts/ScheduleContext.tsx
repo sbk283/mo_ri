@@ -8,12 +8,12 @@ interface ScheduleContextType {
   schedules: Schedule[];
   loading: boolean;
   error: string | null;
-  fetchSchedules: (groupId: string, start: string, end: string) => Promise<void>;
+  fetchSchedules: (groupId: string, startDate: string, endDate: string) => Promise<void>;
   addSchedule: (
     payload: Omit<group_schedule, 'schedule_id' | 'schedule_created_at'>,
   ) => Promise<void>;
-  updateSchedule: (id: string, updates: Partial<group_schedule>) => Promise<void>;
-  deleteSchedule: (id: string) => Promise<void>;
+  updateSchedule: (scheduleId: string, updates: Partial<group_schedule>) => Promise<void>;
+  deleteSchedule: (scheduleId: string) => Promise<void>;
   clearSchedules: () => void;
 }
 
@@ -24,26 +24,30 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSchedules = useCallback(async (groupId: string, start: string, end: string) => {
-    setLoading(true);
-    setError(null);
-    const { data, error: fetchError } = await supabase
-      .from('group_schedule')
-      .select('*')
-      .eq('group_id', groupId)
-      .gte('schedule_start_at', start)
-      .lt('schedule_start_at', end)
-      .order('schedule_start_at', { ascending: true });
+  // 일정 조회: 종료일도 고려하여 해당 월과 겹치는 모든 일정 조회
+  const fetchSchedules = useCallback(
+    async (groupId: string, startDate: string, endDate: string) => {
+      setLoading(true);
+      setError(null);
+      const { data, error: fetchError } = await supabase
+        .from('group_schedule')
+        .select('*')
+        .eq('group_id', groupId)
+        .gte('schedule_end_at', startDate) // 종료일이 월 시작일 이후 (아직 끝나지 않음)
+        .lt('schedule_start_at', endDate) // 시작일이 월 종료일 이전 (이미 시작됨)
+        .order('schedule_start_at', { ascending: true });
 
-    if (fetchError) {
-      setError(fetchError.message);
-    } else if (data) {
-      setSchedules(data as Schedule[]);
-    }
-    setLoading(false);
-  }, []);
+      if (fetchError) {
+        setError(fetchError.message);
+      } else if (data) {
+        setSchedules(data as Schedule[]);
+      }
+      setLoading(false);
+    },
+    [],
+  );
 
-  // 추가
+  // 일정 추가
   const addSchedule = useCallback(
     async (payload: Omit<group_schedule, 'schedule_id' | 'schedule_created_at'>) => {
       setError(null);
@@ -56,40 +60,50 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
       if (insertError) {
         setError(insertError.message);
       } else if (data) {
-        setSchedules(prev => [...prev, data as Schedule]);
+        setSchedules(previousSchedules => [...previousSchedules, data as Schedule]);
       }
     },
     [],
   );
 
-  // 업데이트
-  const updateSchedule = useCallback(async (id: string, updates: Partial<group_schedule>) => {
-    setError(null);
-    const { data, error: updateError } = await supabase
-      .from('group_schedule')
-      .update(updates)
-      .eq('schedule_id', id)
-      .select('*')
-      .single();
+  // 일정 업데이트
+  const updateSchedule = useCallback(
+    async (scheduleId: string, updates: Partial<group_schedule>) => {
+      setError(null);
+      const { data, error: updateError } = await supabase
+        .from('group_schedule')
+        .update(updates)
+        .eq('schedule_id', scheduleId)
+        .select('*')
+        .single();
 
-    if (updateError) {
-      setError(updateError.message);
-    } else if (data) {
-      setSchedules(prev => prev.map(s => (s.schedule_id === id ? (data as Schedule) : s)));
-    }
-  }, []);
+      if (updateError) {
+        setError(updateError.message);
+      } else if (data) {
+        setSchedules(previousSchedules =>
+          previousSchedules.map(schedule =>
+            schedule.schedule_id === scheduleId ? (data as Schedule) : schedule,
+          ),
+        );
+      }
+    },
+    [],
+  );
 
-  // 삭제
-  const deleteSchedule = useCallback(async (id: string) => {
+  // 일정 삭제
+  const deleteSchedule = useCallback(async (scheduleId: string) => {
     setError(null);
     const { error: deleteError } = await supabase
       .from('group_schedule')
       .delete()
-      .eq('schedule_id', id);
+      .eq('schedule_id', scheduleId);
+
     if (deleteError) {
       setError(deleteError.message);
     } else {
-      setSchedules(prev => prev.filter(s => s.schedule_id !== id));
+      setSchedules(previousSchedules =>
+        previousSchedules.filter(schedule => schedule.schedule_id !== scheduleId),
+      );
     }
   }, []);
 
@@ -118,9 +132,9 @@ export function ScheduleProvider({ children }: PropsWithChildren) {
 
 // 커스텀 훅
 export function useSchedule() {
-  const ctx = useContext(ScheduleContext);
-  if (!ctx) {
+  const context = useContext(ScheduleContext);
+  if (!context) {
     throw new Error('useSchedule은 ScheduleProvider 내부에서만 사용할 수 있습니다.');
   }
-  return ctx;
+  return context;
 }

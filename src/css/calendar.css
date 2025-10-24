@@ -57,7 +57,7 @@
 
 /* 요일 전체 박스 높이 키우기 */
 .fc-scrollgrid-sync-inner {
-  height: 43px !important;
+  height: auto !important;
 }
 
 /* ===== 날짜 셀 =====*/

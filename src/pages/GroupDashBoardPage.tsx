@@ -199,7 +199,7 @@ const GroupDashBoardPage = () => {
         </div>
 
         <div className="flex justify-end">
-          <p className="text-sm text-gray-300 cursor-pointer pt-8">모임나가기</p>
+          <p className="text-sm text-gray-300 cursor-pointer pt-18">모임나가기</p>
         </div>
       </GroupDashboardLayout>
     </div>

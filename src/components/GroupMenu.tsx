@@ -111,11 +111,11 @@ function GroupMenu() {
       }
       if (selectedTab.label === '진행중') {
         // 시작일이 오늘이거나 과거이면서 종료일이 오늘 이후인 recruiting 모임
-        return group.status === 'recruiting' && startDate <= today && endDate >= today;
+        return group.status === 'closed' && startDate <= today && endDate >= today;
       }
       if (selectedTab.label === '종료') {
         // 종료된 모임
-        return group.status === 'finished' || endDate < today;
+        return group.status === 'closed' || endDate < today;
       }
       return false;
     });

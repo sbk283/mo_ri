@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import GroupContentNon from './GroupContentNon';
+import JoinGroupContentNon from './JoinGroupContentNon';
 
 interface JoinGroupContentBoxProps {
   groups: any[]; // 위 fetch에서 'groups' 배열 (동일 필드)
@@ -31,7 +31,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
   }
 
   if (groups.length === 0) {
-    return <GroupContentNon />;
+    return <JoinGroupContentNon />;
   }
 
   return (
@@ -97,9 +97,15 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                 </div>
               </div>
             </div>
-            <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
-              <img src="/images/swiper_next.svg" alt="상세보기" />
-            </div>
+            {group.status === 'closed' ? (
+              <button className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[3px] border border-brand rounded-[5px] text-brand text-[15px] bg-white">
+                후기작성
+              </button>
+            ) : (
+              <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
+                <img src="/images/swiper_next.svg" alt="상세보기" />
+              </div>
+            )}
           </Link>
         );
       })}

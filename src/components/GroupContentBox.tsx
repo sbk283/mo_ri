@@ -99,10 +99,15 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
                 </div>
               </div>
             </div>
-
-            <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
-              <img src="/images/swiper_next.svg" alt="상세보기" />
-            </div>
+            {group.status === 'closed' ? (
+              <div className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[3px] border border-[#CCC] rounded-[5px] text-[#767676] text-[15px] bg-white">
+                모임종료
+              </div>
+            ) : (
+              <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
+                <img src="/images/swiper_next.svg" alt="상세보기" />
+              </div>
+            )}
           </Link>
         );
       })}

@@ -362,7 +362,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
   );
 };
 
-// 커스텀 훅
+// 커스텀훅
 export function useGroupMember() {
   const ctx = useContext(GroupMemberContext);
   if (!ctx) throw new Error('useGroupMember은 GroupMemberProvider 안에서만 사용해야 합니다.');

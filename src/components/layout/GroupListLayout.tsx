@@ -103,90 +103,95 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
           </div>
         </header>
 
-        {/*  여기에 검색된 내용 출력할거야,검색결과는 이쪽 항목만 나오고, 밑에 내용들은 안보일거임 */}
-        <GroupSearchResults searchTerm={searchTerm} />
+        {searchTerm ? (
+          <GroupSearchResults searchTerm={searchTerm} />
+        ) : (
+          <>
+            {/* 중앙 Swiper */}
+            <section className="mb-12 w-[1024px]">
+              <h2 className="text-lg font-bold mb-4">해당 카테고리의 인기있는 TOP8</h2>
+              <BannerCardSwiper groups={groups} />
+            </section>
 
-        {/* 중앙 Swiper */}
-        <section className="mb-12 w-[1024px]">
-          <h2 className="text-lg font-bold mb-4">해당 카테고리의 인기있는 TOP8</h2>
-          <BannerCardSwiper groups={groups} />
-        </section>
-
-        {/* 리스트 */}
-        <section>
-          <div className="flex items-center justify-between mb-4 relative">
-            <h2 className="text-lg font-bold">
-              {mainCategory} &gt; {activeCategory}
-            </h2>
-            <ArrayDropdown
-              options={['최신순', '원데이', '단기', '장기']}
-              value={selectedSort}
-              onChange={setSelectedSort}
-            />
-          </div>
-
-          <div className="space-y-4">
-            {loading ? (
-              <div className="flex justify-center items-center h-60 text-gray-500">로딩 중...</div>
-            ) : displayedGroups.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className="flex flex-col justify-center items-center h-60 bg-gray-50"
-              >
-                <motion.p
-                  className="text-lg font-semibold text-gray-600"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  현재 등록된 모임이 없습니다
-                </motion.p>
-                <motion.p
-                  className="text-sm text-gray-400 mt-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.4 }}
-                >
-                  새로운 모임을 만들고 친구들과 활동을 시작해보세요!
-                </motion.p>
-              </motion.div>
-            ) : (
-              displayedGroups.map(group => (
-                <GroupListCard
-                  key={group.group_id}
-                  group_id={group.group_id}
-                  group_title={group.group_title}
-                  group_short_intro={group.group_short_intro}
-                  category_major_name={
-                    group.categories_major?.category_major_name ?? '카테고리 없음'
-                  }
-                  category_sub_name={
-                    group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'
-                  }
-                  status={group.status}
-                  group_region={group.group_region}
-                  image_urls={group.image_urls}
-                  member_count={group.member_count}
-                  group_capacity={group.group_capacity}
-                  group_start_day={group.group_start_day}
-                  group_end_day={group.group_end_day}
+            {/* 리스트 */}
+            <section>
+              <div className="flex items-center justify-between mb-4 relative">
+                <h2 className="text-lg font-bold">
+                  {mainCategory} &gt; {activeCategory}
+                </h2>
+                <ArrayDropdown
+                  options={['최신순', '원데이', '단기', '장기']}
+                  value={selectedSort}
+                  onChange={setSelectedSort}
                 />
-              ))
-            )}
-
-            {displayedGroups.length > 0 && (
-              <div className="pt-[107px] flex items-center">
-                <div className="flex-1 border-t border-[#8C8C8C]" />
-                <span className="mx-4 text-sm text-[#8C8C8C] whitespace-nowrap">
-                  모든 항목을 불러왔습니다
-                </span>
-                <div className="flex-1 border-t border-[#8C8C8C]" />
               </div>
-            )}
-          </div>
-        </section>
+
+              <div className="space-y-4">
+                {loading ? (
+                  <div className="flex justify-center items-center h-60 text-gray-500">
+                    로딩 중...
+                  </div>
+                ) : displayedGroups.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="flex flex-col justify-center items-center h-60 bg-gray-50"
+                  >
+                    <motion.p
+                      className="text-lg font-semibold text-gray-600"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      현재 등록된 모임이 없습니다
+                    </motion.p>
+                    <motion.p
+                      className="text-sm text-gray-400 mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.4 }}
+                    >
+                      새로운 모임을 만들고 친구들과 활동을 시작해보세요!
+                    </motion.p>
+                  </motion.div>
+                ) : (
+                  displayedGroups.map(group => (
+                    <GroupListCard
+                      key={group.group_id}
+                      group_id={group.group_id}
+                      group_title={group.group_title}
+                      group_short_intro={group.group_short_intro}
+                      category_major_name={
+                        group.categories_major?.category_major_name ?? '카테고리 없음'
+                      }
+                      category_sub_name={
+                        group.categories_sub?.category_sub_name ?? '세부 카테고리 없음'
+                      }
+                      status={group.status}
+                      group_region={group.group_region}
+                      image_urls={group.image_urls}
+                      member_count={group.member_count}
+                      group_capacity={group.group_capacity}
+                      group_start_day={group.group_start_day}
+                      group_end_day={group.group_end_day}
+                    />
+                  ))
+                )}
+
+                {displayedGroups.length > 0 && (
+                  <div className="pt-[107px] flex items-center">
+                    <div className="flex-1 border-t border-[#8C8C8C]" />
+                    <span className="mx-4 text-sm text-[#8C8C8C] whitespace-nowrap">
+                      모든 항목을 불러왔습니다
+                    </span>
+                    <div className="flex-1 border-t border-[#8C8C8C]" />
+                  </div>
+                )}
+              </div>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );

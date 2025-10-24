@@ -7,7 +7,7 @@ interface PaginationProps {
 
 export default function GroupPagination({ page, totalPages, onPageChange }: PaginationProps) {
   return (
-    <div className="flex justify-center items-center gap-2 mt-6">
+    <div className="flex justify-center items-center gap-2 mt-6 mb-4">
       {/* 이전 */}
       <button
         onClick={() => onPageChange(Math.max(page - 1, 1))}

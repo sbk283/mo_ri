@@ -6,9 +6,84 @@ import GroupContentDetailEdit from './GroupContentDetailEdit';
 import type { Notice } from '../../types/notice';
 
 const ITEMS_PER_PAGE = 10;
+const BUCKET = 'group-post-images';
+const PREFIX = 'notice'; // 공지 접두어
 const today = () => new Date().toISOString().slice(0, 10);
 
 type NoticeRow = Notice & { post_id: string };
+
+const isHttp = (u?: string | null) => !!u && /^https?:\/\//i.test(u);
+const isPublicPath = (u?: string | null) => !!u && /\/storage\/v1\/object\/public\//i.test(u);
+
+/** 그룹 폴더 하위 키 생성: notice/{groupId}/{timestamp}-{uuid}.{ext} */
+const buildKey = (groupId: string, filename: string) => {
+  const ts = Date.now();
+  const ext = (filename.split('.').pop() || 'png').toLowerCase();
+  const uuid = (
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${ts}`
+  ) as string;
+  return `${PREFIX}/${groupId}/${ts}-${uuid}.${ext}`;
+};
+
+/** 상대/키 → 퍼블릭 URL로 변환. 이미 http/public이면 그대로 */
+const resolvePostImageUrl = (raw?: string | null, groupId?: string | null): string | null => {
+  if (!raw) return null;
+  if (isHttp(raw) || isPublicPath(raw)) return raw;
+
+  // 파일명 또는 키가 들어온 경우, notice/<gid>/... 형태로 보강
+  let key = raw.replace(/^\/+/, '');
+  if (groupId && !key.startsWith(`${PREFIX}/${groupId}/`)) {
+    if (key.startsWith(`${groupId}/`)) key = `${PREFIX}/${key}`;
+    else key = `${PREFIX}/${groupId}/${key}`;
+  }
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(key);
+  return data?.publicUrl ?? null;
+};
+
+/** HTML 내 img src를 전부 퍼블릭 URL로 치환 */
+const resolveAllImageSrcInHtml = (html?: string | null, groupId?: string | null): string => {
+  if (!html) return '';
+  return html.replace(/<img\b([^>]*?)\bsrc=["']([^"']+)["']([^>]*)>/gi, (_m, pre, src, post) => {
+    const resolved = resolvePostImageUrl(src, groupId) || src;
+    return `<img${pre}src="${resolved}"${post}>`;
+  });
+};
+
+/** data:image/*;base64 를 찾아 실제 파일로 업로드 후 URL로 치환 */
+async function externalizeInlineImages(html: string, groupId: string): Promise<string> {
+  const matches = Array.from(
+    html.matchAll(/<img\b[^>]*\bsrc=["'](data:image\/[^"']+)["'][^>]*>/gi),
+  );
+  if (matches.length === 0) return html;
+
+  let out = html;
+  for (const m of matches) {
+    const dataUrl = m[1] as string;
+    try {
+      const blob = await (await fetch(dataUrl)).blob();
+      const mime = blob.type || 'image/png';
+      const ext = mime.split('/')[1] || 'png';
+      const filename = `inline.${ext}`;
+      const key = buildKey(groupId, filename); // notice/<gid>/...
+
+      const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, blob, {
+        upsert: false,
+        cacheControl: '3600',
+        contentType: mime,
+      });
+      if (upErr) continue;
+
+      const { data } = supabase.storage.from(BUCKET).getPublicUrl(key);
+      if (data?.publicUrl) {
+        out = out.replace(dataUrl, data.publicUrl);
+      }
+    } catch {
+      // 실패 시 해당 이미지는 그대로 둔다
+    }
+  }
+  return out;
+}
 
 export function DashboardNotice({
   groupId,
@@ -72,9 +147,9 @@ export function DashboardNotice({
   const [items, setItems] = useState<NoticeRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 목록 불러오기 (DB가 관리하는 view_count 사용)
-  const reload = async () => {
-    if (!groupId) return;
+  // 목록 불러오기: 리스트 반환 (생성 직후 상세로 이동 위해)
+  const reload = async (): Promise<NoticeRow[]> => {
+    if (!groupId) return [];
     setLoading(true);
     try {
       const { data: posts, error: postsErr } = await supabase
@@ -88,7 +163,6 @@ export function DashboardNotice({
       const { data: u } = await supabase.auth.getUser();
       const userId = u?.user?.id ?? null;
 
-      // 내 읽음 집합
       let readSet = new Set<string>();
       if (userId && posts?.length) {
         const ids = posts.map(p => p.post_id);
@@ -100,28 +174,29 @@ export function DashboardNotice({
         if (reads?.length) readSet = new Set(reads.map(r => r.post_id as string));
       }
 
-      // 매핑
       const mapped: NoticeRow[] =
         (posts ?? []).map((r, i) => ({
           id: i + 1,
           post_id: r.post_id,
           title: r.post_title ?? '',
-          content: r.post_body_md ?? '',
+          content: resolveAllImageSrcInHtml(r.post_body_md ?? '', groupId),
           date: (r.post_created_at ?? '').slice(0, 10),
           isRead: readSet.has(r.post_id),
-          views: Number(r.view_count ?? 0), // ✅ DB 카운터 그대로 사용
+          views: Number(r.view_count ?? 0),
         })) ?? [];
 
       setItems(mapped);
+      return mapped;
     } catch (e) {
       console.error('reload error', e);
+      return [];
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    reload();
+    void reload();
   }, [groupId, boardType]);
 
   // 페이지네이션
@@ -139,7 +214,7 @@ export function DashboardNotice({
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // 상세 진입 시: 읽음 upsert만 하고, 처음 읽는 경우에만 로컬에서 views +1 (DB 트리거도 +1)
+  // 상세 진입: 읽음 upsert(중복무시) → 처음 읽음이면 로컬 views+1
   const openDetail = async (localId: number) => {
     const idx = items.findIndex(n => n.id === localId);
     if (idx < 0) return;
@@ -151,24 +226,36 @@ export function DashboardNotice({
 
     const wasRead = t.isRead;
 
-    // 읽음 upsert (group_id 넣지 말 것)
-    const { error } = await supabase
+    const base = supabase
       .from('group_post_reads')
-      .upsert({ post_id: t.post_id, user_id: userId }, { onConflict: 'post_id,user_id' });
+      .upsert(
+        { post_id: t.post_id, user_id: userId },
+        { onConflict: 'post_id,user_id', ignoreDuplicates: true },
+      );
 
-    if (error) {
-      console.error('upsert read error', error);
-    } else {
-      // 처음 읽는 경우에만 로컬 +1 (DB 트리거도 +1 되었음)
+    const { data: inserted, error: insErr } = await base.select('post_id');
+
+    if (insErr) {
+      // @ts-ignore
+      if (insErr.code !== '23505') {
+        console.error('insert read error', insErr);
+      }
+    }
+
+    if (!wasRead && inserted && inserted.length > 0) {
       setItems(prev => {
         const copy = [...prev];
         const cur = copy[idx];
         if (!cur) return prev;
-        copy[idx] = {
-          ...cur,
-          isRead: true,
-          views: wasRead ? cur.views : cur.views + 1,
-        };
+        copy[idx] = { ...cur, isRead: true, views: cur.views + 1 };
+        return copy;
+      });
+    } else {
+      setItems(prev => {
+        const copy = [...prev];
+        const cur = copy[idx];
+        if (!cur) return prev;
+        copy[idx] = { ...cur, isRead: true };
         return copy;
       });
     }
@@ -193,40 +280,93 @@ export function DashboardNotice({
     views: 0,
   };
 
-  // 작성/수정/삭제
+  // 작성
   const handleCreateSave = async (next: Notice) => {
     if (!groupId || !isHost) return;
     const { data: u } = await supabase.auth.getUser();
     const userId = u?.user?.id;
     if (!userId) return;
 
-    const { error } = await supabase.from('group_posts').insert({
-      user_id: userId,
-      group_id: groupId,
-      board_type: boardType,
-      post_title: next.title,
-      post_body_md: next.content,
-    });
-    if (error) {
+    // 본문 내 dataURL 업로드 및 경로 치환
+    const cleanedHtml = await externalizeInlineImages(next.content || '', groupId);
+    const normalizedHtml = resolveAllImageSrcInHtml(cleanedHtml, groupId);
+
+    const { data: ins, error } = await supabase
+      .from('group_posts')
+      .insert({
+        user_id: userId,
+        group_id: groupId,
+        board_type: boardType,
+        post_title: next.title,
+        post_body_md: normalizedHtml,
+      })
+      .select('post_id')
+      .single();
+
+    if (error || !ins) {
       console.error('create error', error);
       return;
     }
 
-    await reload();
-    setCreating(false);
+    const list = await reload();
+    if (!list.length) {
+      setCreating(false);
+      setPage(1);
+      setDetailIdx(null);
+      setEditing(false);
+      return;
+    }
+
+    const first = list[0];
     setPage(1);
-    setDetailIdx(0);
+    setCreating(false);
+
+    const base = supabase
+      .from('group_post_reads')
+      .upsert(
+        { post_id: first.post_id, user_id: userId },
+        { onConflict: 'post_id,user_id', ignoreDuplicates: true },
+      );
+    const { data: inserted, error: insErr } = await base.select('post_id');
+    if (insErr) {
+      // @ts-ignore
+      if (insErr.code !== '23505') console.error('insert read error', insErr);
+    }
+
+    if (inserted && inserted.length > 0) {
+      setItems(prev => {
+        const copy = [...prev];
+        if (copy.length > 0 && copy[0].post_id === first.post_id) {
+          copy[0] = { ...copy[0], isRead: true, views: (copy[0].views ?? 0) + 1 };
+        }
+        return copy;
+      });
+    } else {
+      setItems(prev => {
+        const copy = [...prev];
+        if (copy.length > 0 && copy[0].post_id === first.post_id) {
+          copy[0] = { ...copy[0], isRead: true };
+        }
+        return copy;
+      });
+    }
+
+    setDetailIdx(first.id - 1);
     setEditing(false);
   };
 
+  // 수정
   const handleDetailSave = async (next: Notice) => {
-    if (detailIdx == null) return;
+    if (detailIdx == null || !groupId) return;
     const target = items[detailIdx];
     if (!target) return;
 
+    const cleanedHtml = await externalizeInlineImages(next.content || '', groupId);
+    const normalizedHtml = resolveAllImageSrcInHtml(cleanedHtml, groupId);
+
     const { error } = await supabase
       .from('group_posts')
-      .update({ post_title: next.title, post_body_md: next.content })
+      .update({ post_title: next.title, post_body_md: normalizedHtml })
       .eq('post_id', target.post_id);
     if (error) {
       console.error('update error', error);
@@ -234,12 +374,17 @@ export function DashboardNotice({
     }
 
     const copy = [...items];
-    copy[detailIdx] = { ...copy[detailIdx], title: next.title, content: next.content };
+    copy[detailIdx] = {
+      ...copy[detailIdx],
+      title: next.title,
+      content: normalizedHtml,
+    };
     setItems(copy);
     setEditing(false);
     setCreating(false);
   };
 
+  // 삭제
   const handleDetailDelete = async () => {
     if (detailIdx == null) return;
     const target = items[detailIdx];
@@ -274,7 +419,14 @@ export function DashboardNotice({
             transition={{ duration: 0.18 }}
           >
             <GroupContentDetailEdit
-              notice={emptyNotice}
+              notice={{
+                id: 0,
+                title: '',
+                content: '',
+                date: today(),
+                isRead: false,
+                views: 0,
+              }}
               onCancel={() => setCreating(false)}
               onSave={handleCreateSave}
             />
@@ -293,7 +445,6 @@ export function DashboardNotice({
               <div className="p-6 text-center text-gray-500">등록된 공지가 없습니다.</div>
             ) : (
               <>
-                {/* 헤더: 호스트면 상태 컬럼 숨김 */}
                 <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
                   <div className="w-[600px] truncate font-semibold pl-7 text-md">제목</div>
                   <div className="w-[120px] text-center text-md">작성일자</div>
@@ -360,11 +511,10 @@ export function DashboardNotice({
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[550px]">
+            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h={[550].toString() + 'px']">
               <header className="px-8 pt-6">
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>
-                  {/* 호스트면 읽음/안읽음 뱃지 숨김 */}
                   {!isHost && (
                     <span
                       className={`w-[52px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center leading-none ${
@@ -394,7 +544,6 @@ export function DashboardNotice({
               </section>
             </article>
 
-            {/* 수정/삭제 버튼 */}
             <footer className="pt-6 flex text-left justify-start">
               <button onClick={closeDetail} className="text-[#8C8C8C] py-2 text-md">
                 &lt; 목록으로

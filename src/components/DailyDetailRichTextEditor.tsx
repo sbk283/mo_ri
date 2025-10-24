@@ -1,4 +1,3 @@
-// src/components/DetailRichTextEditor.tsx
 import React, {
   useCallback,
   useRef,
@@ -10,22 +9,23 @@ import React, {
 } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
-interface DetailRichTextEditorProps {
+interface DailyDetailRichTextEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   disabled?: boolean;
   onImagesChange?: (images: File[]) => void;
   height?: number;
-
   requireNotEmpty?: boolean;
   onValidityChange?: (valid: boolean) => void;
+  groupId?: string; // 선택형으로 변경
 }
 
-const BUCKET = 'group-images';
-const ROOT_PREFIX = 'groups';
+const BUCKET = 'group-post-images';
+const ROOT_PREFIX = 'daily';
 
 const checkEditorContent = (quillRef: React.MutableRefObject<ReactQuill | null>): boolean => {
   const editor = quillRef.current?.getEditor?.();
@@ -39,7 +39,7 @@ const checkEditorContent = (quillRef: React.MutableRefObject<ReactQuill | null>)
   );
 };
 
-const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
+const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo(
   ({
     value,
     onChange,
@@ -49,44 +49,47 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
     height = 350,
     requireNotEmpty = false,
     onValidityChange,
+    groupId,
   }) => {
     const quillRef = useRef<ReactQuill | null>(null);
     const [isMounted, setIsMounted] = useState(false);
 
+    // groupId가 안 오면 URL 파라미터(id)에서 가져옴
+    const params = useParams<{ id: string }>();
+    const resolvedGroupId = (groupId ?? params.id ?? '').trim();
+
     useEffect(() => setIsMounted(true), []);
     useEffect(() => {
-      const v = checkEditorContent(quillRef);
-      onValidityChange?.(v);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value]);
+      onValidityChange?.(checkEditorContent(quillRef));
+    }, [value, onValidityChange]);
 
-    const uploadImageToSupabase = useCallback(async (file: File): Promise<string> => {
-      const ymd = new Date().toISOString().slice(0, 7).replace('-', '');
-      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-      const name = crypto.randomUUID();
-      const path = `${ROOT_PREFIX}/${ymd}/${name}.${ext}`;
+    const uploadImageToSupabase = useCallback(
+      async (file: File): Promise<string> => {
+        if (!resolvedGroupId) throw new Error('groupId가 없습니다.');
+        const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+        const name = crypto.randomUUID();
+        const path = `${ROOT_PREFIX}/${resolvedGroupId}/${name}.${ext}`;
 
-      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
-        cacheControl: '31536000',
-        upsert: false,
-        contentType: file.type || 'image/*',
-      });
-      if (upErr) throw upErr;
+        const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
+          cacheControl: '31536000',
+          upsert: false,
+          contentType: file.type || 'image/*',
+        });
+        if (upErr) throw upErr;
 
-      const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
-      if (!data?.publicUrl) throw new Error('공개 URL을 생성하지 못했습니다. 다시 시도해주세요.');
-      return data.publicUrl;
-    }, []);
+        const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+        if (!data?.publicUrl) throw new Error('공개 URL을 생성하지 못했습니다.');
+        return data.publicUrl;
+      },
+      [resolvedGroupId],
+    );
 
     const safeSetSelection = (editor: any, index: number) => {
       try {
         if (!editor?.root?.isConnected) return;
         const len = Math.max(0, (editor.getLength?.() ?? 1) - 1);
         const clamped = Math.min(Math.max(index, 0), len);
-        setTimeout(() => {
-          if (!editor?.root?.isConnected) return;
-          editor.setSelection(clamped, 0, 'silent');
-        }, 0);
+        setTimeout(() => editor?.setSelection?.(clamped, 0, 'silent'), 0);
       } catch {
         /* no-op */
       }
@@ -94,27 +97,19 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
 
     const insertOrReplaceAtSelection = useCallback((editor: any, url: string) => {
       const sel = editor.getSelection?.(true);
-      let idx = sel?.index ?? (editor.getLength?.() ?? 1) - 1;
-
-      const [leaf] = editor.getLeaf?.(idx) ?? [];
-      const isImage =
-        leaf && leaf.parent && leaf.parent.statics && leaf.parent.statics.blotName === 'image';
-
-      if (isImage) {
-        editor.deleteText(idx, 1, 'user');
-        editor.insertEmbed(idx, 'image', url, 'user');
-        safeSetSelection(editor, idx + 1);
-      } else {
-        editor.insertEmbed(idx, 'image', url, 'user');
-        safeSetSelection(editor, idx + 1);
-      }
+      const idx = sel?.index ?? (editor.getLength?.() ?? 1) - 1;
+      editor.insertEmbed(idx, 'image', url, 'user');
+      safeSetSelection(editor, idx + 1);
     }, []);
 
     const uploadAndInsertFiles = useCallback(
       async (files: FileList | File[]) => {
+        if (!resolvedGroupId) {
+          console.error('[DailyEditor] upload blocked: missing groupId');
+          return;
+        }
         const editor = quillRef.current?.getEditor?.();
         if (!editor || !files?.length) return;
-
         const list = Array.from(files);
         const accepted: File[] = [];
 
@@ -132,23 +127,31 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
         if (accepted.length && onImagesChange) onImagesChange(accepted);
         onValidityChange?.(checkEditorContent(quillRef));
       },
-      [insertOrReplaceAtSelection, onImagesChange, onValidityChange, uploadImageToSupabase],
+      [
+        insertOrReplaceAtSelection,
+        onImagesChange,
+        onValidityChange,
+        uploadImageToSupabase,
+        resolvedGroupId,
+      ],
     );
 
     const imageHandler = useCallback(() => {
+      if (!resolvedGroupId) {
+        console.error('[DailyEditor] image upload clicked without groupId');
+        return;
+      }
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
       input.multiple = true;
-      input.onchange = () => {
-        if (!input.files?.length) return;
-        void uploadAndInsertFiles(input.files);
-      };
+      input.onchange = () => input.files && void uploadAndInsertFiles(input.files);
       input.click();
-    }, [uploadAndInsertFiles]);
+    }, [uploadAndInsertFiles, resolvedGroupId]);
 
     const handlePaste = useCallback(
       (e: React.ClipboardEvent) => {
+        if (!resolvedGroupId) return;
         const items = e.clipboardData?.items;
         if (!items) return;
         const files: File[] = [];
@@ -164,17 +167,16 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
           void uploadAndInsertFiles(files);
         }
       },
-      [uploadAndInsertFiles],
+      [uploadAndInsertFiles, resolvedGroupId],
     );
 
     const handleDrop = useCallback(
       (e: DragEvent<HTMLDivElement>) => {
+        if (!resolvedGroupId) return;
         e.preventDefault();
-        if (e.dataTransfer?.files?.length) {
-          void uploadAndInsertFiles(e.dataTransfer.files);
-        }
+        if (e.dataTransfer?.files?.length) void uploadAndInsertFiles(e.dataTransfer.files);
       },
-      [uploadAndInsertFiles],
+      [uploadAndInsertFiles, resolvedGroupId],
     );
 
     const modules = useMemo(
@@ -189,7 +191,6 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
           ],
           handlers: { image: imageHandler },
         },
-        clipboard: { matchVisual: false },
       }),
       [imageHandler],
     );
@@ -199,13 +200,7 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
       [],
     );
 
-    if (!isMounted) {
-      return (
-        <div className="editor-wrapper" style={{ minHeight: `${height + 50}px` }} aria-busy="true">
-          Loading...
-        </div>
-      );
-    }
+    if (!isMounted) return <div style={{ minHeight: `${height + 50}px` }}>Loading...</div>;
 
     return (
       <div
@@ -234,6 +229,4 @@ const DetailRichTextEditor: React.FC<DetailRichTextEditorProps> = memo(
   },
 );
 
-DetailRichTextEditor.displayName = 'DetailRichTextEditor';
-
-export default DetailRichTextEditor;
+export default DailyDetailRichTextEditor;

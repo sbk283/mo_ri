@@ -5,11 +5,12 @@ import DashboardDetail from '../components/dashboard/DashboardDetail';
 import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 function GroupContentPage() {
   const { id: groupId } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
@@ -144,6 +145,41 @@ function GroupContentPage() {
       ? roleLoaded && isHost // 공지: 호스트만
       : true); // 일상: 기존 로직 유지
 
+  // === 모임 나가기: member_status 를 'left' 로 업데이트 ===
+  const handleLeaveGroup = async () => {
+    const ok = window.confirm('정말로 모임을 탈퇴하시겠어요?');
+    if (!ok) return;
+
+    const { data: u } = await supabase.auth.getUser();
+    const userId = u?.user?.id;
+
+    if (!userId || !groupId) {
+      alert('유효하지 않은 요청입니다.');
+      return;
+    }
+
+    if (isHost) {
+      alert('호스트(관리자)는 모임을 탈퇴할 수 없습니다.');
+      return;
+    }
+
+    const { error } = await supabase
+      .from('group_members')
+      .update({ member_status: 'left' })
+      .eq('group_id', groupId)
+      .eq('user_id', userId)
+      .neq('member_status', 'left'); // 이미 left면 중복 업데이트 방지
+
+    if (error) {
+      console.error('[GroupContentPage] leave error:', error);
+      alert('모임 탈퇴 중 오류가 발생했습니다.');
+      return;
+    }
+
+    alert('모임에서 탈퇴되었습니다.');
+    navigate('/');
+  };
+
   return (
     <div>
       <GroupDashboardLayout>
@@ -218,6 +254,16 @@ function GroupContentPage() {
               </main>
             </div>
           </div>
+
+          {/* 모임 나가기 */}
+          {!isHost && (
+            <button
+              className="text-sm ml-auto mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition"
+              onClick={handleLeaveGroup}
+            >
+              모임나가기
+            </button>
+          )}
         </div>
       </GroupDashboardLayout>
     </div>

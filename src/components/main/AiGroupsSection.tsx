@@ -51,13 +51,13 @@ export default function AiGroupsSection() {
       <div className="mx-auto">
         <header className="pt-[75px] pb-[32px]">
           <h2 id="popular-groups-heading" className="font-semibold text-lg">
-            AI 가 선별한
+            나의 속도에 맞춘 성장 여정!
           </h2>
           <div className=" flex justify-between items-center">
             <div className="flex items-center gap-4">
-              <p className="font-semibold text-xxl">나만의 취향 맞춤 모임!</p>
+              <p className="font-semibold text-xxl">기간별 모임으로 시작해 보세요</p>
               <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
-                <img src={Plus} alt="" aria-hidden="true" />
+                <img src={Plus} alt="더보기" />
                 <span className="text-md">더보기</span>
               </Link>
             </div>

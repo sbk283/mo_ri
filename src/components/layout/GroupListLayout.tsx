@@ -6,6 +6,8 @@ import { diffDaysInclusive, toGroupTypeByRange } from '../../utils/date';
 import ArrayDropdown from '../common/ArrayDropdown';
 import BannerCardSwiper from '../common/BannerCardSwiper';
 import GroupListCard from '../common/GroupListCard';
+import GroupSearchResults from '../search/GroupSearchResults';
+import { useSearchParams } from 'react-router-dom';
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -17,6 +19,9 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
   const [selectedSort, setSelectedSort] = useState('최신순');
   const { groups, loading, fetchGroups } = useGroup();
   const { fetchMemberCount } = useGroupMember();
+  // 검색
+  const [searchParams] = useSearchParams();
+  const searchTerm = searchParams.get('search') || '';
 
   // 그룹 불러오기
   useEffect(() => {
@@ -97,6 +102,9 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
             </p>
           </div>
         </header>
+
+        {/*  여기에 검색된 내용 출력할거야,검색결과는 이쪽 항목만 나오고, 밑에 내용들은 안보일거임 */}
+        <GroupSearchResults searchTerm={searchTerm} />
 
         {/* 중앙 Swiper */}
         <section className="mb-12 w-[1024px]">

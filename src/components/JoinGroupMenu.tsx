@@ -2,35 +2,23 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useLayoutEffect, useRef, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import JoinGroupContentBox from './JoinGroupContentBox';
+import type { GroupWithCategory } from '../types/group';
 
-// 이 타입은 'group_members' 테이블 기준
-type JoinedGroupRow = {
-  group_id: string;
-  groups: {
-    group_id: string;
-    group_title: string;
-    group_short_intro: string | null;
-    group_start_day: string;
-    group_end_day: string;
-    group_capacity: number | null;
-    group_region: string | null;
-    image_urls: string[] | null;
-    group_created_at: string;
-    status: 'recruiting' | 'closed' | 'finished';
-    categories_major?: { category_major_name: string } | null;
-    categories_sub?: { category_sub_name: string } | null;
-    group_members?: { user_id: string | null; member_status: string }[];
-    member_count?: number;
-  };
+type JoinedGroupRow = GroupWithCategory & {
+  group_members?: {
+    user_id: string | null;
+    member_status: string;
+    member_role: string;
+  }[];
+  member_count?: number;
 };
 
 function JoinGroupMenu() {
   const tabs = [{ label: '모집중' }, { label: '진행중' }, { label: '종료' }];
   const [selectedTab, setSelectedTab] = useState(tabs[0]);
-  const [groups, setGroups] = useState<JoinedGroupRow['groups'][]>([]);
+  const [groups, setGroups] = useState<JoinedGroupRow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // underline UI(생략)
   const listRef = useRef<HTMLUListElement | null>(null);
   const tabRefs = useRef<(HTMLLIElement | null)[]>([]);
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
@@ -53,6 +41,7 @@ function JoinGroupMenu() {
 
   useEffect(() => {
     let ignore = false;
+
     async function fetchJoinedGroups() {
       setLoading(true);
 
@@ -65,41 +54,43 @@ function JoinGroupMenu() {
         return;
       }
 
-      // '내가 참가한' 모임만
       const { data, error } = await supabase
         .from('group_members')
         .select(
           `
-    group_id,
-    groups (
-      *,
-      created_by,
-      categories_major(category_major_name),
-      categories_sub(category_sub_name),
-      group_members!left(user_id, member_status, member_role)
-    )
-  `,
+          group_id,
+          member_role,
+          groups (
+            *,
+            created_by,
+            categories_major(category_major_name),
+            categories_sub(category_sub_name),
+            group_members!left(user_id, member_status, member_role)
+          )
+        `,
         )
         .eq('user_id', userId)
         .eq('member_status', 'approved')
-        .eq('member_role', 'member')
-        .neq('groups.created_by', userId);
+        .eq('member_role', 'member');
 
       if (ignore) return;
 
       if (error || !data) {
         setGroups([]);
       } else {
-        // group_members 테이블에서 groups객체를 뽑아냄
-        const joinedGroupList = (data as JoinedGroupRow[])
+        const joinedGroupList = (data as any[])
           .map(row => {
-            const group = row.groups;
-            // 멤버 카운트
+            let group = row.groups;
+            if (Array.isArray(group)) group = group[0];
+            if (!group) return null;
             const approved =
-              group?.group_members?.filter(m => m.member_status === 'approved') ?? [];
-            return group ? { ...group, member_count: approved.length } : null;
+              group.group_members?.filter((m: any) => m.member_status === 'approved') ?? [];
+            return {
+              ...group,
+              member_count: approved.length,
+            };
           })
-          .filter(Boolean) as JoinedGroupRow['groups'][];
+          .filter(Boolean) as JoinedGroupRow[];
         setGroups(joinedGroupList);
       }
       setLoading(false);
@@ -118,20 +109,28 @@ function JoinGroupMenu() {
 
   const filteredGroups = useMemo(() => {
     return groups.filter(group => {
+      if (!group) return false;
       const createdAt = new Date(group.group_created_at);
       const startDate = new Date(group.group_start_day);
       const endDate = new Date(group.group_end_day);
       createdAt.setHours(0, 0, 0, 0);
       startDate.setHours(0, 0, 0, 0);
       endDate.setHours(0, 0, 0, 0);
+
       if (selectedTab.label === '모집중') {
+        // 모집중: recruiting이고, 시작일은 오늘 이후, 생성일 이전
         return group.status === 'recruiting' && createdAt <= today && startDate > today;
       }
       if (selectedTab.label === '진행중') {
-        return group.status === 'recruiting' && startDate <= today && endDate >= today;
+        return (
+          (group.status === 'recruiting' || group.status === 'finished') &&
+          startDate <= today &&
+          endDate >= today
+        );
       }
       if (selectedTab.label === '종료') {
-        return group.status === 'finished' || endDate < today;
+        // 종료: closed(완전종료)거나 종료일이 오늘 이전
+        return group.status === 'closed' || endDate < today;
       }
       return false;
     });

@@ -16,6 +16,14 @@ import type { group_members } from '../types/group';
 export type MemberStatus = 'applied' | 'approved' | 'rejected' | 'left';
 export type MemberRole = 'host' | 'member';
 
+// 프로필 요약 타입 추가
+export interface UserMiniProfile {
+  user_id: string | null;
+  nickname: string | null;
+  avatar_url: string | null;
+}
+
+// GroupMember에 profile 필드 추가
 export interface GroupMember {
   member_id: string;
   user_id: string;
@@ -23,6 +31,7 @@ export interface GroupMember {
   member_status: MemberStatus;
   member_role: MemberRole;
   member_joined_at: string;
+  profile?: UserMiniProfile;
 }
 
 interface GroupMemberContextType {
@@ -39,12 +48,13 @@ interface GroupMemberContextType {
 
   memberCounts: Record<string, number>;
   subscribeToGroup: (groupId: string) => void;
+
+  kickMember: (groupId: string, targetUserId: string) => Promise<'success' | 'error' | 'denied'>;
 }
 
 const GroupMemberContext = createContext<GroupMemberContextType | null>(null);
 
 interface GroupMemberProviderProps extends PropsWithChildren {
-  // 그룹 멤버 수 변화 시 실행될 외부 콜백 (GroupContext가 넘겨줄 예정)
   onMemberCountChange?: (groupId: string, delta: number) => void;
 }
 
@@ -57,8 +67,6 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [memberCounts, setMemberCounts] = useState<Record<string, number>>({});
-
-  // 실시간으로 구독 중인 그룹 ID 목록 추적
   const [subscribedGroups, setSubscribedGroups] = useState<Set<string>>(new Set());
 
   // 유저 커리어 조회
@@ -79,19 +87,57 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     }
   }, []);
 
-  // 멤버 목록 조회
+  // 멤버 목록 조회 (user_profiles 조인 추가)
+  // 서버에서 approved 상태만 조회하도록 필터 추가
   const fetchMembers = useCallback(async (groupId: string) => {
     setLoading(true);
     setError(null);
     try {
       const { data, error } = await supabase
         .from('group_members')
-        .select('*')
+        .select(
+          `
+        member_id,
+        user_id,
+        group_id,
+        member_status,
+        member_role,
+        member_joined_at,
+        user_profiles ( user_id, nickname, avatar_url )
+      `,
+        )
         .eq('group_id', groupId)
+        .eq('member_status', 'approved') // ← 여기서 승인된 멤버만 가져옴
         .order('member_joined_at', { ascending: true });
 
       if (error) throw error;
-      setMembers(data || []);
+
+      // Supabase는 user_profiles를 배열로 반환할 수 있으므로 안전하게 처리
+      const mapped: GroupMember[] = (data ?? []).map(row => {
+        const userProfileRaw = (row as Record<string, unknown>)['user_profiles'];
+        const userProfile =
+          Array.isArray(userProfileRaw) && userProfileRaw.length > 0
+            ? (userProfileRaw[0] as Record<string, unknown>)
+            : (userProfileRaw as Record<string, unknown> | null);
+
+        return {
+          member_id: row.member_id,
+          user_id: row.user_id,
+          group_id: row.group_id,
+          member_status: row.member_status,
+          member_role: row.member_role,
+          member_joined_at: row.member_joined_at,
+          profile: userProfile
+            ? {
+                user_id: (userProfile['user_id'] as string | null) ?? null,
+                nickname: (userProfile['nickname'] as string | null) ?? null,
+                avatar_url: (userProfile['avatar_url'] as string | null) ?? null,
+              }
+            : undefined,
+        };
+      });
+
+      setMembers(mapped);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : '멤버 조회 실패';
       console.error('멤버 조회 실패:', errorMessage);
@@ -101,7 +147,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     }
   }, []);
 
-  // 특정 그룹의 현재 멤버 수 (DB에서 실시간 조회)
+  // 특정 그룹의 현재 멤버 수
   const fetchMemberCount = useCallback(async (groupId: string): Promise<number> => {
     try {
       const { count, error } = await supabase
@@ -112,7 +158,6 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
 
       if (error) throw error;
 
-      // Context 상태 업데이트
       setMemberCounts(prev => {
         const next = { ...prev, [groupId]: count ?? 0 };
         return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
@@ -126,7 +171,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     }
   }, []);
 
-  // Realtime 구독 설정 (group_members 테이블 변경사항 감지)
+  // 실시간 변경 구독
   useEffect(() => {
     const channel = supabase
       .channel('group_members_realtime')
@@ -134,8 +179,6 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
         'postgres_changes',
         { event: '*', schema: 'public', table: 'group_members' },
         (payload: RealtimePostgresChangesPayload<group_members>) => {
-          console.log('Realtime 변경 감지:', payload);
-
           let groupId: string | undefined;
 
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
@@ -148,6 +191,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
             fetchMemberCount(groupId);
 
             if (subscribedGroups.has(groupId)) {
+              // 구독 중인 그룹이라면 멤버 목록도 새로고침
               fetchMembers(groupId);
             }
 
@@ -167,12 +211,11 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     };
   }, [subscribedGroups, fetchMemberCount, fetchMembers, onMemberCountChange]);
 
-  // 특정 그룹을 구독 목록에 추가
   const subscribeToGroup = useCallback((groupId: string) => {
     setSubscribedGroups(prev => new Set(prev).add(groupId));
   }, []);
 
-  // 모임 참가 (자동 승인)
+  // 모임 참가
   const joinGroup = useCallback(
     async (groupId: string): Promise<'success' | 'already' | 'error'> => {
       if (!user) return 'error';
@@ -218,7 +261,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     [user],
   );
 
-  // 탈퇴 (본인 탈퇴)
+  // 모임 탈퇴
   const leaveGroup = useCallback(
     async (groupId: string): Promise<'success' | 'error'> => {
       if (!user) return 'error';
@@ -247,6 +290,57 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     [user],
   );
 
+  // 모임 추방 (함수명이 생각이 안나서 kick임 용서하세요...)
+  const kickMember = useCallback(
+    async (groupId: string, targetUserId: string): Promise<'success' | 'error' | 'denied'> => {
+      if (!user) return 'error';
+
+      try {
+        // 1. 대상이 호스트면 추방 금지
+        const { data: target, error: fetchError } = await supabase
+          .from('group_members')
+          .select('member_role')
+          .eq('group_id', groupId)
+          .eq('user_id', targetUserId)
+          .maybeSingle();
+
+        if (fetchError) throw fetchError;
+        if (target?.member_role === 'host') {
+          console.warn('호스트는 추방 불가');
+          return 'denied';
+        }
+
+        // 2. 대상 member_status='left'로 변경
+        const { error: updateError } = await supabase
+          .from('group_members')
+          .update({ member_status: 'left' })
+          .eq('group_id', groupId)
+          .eq('user_id', targetUserId);
+
+        if (updateError) throw updateError;
+
+        // 3. 낙관적 UI 업데이트: 현재 Context 상태에서 즉시 제거
+        setMembers(prev =>
+          prev.filter(member => !(member.group_id === groupId && member.user_id === targetUserId)),
+        );
+
+        // 4. 카운트도 즉시 갱신
+        setMemberCounts(prev => {
+          const current = prev[groupId] ?? 0;
+          return { ...prev, [groupId]: Math.max(0, current - 1) };
+        });
+
+        console.log(`${targetUserId} 추방 성공`);
+        return 'success';
+      } catch (err) {
+        const message = err instanceof Error ? err.message : '추방 실패';
+        console.error('추방 오류:', message);
+        return 'error';
+      }
+    },
+    [user],
+  );
+
   return (
     <GroupMemberContext.Provider
       value={{
@@ -260,6 +354,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
         leaveGroup,
         memberCounts,
         subscribeToGroup,
+        kickMember,
       }}
     >
       {children}
@@ -267,7 +362,7 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
   );
 };
 
-// 커스텀 훅
+// 커스텀훅
 export function useGroupMember() {
   const ctx = useContext(GroupMemberContext);
   if (!ctx) throw new Error('useGroupMember은 GroupMemberProvider 안에서만 사용해야 합니다.');

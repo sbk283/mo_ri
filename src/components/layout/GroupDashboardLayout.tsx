@@ -16,7 +16,7 @@ function GroupDashboardLayout({ children }: LayoutProps) {
       </div>
 
       {/* 높이 보정 */}
-      <div className="w-full h-0 pb-1" />
+      <div className="w-full h-0 pb-14" />
     </div>
   );
 }

@@ -81,7 +81,7 @@ function GroupScheduleList({
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(66,148,207,0.5) transparent',
       }}
-      className="w-[300px] pr-1 overflow-y-auto h-[670px]"
+      className="w-[300px] pr-1 overflow-y-auto min-h-[670px]"
     >
       <h3 className="flex gap-1 justify-end mr-[18px] text-brand mb-3 text-3xl font-semibold">
         {monthLabel || dayjs().format('M월')}
@@ -128,19 +128,27 @@ function GroupScheduleList({
                   <div>
                     <div>
                       <div className="flex items-center justify-between">
-                        <p className="text-xs text-brand font-semibold">
-                          {dayjs(s.schedule_start_at).format('MM-DD')} ~{' '}
-                          {dayjs(s.schedule_end_at).format('MM-DD')}
+                        <p className="text-sm text-brand font-semibold">
+                          {dayjs(s.schedule_start_at).format('MM.DD')} ~{' '}
+                          {dayjs(s.schedule_end_at).format('MM.DD')}
                         </p>
-                        <button
-                          onClick={() => handleEditClick(s)}
-                          className="font-medium hover:opacity-80"
-                        >
-                          <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
-                        </button>
+                        <div className='flex gap-1'>
+                          <button
+                            onClick={() => handleEditClick(s)}
+                            className="font-medium hover:opacity-80"
+                          >
+                            <img src="/images/revise.svg" alt="수정하기" className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(s.schedule_id)}
+                            className="text-xs text-[#FF5252]"
+                          >
+                            <img src="/images/trashcan.svg" alt="일정삭제" className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
 
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-300 font-medium">
                         {dayjs(s.schedule_start_at).format('HH:mm')} -{' '}
                         {dayjs(s.schedule_end_at).format('HH:mm')}
                       </p>
@@ -156,14 +164,7 @@ function GroupScheduleList({
                     </p>
                   </div>
 
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => handleDeleteClick(s.schedule_id)}
-                      className="text-xs text-[#FF5252]"
-                    >
-                      일정삭제
-                    </button>
-                  </div>
+                  <div className="flex justify-end"></div>
                 </div>
               </div>
             );

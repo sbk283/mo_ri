@@ -81,7 +81,7 @@ function MeetingCard({
           <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">{title}</h2>
 
           {displayDday && (
-            <span className="text-white text-[15px] font-semibold bg-gray-700 rounded px-2">
+            <span className="text-white text-sm font-semibold bg-gray-300 rounded px-2">
               {displayDday}
             </span>
           )}

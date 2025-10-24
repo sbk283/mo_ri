@@ -56,9 +56,9 @@
 }
 
 /* 요일 전체 박스 높이 키우기 */
-.fc-scrollgrid-sync-inner {
+/* .fc-scrollgrid-sync-inner {
   height: 43px !important;
-}
+} */
 
 /* ===== 날짜 셀 =====*/
 .fc-daygrid-day {

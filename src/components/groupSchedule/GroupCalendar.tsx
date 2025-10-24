@@ -2,7 +2,7 @@ import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import FullCalendar from '@fullcalendar/react';
 import dayjs from 'dayjs';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useSchedule } from '../../contexts/ScheduleContext';
 
 interface GroupCalendarProps {
@@ -10,7 +10,7 @@ interface GroupCalendarProps {
   asideRef: React.RefObject<HTMLDivElement>;
   setMonthLabel: React.Dispatch<React.SetStateAction<string>>;
   setSelectedEventId: React.Dispatch<React.SetStateAction<string | null>>;
-  setMonthRange: React.Dispatch<React.SetStateAction<{ start: string; end: string } | null>>; // ✅ 부모에서 내려받기
+  setMonthRange: React.Dispatch<React.SetStateAction<{ start: string; end: string } | null>>;
 }
 
 /**
@@ -78,7 +78,9 @@ function GroupCalendar({
           showNonCurrentDates
           height="100%"
           contentHeight="100%"
-          expandRows
+          expandRows={false}
+          dayMaxEventRows={3}
+          moreLinkClick="popover"
           events={events}
           datesSet={handleDatesSet}
           eventDidMount={info => {
@@ -120,8 +122,6 @@ function GroupCalendar({
               });
             }
           }}
-          dayMaxEventRows={3}
-          moreLinkClick="popover"
           eventDisplay="block"
           eventContent={arg => {
             const sameDayEvents = arg.view.calendar

@@ -182,7 +182,7 @@ function GroupSchedulePage() {
           이 모임의 멤버만 접근할 수 있습니다.
         </div>
       ) : (
-        <div className="bg-white shadow-card rounded-sm p-6 flex flex-col h-[770px]">
+        <div className="bg-white shadow-card rounded-sm p-6 flex flex-col min-h-[770px]">
           <GroupScheduleHeader
             monthLabel={monthLabel}
             handlePrev={handlePrev}

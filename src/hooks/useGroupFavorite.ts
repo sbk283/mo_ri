@@ -22,8 +22,6 @@ export function useGroupFavorite() {
         console.error('찜 추가 실패:', error);
         return { error: error.message };
       }
-
-      console.log('찜 추가 성공:', data);
       return { data };
     },
     [user],
@@ -41,11 +39,10 @@ export function useGroupFavorite() {
         .eq('group_id', groupId);
 
       if (error) {
+        // 실패 주석 남겨놈 필요없을 시 지움
         console.error('찜 해제 실패:', error);
         return { error: error.message };
       }
-
-      console.log('찜 해제 성공');
       return { data: 'ok' };
     },
     [user],

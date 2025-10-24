@@ -68,7 +68,6 @@ function MeetingHeader({
     const fetchFavoriteStatus = async () => {
       if (!user || !groupId) return;
       const isFav = await checkFavorite(groupId);
-      console.log('초기 찜 상태:', isFav);
       setFavorite(isFav);
     };
 
@@ -77,8 +76,6 @@ function MeetingHeader({
 
   // 찜 토글
   const handleFavoriteToggle = async () => {
-    console.log('⭐ 찜 토글 클릭:', favorite ? '해제' : '추가');
-
     if (favorite) {
       await removeFavorite(groupId);
       setFavorite(false);

@@ -71,7 +71,7 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
           >
             {badge}
 
-            <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden">
+            <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
               <img
                 src={group.image_urls?.[0] || '/default-img.jpg'}
                 alt="모임사진"

@@ -1,10 +1,14 @@
 interface MeetingLeaderInfoProps {
-  leaderName: string;
+  leaderNickName: string;
   leaderLocation?: string;
   leaderCareer?: string;
 }
 
-function MeetingLeaderInfo({ leaderName, leaderLocation, leaderCareer }: MeetingLeaderInfoProps) {
+function MeetingLeaderInfo({
+  leaderNickName,
+  leaderLocation,
+  leaderCareer,
+}: MeetingLeaderInfoProps) {
   return (
     <div>
       <h4 className="font-semibold mb-2">모임장에 관한 정보</h4>
@@ -16,7 +20,7 @@ function MeetingLeaderInfo({ leaderName, leaderLocation, leaderCareer }: Meeting
               이름
             </td>
             <td className="border border-[#c0c0c0] px-4 py-3 text-[17px]">
-              {leaderName || '이름 정보 없음'}
+              {leaderNickName || '이름 정보 없음'}
             </td>
           </tr>
 
@@ -35,9 +39,7 @@ function MeetingLeaderInfo({ leaderName, leaderLocation, leaderCareer }: Meeting
             <td className="border border-[#c0c0c0] bg-[#f8f8f8] px-4 py-3 text-center font-bold text-[17px]">
               경력
             </td>
-            <td
-              className="border border-[#c0c0c0] px-4 py-3 text-[17px] leading-relaxed whitespace-pre-line"
-            >
+            <td className="border border-[#c0c0c0] px-4 py-3 text-[17px] leading-relaxed whitespace-pre-line">
               {leaderCareer || '경력 정보 없음'}
             </td>
           </tr>

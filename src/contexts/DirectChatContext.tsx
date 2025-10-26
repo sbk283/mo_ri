@@ -1,228 +1,279 @@
-// /**
-//  * 1:1 채팅 Context Provider
-//  *  - 1:1 채팅 기능 전역 상태 관리
-//  *  - 채팅방, 메세지, 사용자 검색 등의 상태와 액션 제공
-//  *
-//  * 주요 기능
-//  *  - 채팅방 목록 관리
-//  *  - 메세지 전송 및 조회
-//  *  - 사용자 검색
-//  *  - ERROR 처리
-//  *  - Loading 상태 관리
-//  *  - 추후 실시간 채팅 업데이트 필요
-//  */
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type PropsWithChildren,
+} from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
+import type {
+  DirectChatContextType,
+  DirectChatWithGroup,
+  directMessages,
+  directMessagesInsert,
+  directChatsInsert,
+} from '../types/chat';
 
-// import { createContext, useCallback, useContext, useRef, useState } from 'react';
-// import type { ChatListItem, ChatUser, CreateMessageData, MessageDetail } from '../types/ChatType';
-// import {
-//   getChatList,
-//   getMessages,
-//   sendMessage as sendMessageService,
-//   searchUsers as searchUsersService,
-//   findOrCreateDirectChat,
-// } from '../services/chat/directChatService';
+const DirectChatContext = createContext<DirectChatContextType | null>(null);
 
-// /**
-//  * DirectChatContext 의 Context 타입 정의
-//  * state 의 모양
-//  * action 의 모양
-//  */
+export const useDirectChat = () => {
+  const ctx = useContext(DirectChatContext);
+  if (!ctx) throw new Error('useDirectChat must be used within DirectChatProvider');
+  return ctx;
+};
 
-// interface DirectChatContextType {
-//   // ========== state ==========
-//   children?: React.ReactNode;
-//   chats: ChatListItem[]; // 채팅방 여러개 관리
-//   messages: MessageDetail[]; // 여러 메세지를 관리
-//   users: ChatUser[]; // 검색된 여러 사용자
-//   loading: boolean; // 로딩 상태 관리
-//   error: string | null;
-//   // ========== action ==========
-//   loadChats: () => Promise<void>; // 채팅 목록 로딩 상태관리
-//   loadMessages: (chatId: string) => Promise<void>; // 특정 채팅방의 메시지 조회
-//   //메세지가 제대로 전송 되었는지 아닌지 체크 여부를 위해 boolean 리턴 타입
-//   sendMessage: (messageData: CreateMessageData) => Promise<boolean>; // 메시지 전송
-//   searchUsers: (searchTerm: string) => Promise<void>; // 검색어(닉네임)로 사용자 검색
-//   createDirectChat: (participantId: string) => Promise<string | null>; // 채팅방 생성 또는 접근
-//   clearError: () => void; // 에러 상태만 초기화 하기
-// }
+/**
+ * 내 참가자 행만 보장
+ * (RLS 정책상 auth.uid() = user_id 인 행만 insert 가능)
+ */
+async function ensureMyParticipant(chatId: string, userId: string) {
+  const { error } = await supabase
+    .from('direct_participants')
+    .upsert({ chat_id: chatId, user_id: userId });
 
-// // 컨텍스트 생성
-// const DirectChatContext = createContext<DirectChatContextType | null>(null);
+  if (error) console.error('ensureMyParticipant error:', error.message);
+}
 
-// // Provider 의 Props
-// interface DirectChatProviderProps {
-//   children: React.ReactNode;
-// }
-// // Provider 생성
-// export const DirectChatContextProvider: React.FC<DirectChatProviderProps> = ({ children }) => {
-//   // 상태 관리
-//   const [chats, setChats] = useState<ChatListItem[]>([]);
-//   const [messages, setMessages] = useState<MessageDetail[]>([]);
-//   const [users, setUsers] = useState<ChatUser[]>([]);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
+/**
+ * 양쪽 모두 참가자 등록 보장
+ * (보내는 사람 / 받는 사람 둘 다 direct_participants에 존재해야
+ * 상대방도 실시간 메시지를 수신할 수 있음)
+ */
+async function ensureBothParticipants(chatId: string, hostId: string, memberId: string) {
+  const { error } = await supabase.from('direct_participants').upsert([
+    { chat_id: chatId, user_id: hostId },
+    { chat_id: chatId, user_id: memberId },
+  ]);
 
-//   // 사용자가 선택해서 활성화한 채팅방의 ID 를 보관함
-//   // 리렌더링이 되어서 값이 갱신되거나, 화면에 보여줄 필요는 없음
-//   const currentChatId = useRef<string | null>(null);
+  if (error) console.error('ensureBothParticipants error:', error.message);
+}
 
-//   // 공통 기능 함수 (에러 메세지 전용 함수)
-//   const handleError = useCallback((errorMessage: string) => {
-//     console.log(`chatError : ${errorMessage}`);
-//     setError(errorMessage);
-//   }, []);
+export function DirectChatProvider({ children }: PropsWithChildren) {
+  const { user } = useAuth();
 
-//   // 액션들
-//   // 채팅방 목록 가져오기 : 내가 참여한 목록
-//   const loadChats = useCallback(async () => {
-//     try {
-//       setLoading(true);
-//       const response = await getChatList();
-//       if (response.success && response.data) {
-//         setChats(response.data); // 목록 담기
-//       } else {
-//         handleError(response.error || '채팅방 목록을 불러올 수 없습니다.');
-//       }
-//     } catch (err) {
-//       handleError('채팅방 목록 업로드 중 오류가 발생했습니다.');
-//     } finally {
-//       setLoading(false);
-//     }
-//   }, [handleError]);
+  const [chats, setChats] = useState<DirectChatWithGroup[]>([]);
+  const [messages, setMessages] = useState<directMessages[]>([]);
+  const [currentChat, setCurrentChat] = useState<Partial<DirectChatWithGroup> | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-//   // 선택된 채팅방의 모든 메시지 가져오기
-//   const loadMessages = useCallback(
-//     async (chatId: string) => {
-//       try {
-//         setLoading(true);
+  // 채팅방 목록 불러오기
+  const fetchChats = useCallback(
+    async (groupId?: string) => {
+      try {
+        setLoading(true);
 
-//         // 현재 활성화 된 채팅방 ID 보관
-//         currentChatId.current = chatId;
+        let query = supabase.from('direct_chats').select(`
+          *,
+          groups!inner(group_title),
+          host:user_profiles!direct_chats_host_id_fkey(nickname, avatar_url),
+          member:user_profiles!direct_chats_member_id_fkey(nickname, avatar_url)
+        `);
 
-//         const response = await getMessages(chatId);
-//         if (response.success && response.data) {
-//           setMessages(response.data);
-//         } else {
-//           handleError(response.error || '메시지를 불러올 수 없습니다.');
-//         }
-//       } catch (err) {
-//         handleError('메시지 로드 중 오류가 발생했습니다.');
-//       } finally {
-//         setLoading(false);
-//       }
-//     },
-//     [handleError],
-//   );
+        if (groupId) query = query.eq('group_id', groupId);
 
-//   const sendMessage = useCallback(
-//     async (messageData: CreateMessageData) => {
-//       try {
-//         setLoading(true);
-//         const response = await sendMessageService(messageData);
-//         if (response.success && response.data) {
-//           // 즉시 UI 에 메시지를 추가한다.
-//           const newMessages: MessageDetail = {
-//             ...response.data,
-//             sender: {
-//               id: response.data.sender_id,
-//               email: 'me@example.com',
-//               nickname: '나',
-//               avatar_url: null,
-//             },
-//           };
-//           setMessages(prev => [...prev, newMessages]);
-//           // 채팅방 새로고침
-//           await loadChats();
-//           return true;
-//         } else {
-//           handleError(response.error || '메세지 전송에 실패했습니다.');
-//           return false;
-//         }
-//       } catch (err) {
-//         handleError('메시지 전송 중 오류가 발생했습니다.');
-//         return false;
-//       } finally {
-//         setLoading(false);
-//       }
-//     },
-//     [handleError],
-//   );
+        const { data, error } = await query;
+        if (error) throw error;
 
-//   // 검색어로 사용자 목록 출력
-//   const searchUsers = useCallback(
-//     async (searchTerm: string) => {
-//       try {
-//         setLoading(true);
-//         const response = await searchUsersService(searchTerm);
-//         if (response.success && response.data) {
-//           setUsers(response.data);
-//         } else {
-//           handleError(response.error || '사용자 검색에 실패했습니다.');
-//         }
-//       } catch (err) {
-//         handleError('사용자 검색 중 오류가 발생했습니다.');
-//       } finally {
-//         setLoading(false);
-//       }
-//     },
-//     [handleError],
-//   );
+        const mapped: DirectChatWithGroup[] = (data ?? []).map(
+          (chat: DirectChatWithGroup & { host: any; member: any; groups: any }) => {
+            const isHost = chat.host_id === user?.id;
+            const partner = isHost ? chat.member : chat.host;
 
-//   // 채팅방 생성 또는 있으면 선택
-//   const createDirectChat = useCallback(
-//     async (participantId: string): Promise<string | null> => {
-//       try {
-//         setLoading(true);
-//         const response = await findOrCreateDirectChat(participantId);
-//         if (response.success && response.data) {
-//           // 채팅방 새로 고침으로 목록 갱신
-//           await loadChats();
-//           return response.data.id; // 새 채팅 ID 를 전달하는 이유 : 즉시 채팅에 참여 시키기 위함
-//         } else {
-//           handleError(response.error || '채팅방 생성에 실패했습니다.');
-//           return null;
-//         }
-//       } catch (err) {
-//         handleError('채팅방 생성 중 오류가 발생했습니다.');
-//         return null;
-//       } finally {
-//         setLoading(false);
-//       }
-//     },
-//     [handleError, loadChats],
-//   );
+            return {
+              ...chat,
+              partnerNickname: partner?.nickname ?? '알 수 없음',
+              partnerAvatar: partner?.avatar_url ?? null,
+              groupTitle: chat.groups?.group_title ?? '모임',
+            };
+          },
+        );
 
-//   // Error 메세지 초기화
-//   const clearError = useCallback(async () => {
-//     setError(null);
-//   }, []);
+        setChats(mapped);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('fetchChats error:', msg);
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user],
+  );
 
-//   // Context 의 value
-//   const value: DirectChatContextType = {
-//     // 상태 (state)
-//     chats,
-//     messages,
-//     users,
-//     loading,
-//     error,
+  // 메시지 불러오기
+  const fetchMessages = useCallback(
+    async (chatId: string) => {
+      try {
+        setLoading(true);
+        if (user?.id) await ensureMyParticipant(chatId, user.id);
 
-//     // 액션 (action) : 상태 관리 업데이트 함수
-//     loadChats,
-//     loadMessages,
-//     sendMessage,
-//     searchUsers,
-//     createDirectChat,
-//     clearError,
-//   };
+        const { data, error } = await supabase
+          .from('direct_messages')
+          .select(
+            `
+            message_id,
+            chat_id,
+            sender_id,
+            content,
+            created_at,
+            updated_at,
+            user_profiles:sender_id(nickname, avatar_url)
+          `,
+          )
+          .eq('chat_id', chatId)
+          .order('created_at', { ascending: true });
 
-//   return <DirectChatContext.Provider value={value}>{children}</DirectChatContext.Provider>;
-// };
+        if (error) throw error;
 
-// // 커스텀 훅
-// export const useDirectChat = () => {
-//   const context = useContext(DirectChatContext);
-//   if (!context) {
-//     throw new Error('채팅 컨텍스트가 생성되지 않았습니다.');
-//   }
-//   return context;
-// };
+        const mapped: directMessages[] = (data ?? []).map((msg: any) => ({
+          message_id: msg.message_id,
+          chat_id: msg.chat_id,
+          sender_id: msg.sender_id,
+          content: msg.content,
+          created_at: msg.created_at,
+          updated_at: msg.updated_at,
+          nickname: msg.user_profiles?.nickname ?? null,
+          avatar_url: msg.user_profiles?.avatar_url ?? null,
+        }));
+
+        setMessages(mapped);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        console.error('fetchMessages error:', msg);
+        setError(msg);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.id],
+  );
+
+  // 메시지 전송
+  const sendMessage = useCallback(
+    async (chatId: string, content: string): Promise<void> => {
+      if (!user) return;
+
+      // 내 참가자 행 보장
+      await ensureMyParticipant(chatId, user.id);
+
+      const insertData: directMessagesInsert = {
+        chat_id: chatId,
+        sender_id: user.id,
+        content,
+      };
+
+      const { error } = await supabase.from('direct_messages').insert(insertData);
+      if (error) console.error('sendMessage error:', error.message);
+    },
+    [user],
+  );
+
+  // 채팅방 찾기 or 생성
+  const findOrCreateChat = useCallback(
+    async (groupId: string, hostId: string, memberId: string): Promise<string> => {
+      // 기존 방 확인
+      const { data: existing, error: selErr } = await supabase
+        .from('direct_chats')
+        .select('chat_id')
+        .eq('group_id', groupId)
+        .or(
+          `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+        )
+        .maybeSingle();
+
+      if (selErr) throw selErr;
+
+      // 있으면 참가자 등록 보장 후 chat_id 반환
+      if (existing?.chat_id) {
+        // await ensureBothParticipants(existing.chat_id, hostId, memberId);
+        if (user?.id) await ensureMyParticipant(existing.chat_id, user.id);
+        return existing.chat_id;
+      }
+
+      // 없으면 새로 생성
+      const newChat: directChatsInsert = {
+        group_id: groupId,
+        host_id: hostId,
+        member_id: memberId,
+        created_by: user?.id ?? null,
+      };
+
+      const { data, error } = await supabase
+        .from('direct_chats')
+        .insert(newChat)
+        .select('chat_id')
+        .single();
+
+      if (error) throw error;
+
+      // 양쪽 모두 참가자 등록
+      //   await ensureBothParticipants(data.chat_id, hostId, memberId);
+      if (user?.id) await ensureMyParticipant(data.chat_id, user.id);
+
+      return data.chat_id;
+    },
+    [user],
+  );
+
+  // 실시간 메시지 구독
+  useEffect(() => {
+    if (!currentChat?.chat_id) return;
+
+    const channel = supabase
+      .channel(`direct_messages_${currentChat.chat_id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages',
+          filter: `chat_id=eq.${currentChat.chat_id}`,
+        },
+        async payload => {
+          const newMsg = payload.new as directMessages;
+
+          const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('nickname, avatar_url')
+            .eq('user_id', newMsg.sender_id)
+            .maybeSingle();
+
+          const enrichedMsg: directMessages = {
+            ...newMsg,
+            nickname: profile?.nickname ?? null,
+            avatar_url: profile?.avatar_url ?? null,
+          };
+
+          setMessages(prev => [...prev, enrichedMsg]);
+        },
+      )
+      .subscribe(status => {
+        if (status === 'SUBSCRIBED') {
+          console.log('📡 Subscribed to:', currentChat.chat_id);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentChat?.chat_id]);
+
+  // Context
+  const value: DirectChatContextType = {
+    chats,
+    messages,
+    currentChat,
+    setCurrentChat,
+    loading,
+    error,
+    fetchChats,
+    fetchMessages,
+    sendMessage,
+    findOrCreateChat,
+  };
+
+  return <DirectChatContext.Provider value={value}>{children}</DirectChatContext.Provider>;
+}

@@ -3,6 +3,7 @@ import App from './App';
 import { useGroup } from './contexts/GroupContext';
 import { GroupMemberProvider } from './contexts/GroupMemberContext';
 import { ScheduleProvider } from './contexts/ScheduleContext';
+import { DirectChatProvider } from './contexts/DirectChatContext';
 
 /**
  * GroupProvider 내부에서 GroupContext의 함수를 꺼내서
@@ -15,7 +16,9 @@ const AppWrapper: React.FC = () => {
   return (
     <GroupMemberProvider onMemberCountChange={updateMemberCount}>
       <ScheduleProvider>
-        <App />
+        <DirectChatProvider>
+          <App />
+        </DirectChatProvider>
       </ScheduleProvider>
     </GroupMemberProvider>
   );

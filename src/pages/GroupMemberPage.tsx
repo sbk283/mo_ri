@@ -52,8 +52,7 @@ function GroupMemberPage() {
 
   // 그룹 멤버 데이터 불러오기
   useEffect(() => {
-    if (!groupId) return;
-    // 실시간 구독 등록 (옵션)
+    if (!groupId || groupId === 'undefined') return;
     subscribeToGroup(groupId);
     fetchMembers(groupId);
   }, [groupId, fetchMembers, subscribeToGroup]);
@@ -117,7 +116,8 @@ function GroupMemberPage() {
 
   // 채팅 이동 함수
   const handleChatClick = (targetUserId: string) => {
-    navigate(`/chat?target=${targetUserId}`);
+    if (!groupId) return;
+    navigate(`/chat/${groupId}/${targetUserId}`);
   };
 
   return (
@@ -174,8 +174,8 @@ function GroupMemberPage() {
                   </div>
                 </div>
 
-                {/* 호스트일 때만 … 버튼 표시 */}
-                {isHost && (
+                {/* … 버튼 노출 조건 */}
+                {(isHost || (!isHost && member.member_role === 'host')) && (
                   <div
                     className="text-neutral-400 text-3xl font-semibold pr-[2px] cursor-pointer select-none"
                     onClick={() =>
@@ -196,38 +196,41 @@ function GroupMemberPage() {
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                       className="absolute top-16 right-[-60px] w-30 bg-white rounded-md shadow-lg border border-neutral-300 overflow-hidden z-50"
                     >
-                      {/* 호스트만 추방 가능 */}
-                      {isHost && member.member_role !== 'host' && (
-                        <button
-                          onClick={() => {
-                            // setTargetMember({ id: Number(member.member_id), name: nickname });
-                            setTargetMember({ id: member.user_id, name: nickname }); // user_id 기반 추방
-                            setKickModalOpen(true);
-                            setOpenId(null);
-                          }}
-                          className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
-                        >
-                          모임 추방하기
-                        </button>
-                      )}
+                      {isHost ? (
+                        /* ✅ 호스트용 메뉴 */
+                        <>
+                          {member.member_role !== 'host' && (
+                            <button
+                              onClick={() => {
+                                setTargetMember({ id: member.user_id, name: nickname });
+                                setKickModalOpen(true);
+                                setOpenId(null);
+                              }}
+                              className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
+                            >
+                              모임 추방하기
+                            </button>
+                          )}
 
-                      <div className="h-px bg-neutral-200" />
+                          <div className="h-px bg-neutral-200" />
 
-                      {/* 채팅 버튼 */}
-                      {chatAllowed ? (
-                        <button
-                          onClick={() => handleChatClick(member.user_id)}
-                          className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
-                        >
-                          채팅 대화하기
-                        </button>
+                          <button
+                            onClick={() => handleChatClick(member.user_id)}
+                            className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
+                          >
+                            채팅 대화하기
+                          </button>
+                        </>
                       ) : (
-                        <button
-                          disabled
-                          className="w-full px-4 py-2 text-center text-sm text-gray-400 cursor-not-allowed bg-gray-50"
-                        >
-                          채팅 불가
-                        </button>
+                        /* ✅ 일반 멤버용 메뉴 — 오직 호스트에게만 보이고, 채팅만 가능 */
+                        <>
+                          <button
+                            onClick={() => handleChatClick(member.user_id)}
+                            className="w-full px-4 py-2 text-center text-sm hover:bg-gray-100"
+                          >
+                            채팅 대화하기
+                          </button>
+                        </>
                       )}
                     </motion.div>
                   )}

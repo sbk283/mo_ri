@@ -16,11 +16,11 @@ type StepThreeProps = Omit<StepTwoProps, 'onChange'>;
 
 function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const { user } = useAuth();
-  const { fetchUserCareers } = useGroupMember();
-  const [leaderCareers, setLeaderCareers] = useState<careers[]>([]);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [leaderName, setLeaderName] = useState('');
+  const [leaderNickName, setLeaderName] = useState('');
+  const [leaderCareers, setLeaderCareers] = useState<careers[]>([]);
+  const { fetchUserCareers } = useGroupMember();
   const navigate = useNavigate();
   const { createGroup } = useGroup();
 
@@ -42,7 +42,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
     const fetchProfileData = async () => {
       if (!user) return;
       const profile = await getProfile(user.id);
-      if (profile?.name) setLeaderName(profile.name);
+      if (profile?.nickname) setLeaderName(profile.nickname);
     };
     fetchProfileData();
   }, [user]);
@@ -93,7 +93,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
             files: c.files ? c.files.map(f => URL.createObjectURL(f)) : [],
           }))}
           leader={{
-            name: leaderName || '이름 정보 없음',
+            nickName: leaderNickName || '닉네임 정보 없음',
             location: formData.group_region || '활동 지역 미입력',
             career:
               leaderCareers.length > 0

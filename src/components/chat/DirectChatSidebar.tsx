@@ -1,58 +1,55 @@
-// 모임장 (호스트) 일 때 보여지는 사이드바
-
 import { useState } from 'react';
-
-type ChatItem = {
-  chatId: string;
-  chatName: string;
-  lastMessage: string;
-  unreadCount: number;
-  avatarUrl: string | null;
-};
+import { useDirectChat } from '../../contexts/DirectChatContext';
 
 interface ChatSidebarProps {
-  chats: ChatItem[];
   onSelect: (chatId: string) => void;
 }
 
-function DirectChatSidebar({ chats, onSelect }: ChatSidebarProps) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+function DirectChatSidebar({ onSelect }: ChatSidebarProps) {
+  const { chats, currentChat, setCurrentChat } = useDirectChat();
+  const [search, setSearch] = useState('');
+
+  // 호스트용 닉네임 검색 (user_profiles.nickname 기준)
+  const filteredChats = chats.filter(chat =>
+    chat.partnerNickname?.toLowerCase().includes(search.toLowerCase()),
+  );
 
   return (
     <aside className="w-[324px] p-5">
       <h2 className="self-start font-semibold text-[28px] pt-1 pb-[14px] pl-1">채팅/문의</h2>
 
+      {/* 검색창 */}
+      <input
+        type="text"
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        placeholder="닉네임으로 검색"
+        className="w-full mb-4 px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-brand focus:outline-none placeholder:text-gray-300"
+      />
+
       <div className="divide-y divide-[#DADADA]">
-        {chats.map(chat => (
+        {filteredChats.map(chat => (
           <div
-            key={chat.chatId}
+            key={chat.chat_id}
             onClick={() => {
-              setActiveId(chat.chatId);
-              onSelect(chat.chatId);
+              setCurrentChat(chat);
+              onSelect(chat.chat_id);
             }}
             className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100 ${
-              activeId === chat.chatId ? 'bg-gray-100' : ''
+              currentChat?.chat_id === chat.chat_id ? 'bg-gray-100' : ''
             }`}
           >
-            {/* 아바타 */}
             <img
-              src={chat.avatarUrl ?? '/images/default_avatar.svg'}
-              alt={chat.chatName}
+              src={chat.partnerAvatar ?? '/images/default_avatar.svg'}
+              alt={chat.partnerNickname ?? '유저'}
               className="w-12 h-12 rounded-full object-cover"
             />
-
-            {/* 텍스트 */}
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-brand truncate">{chat.chatName}</p>
-              <p className="text-sm text-gray-500 truncate">{chat.lastMessage}</p>
+              <p className="font-semibold text-brand truncate">{chat.partnerNickname}</p>
+              <p className="text-sm text-gray-500 truncate">
+                {chat.lastMessage ?? '대화 시작하기'}
+              </p>
             </div>
-
-            {/* 안읽은 메세지 뱃지 */}
-            {chat.unreadCount > 0 && (
-              <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                {chat.unreadCount}
-              </span>
-            )}
           </div>
         ))}
       </div>

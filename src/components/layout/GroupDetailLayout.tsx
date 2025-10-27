@@ -176,7 +176,7 @@ function GroupDetailLayout() {
         curriculum={curriculum}
         leader={{
           nickName: leaderNickName || '이름 정보 없음',
-          location: group.group_region || '활동 지역 미입력',
+          location: group.group_region || '활동 지역 무관',
           career: leaderCareer || '경력 정보 없음',
         }}
       />

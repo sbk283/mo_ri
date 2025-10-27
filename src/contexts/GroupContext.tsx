@@ -1,22 +1,9 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-  type PropsWithChildren,
-} from 'react';
-import { supabase } from '../lib/supabase';
-import type {
-  GroupFormData,
-  // groups,
-  groupsUpdate,
-  GroupWithCategory,
-} from '../types/group';
-import { useAuth } from './AuthContext';
+import { createContext, useCallback, useContext, useState, type PropsWithChildren } from 'react';
 import { slugToCategoryMap } from '../constants/categorySlugs';
+import { supabase } from '../lib/supabase';
+import type { GroupFormData, groupsUpdate, GroupWithCategory } from '../types/group';
+import { useAuth } from './AuthContext';
 
-// 그룹 관련 컨텍스트 타입 정의
 interface GroupContextType {
   groups: GroupWithCategory[];
   currentGroup: GroupWithCategory | null;
@@ -30,7 +17,6 @@ interface GroupContextType {
   deleteGroup: (groupId: string) => Promise<void>;
 }
 
-// 컨텍스트 생성
 const GroupContext = createContext<GroupContextType | null>(null);
 
 export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
@@ -40,16 +26,15 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 그룹 목록 조회
+  // ✅ 그룹 목록 조회
   const fetchGroups = useCallback(async (slug?: string) => {
     try {
       setLoading(true);
-
       let query = supabase.from('groups').select(`
-  *,
-  categories_major:categories_major!inner (category_major_name, category_major_slug),
-  categories_sub:categories_sub!inner (category_sub_name, category_sub_slug)
-`);
+        *,
+        categories_major:categories_major!inner (category_major_name, category_major_slug),
+        categories_sub:categories_sub!inner (category_sub_name, category_sub_slug)
+      `);
 
       if (slug && slug !== 'all') {
         const korName = slugToCategoryMap[slug];
@@ -72,25 +57,27 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
       }));
 
       setGroups(mapped);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('fetchGroups error:', err.message);
+    } catch (err: unknown) {
+      // ✅ 수정: any → unknown
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error('fetchGroups error:', err.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 그룹 생성
+  // ✅ 그룹 생성
   const createGroup = useCallback(
     async (formData: GroupFormData) => {
       if (!user) throw new Error('로그인 후 이용해주세요.');
       setLoading(true);
 
       try {
-        // 1. 버킷 존재 확인 (없으면 자동 생성)
+        // 1️⃣ 버킷 확인
         const { data: buckets, error: bucketError } = await supabase.storage.listBuckets();
         if (bucketError) throw new Error(`스토리지 버킷 조회 실패: ${bucketError.message}`);
-
         const hasBucket = buckets.some(b => b.name === 'group-images');
         if (!hasBucket) {
           const { error: createBucketError } = await supabase.storage.createBucket('group-images', {
@@ -98,18 +85,13 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
           });
           if (createBucketError)
             throw new Error(`스토리지 버킷 생성 실패: ${createBucketError.message}`);
-          console.log('group-images 버킷 자동 생성 완료');
         }
 
-        // 2. 파일명 안전하게 변환하는 유틸
+        // 2️⃣ 파일명 정리 유틸
         const sanitizeFileName = (name: string) =>
-          encodeURIComponent(
-            name
-              .replace(/\s+/g, '_') // 공백 -> _
-              .replace(/[^\w.-]/g, ''), // 한글, 특수문자 제거
-          );
+          encodeURIComponent(name.replace(/\s+/g, '_').replace(/[^\w.-]/g, ''));
 
-        // 3. 그룹 기본 데이터 생성
+        // 3️⃣ 그룹 기본 데이터 삽입
         const { data: inserted, error: insertError } = await supabase
           .from('groups')
           .insert({
@@ -126,95 +108,96 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
             status: 'recruiting',
             created_by: user.id,
           })
-          .select('group_id')
-          .single();
+          .select('group_id');
 
         if (insertError) throw insertError;
-        const groupId = inserted.group_id;
+        const groupId: string = inserted?.[0]?.group_id ?? ''; // ✅ 수정: 타입 명시 + 안전 기본값
+        if (!groupId) throw new Error('❌ group_id를 가져오지 못했습니다.');
+        console.log('✅ 그룹 생성 완료:', groupId);
 
-        // 그룹 생성 직후, 생성자를 host로 멤버 등록
-        const { error: hostInsertError } = await supabase.from('group_members').insert({
+        // 4️⃣ host 등록
+        const { error: hostError } = await supabase.from('group_members').insert({
           group_id: groupId,
           user_id: user.id,
           member_role: 'host',
           member_status: 'approved',
         });
+        if (hostError) throw hostError;
 
-        if (hostInsertError) {
-          console.error('그룹 멤버(host) 추가 실패:', hostInsertError.message);
-          throw hostInsertError;
-        }
-
-        // 4. 커리큘럼 파일 업로드
+        // 5️⃣ 커리큘럼 업로드
         const uploadedCurriculum = await Promise.all(
-          formData.curriculum.map(async (item, i) => {
-            const fileUrls: string[] = [];
-
-            if (item.files && item.files.length > 0) {
-              for (const file of item.files) {
-                const safeName = sanitizeFileName(`${i + 1}-${file.name}`);
-                const path = `groups/${groupId}/curriculum/${safeName}`;
-
-                const { error: uploadError } = await supabase.storage
-                  .from('group-images')
-                  .upload(path, file, { upsert: false });
-
-                if (uploadError && uploadError.message !== 'The resource already exists')
-                  throw uploadError;
-
-                const { data: publicUrlData } = supabase.storage
-                  .from('group-images')
-                  .getPublicUrl(path);
-
-                if (publicUrlData?.publicUrl) fileUrls.push(publicUrlData.publicUrl);
+          formData.curriculum.map(
+            async (item, i): Promise<{ title: string; detail: string; files: string[] }> => {
+              const fileUrls: string[] = [];
+              if (item.files?.length) {
+                for (const file of item.files) {
+                  // ✅ 수정: file 타입 보장
+                  if (!(file instanceof File)) {
+                    console.warn('⚠️ file이 File 객체가 아닙니다:', file);
+                    continue;
+                  }
+                  const safeName = sanitizeFileName(`${i + 1}-${file.name}`);
+                  const path = `groups/${groupId}/curriculum/${safeName}`;
+                  const { error: uploadError } = await supabase.storage
+                    .from('group-images')
+                    .upload(path, file, { upsert: false });
+                  if (uploadError && uploadError.message !== 'The resource already exists')
+                    throw uploadError;
+                  const { data: publicUrl } = supabase.storage
+                    .from('group-images')
+                    .getPublicUrl(path);
+                  if (publicUrl?.publicUrl) fileUrls.push(publicUrl.publicUrl);
+                }
               }
-            }
-
-            return { title: item.title, detail: item.detail, files: fileUrls };
-          }),
+              return { title: item.title, detail: item.detail, files: fileUrls };
+            },
+          ),
         );
 
-        // 5. 대표 이미지 업로드
+        // 6️⃣ 대표 이미지 업로드
         const uploadedUrls: string[] = [];
-        if (formData.images && formData.images.length > 0) {
+        if (formData.images?.length) {
           for (const file of formData.images) {
+            // ✅ 수정: file 타입 보장
+            if (!(file instanceof File)) {
+              console.warn('⚠️ 대표 이미지 file이 File 객체가 아닙니다:', file);
+              continue;
+            }
             const safeName = sanitizeFileName(file.name);
             const path = `groups/${groupId}/${safeName}`;
-
             const { error: uploadError } = await supabase.storage
               .from('group-images')
               .upload(path, file, { upsert: false });
-
             if (uploadError && uploadError.message !== 'The resource already exists')
               throw uploadError;
-
-            const { data: publicUrlData } = supabase.storage
-              .from('group-images')
-              .getPublicUrl(path);
-
-            if (publicUrlData?.publicUrl) uploadedUrls.push(publicUrlData.publicUrl);
+            const { data: publicUrl } = supabase.storage.from('group-images').getPublicUrl(path);
+            if (publicUrl?.publicUrl) uploadedUrls.push(publicUrl.publicUrl);
           }
         }
 
-        // 6. DB 업데이트 (image_urls + curriculum)
+        // ✅ 디버깅 로그
+        console.log('🧩 uploadedCurriculum:', uploadedCurriculum);
+        console.log('🧩 uploadedUrls:', uploadedUrls);
+
+        // 7️⃣ DB 업데이트
         const { error: updateError } = await supabase
           .from('groups')
           .update({
-            image_urls: uploadedUrls.length > 0 ? uploadedUrls : null,
-            curriculum:
-              uploadedCurriculum && uploadedCurriculum.length > 0
-                ? JSON.stringify(uploadedCurriculum)
-                : null,
+            image_urls: uploadedUrls ?? [],
+            curriculum: uploadedCurriculum ?? [],
           })
           .eq('group_id', groupId);
 
         if (updateError) throw updateError;
+        console.log('✅ 이미지 + 커리큘럼 DB 반영 완료');
 
-        console.log('그룹 생성 성공:', groupId);
-        await fetchGroups(); // 그룹 생성 후 목록 갱신
-      } catch (err: any) {
-        console.error('그룹 생성 실패:', err.message);
-        setError(err.message);
+        await fetchGroups();
+      } catch (err: unknown) {
+        // ✅ 수정: any → unknown
+        if (err instanceof Error) {
+          console.error('❌ 그룹 생성 실패:', err.message);
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -222,72 +205,69 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
     [user, fetchGroups],
   );
 
-  // 그룹 상세 조회
+  // ✅ 그룹 상세 조회
   const fetchGroupById = useCallback(async (groupId: string) => {
     try {
       setLoading(true);
       setError(null);
-
       const { data, error } = await supabase
         .from('groups')
         .select(
           `
-    *,
-    categories_major:major_id (category_major_name, category_major_slug),
-    categories_sub:sub_id (category_sub_name, category_sub_slug)
-  `,
+          *,
+          categories_major:major_id (category_major_name, category_major_slug),
+          categories_sub:sub_id (category_sub_name, category_sub_slug)
+        `,
         )
         .eq('group_id', groupId)
         .single();
 
       if (error) throw error;
-
-      // 조인된 결과를 currentGroup에 저장
       _setCurrentGroup(data as GroupWithCategory);
-      console.log('그룹 상세 데이터:', data);
-    } catch (err: any) {
-      setError(err.message);
-      console.error('fetchGroupById error:', err.message);
+      console.log('✅ 그룹 상세 조회:', data);
+    } catch (err: unknown) {
+      // ✅ 수정: any → unknown
+      if (err instanceof Error) {
+        setError(err.message);
+        console.error('fetchGroupById error:', err.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 멤버 카운트 실시간 반영
+  // ✅ 멤버 카운트 반영
   const updateMemberCount = useCallback((groupId: string, delta: number) => {
     setGroups(prev =>
-      prev.map(group =>
-        group.group_id === groupId
-          ? { ...group, member_count: Math.max((group.member_count ?? 0) + delta, 0) }
-          : group,
+      prev.map(g =>
+        g.group_id === groupId
+          ? { ...g, member_count: Math.max((g.member_count ?? 0) + delta, 0) }
+          : g,
       ),
     );
   }, []);
 
-  // 그룹 수정 (업데이트)
+  // ✅ 그룹 수정
   const updateGroup = useCallback(async (groupId: string, updates: Partial<groupsUpdate>) => {
     try {
       setLoading(true);
       setError(null);
-
       const { error } = await supabase.from('groups').update(updates).eq('group_id', groupId);
-
       if (error) throw error;
-
-      setGroups(prev =>
-        prev.map(group => (group.group_id === groupId ? { ...group, ...updates } : group)),
-      );
-
-      console.log('그룹 업데이트 성공:', groupId, updates);
-    } catch (err: any) {
-      console.error('updateGroup error:', err.message);
-      setError(err.message);
+      setGroups(prev => prev.map(g => (g.group_id === groupId ? { ...g, ...updates } : g)));
+      console.log('✅ 그룹 업데이트 성공:', groupId);
+    } catch (err: unknown) {
+      // ✅ 수정: any → unknown
+      if (err instanceof Error) {
+        console.error('updateGroup error:', err.message);
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // 그룹 삭제
+  // ✅ 그룹 삭제
   const deleteGroup = useCallback(
     async (groupId: string) => {
       try {
@@ -295,47 +275,32 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
         setLoading(true);
         setError(null);
 
-        // 권한 확인 (본인이 만든 그룹만 삭제 가능)
         const { data: group, error: fetchError } = await supabase
           .from('groups')
           .select('created_by')
           .eq('group_id', groupId)
           .single();
-
         if (fetchError) throw fetchError;
         if (group?.created_by !== user.id)
           throw new Error('본인이 만든 모임만 삭제할 수 있습니다.');
 
-        // 연결된 group_members 먼저 삭제 (FK 문제 방지)
-        const { error: memberDeleteError } = await supabase
+        const { error: memberDel } = await supabase
           .from('group_members')
           .delete()
           .eq('group_id', groupId);
-        if (memberDeleteError) throw memberDeleteError;
+        if (memberDel) throw memberDel;
 
-        // 그룹 삭제
-        const { error: groupDeleteError } = await supabase
-          .from('groups')
-          .delete()
-          .eq('group_id', groupId);
-        if (groupDeleteError) throw groupDeleteError;
+        const { error: groupDel } = await supabase.from('groups').delete().eq('group_id', groupId);
+        if (groupDel) throw groupDel;
 
-        // 스토리지 이미지 삭제 (있을 경우)
-        const folderPrefix = `groups/${groupId}`;
-        const { data: files, error: listError } = await supabase.storage
-          .from('group-images')
-          .list(folderPrefix, { limit: 100 });
-        if (!listError && files && files.length > 0) {
-          const pathsToRemove = files.map(f => `${folderPrefix}/${f.name}`);
-          await supabase.storage.from('group-images').remove(pathsToRemove);
-        }
-
-        // 프론트 상태 동기화
         setGroups(prev => prev.filter(g => g.group_id !== groupId));
-        console.log(`그룹(${groupId}) 삭제 완료`);
-      } catch (err: any) {
-        console.error('deleteGroup error:', err.message);
-        setError(err.message);
+        console.log(`✅ 그룹(${groupId}) 삭제 완료`);
+      } catch (err: unknown) {
+        // ✅ 수정: any → unknown
+        if (err instanceof Error) {
+          console.error('deleteGroup error:', err.message);
+          setError(err.message);
+        }
       } finally {
         setLoading(false);
       }
@@ -363,7 +328,7 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   );
 };
 
-// 컨텍스트 훅
+// ✅ 훅
 export function useGroup() {
   const ctx = useContext(GroupContext);
   if (!ctx) throw new Error('useGroup은 GroupProvider 안에서만 사용 가능합니다.');

@@ -130,7 +130,7 @@ const GroupDashBoardPage = () => {
                 ) : (
                   <img
                     className="w-full h-full object-cover"
-                    src={group?.image_urls?.[0] ?? '/images/placeholder.jpg'}
+                    src={group?.image_urls?.[0] ?? '/nullbg.jpg'}
                     alt="모임사진"
                   />
                 )}

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 import { useGroup } from '../../contexts/GroupContext';
 import GroupListCard from '../common/GroupListCard';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 type Props = {
   searchTerm: string;
@@ -30,8 +31,7 @@ export default function GroupSearchResults({ searchTerm }: Props) {
       );
   }, [groups, searchTerm]);
 
-  if (loading)
-    return <div className="flex justify-center items-center h-60 text-gray-500">로딩 중...</div>;
+  if (loading) return <LoadingSpinner />;
 
   if (displayedGroups.length === 0)
     return (
@@ -51,26 +51,4 @@ export default function GroupSearchResults({ searchTerm }: Props) {
         </motion.p>
       </motion.div>
     );
-
-  return (
-    <div className="space-y-4">
-      {displayedGroups.map(g => (
-        <GroupListCard
-          key={g.group_id}
-          group_id={g.group_id}
-          group_title={g.group_title}
-          group_short_intro={g.group_short_intro}
-          category_major_name={g.categories_major?.category_major_name ?? '카테고리 없음'}
-          category_sub_name={g.categories_sub?.category_sub_name ?? '세부 카테고리 없음'}
-          status={g.status}
-          group_region={g.group_region}
-          image_urls={g.image_urls}
-          member_count={g.member_count}
-          group_capacity={g.group_capacity}
-          group_start_day={g.group_start_day}
-          group_end_day={g.group_end_day}
-        />
-      ))}
-    </div>
-  );
 }

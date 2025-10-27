@@ -44,7 +44,7 @@ function MeetingHeader({
   onFavoriteToggle,
 }: MeetingHeaderProps) {
   const [selectedImage, setSelectedImage] = useState<string>(
-    images.length > 0 ? images[0] : '/images/no_image.png',
+    images.length > 0 ? images[0] : '/nullbg.jpg',
   );
 
   const [shareOpen, setShareOpen] = useState(false);

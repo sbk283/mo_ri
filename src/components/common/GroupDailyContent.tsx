@@ -228,7 +228,7 @@ export default function GroupDailyContent({
       }
     }
 
-    // likedByMe
+    // 좋아요
     let likedMap: Record<string, boolean> = {};
     if (currentUserId) {
       const { data: mineData, error: mineErr } = await supabase
@@ -283,7 +283,7 @@ export default function GroupDailyContent({
     }
   };
 
-  // 좋아요 토글 (최종 결과 반환)
+  // 좋아요 토글
   const toggleLike = async (
     postId: string,
     onDetailSync?: (liked: boolean) => void,
@@ -507,10 +507,10 @@ export default function GroupDailyContent({
   // 로딩 스켈레톤
   const SkeletonCard = () => (
     <div className="relative flex h-[233px] flex-col rounded-sm bg-white text-left transition px-4 py-1">
-      <div className="w-[290px] h-[160px] bg-gray-200 rounded-sm" />
-      <div className="mt-2 h-[18px] w-[70%] bg-gray-200 rounded" />
-      <div className="mt-1 h-[14px] w-[40%] bg-gray-200 rounded" />
-      <div className="mt-1 h-[14px] w-[50%] bg-gray-200 rounded" />
+      <div className="w-[290px] h-[160px] bg-gray-100 rounded-sm" />
+      <div className="mt-2 h-[18px] w-[70%] bg-gray-100 rounded" />
+      <div className="mt-1 h-[14px] w-[40%] bg-gray-100 rounded" />
+      <div className="mt-1 h-[14px] w-[50%] bg-gray-100 rounded" />
     </div>
   );
 
@@ -859,7 +859,7 @@ export default function GroupDailyContent({
                           />
                         ) : (
                           <img
-                            src="/no-image.jpeg"
+                            src="/images/no_image.jpg"
                             alt="기본 이미지"
                             className="w-[290px] h-[160px] object-cover rounded-sm"
                           />

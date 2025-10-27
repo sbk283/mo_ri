@@ -5,7 +5,6 @@ import MeetingHeader from '../common/prevgroup/MeetingHeader';
 import MeetingTabs from '../common/prevgroup/MeetingTabs';
 import { useGroupMember } from '../../contexts/GroupMemberContext';
 import type { GroupWithCategory } from '../../types/group';
-import LoadingSpinner from '../common/LoadingSpinner';
 
 // 모임 상세 페이지
 function GroupDetailLayout() {
@@ -116,11 +115,7 @@ function GroupDetailLayout() {
 
   // 로딩 / 에러 처리
   if (loading)
-    return (
-      <div className="flex m-auto">
-        <LoadingSpinner />
-      </div>
-    );
+    return <div className="flex justify-center items-center h-80 text-gray-500">로딩 중...</div>;
   if (!group)
     return (
       <div className="flex justify-center items-center h-80 text-gray-500">

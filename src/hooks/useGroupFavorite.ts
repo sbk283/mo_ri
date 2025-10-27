@@ -9,6 +9,7 @@ export function useGroupFavorite() {
   const addFavorite = useCallback(
     async (groupId: string) => {
       if (!user) return { error: '로그인이 필요합니다.' };
+      if (!groupId || groupId === 'preview-temp-id') return;
 
       const { data, error } = await supabase
         .from('group_favorites')
@@ -31,6 +32,7 @@ export function useGroupFavorite() {
   const removeFavorite = useCallback(
     async (groupId: string) => {
       if (!user) return { error: '로그인이 필요합니다.' };
+      if (!groupId || groupId === 'preview-temp-id') return;
 
       const { error } = await supabase
         .from('group_favorites')
@@ -52,6 +54,7 @@ export function useGroupFavorite() {
   const checkFavorite = useCallback(
     async (groupId: string) => {
       if (!user) return false;
+      if (!groupId || groupId === 'preview-temp-id') return;
 
       const { data, error } = await supabase
         .from('group_favorites')

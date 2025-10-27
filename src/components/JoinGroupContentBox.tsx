@@ -72,7 +72,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
             {badge}
             <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
               <img
-                src={group.image_urls?.[0] || '/default-img.jpg'}
+                src={group.image_urls?.[0] || '/nullbg.jpg'}
                 alt="모임사진"
                 className="w-full h-full object-cover"
               />

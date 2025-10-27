@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchUserGroups } from '../../lib/fetchUserGroups';
 import type { GroupWithCategory } from '../../types/group';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 interface ParticipationHistoryProps {
   onCheckChange: (items: any[]) => void;
@@ -66,7 +67,7 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
     useImperativeHandle(ref, () => ({
       selectAll,
     }));
-    if (loading) return <div className="text-center py-20 text-gray-400">로딩 중...</div>;
+    if (loading) return <LoadingSpinner />;
     if (groupItems.length === 0) {
       return (
         <div className="text-center py-20 text-gray-400 font-bold">참여한 모임이 없습니다.</div>

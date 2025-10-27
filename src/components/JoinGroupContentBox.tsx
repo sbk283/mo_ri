@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { GroupWithCategory } from '../types/group';
+import EditReview from './common/modal/EditReview';
+import type { ReviewItem } from './common/ReviewCard';
 import JoinGroupContentNon from './JoinGroupContentNon';
 
 interface JoinGroupContentBoxProps {
-  groups: any[]; // 위 fetch에서 'groups' 배열 (동일 필드)
+  groups: GroupWithCategory[]; // 위 fetch에서 'groups' 배열 (동일 필드)
   loading: boolean;
 }
 
@@ -33,6 +37,25 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
   if (groups.length === 0) {
     return <JoinGroupContentNon />;
   }
+
+  // 모달창
+  const [modalOpen, setModalOpen] = useState(false);
+  const [currentReview, setCurrentReview] = useState<ReviewItem | null>(null);
+
+  const createEmptyReview = (group?: GroupWithCategory): ReviewItem => ({
+    id: 0,
+    title: '',
+    category: '',
+    src: '',
+    period: '',
+    rating: 3,
+    authorMasked: '',
+    created_at: '',
+    content: '',
+    tags: [],
+    empathy: 0,
+    status: '종료',
+  });
 
   return (
     <div className="w-[1024px] mx-auto space-y-9">
@@ -98,7 +121,15 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
               </div>
             </div>
             {group.status === 'closed' ? (
-              <button className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[3px] border border-brand rounded-[5px] text-brand text-[15px] bg-white">
+              <button
+                className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] border border-brand rounded-[5px] text-brand text-[15px] bg-white z-[10] hover:bg-brand hover:text-white transition duration-300 ease-in-out "
+                onClick={e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCurrentReview(createEmptyReview());
+                  setModalOpen(true);
+                }}
+              >
                 후기작성
               </button>
             ) : (
@@ -109,6 +140,14 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
           </Link>
         );
       })}
+      {modalOpen && currentReview && (
+        <EditReview
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          onConfirm={() => setModalOpen(false)}
+          review={currentReview}
+        />
+      )}
     </div>
   );
 }

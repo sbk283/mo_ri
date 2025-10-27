@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchUserGroups } from '../../lib/fetchUserGroups';
 import type { GroupWithCategory } from '../../types/group';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 interface ParticipationHistoryProps {
   onCheckChange: (items: any[]) => void;
@@ -42,32 +43,31 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
 
     // 체크박스 토글 함수
     const handleCheckboxToggle = (groupId: string) => {
-      setGroupItems(prev => {
-        const updated = prev.map(item =>
+      setGroupItems(prev =>
+        prev.map(item =>
           item.group_id === groupId ? { ...item, isChecked: !item.isChecked } : item,
-        );
-
-        //체크된 개수를 부모에게 전달
-        onCheckChange(updated.filter(item => item.isChecked));
-        return updated;
-      });
+        ),
+      );
     };
 
     //  전체 선택 함수
     const selectAll = () => {
       setGroupItems(prev => {
         const allChecked = prev.every(item => item.isChecked);
-        const updated = prev.map(item => ({ ...item, isChecked: !allChecked }));
-        onCheckChange(updated.filter(item => item.isChecked));
-        return updated;
+        return prev.map(item => ({ ...item, isChecked: !allChecked }));
       });
     };
+
+    //변경될 때마다 부모에게 알려주기 (렌더 후)
+    useEffect(() => {
+      onCheckChange(groupItems.filter(item => item.isChecked));
+    }, [groupItems, onCheckChange]);
 
     // 부모에서 ref.current.selectAll() 호출 가능하게 연결
     useImperativeHandle(ref, () => ({
       selectAll,
     }));
-    if (loading) return <div className="text-center py-20 text-gray-400">로딩 중...</div>;
+    if (loading) return <LoadingSpinner />;
     if (groupItems.length === 0) {
       return (
         <div className="text-center py-20 text-gray-400 font-bold">참여한 모임이 없습니다.</div>

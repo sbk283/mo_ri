@@ -5,6 +5,7 @@ import MypageMyGroupMenu from '../components/MypageMyGroupMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile } from '../lib/profile';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 // 기본 회원 정보, 모임 참여이력, 모임 생성이력 출력해야합니다.
 function MyPage() {
@@ -74,7 +75,7 @@ function MyPage() {
   if (loading) {
     return (
       <MyPageLayout>
-        <div className="text-center text-gray-400 h-[1080px]">불러오는 중...</div>
+        <LoadingSpinner />
       </MyPageLayout>
     );
   }
@@ -114,12 +115,20 @@ function MyPage() {
             <div className="text-brand text-xxl font-bold mb-[4px] ">
               {nickname} <span className="text-black">님 반가워요✨</span>
             </div>
-            <Link
-              to={'/mypagesetting'}
-              className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"
-            >
-              회원정보수정
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                to={'/admin'}
+                className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"
+              >
+                관리자 페이지
+              </Link>
+              <Link
+                to={'/mypagesetting'}
+                className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"
+              >
+                회원정보수정
+              </Link>
+            </div>
           </div>
 
           <div className="text-md text-gray-400 font-medium mb-[20px]">

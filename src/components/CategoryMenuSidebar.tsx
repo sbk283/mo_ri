@@ -1,14 +1,16 @@
 //  카테고리 메뉴 사이드바
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { categorySlugMap, slugToCategoryMap } from '../constants/categorySlugs';
+import SearchBar from './search/SearchBar';
 
 function CategoryMenuSidebar() {
   const [activeMain, setActiveMain] = useState('');
   const [activeSub, setActiveSub] = useState('');
   const [openCategory, setOpenCategory] = useState('');
   const location = useLocation(); // 현재 경로
+  const navigate = useNavigate();
 
   const categories = [
     { name: '전체보기', icon: '/images/list_all_dark.svg' },
@@ -25,6 +27,12 @@ function CategoryMenuSidebar() {
     },
     { name: '봉사/사회참여', icon: '/images/volunteer_dark.svg', sub: ['복지/나눔', '캠페인'] },
   ];
+
+  // 검색 하기
+  const handleSearch = (term: string) => {
+    if (!term.trim()) return;
+    navigate(`/grouplist?search=${encodeURIComponent(term.trim())}`);
+  };
 
   // URL slug 홛ㄱ인 후 activeMain인지 activeSub인지 결정
   useEffect(() => {
@@ -84,17 +92,18 @@ function CategoryMenuSidebar() {
 
       {/* 검색창 */}
       <div className="mt-2 relative w-full h-[45px]">
-        <input
-          type="text"
+        <SearchBar
           placeholder="모임명, 카테고리 검색"
-          className="w-full rounded-sm border-2 border-brand px-3 pr-9 py-[10px] placeholder:text-sm placeholder:text-gray-400"
+          onSearch={handleSearch}
+          inputClassName="w-full rounded-sm border-2 border-brand px-3 pr-9 py-[10px] placeholder:text-sm placeholder:text-gray-400"
+          icon={<img src="/images/search.svg" alt="검색" className="w-[24px] h-[24px]" />}
         />
-        <button
+        {/* <button
           type="button"
           className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center"
         >
           <img src="/images/search.svg" alt="검색" className="w-[24px] h-[24px]" />
-        </button>
+        </button> */}
       </div>
 
       {/* 카테고리 */}

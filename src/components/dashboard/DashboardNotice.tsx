@@ -511,7 +511,7 @@ export function DashboardNotice({
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h={[550].toString() + 'px']">
+            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[450px]">
               <header className="px-8 pt-6">
                 <div className="flex items-center gap-3">
                   <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>

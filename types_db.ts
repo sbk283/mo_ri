@@ -410,6 +410,74 @@ export type Database = {
           },
         ]
       }
+      group_review_tags: {
+        Row: {
+          review_id: string
+          tag_code: string
+        }
+        Insert: {
+          review_id: string
+          tag_code: string
+        }
+        Update: {
+          review_id?: string
+          tag_code?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_review_tags_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "group_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "group_review_tags_tag_code_fkey"
+            columns: ["tag_code"]
+            isOneToOne: false
+            referencedRelation: "review_tag_dict"
+            referencedColumns: ["tag_code"]
+          },
+        ]
+      }
+      group_reviews: {
+        Row: {
+          author_id: string
+          created_at: string
+          group_id: string
+          pros_text: string | null
+          rating: number
+          review_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          created_at?: string
+          group_id: string
+          pros_text?: string | null
+          rating: number
+          review_id?: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          created_at?: string
+          group_id?: string
+          pros_text?: string | null
+          rating?: number
+          review_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_reviews_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+        ]
+      }
       group_schedule: {
         Row: {
           group_id: string
@@ -596,6 +664,47 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      review_likes: {
+        Row: {
+          created_at: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_likes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "group_reviews"
+            referencedColumns: ["review_id"]
+          },
+        ]
+      }
+      review_tag_dict: {
+        Row: {
+          label: string
+          tag_code: string
+        }
+        Insert: {
+          label: string
+          tag_code: string
+        }
+        Update: {
+          label?: string
+          tag_code?: string
+        }
+        Relationships: []
       }
       user_careers: {
         Row: {

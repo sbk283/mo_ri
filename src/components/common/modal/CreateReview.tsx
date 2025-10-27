@@ -1,6 +1,6 @@
 // src/components/review/CreateReview.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../../lib/supabase';
 
 export type ReviewItem = {
@@ -9,45 +9,104 @@ export type ReviewItem = {
   category: string;
   rating: 1 | 2 | 3 | 4 | 5;
   content: string;
-  tags: string[]; // UI 표기용 라벨 배열
+  tags: string[];
 };
 
 interface CreateModalProps {
   open: boolean;
   onClose: () => void;
   groupId: string;
-  review: ReviewItem;
   onSuccess?: (created: { review_id: string }) => void;
 }
 
 type TagDictRow = { tag_code: string; label: string };
 
-export default function CreateReview({
-  open,
-  onClose,
-  groupId,
-  review,
-  onSuccess,
-}: CreateModalProps) {
-  const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(review.rating);
-  const [content, setContent] = useState(review.content);
+// INNER JOIN 전제: categories_major는 반드시 존재(런타임). TS에선 안전 캐스팅/가드.
+type GroupInfo = {
+  group_title: string | null;
+  major_id: string | null;
+  categories_major: { category_major_name: string };
+};
 
-  // 태그 사전 로드
+type RawGroupRow = {
+  group_title: string | null;
+  major_id: string | null;
+  categories_major?: { category_major_name: string } | null;
+};
+
+export default function CreateReview({ open, onClose, groupId, onSuccess }: CreateModalProps) {
+  const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(5);
+  const [content, setContent] = useState('');
+  const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
+
   const [tagDict, setTagDict] = useState<TagDictRow[]>([]);
   const [selectedCodes, setSelectedCodes] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  // 코드 -> 라벨 (UI 표시)
-  const labelByCode = useMemo(
-    () => Object.fromEntries(tagDict.map(t => [t.tag_code, t.label])),
-    [tagDict],
-  );
-  // 라벨 -> 코드 (초기값 세팅, 라벨을 코드로 변환)
-  const codeByLabel = useMemo(
-    () => Object.fromEntries(tagDict.map(t => [t.label, t.tag_code])),
-    [tagDict],
-  );
-
+  // 그룹 정보 조회 (INNER JOIN + single)
   useEffect(() => {
+    if (!open || !groupId) return;
+
+    let ignore = false;
+    (async () => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select(
+          `
+          group_title,
+          major_id,
+          categories_major:major_id!inner (
+            category_major_name
+          )
+        `,
+        )
+        .eq('group_id', groupId)
+        .single();
+
+      if (error) {
+        console.error('[CreateReview] load group info error', error);
+        return;
+      }
+      if (ignore) return;
+
+      // ✅ null 가드 추가 (빨간줄 원인 제거)
+      if (!data) {
+        console.warn('[CreateReview] no group row returned');
+        setGroupInfo(null);
+        return;
+      }
+
+      const row = data as unknown as RawGroupRow;
+
+      if (!row.categories_major) {
+        // RLS/데이터 무결성 이슈 방어
+        console.warn('[CreateReview] categories_major missing (check RLS/FK)');
+        setGroupInfo({
+          group_title: row.group_title ?? null,
+          major_id: row.major_id ?? null,
+          categories_major: { category_major_name: '기타' },
+        });
+        return;
+      }
+
+      const mapped: GroupInfo = {
+        group_title: row.group_title ?? null,
+        major_id: row.major_id ?? null,
+        categories_major: { category_major_name: row.categories_major.category_major_name },
+      };
+      setGroupInfo(mapped);
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, [open, groupId]);
+
+  // 태그 사전 로드
+  useEffect(() => {
+    if (!open) return;
+
     let ignore = false;
     (async () => {
       const { data, error } = await supabase
@@ -60,23 +119,13 @@ export default function CreateReview({
         return;
       }
       if (ignore) return;
-
-      const dict = data ?? [];
-      setTagDict(dict);
-
-      // 라벨 배열(review.tags)을 코드 배열로 변환해서 초기 선택에 반영
-      const initialCodes = (review.tags ?? [])
-        .map(label => codeByLabel[label])
-        .filter((c): c is string => !!c);
-
-      setSelectedCodes(initialCodes);
+      setTagDict(data ?? []);
     })();
 
     return () => {
       ignore = true;
     };
-    // review.tags가 바뀌면 초기값 재계산
-  }, [review.tags, codeByLabel]);
+  }, [open]);
 
   const toggleByCode = (code: string) => {
     setSelectedCodes(prev =>
@@ -84,16 +133,17 @@ export default function CreateReview({
     );
   };
 
-  const [submitting, setSubmitting] = useState(false);
-  const [errMsg, setErrMsg] = useState<string | null>(null);
-
   const handleSubmit = async () => {
+    if (!content.trim()) {
+      setErrMsg('후기 내용을 입력해주세요.');
+      return;
+    }
     setSubmitting(true);
     setErrMsg(null);
 
     try {
       const { data: userRes, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userRes.user) throw new Error('로그인이 필요합니다.');
+      if (userErr || !userRes?.user) throw new Error('로그인이 필요합니다.');
       const uid = userRes.user.id;
 
       // 1) 리뷰 본문 insert
@@ -107,11 +157,11 @@ export default function CreateReview({
         })
         .select('review_id')
         .single();
-
       if (insErr) throw insErr;
+
       const review_id = reviewRow.review_id as string;
 
-      // 2) 태그 매핑 벌크 insert
+      // 2) 태그 매핑 insert
       if (selectedCodes.length > 0) {
         const payload = selectedCodes.map(code => ({ review_id, tag_code: code }));
         const { error: tagErr } = await supabase.from('group_review_tags').insert(payload);
@@ -120,6 +170,11 @@ export default function CreateReview({
 
       onSuccess?.({ review_id });
       onClose();
+
+      // 초기화
+      setRating(5);
+      setContent('');
+      setSelectedCodes([]);
     } catch (e: any) {
       console.error('[CreateReview] submit error', e);
       setErrMsg(e?.message ?? '등록 중 오류가 발생했습니다.');
@@ -127,6 +182,9 @@ export default function CreateReview({
       setSubmitting(false);
     }
   };
+
+  const groupTitle = groupInfo?.group_title ?? '(제목 없음)';
+  const categoryName = groupInfo?.categories_major?.category_major_name ?? '기타';
 
   return (
     <AnimatePresence>
@@ -136,7 +194,9 @@ export default function CreateReview({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={() => {
+            if (!submitting) onClose();
+          }}
         >
           <motion.div
             className="bg-white rounded-sm w-[590px] h-[740px] overflow-y-auto border-[#B7B7B7] border"
@@ -157,9 +217,9 @@ export default function CreateReview({
               {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
                 <div className="flex items-center">
-                  <label className="text-xl font-semibold mr-3">{review.title}</label>
+                  <label className="text-xl font-semibold mr-3">{groupTitle}</label>
                   <span className="text-white bg-[#D83737] h-[28px] text-md px-2 py-1 rounded-sm">
-                    {review.category}
+                    {categoryName}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 leading-normal mt-6">
@@ -170,6 +230,7 @@ export default function CreateReview({
                       type="button"
                       onClick={() => setRating(n as 1 | 2 | 3 | 4 | 5)}
                       className="focus:outline-none"
+                      disabled={submitting}
                     >
                       <svg
                         viewBox="0 0 20 20"
@@ -182,32 +243,30 @@ export default function CreateReview({
                 </div>
               </div>
 
-              {/* 해시태그 선택 (라벨 표시, 내부값은 코드) */}
+              {/* 해시태그 선택 */}
               <div className="my-6">
                 <label className="block text-sm font-semibold mb-3">해시태그 선택</label>
                 <div className="flex flex-wrap gap-3">
-                  {tagDict.map(tag => (
-                    <button
-                      key={tag.tag_code}
-                      type="button"
-                      onClick={() => toggleByCode(tag.tag_code)}
-                      className={`px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
-                        selectedCodes.includes(tag.tag_code)
-                          ? 'bg-white text-[#0689E8] border-[#0689E8]'
-                          : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
-                      }`}
-                    >
-                      # {tag.label}
-                    </button>
-                  ))}
+                  {tagDict.length === 0 ? (
+                    <p className="text-gray-400 text-sm">태그를 불러오는 중...</p>
+                  ) : (
+                    tagDict.map(tag => (
+                      <button
+                        key={tag.tag_code}
+                        type="button"
+                        onClick={() => toggleByCode(tag.tag_code)}
+                        className={`px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
+                          selectedCodes.includes(tag.tag_code)
+                            ? 'bg-white text-[#0689E8] border-[#0689E8]'
+                            : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
+                        }`}
+                        disabled={submitting}
+                      >
+                        # {tag.label}
+                      </button>
+                    ))
+                  )}
                 </div>
-
-                {/* 선택 미리보기: 코드 -> 라벨 변환 사용 */}
-                {selectedCodes.length > 0 && (
-                  <div className="mt-3 text-sm text-gray-600">
-                    선택: {selectedCodes.map(c => `# ${labelByCode[c] ?? c}`).join(' ')}
-                  </div>
-                )}
               </div>
 
               {/* 리뷰 내용 */}
@@ -218,6 +277,7 @@ export default function CreateReview({
                   placeholder="모임의 어떤 점이 좋았는지 적어주세요."
                   value={content}
                   onChange={e => setContent(e.target.value)}
+                  disabled={submitting}
                 />
               </div>
 
@@ -229,7 +289,7 @@ export default function CreateReview({
                 <button
                   type="button"
                   disabled={submitting}
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm disabled:opacity-60"
+                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors disabled:opacity-60"
                   onClick={onClose}
                 >
                   취소하기
@@ -237,7 +297,7 @@ export default function CreateReview({
                 <button
                   type="button"
                   disabled={submitting}
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm disabled:opacity-60"
+                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0577c9] transition-colors disabled:opacity-60"
                   onClick={handleSubmit}
                 >
                   {submitting ? '등록 중...' : '등록하기'}

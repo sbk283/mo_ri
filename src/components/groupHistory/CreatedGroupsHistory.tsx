@@ -46,25 +46,25 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
 
     // 체크박스 토글 함수
     const handleCheckboxToggle = (groupId: string) => {
-      setGroupItems(prev => {
-        const updated = prev.map(item =>
+      setGroupItems(prev =>
+        prev.map(item =>
           item.group_id === groupId ? { ...item, isChecked: !item.isChecked } : item,
-        );
-        // 체크된 개수를 부모에게 전달
-        onCheckChange(updated.filter(item => item.isChecked));
-        return updated;
-      });
+        ),
+      );
     };
 
     // 전체선택 함수
     const selectAll = () => {
       setGroupItems(prev => {
-        const allChecked = prev.every(item => item.isChecked); // 모두 체크된 상태인지 확인
-        const updated = prev.map(item => ({ ...item, isChecked: !allChecked })); // 전체 토글
-        onCheckChange(updated.filter(item => item.isChecked));
-        return updated;
+        const allChecked = prev.every(item => item.isChecked);
+        return prev.map(item => ({ ...item, isChecked: !allChecked }));
       });
     };
+
+    // 변경될 때마다 부모에 전달 (렌더 후)
+    useEffect(() => {
+      onCheckChange(groupItems.filter(item => item.isChecked));
+    }, [groupItems, onCheckChange]);
 
     // 부모가 ref.current.selectAll() 호출 가능하도록 연결
     useImperativeHandle(ref, () => ({

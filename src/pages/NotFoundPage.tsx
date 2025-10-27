@@ -9,6 +9,12 @@ import NotFoundFloatingBits from '../components/NotFoundloatingBits';
 function NotFoundPage() {
   const navigate = useNavigate();
 
+  // ✅ 기존 SearchBar의 onSearch 로직과 동일하게
+  const handleSearch = (term: string) => {
+    if (!term.trim()) return;
+    navigate(`/grouplist?search=${encodeURIComponent(term.trim())}`);
+  };
+
   return (
     <div className="relative min-h-dvh w-full overflow-hidden bg-gradient-to-b from-white via-[#f7fbff] to-[#eef6ff] dark:from-[#0b1020] dark:via-[#0a0f1c] dark:to-[#070b14]">
       {/* soft glow backdrop */}
@@ -85,7 +91,7 @@ function NotFoundPage() {
               placeholder="모임명, 카테고리, 모임장 닉네임으로 검색해보기"
               onPressEnter={e => {
                 const q = (e.target as HTMLInputElement).value?.trim();
-                if (q) navigate(`/search?q=${encodeURIComponent(q)}`);
+                handleSearch(q);
               }}
             />
           </div>

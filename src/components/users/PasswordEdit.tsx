@@ -8,6 +8,7 @@ import ProfileImageEdit from './profilesetting/ProfileImageEdit';
 import ProfileInfoEdit from './profilesetting/ProfileInfoEdit';
 import ProfileInterestEdit from './profilesetting/ProfileInterestEdit';
 import ProfileMarketingEdit from './profilesetting/ProfileMarketingEdit';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 function PasswordEdit() {
   const { user } = useAuth();
@@ -45,7 +46,7 @@ function PasswordEdit() {
   }, [user]);
 
   // 로딩중..
-  if (loading) return <div className="text-gray-400">불러오는 중...</div>;
+  if (loading) return <LoadingSpinner />;
 
   return (
     <div>

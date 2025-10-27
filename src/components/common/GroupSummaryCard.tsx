@@ -22,7 +22,7 @@ function GroupSummaryCard({
   memberLimit,
   duration,
   dday,
-  thumbnail = '/images/no_image.png',
+  thumbnail = '/nullbg.jpg',
   desc,
 }: GroupSummaryCardProps) {
   return (

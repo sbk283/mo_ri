@@ -5,6 +5,7 @@ import MypageMyGroupMenu from '../components/MypageMyGroupMenu';
 import { useAuth } from '../contexts/AuthContext';
 import { getProfile } from '../lib/profile';
 import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 // 기본 회원 정보, 모임 참여이력, 모임 생성이력 출력해야합니다.
 function MyPage() {
@@ -74,7 +75,7 @@ function MyPage() {
   if (loading) {
     return (
       <MyPageLayout>
-        <div className="text-center text-gray-400 h-[1080px]">불러오는 중...</div>
+        <LoadingSpinner />
       </MyPageLayout>
     );
   }

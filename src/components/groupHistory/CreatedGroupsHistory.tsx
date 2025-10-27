@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchUserGroups } from '../../lib/fetchUserGroups';
 import type { GroupWithCategory } from '../../types/group';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 interface CreatedGroupsHistoryProps {
   onCheckChange: (items: any[]) => void;
@@ -71,7 +72,7 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
       selectAll,
     }));
 
-    if (loading) return <div className="text-center py-20 text-gray-400">로딩 중...</div>;
+    if (loading) return <LoadingSpinner />;
     if (groupItems.length === 0) {
       return (
         <div className="text-center py-20 text-gray-400 font-bold">생성한 모임이 없습니다.</div>

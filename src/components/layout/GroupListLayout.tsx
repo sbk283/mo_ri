@@ -8,6 +8,7 @@ import BannerCardSwiper from '../common/BannerCardSwiper';
 import GroupListCard from '../common/GroupListCard';
 import GroupSearchResults from '../search/GroupSearchResults';
 import { useSearchParams } from 'react-router-dom';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -128,9 +129,7 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
 
               <div className="space-y-4">
                 {loading ? (
-                  <div className="flex justify-center items-center h-60 text-gray-500">
-                    로딩 중...
-                  </div>
+                  <LoadingSpinner />
                 ) : displayedGroups.length === 0 ? (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}

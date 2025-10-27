@@ -102,7 +102,7 @@ export function GroupCard({
           {/* 이미지 */}
           <div className="relative">
             <img
-              src={item.image_urls?.[0] ?? '/placeholder.jpg'}
+              src={item.image_urls?.[0] ?? '/nullbg.jpg'}
               alt={`${item.group_title} 썸네일`}
               className="w-full object-cover h-[133px]"
             />
@@ -148,8 +148,8 @@ export function GroupCard({
       {/* 즐겨찾기 확인 모달 */}
       <ConfirmModal
         open={confirmOpen}
-        title={'찜을 변경하시겠습니까?'}
-        message={'찜 상태를 변경하면 언제든 다시 변경할 수 있습니다.'}
+        title={'찜을 해제하시겠습니까?'}
+        message={'찜을 해제해도 \n 언제든 다시 찜리스트에 추가할 수 있습니다.'}
         onConfirm={handleConfirmModal}
         onClose={handleCloseModal}
       />

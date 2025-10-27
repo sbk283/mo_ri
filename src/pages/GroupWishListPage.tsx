@@ -4,6 +4,7 @@ import GroupCard from '../components/common/GroupCard';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
 import { supabase } from '../lib/supabase';
 import type { groups } from '../types/group';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 type GroupRow = groups & { favorite?: boolean };
 
@@ -123,7 +124,9 @@ function GroupWishListPage() {
       {/* 찜리스트 부분 */}
       <div className="mt-[40px]">
         {loading ? (
-          <div className="text-center text-gray-400 text-lg py-20 mb-20">로딩중...</div>
+          <div className="text-center text-gray-400 text-lg py-20 mb-20">
+            <LoadingSpinner />
+          </div>
         ) : groupsList.length === 0 ? (
           <div className="text-center text-gray-400 text-lg py-20 mb-20">
             <div>찜한 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>

@@ -53,7 +53,7 @@ function GroupListCard({
   const mainImage =
     image_urls && image_urls.length > 0
       ? image_urls[0]
-      : 'https://i.ibb.co/s5cD7JG/default-group-thumb.jpg';
+      : '/nullbg.jpg';
 
   const statusLabel = {
     recruiting: '모집중',

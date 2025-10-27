@@ -79,6 +79,146 @@ export type Database = {
           },
         ]
       }
+      direct_chats: {
+        Row: {
+          chat_id: string
+          created_at: string
+          created_by: string | null
+          group_id: string
+          host_id: string
+          member_id: string
+          updated_at: string
+        }
+        Insert: {
+          chat_id?: string
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          host_id: string
+          member_id: string
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          host_id?: string
+          member_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_chats_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "direct_chats_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["group_id"]
+          },
+          {
+            foreignKeyName: "direct_chats_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "direct_chats_member_id_fkey"
+            columns: ["member_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      direct_messages: {
+        Row: {
+          chat_id: string
+          content: string
+          created_at: string
+          message_id: string
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          chat_id: string
+          content: string
+          created_at?: string
+          message_id?: string
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: string
+          content?: string
+          created_at?: string
+          message_id?: string
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "direct_chats"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      direct_participants: {
+        Row: {
+          chat_id: string
+          joined_at: string | null
+          last_read_at: string | null
+          left_at: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          left_at?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          joined_at?: string | null
+          last_read_at?: string | null
+          left_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_participants_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "direct_chats"
+            referencedColumns: ["chat_id"]
+          },
+          {
+            foreignKeyName: "direct_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       group_favorites: {
         Row: {
           created_at: string
@@ -163,6 +303,58 @@ export type Database = {
           },
         ]
       }
+      group_post_likes: {
+        Row: {
+          created_at: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "group_posts"
+            referencedColumns: ["post_id"]
+          },
+        ]
+      }
+      group_post_reads: {
+        Row: {
+          post_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          post_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          post_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_post_reads_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "group_posts"
+            referencedColumns: ["post_id"]
+          },
+        ]
+      }
       group_posts: {
         Row: {
           board_type: string
@@ -172,6 +364,7 @@ export type Database = {
           post_id: string
           post_title: string
           user_id: string | null
+          view_count: number
         }
         Insert: {
           board_type: string
@@ -181,6 +374,7 @@ export type Database = {
           post_id?: string
           post_title: string
           user_id?: string | null
+          view_count?: number
         }
         Update: {
           board_type?: string
@@ -190,6 +384,7 @@ export type Database = {
           post_id?: string
           post_title?: string
           user_id?: string | null
+          view_count?: number
         }
         Relationships: [
           {

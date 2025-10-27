@@ -90,6 +90,11 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
   // 멤버 목록 조회 (user_profiles 조인 추가)
   // 서버에서 approved 상태만 조회하도록 필터 추가
   const fetchMembers = useCallback(async (groupId: string) => {
+    if (!groupId || groupId === 'undefined') {
+      console.warn('fetchMembers 호출 중 groupId가 비어 있습니다:', groupId);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -107,12 +112,11 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
       `,
         )
         .eq('group_id', groupId)
-        .eq('member_status', 'approved') // ← 여기서 승인된 멤버만 가져옴
+        .eq('member_status', 'approved')
         .order('member_joined_at', { ascending: true });
 
       if (error) throw error;
 
-      // Supabase는 user_profiles를 배열로 반환할 수 있으므로 안전하게 처리
       const mapped: GroupMember[] = (data ?? []).map(row => {
         const userProfileRaw = (row as Record<string, unknown>)['user_profiles'];
         const userProfile =

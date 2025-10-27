@@ -10,7 +10,7 @@ import type { GroupWithCategory } from '../../types/group';
 function GroupDetailLayout() {
   const { id } = useParams<{ id: string }>();
   const [group, setGroup] = useState<GroupWithCategory | null>(null);
-  const [leaderName, setLeaderName] = useState('');
+  const [leaderNickName, setLeaderNickName] = useState('');
   const [leaderCareer, setLeaderCareer] = useState('');
   const [curriculum, setCurriculum] = useState<
     { title: string; detail: string; files: string[] }[]
@@ -77,11 +77,11 @@ function GroupDetailLayout() {
           // 이름
           const { data: profileData } = await supabase
             .from('user_profiles')
-            .select('name')
+            .select('nickname')
             .eq('user_id', data.created_by)
             .single();
 
-          if (profileData?.name) setLeaderName(profileData.name);
+          if (profileData?.nickname) setLeaderNickName(profileData.nickname);
 
           // 경력 여러 개 가져오기
           const { data: careerData } = await supabase
@@ -175,7 +175,7 @@ function GroupDetailLayout() {
         intro={group.group_content || ''}
         curriculum={curriculum}
         leader={{
-          name: leaderName || '이름 정보 없음',
+          nickName: leaderNickName || '이름 정보 없음',
           location: group.group_region || '활동 지역 미입력',
           career: leaderCareer || '경력 정보 없음',
         }}

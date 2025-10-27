@@ -110,9 +110,19 @@ function App() {
           <Route path="/creategroup" element={<CreateGroupPage />} />
           {/* 모임 상세보기 */}
           <Route path="/groupdetail/:id" element={<GroupDetailPage />} />
-          {/* 채팅 */}
+          {/* 채팅 메인 (전체 채팅 목록) */}
           <Route
-            path="/chat/:id"
+            path="/chat"
+            element={
+              <Protected>
+                <DirectChatPage />
+              </Protected>
+            }
+          />
+
+          {/* 그룹별 채팅 (targetUserId는 optional) */}
+          <Route
+            path="/chat/:groupId/:targetUserId?"
             element={
               <Protected>
                 <DirectChatPage />

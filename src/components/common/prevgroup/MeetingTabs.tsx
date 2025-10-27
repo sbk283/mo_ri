@@ -11,7 +11,7 @@ interface MeetingTabsProps {
     files?: string[];
   }[];
   leader: {
-    name: string;
+    nickName: string;
     location?: string;
     career?:
       | string // 문자열도 가능 (GroupDetailLayout)
@@ -144,7 +144,7 @@ function MeetingTabs({ intro, curriculum, leader }: MeetingTabsProps) {
         viewport={{ once: true }}
       >
         <MeetingLeaderInfo
-          leaderName={leader.name}
+          leaderNickName={leader.nickName}
           leaderLocation={leader.location}
           leaderCareer={
             Array.isArray(leader.career)

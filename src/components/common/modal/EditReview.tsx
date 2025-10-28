@@ -1,3 +1,4 @@
+// src/components/common/modal/EditReview.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import type { ReviewItem } from '../ReviewCard';
@@ -45,6 +46,9 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          onClick={e => {
+            if (e.target === e.currentTarget) onClose();
+          }}
         >
           <motion.div
             className="bg-white rounded-sm w-[590px] h-[740px] overflow-y-auto border-[#B7B7B7] border"
@@ -61,7 +65,8 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               </div>
 
               <div className="border border-[#6C6C6C] mb-8"></div>
-              {/* 별점 */}
+
+              {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
                 <div className="flex items-center">
                   <label className="text-xl font-semibold mr-3 ">{review.title}</label>
@@ -69,21 +74,23 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                     {review.category}
                   </span>
                 </div>
+
+                {/* ⭐ SVG → IMG 변경 구간 */}
                 <div className="flex items-center gap-2 leading-normal mt-6">
-                  <span className="mr-5 text-md font-semibold ">별점</span>
+                  <span className="mr-5 text-md font-semibold">별점</span>
                   {[1, 2, 3, 4, 5].map(n => (
                     <button
                       key={n}
                       type="button"
                       onClick={() => setRating(n as 1 | 2 | 3 | 4 | 5)}
                       className="focus:outline-none "
+                      aria-label={`${n}점 주기`}
                     >
-                      <svg
-                        viewBox="0 0 20 20"
-                        className={`w-6 h-6 gap-1 ${n <= rating ? 'fill-amber-400' : 'fill-gray-300'}`}
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.1 3.38a1 1 0 0 0 .95.69h3.552c.967 0 1.371 1.24.588 1.81l-2.874 2.09a1 1 0 0 0-.364 1.118l1.1 3.38c.3.921-.755 1.688-1.54 1.118l-2.874-2.09a1 1 0 0 0-1.176 0l-2.874 2.09c-.785.57-1.84-.197-1.54-1.118l1.1-3.38a1 1 0 0 0-.364-1.118L1.86 8.807c-.783-.57-.379-1.81.588-1.81h3.552a1 1 0 0 0 .95-.69l1.1-3.38z" />
-                      </svg>
+                      <img
+                        src={n <= rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+                        alt={n <= rating ? `${n}점` : `${n}점 미만`}
+                        className="w-6 h-6"
+                      />
                     </button>
                   ))}
                 </div>
@@ -114,8 +121,8 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="my-6">
                 <label className="block mb-2 text-sm font-semibold">어떤 점이 좋았나요?</label>
                 <textarea
-                  className="w-full border border-[#A3A3A3] rounded-sm p-3 min-h-[145px] x-[490px] focus:outline-none focus:border-blue-500"
-                  placeholder="모임 관리자분께서 잘못을 잘 조해주셔서, 좋았어요."
+                  className="w-full border border-[#A3A3A3] rounded-sm p-3 min-h-[145px] focus:outline-none focus:border-blue-500"
+                  placeholder="모임의 어떤 점이 좋았는지 적어주세요."
                   value={content}
                   onChange={e => setContent(e.target.value)}
                 />

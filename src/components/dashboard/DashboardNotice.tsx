@@ -1,3 +1,4 @@
+// src/components/dashboard/DashboardNotice.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import GroupPagination from '../common/GroupPagination';
@@ -7,15 +8,18 @@ import type { Notice } from '../../types/notice';
 
 const ITEMS_PER_PAGE = 10;
 const BUCKET = 'group-post-images';
-const PREFIX = 'notice'; // 공지 접두어
+const PREFIX = 'notice';
 const today = () => new Date().toISOString().slice(0, 10);
 
-type NoticeRow = Notice & { post_id: string };
+type NoticeRow = Notice & {
+  post_id: string;
+  likes: number;
+  liked: boolean;
+};
 
 const isHttp = (u?: string | null) => !!u && /^https?:\/\//i.test(u);
 const isPublicPath = (u?: string | null) => !!u && /\/storage\/v1\/object\/public\//i.test(u);
 
-/** 그룹 폴더 하위 키 생성: notice/{groupId}/{timestamp}-{uuid}.{ext} */
 const buildKey = (groupId: string, filename: string) => {
   const ts = Date.now();
   const ext = (filename.split('.').pop() || 'png').toLowerCase();
@@ -25,23 +29,18 @@ const buildKey = (groupId: string, filename: string) => {
   return `${PREFIX}/${groupId}/${ts}-${uuid}.${ext}`;
 };
 
-/** 상대/키 → 퍼블릭 URL로 변환. 이미 http/public이면 그대로 */
 const resolvePostImageUrl = (raw?: string | null, groupId?: string | null): string | null => {
   if (!raw) return null;
   if (isHttp(raw) || isPublicPath(raw)) return raw;
-
-  // 파일명 또는 키가 들어온 경우, notice/<gid>/... 형태로 보강
   let key = raw.replace(/^\/+/, '');
   if (groupId && !key.startsWith(`${PREFIX}/${groupId}/`)) {
     if (key.startsWith(`${groupId}/`)) key = `${PREFIX}/${key}`;
     else key = `${PREFIX}/${groupId}/${key}`;
   }
-
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(key);
   return data?.publicUrl ?? null;
 };
 
-/** HTML 내 img src를 전부 퍼블릭 URL로 치환 */
 const resolveAllImageSrcInHtml = (html?: string | null, groupId?: string | null): string => {
   if (!html) return '';
   return html.replace(/<img\b([^>]*?)\bsrc=["']([^"']+)["']([^>]*)>/gi, (_m, pre, src, post) => {
@@ -50,7 +49,6 @@ const resolveAllImageSrcInHtml = (html?: string | null, groupId?: string | null)
   });
 };
 
-/** data:image/*;base64 를 찾아 실제 파일로 업로드 후 URL로 치환 */
 async function externalizeInlineImages(html: string, groupId: string): Promise<string> {
   const matches = Array.from(
     html.matchAll(/<img\b[^>]*\bsrc=["'](data:image\/[^"']+)["'][^>]*>/gi),
@@ -64,8 +62,7 @@ async function externalizeInlineImages(html: string, groupId: string): Promise<s
       const blob = await (await fetch(dataUrl)).blob();
       const mime = blob.type || 'image/png';
       const ext = mime.split('/')[1] || 'png';
-      const filename = `inline.${ext}`;
-      const key = buildKey(groupId, filename); // notice/<gid>/...
+      const key = buildKey(groupId, `inline.${ext}`);
 
       const { error: upErr } = await supabase.storage.from(BUCKET).upload(key, blob, {
         upsert: false,
@@ -75,11 +72,9 @@ async function externalizeInlineImages(html: string, groupId: string): Promise<s
       if (upErr) continue;
 
       const { data } = supabase.storage.from(BUCKET).getPublicUrl(key);
-      if (data?.publicUrl) {
-        out = out.replace(dataUrl, data.publicUrl);
-      }
+      if (data?.publicUrl) out = out.replace(dataUrl, data.publicUrl);
     } catch {
-      // 실패 시 해당 이미지는 그대로 둔다
+      // skip
     }
   }
   return out;
@@ -97,44 +92,38 @@ export function DashboardNotice({
   onCraftingChange?: (v: boolean) => void;
 }) {
   const [isHost, setIsHost] = useState(false);
-  const [roleLoaded, setRoleLoaded] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const prevKey = useRef(createRequestKey);
 
-  // 호스트 여부 확인
+  const [items, setItems] = useState<NoticeRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+  const [likeBusy, setLikeBusy] = useState<Set<string>>(new Set()); // post_id 단위 락
+
+  // 호스트 여부
   useEffect(() => {
     let ignore = false;
     (async () => {
-      setRoleLoaded(false);
       const { data: u } = await supabase.auth.getUser();
       const userId = u?.user?.id;
       if (!groupId || !userId) {
-        if (!ignore) {
-          setIsHost(false);
-          setRoleLoaded(true);
-        }
+        if (!ignore) setIsHost(false);
         return;
       }
-
       const { data } = await supabase
         .from('group_members')
         .select('member_role')
         .eq('group_id', groupId)
         .eq('user_id', userId)
         .maybeSingle();
-
-      const host = String(data?.member_role ?? '').toLowerCase() === 'host';
-      if (!ignore) {
-        setIsHost(host);
-        setRoleLoaded(true);
-      }
+      if (!ignore) setIsHost(String(data?.member_role ?? '').toLowerCase() === 'host');
     })();
     return () => {
       ignore = true;
     };
   }, [groupId]);
 
-  // 작성 모드 관리
-  const [creating, setCreating] = useState(false);
-  const prevKey = useRef(createRequestKey);
+  // 작성 트리거
   useEffect(() => {
     if (createRequestKey > prevKey.current && isHost) setCreating(true);
     prevKey.current = createRequestKey;
@@ -143,15 +132,15 @@ export function DashboardNotice({
     onCraftingChange?.(creating);
   }, [creating, onCraftingChange]);
 
-  // 공지 목록 상태
-  const [items, setItems] = useState<NoticeRow[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // 목록 불러오기: 리스트 반환 (생성 직후 상세로 이동 위해)
+  // 목록 불러오기(+ 좋아요 집계)
   const reload = async (): Promise<NoticeRow[]> => {
     if (!groupId) return [];
     setLoading(true);
     try {
+      const { data: u } = await supabase.auth.getUser();
+      const userId = u?.user?.id ?? null;
+      setMyUserId(userId);
+
       const { data: posts, error: postsErr } = await supabase
         .from('group_posts')
         .select('post_id, post_title, post_body_md, post_created_at, view_count')
@@ -160,9 +149,7 @@ export function DashboardNotice({
         .order('post_created_at', { ascending: false });
       if (postsErr) throw postsErr;
 
-      const { data: u } = await supabase.auth.getUser();
-      const userId = u?.user?.id ?? null;
-
+      // 읽음
       let readSet = new Set<string>();
       if (userId && posts?.length) {
         const ids = posts.map(p => p.post_id);
@@ -174,6 +161,21 @@ export function DashboardNotice({
         if (reads?.length) readSet = new Set(reads.map(r => r.post_id as string));
       }
 
+      // 좋아요 전체 + 내 좋아요
+      const likeCountById: Record<string, number> = {};
+      const myLiked = new Set<string>();
+      if (posts?.length) {
+        const ids = posts.map(p => p.post_id);
+        const { data: likesAll } = await supabase
+          .from('group_post_likes')
+          .select('post_id, user_id')
+          .in('post_id', ids);
+        (likesAll ?? []).forEach(r => {
+          likeCountById[r.post_id] = (likeCountById[r.post_id] ?? 0) + 1;
+          if (userId && r.user_id === userId) myLiked.add(r.post_id);
+        });
+      }
+
       const mapped: NoticeRow[] =
         (posts ?? []).map((r, i) => ({
           id: i + 1,
@@ -183,6 +185,8 @@ export function DashboardNotice({
           date: (r.post_created_at ?? '').slice(0, 10),
           isRead: readSet.has(r.post_id),
           views: Number(r.view_count ?? 0),
+          likes: likeCountById[r.post_id] ?? 0,
+          liked: myLiked.has(r.post_id),
         })) ?? [];
 
       setItems(mapped);
@@ -199,6 +203,90 @@ export function DashboardNotice({
     void reload();
   }, [groupId, boardType]);
 
+  // 유틸: post_id로 단일 항목 갱신
+  const patchItem = (postId: string, updater: (cur: NoticeRow) => NoticeRow) => {
+    setItems(prev => prev.map(it => (it.post_id === postId ? updater(it) : it)));
+  };
+
+  // 서버 진실값으로 재조정
+  const reconcileLikeFromServer = async (postId: string) => {
+    const { data: all } = await supabase
+      .from('group_post_likes')
+      .select('post_id, user_id')
+      .eq('post_id', postId);
+
+    const count = (all ?? []).length;
+    const liked = !!(all ?? []).find(r => r.user_id === myUserId);
+    patchItem(postId, cur => ({ ...cur, likes: count, liked }));
+  };
+
+  // 좋아요 토글(낙관적 → 서버 → 재조정)
+  const toggleLike = async (postId: string) => {
+    if (!myUserId) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    // 락
+    setLikeBusy(prev => {
+      if (prev.has(postId)) return prev;
+      const next = new Set(prev);
+      next.add(postId);
+      return next;
+    });
+
+    // 현재 스냅샷
+    const cur = items.find(it => it.post_id === postId);
+    if (!cur) {
+      // 해제 락
+      setLikeBusy(prev => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
+      return;
+    }
+
+    const optimisticLiked = !cur.liked;
+
+    // 1) 낙관적 반영
+    patchItem(postId, c => ({
+      ...c,
+      liked: optimisticLiked,
+      likes: Math.max(0, c.likes + (optimisticLiked ? 1 : -1)),
+    }));
+
+    // 2) 서버 적용
+    try {
+      if (optimisticLiked) {
+        const { error } = await supabase
+          .from('group_post_likes')
+          .insert({ post_id: postId, user_id: myUserId });
+        // @ts-ignore 23505(중복) 허용
+        if (error && error.code !== '23505') throw error;
+      } else {
+        const { error } = await supabase
+          .from('group_post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', myUserId);
+        if (error) throw error;
+      }
+    } catch (e) {
+      console.error('toggle like error', e);
+      // 실패 시 즉시 서버값으로 재조정
+      await reconcileLikeFromServer(postId);
+    } finally {
+      // 3) 최종 서버값으로 한 번 더 맞춤(경쟁/레이스 대비)
+      await reconcileLikeFromServer(postId);
+      // 락 해제
+      setLikeBusy(prev => {
+        const next = new Set(prev);
+        next.delete(postId);
+        return next;
+      });
+    }
+  };
+
   // 페이지네이션
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [items.length]);
@@ -211,10 +299,10 @@ export function DashboardNotice({
     return items.slice(start, start + ITEMS_PER_PAGE);
   }, [page, items]);
 
+  // 상세
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
 
-  // 상세 진입: 읽음 upsert(중복무시) → 처음 읽음이면 로컬 views+1
   const openDetail = async (localId: number) => {
     const idx = items.findIndex(n => n.id === localId);
     if (idx < 0) return;
@@ -222,42 +310,26 @@ export function DashboardNotice({
     const t = items[idx];
     const { data: u } = await supabase.auth.getUser();
     const userId = u?.user?.id;
-    if (!groupId || !userId || !t?.post_id) return;
 
-    const wasRead = t.isRead;
-
-    const base = supabase
-      .from('group_post_reads')
-      .upsert(
-        { post_id: t.post_id, user_id: userId },
-        { onConflict: 'post_id,user_id', ignoreDuplicates: true },
-      );
-
-    const { data: inserted, error: insErr } = await base.select('post_id');
-
-    if (insErr) {
-      // @ts-ignore
-      if (insErr.code !== '23505') {
-        console.error('insert read error', insErr);
+    if (groupId && userId && t?.post_id) {
+      const wasRead = t.isRead;
+      const base = supabase
+        .from('group_post_reads')
+        .upsert(
+          { post_id: t.post_id, user_id: userId },
+          { onConflict: 'post_id,user_id', ignoreDuplicates: true },
+        );
+      const { data: inserted, error: insErr } = await base.select('post_id');
+      if (!wasRead && inserted && inserted.length > 0) {
+        patchItem(t.post_id, cur => ({ ...cur, isRead: true, views: cur.views + 1 }));
+      } else {
+        patchItem(t.post_id, cur => ({ ...cur, isRead: true }));
       }
-    }
-
-    if (!wasRead && inserted && inserted.length > 0) {
-      setItems(prev => {
-        const copy = [...prev];
-        const cur = copy[idx];
-        if (!cur) return prev;
-        copy[idx] = { ...cur, isRead: true, views: cur.views + 1 };
-        return copy;
-      });
-    } else {
-      setItems(prev => {
-        const copy = [...prev];
-        const cur = copy[idx];
-        if (!cur) return prev;
-        copy[idx] = { ...cur, isRead: true };
-        return copy;
-      });
+      if (
+        insErr && // @ts-ignore
+        insErr.code !== '23505'
+      )
+        console.error('insert read error', insErr);
     }
 
     setDetailIdx(idx);
@@ -271,23 +343,13 @@ export function DashboardNotice({
     setCreating(false);
   };
 
-  const emptyNotice: Notice = {
-    id: 0,
-    title: '',
-    content: '',
-    date: today(),
-    isRead: false,
-    views: 0,
-  };
-
-  // 작성
+  // 작성/수정/삭제 (기존 로직 유지)
   const handleCreateSave = async (next: Notice) => {
     if (!groupId || !isHost) return;
     const { data: u } = await supabase.auth.getUser();
     const userId = u?.user?.id;
     if (!userId) return;
 
-    // 본문 내 dataURL 업로드 및 경로 치환
     const cleanedHtml = await externalizeInlineImages(next.content || '', groupId);
     const normalizedHtml = resolveAllImageSrcInHtml(cleanedHtml, groupId);
 
@@ -328,34 +390,22 @@ export function DashboardNotice({
         { onConflict: 'post_id,user_id', ignoreDuplicates: true },
       );
     const { data: inserted, error: insErr } = await base.select('post_id');
-    if (insErr) {
-      // @ts-ignore
-      if (insErr.code !== '23505') console.error('insert read error', insErr);
-    }
+    if (
+      insErr && // @ts-ignore
+      insErr.code !== '23505'
+    )
+      console.error('insert read error', insErr);
 
     if (inserted && inserted.length > 0) {
-      setItems(prev => {
-        const copy = [...prev];
-        if (copy.length > 0 && copy[0].post_id === first.post_id) {
-          copy[0] = { ...copy[0], isRead: true, views: (copy[0].views ?? 0) + 1 };
-        }
-        return copy;
-      });
+      patchItem(first.post_id, cur => ({ ...cur, isRead: true, views: cur.views + 1 }));
     } else {
-      setItems(prev => {
-        const copy = [...prev];
-        if (copy.length > 0 && copy[0].post_id === first.post_id) {
-          copy[0] = { ...copy[0], isRead: true };
-        }
-        return copy;
-      });
+      patchItem(first.post_id, cur => ({ ...cur, isRead: true }));
     }
 
     setDetailIdx(first.id - 1);
     setEditing(false);
   };
 
-  // 수정
   const handleDetailSave = async (next: Notice) => {
     if (detailIdx == null || !groupId) return;
     const target = items[detailIdx];
@@ -373,18 +423,11 @@ export function DashboardNotice({
       return;
     }
 
-    const copy = [...items];
-    copy[detailIdx] = {
-      ...copy[detailIdx],
-      title: next.title,
-      content: normalizedHtml,
-    };
-    setItems(copy);
+    patchItem(target.post_id, cur => ({ ...cur, title: next.title, content: normalizedHtml }));
     setEditing(false);
     setCreating(false);
   };
 
-  // 삭제
   const handleDetailDelete = async () => {
     if (detailIdx == null) return;
     const target = items[detailIdx];
@@ -406,7 +449,7 @@ export function DashboardNotice({
 
   const current = detailIdx != null ? items[detailIdx] : null;
 
-  // 렌더링
+  // 렌더
   return (
     <div className="w-[975px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
@@ -419,14 +462,7 @@ export function DashboardNotice({
             transition={{ duration: 0.18 }}
           >
             <GroupContentDetailEdit
-              notice={{
-                id: 0,
-                title: '',
-                content: '',
-                date: today(),
-                isRead: false,
-                views: 0,
-              }}
+              notice={{ id: 0, title: '', content: '', date: today(), isRead: false, views: 0 }}
               onCancel={() => setCreating(false)}
               onSave={handleCreateSave}
             />
@@ -446,30 +482,45 @@ export function DashboardNotice({
             ) : (
               <>
                 <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
-                  <div className="w-[600px] truncate font-semibold pl-7 text-md">제목</div>
+                  <div className="w-[520px] truncate font-semibold pl-7 text-md">제목</div>
                   <div className="w-[120px] text-center text-md">작성일자</div>
-                  <div className="w-[100px] text-center text-md">조회수</div>
+                  <div className="w-[80px] text-center text-md">조회수</div>
+                  <div className="w-[80px] text-center text-md">좋아요</div>
                   {!isHost && <div className="w-[50px] text-center mr-7 text-sm">상태</div>}
                 </div>
 
                 <div className="flex flex-col divide-y divide-dashed divide-gray-300">
                   {pageItems.map(n => (
-                    <button
+                    <div
                       key={n.post_id}
-                      type="button"
-                      onClick={() => openDetail(n.id)}
-                      className="flex justify-between items-center py-3 hover:bg-gray-50 text-left focus:outline-none"
+                      className="flex justify-between items-center py-3 hover:bg-gray-50 text-left"
                     >
-                      <span
-                        className="w-[600px] truncate font-semibold pl-7 text-[#111]"
+                      <button
+                        type="button"
+                        onClick={() => openDetail(n.id)}
+                        className="w-[520px] truncate font-semibold pl-7 text-[#111] text-left focus:outline-none"
                         title={n.title}
                       >
                         {n.title}
-                      </span>
+                      </button>
+
                       <span className="w-[120px] text-center text-gray-400 text-sm">{n.date}</span>
-                      <span className="w-[100px] text-center text-gray-400 text-sm">
+                      <span className="w-[80px] text-center text-gray-400 text-sm">
                         {n.views ?? 0}
                       </span>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleLike(n.post_id)}
+                        disabled={likeBusy.has(n.post_id)}
+                        className={`w-[80px] text-center text-sm font-semibold ${
+                          n.liked ? 'text-[#0689E8]' : 'text-[#6C6C6C]'
+                        } ${likeBusy.has(n.post_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        aria-pressed={n.liked}
+                      >
+                        {n.liked ? '좋아요 취소' : '좋아요'} {n.likes}
+                      </button>
+
                       {!isHost && (
                         <span
                           className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center mr-7 ${
@@ -479,7 +530,7 @@ export function DashboardNotice({
                           {n.isRead ? '읽음' : '안읽음'}
                         </span>
                       )}
-                    </button>
+                    </div>
                   ))}
                 </div>
 
@@ -525,9 +576,24 @@ export function DashboardNotice({
                     </span>
                   )}
                 </div>
+
                 <div className="flex items-center text-[#8C8C8C] text-sm gap-3">
                   <span>{current?.date}</span>
                   <span>조회수 {current?.views ?? 0}</span>
+
+                  {current && (
+                    <button
+                      type="button"
+                      onClick={() => toggleLike(current.post_id)}
+                      disabled={likeBusy.has(current.post_id)}
+                      className={`ml-2 text-sm font-semibold ${
+                        current.liked ? 'text-[#0689E8]' : 'text-[#6C6C6C]'
+                      } ${likeBusy.has(current.post_id) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      aria-pressed={current.liked}
+                    >
+                      {current.liked ? '좋아요 취소' : '좋아요'} {current.likes}
+                    </button>
+                  )}
                 </div>
               </header>
 

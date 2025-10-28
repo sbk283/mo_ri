@@ -11,9 +11,8 @@ export type ReviewItem = {
   period: string;
   content: string;
   tags: string[];
-  authorMasked: string;
+  created_id: string;
   created_at?: string;
-  ad?: boolean;
   empathy?: number;
 };
 
@@ -58,7 +57,7 @@ export function ReviewCard({
         <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.content}</p>
         {/* 작성자 하단 고정 */}
         <p className="absolute bottom-[27px] left-[27px] text-[#B8641B] text-sm">
-          {item.authorMasked}
+          {item.created_id} 님의 후기
         </p>
       </div>
     </button>

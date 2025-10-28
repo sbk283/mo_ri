@@ -1,74 +1,249 @@
+// src/pages/GroupReviewsPage.tsx
 import { motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import GroupManagerLayout from '../components/layout/GroupManagerLayout';
 import ReviewBar from '../components/common/ReviewBar';
 import type { ReviewItem } from '../components/common/ReviewCard';
+import { supabase } from '../lib/supabase';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
-const mockReviews: ReviewItem[] = [
-  {
-    id: 1,
-    title: '단기 속성 피그마 스터디하기',
-    category: '스터디/학습',
-    status: '종료',
-    src: '/public/bruce.jpg',
-    rating: 5,
-    period: '2025.02.12 ~ 2025.02.20',
-    content:
-      '짧은 기간인데도 화면 설계 → 컴포넌트화 → 프로토타입까지 흐름이 딱 잡혔어요. 실습 비중이 높아서 손에 바로 익고, 과제 피드백이 구체적이라 어디를 고쳐야 하는지 바로 알 수 있었음.',
-    tags: ['강력추천', '알찬커리큘럼', '친절한모임장'],
-    authorMasked: 'zipgago*** 님의 후기',
-    ad: false,
-  },
-  {
-    id: 2,
-    title: '주 2회 실무형 피그마',
-    category: '스터디/학습',
-    status: '종료',
-    src: '/public/bruce.jpg',
-    rating: 4,
-    period: '2025.03.01 ~ 2025.03.21',
-    content:
-      '디자인 시스템과 오토 레이아웃을 실무 예제로 다뤄서 바로 프로젝트에 써먹기 좋았어요. 과제 제출 후 코멘트가 세세해서 성장 포인트가 명확했는데, 난이도가 살짝 높아서 초반엔 적응이 필요함.',
-    tags: ['알찬커리큘럼', '전문적인운영', '초보자추천'],
-    authorMasked: 'design*** 님의 후기',
-    ad: true,
-  },
-  {
-    id: 3,
-    title: 'UX 라이팅 원데이',
-    category: '스터디/학습',
-    status: '종료',
-    src: '/public/bruce.jpg',
-    rating: 5,
-    period: '2025.04.06',
-    content:
-      '버튼 라벨, 알림 문구, 에러 메시지처럼 바로 적용 가능한 사례를 중심으로 배우니까 효과가 확 느껴졌어요. 톤앤매너 가이드 만드는 방법이 특히 유익했고, 실제 서비스 문구를 고쳐보는 실습이 재미있었음.',
-    tags: ['재참여하고싶어요', '좋은분위기', '전문적인운영'],
-    authorMasked: 'uxwriter*** 님의 후기',
-    ad: false,
-  },
-];
+const fmt = (d?: string | null) => (d ? d.replace(/-/g, '.') : '');
+const NO_IMAGE = '/images/no_image.jpg';
 
-function GroupReviewsPage() {
-  // 상태를 mockReviews로 초기화
-  const [items, setItems] = useState<ReviewItem[]>(mockReviews);
+type ReviewRow = {
+  review_id: string;
+  group_id: string;
+  author_id: string;
+  rating: number;
+  pros_text: string | null;
+  created_at: string;
+  groups: {
+    group_title: string | null;
+    image_urls: string[] | null;
+    status: string | null;
+    group_start_day: string | null;
+    group_end_day: string | null;
+    sub_id: string | null;
+    categories_sub: {
+      categories_major: { category_major_name: string | null } | null;
+    } | null;
+  } | null;
+};
 
-  const handleEdit = (id: number) => {
-    // TODO: 편집 모달 열기 or 라우팅
-    // console.log('edit', id);
+type TagDict = { tag_code: string; label: string };
+type TagRow = { review_id: string; tag_code: string };
+
+export default function GroupReviewsPage() {
+  const [items, setItems] = useState<ReviewItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [numToReviewId, setNumToReviewId] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    let ignore = false;
+
+    (async () => {
+      setLoading(true);
+
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u?.user?.id;
+      if (!uid) {
+        if (!ignore) {
+          setItems([]);
+          setNumToReviewId({});
+          setLoading(false);
+        }
+        return;
+      }
+
+      const selectSQL = `
+        review_id, group_id, author_id, rating, pros_text, created_at,
+        groups:group_id (
+          group_title, image_urls, status, group_start_day, group_end_day, sub_id,
+          categories_sub:sub_id (
+            categories_major:major_id ( category_major_name )
+          )
+        )
+      ` as const;
+
+      const { data: rows, error } = await supabase
+        .from('group_reviews')
+        .select(selectSQL)
+        .eq('author_id', uid)
+        .order('created_at', { ascending: false })
+        .returns<ReviewRow[]>();
+
+      if (error) {
+        console.error('[GroupReviewsPage] load error', error);
+        if (!ignore) setLoading(false);
+        return;
+      }
+
+      if (!rows?.length) {
+        if (!ignore) {
+          setItems([]);
+          setNumToReviewId({});
+          setLoading(false);
+        }
+        return;
+      }
+
+      const { data: dict } = await supabase
+        .from('review_tag_dict')
+        .select('tag_code,label')
+        .returns<TagDict[]>();
+      const labelByCode = Object.fromEntries((dict ?? []).map(d => [d.tag_code, d.label]));
+
+      const reviewIds = rows.map(r => r.review_id);
+      const { data: tagRows } = await supabase
+        .from('group_review_tags')
+        .select('review_id, tag_code')
+        .in('review_id', reviewIds)
+        .order('tag_code', { ascending: true })
+        .returns<TagRow[]>();
+
+      const tagsByReview: Record<string, string[]> = {};
+      (tagRows ?? []).forEach(tr => {
+        const label = labelByCode[tr.tag_code] ?? tr.tag_code;
+        (tagsByReview[tr.review_id] ??= []).push(label);
+      });
+
+      const numMap: Record<number, string> = {};
+      const mapped: ReviewItem[] = rows.map((r, idx) => {
+        const g = r.groups;
+        const major = g?.categories_sub?.categories_major?.category_major_name?.trim() ?? '기타';
+
+        const n = idx + 1;
+        numMap[n] = r.review_id;
+
+        const start = fmt(g?.group_start_day);
+        const end = fmt(g?.group_end_day);
+
+        return {
+          id: n,
+          title: g?.group_title ?? '(제목 없음)',
+          category: major,
+          status: (g?.status ?? '').toLowerCase() === 'closed' ? '종료' : '진행중',
+          src: g?.image_urls?.[0] || NO_IMAGE,
+          rating: Math.min(5, Math.max(1, r.rating ?? 5)) as 1 | 2 | 3 | 4 | 5,
+          period: start && end ? `${start} ~ ${end}` : '',
+          content: r.pros_text ?? '',
+          tags: [...new Set(tagsByReview[r.review_id] ?? [])],
+          created_at: r.created_at,
+          created_id: '',
+        };
+      });
+
+      if (!ignore) {
+        setItems(mapped);
+        setNumToReviewId(numMap);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const handleEdit = async (id: number, updated: Partial<ReviewItem>) => {
+    const reviewId = numToReviewId[id];
+    if (!reviewId) return;
+
+    const payload: { rating?: number; pros_text?: string } = {};
+    if (typeof updated.rating === 'number') payload.rating = updated.rating;
+    if (typeof updated.content === 'string') payload.pros_text = updated.content;
+
+    if (Object.keys(payload).length) {
+      const { error } = await supabase
+        .from('group_reviews')
+        .update(payload)
+        .eq('review_id', reviewId);
+      if (error) {
+        console.error('[GroupReviewsPage] update error', error);
+        alert('수정 중 오류가 발생했습니다.');
+        return;
+      }
+    }
+
+    if (Array.isArray(updated.tags)) {
+      const { data: dict } = await supabase
+        .from('review_tag_dict')
+        .select('tag_code,label')
+        .returns<TagDict[]>();
+      const codeByLabel = new Map<string, string>(
+        (dict ?? []).map(d => [d.label.trim(), d.tag_code]),
+      );
+
+      const codes = updated.tags
+        .map(lbl => codeByLabel.get(String(lbl).trim()))
+        .filter((v): v is string => !!v);
+
+      const { error: delErr } = await supabase
+        .from('group_review_tags')
+        .delete()
+        .eq('review_id', reviewId);
+      if (delErr) {
+        console.error('tags delete error', delErr);
+      } else if (codes.length) {
+        const rows = codes.map(c => ({ review_id: reviewId, tag_code: c }));
+        const { error: insErr } = await supabase.from('group_review_tags').insert(rows);
+        if (insErr) console.error('tags insert error', insErr);
+      }
+    }
+
+    setItems(prev => prev.map(it => (it.id === id ? { ...it, ...updated } : it)));
   };
 
-  const handleDelete = (id: number) => {
-    // 삭제 시 상태에서 제거 → 렌더에도 즉시 반영
+  const handleDelete = async (id: number) => {
+    const reviewId = numToReviewId[id];
+    if (!reviewId) return;
+    const { error } = await supabase.from('group_reviews').delete().eq('review_id', reviewId);
+    if (error) {
+      console.error('[GroupReviewsPage] delete error', error);
+      alert('삭제 중 오류가 발생했습니다.');
+      return;
+    }
     setItems(prev => prev.filter(it => it.id !== id));
   };
 
-  // 애니 ease 프리셋
-  const ease: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
+  const list = useMemo(() => {
+    if (loading)
+      return (
+        <div className="mb-20">
+          <LoadingSpinner />
+        </div>
+      );
+
+    if (!items.length)
+      return (
+        <div className="text-center text-gray-400 text-lg py-20 mb-20">
+          <div>리뷰할 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
+          <a href="/grouplist" className="text-[#0689E8] font-md mt-[19px] inline-block">
+            모임 참여하러 가기 {'>'}
+          </a>
+        </div>
+      );
+
+    return (
+      <ul className="flex flex-col gap-4">
+        {items.map(item => (
+          <motion.ul
+            key={item.id}
+            layout
+            initial={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
+            transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
+            className="overflow-hidden"
+          >
+            <ReviewBar review={item} onEdit={handleEdit} onDelete={handleDelete} />
+          </motion.ul>
+        ))}
+      </ul>
+    );
+  }, [items, loading]);
 
   return (
     <GroupManagerLayout>
-      {/* 상단 텍스트 */}
       <div className="text-xl font-bold text-gray-400 mb-[21px]">모임관리 {'>'} 후기/리뷰 관리</div>
 
       <div className="flex gap-[12px] mb-6">
@@ -81,36 +256,7 @@ function GroupReviewsPage() {
         </div>
       </div>
 
-      {/* 리뷰 리스트 */}
-      <section className="space-y-4 mb-10">
-        {items.length === 0 ? (
-          // 빈 상태
-          <div className="text-center text-gray-400 text-lg py-20 mb-20">
-            <div>리뷰할 모임이 없습니다. 새로운 모임에 참여해 즐거운 활동을 시작해보세요!</div>
-            <a href="/grouplist" className="text-[#0689E8] font-md mt-[19px] inline-block">
-              모임 참여하러 가기 {`>`}
-            </a>
-          </div>
-        ) : (
-          <ul className="flex flex-col gap-4">
-            {/* items로 렌더 */}
-            {items.map(item => (
-              <motion.ul
-                key={item.id}
-                layout // 레이아웃 자연스럽게
-                initial={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
-                transition={{ duration: 0.22, ease }}
-                className="overflow-hidden" // 높이 접힘 시 튀는 것 방지
-              >
-                <ReviewBar review={item} onEdit={handleEdit} onDelete={handleDelete} />
-              </motion.ul>
-            ))}
-          </ul>
-        )}
-      </section>
+      <section className="space-y-4 mb-10">{list}</section>
     </GroupManagerLayout>
   );
 }
-
-export default GroupReviewsPage;

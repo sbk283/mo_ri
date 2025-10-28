@@ -21,7 +21,6 @@ interface CreateModalProps {
 
 type TagDictRow = { tag_code: string; label: string };
 
-// INNER JOIN 전제: categories_major는 반드시 존재(런타임). TS에선 안전 캐스팅/가드.
 type GroupInfo = {
   group_title: string | null;
   major_id: string | null;
@@ -44,7 +43,6 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
   const [submitting, setSubmitting] = useState(false);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  // 그룹 정보 조회 (INNER JOIN + single)
   useEffect(() => {
     if (!open || !groupId) return;
 
@@ -70,7 +68,6 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
       }
       if (ignore) return;
 
-      // ✅ null 가드 추가 (빨간줄 원인 제거)
       if (!data) {
         console.warn('[CreateReview] no group row returned');
         setGroupInfo(null);
@@ -80,7 +77,6 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
       const row = data as unknown as RawGroupRow;
 
       if (!row.categories_major) {
-        // RLS/데이터 무결성 이슈 방어
         console.warn('[CreateReview] categories_major missing (check RLS/FK)');
         setGroupInfo({
           group_title: row.group_title ?? null,
@@ -146,7 +142,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
       if (userErr || !userRes?.user) throw new Error('로그인이 필요합니다.');
       const uid = userRes.user.id;
 
-      // 1) 리뷰 본문 insert
+      // 리뷰 본문 insert
       const { data: reviewRow, error: insErr } = await supabase
         .from('group_reviews')
         .insert({
@@ -161,7 +157,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
       const review_id = reviewRow.review_id as string;
 
-      // 2) 태그 매핑 insert
+      // 태그 매핑 insert
       if (selectedCodes.length > 0) {
         const payload = selectedCodes.map(code => ({ review_id, tag_code: code }));
         const { error: tagErr } = await supabase.from('group_review_tags').insert(payload);
@@ -222,6 +218,8 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                     {categoryName}
                   </span>
                 </div>
+
+                {/* ⭐ SVG → IMG 변경 구간 */}
                 <div className="flex items-center gap-2 leading-normal mt-6">
                   <span className="mr-5 text-md font-semibold">별점</span>
                   {[1, 2, 3, 4, 5].map(n => (
@@ -231,13 +229,13 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                       onClick={() => setRating(n as 1 | 2 | 3 | 4 | 5)}
                       className="focus:outline-none"
                       disabled={submitting}
+                      aria-label={`${n}점 주기`}
                     >
-                      <svg
-                        viewBox="0 0 20 20"
-                        className={`w-6 h-6 ${n <= rating ? 'fill-amber-400' : 'fill-gray-300'}`}
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.1 3.38a1 1 0 0 0 .95.69h3.552c.967 0 1.371 1.24.588 1.81l-2.874 2.09a1 1 0 0 0-.364 1.118l1.1 3.38c.3.921-.755 1.688-1.54 1.118l-2.874-2.09a1 1 0 0 0-1.176 0l-2.874 2.09c-.785.57-1.84-.197-1.54-1.118l1.1-3.38a1 1 0 0 0-.364-1.118L1.86 8.807c-.783-.57-.379-1.81.588-1.81h3.552a1 1 0 0 0 .95-.69l1.1-3.38z" />
-                      </svg>
+                      <img
+                        src={n <= rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+                        alt={n <= rating ? `${n}점` : `${n}점 미만`}
+                        className="w-6 h-6"
+                      />
                     </button>
                   ))}
                 </div>

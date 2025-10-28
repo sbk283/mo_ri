@@ -1,3 +1,4 @@
+// src/components/common/ReviewBar.tsx
 import clsx from 'clsx';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useState, type ReactNode } from 'react';
@@ -66,20 +67,14 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
     setRemoved(true);
   };
 
-  const handleEditClick = () => {
-    setEditModalOpen(true);
-  };
+  const handleEditClick = () => setEditModalOpen(true);
 
   const handleEditConfirm = (updated: Partial<ReviewItem>) => {
     setEditModalOpen(false);
     setCurrentReview(prev => ({ ...prev, ...updated }));
     onEdit?.(review.id, updated);
-
-    // 성공 모달 표시
     setSuccessModalOpen(true);
-    setTimeout(() => {
-      setSuccessModalOpen(false);
-    }, 1500);
+    setTimeout(() => setSuccessModalOpen(false), 1500);
   };
 
   return (

@@ -1,4 +1,3 @@
-// src/components/common/ReviewDetailModal.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -11,12 +10,11 @@ export type ReviewDetail = {
   src: string;
   period: string;
   rating: 1 | 2 | 3 | 4 | 5;
-  authorMasked: string;
   created_at: string;
   content: string;
   tags: string[];
   empathy: number;
-  ad?: boolean;
+  creator_id: string;
 };
 
 type Props = {
@@ -25,6 +23,19 @@ type Props = {
   onClose: () => void;
   onEmpathy?: (id: number) => void;
 };
+
+function formatYyDdMmHhMmSs(input: string | number | Date, tzOffsetMin = 0) {
+  const d0 = new Date(input);
+  if (isNaN(d0.getTime())) return String(input ?? '');
+  const d = new Date(d0.getTime() + tzOffsetMin * 60 * 1000); // KST 고정하려면 9*60
+  const yy = String(d.getFullYear()).slice(-2);
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const ss = String(d.getSeconds()).padStart(2, '0');
+  return `${yy}-${dd}-${mm} ${hh}-${mi}-${ss}`;
+}
 
 export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: Props) {
   const navigate = useNavigate();
@@ -52,6 +63,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
   if (!open || !review) return null;
 
   const report = () => navigate('/inquiry');
+  const created = formatYyDdMmHhMmSs(review.created_at /* , 9*60 */);
 
   return (
     <AnimatePresence>
@@ -85,12 +97,11 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
               <div className="absolute top-0 left-0 w-full h-[294px] bg-black/40" />
             </div>
 
-            {/* 상단 정보 (이미지 위 흰 글씨) */}
+            {/* 상단 정보 */}
             <div className="relative z-10 h-[294px] flex flex-col justify-end px-6 pb-16 text-white">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 min-w-0">
                   <h3 className="flex-1 min-w-0 text-lg font-bold truncate">{review.title}</h3>
-                  {review.ad && <img src="/images/trophy.svg" alt="trophy" className="w-4 h-4" />}
                 </div>
                 <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm">
                   {review.category}
@@ -109,14 +120,14 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
               </div>
             </div>
 
-            {/* 본문 카드: 이미지에 살짝 걸치게 */}
+            {/* 본문 카드 */}
             <div className="relative z-20 -mt-12 px-6">
               <div className="border rounded-sm px-4 py-6 bg-white">
                 <div className="flex items-center justify-between text-sm text-gray-500 mb-2">
                   <span className="font-semibold text-md text-[#B8641B]">
-                    {review.authorMasked}
+                    {review.creator_id} 님의 후기
                   </span>
-                  <span className="text-sm text-[#939393]">작성일자: {review.created_at}</span>
+                  <span className="text-sm text-[#939393]">작성일자: {created}</span>
                 </div>
 
                 <p className="text-black leading-6 text-md whitespace-pre-line">{review.content}</p>
@@ -133,7 +144,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                 </div>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <span className="text-[#E9A107] text-md">공감+{review.empathy}</span>
+                  <span className="text-[#E9A107] text-md">공감 +{review.empathy}</span>
                   <button
                     type="button"
                     className="text-gray-400 hover:text-gray-600"

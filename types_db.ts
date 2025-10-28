@@ -528,6 +528,7 @@ export type Database = {
       }
       groups: {
         Row: {
+          approved: boolean
           created_by: string | null
           curriculum: Json | null
           favorite: boolean | null
@@ -549,6 +550,7 @@ export type Database = {
           sub_id: string | null
         }
         Insert: {
+          approved?: boolean
           created_by?: string | null
           curriculum?: Json | null
           favorite?: boolean | null
@@ -570,6 +572,7 @@ export type Database = {
           sub_id?: string | null
         }
         Update: {
+          approved?: boolean
           created_by?: string | null
           curriculum?: Json | null
           favorite?: boolean | null

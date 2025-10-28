@@ -20,20 +20,25 @@ export default function AiGroupsSection() {
     fetchGroups();
   }, [fetchGroups]);
 
-  // 모집 마감 그룹 가져오지않기.
   // 오늘 날짜
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // 마감되지 않은 그룹만 필터링
-  const activeGroups = groups.filter(group => {
-    const endDate = new Date(group.group_end_day);
-    return endDate >= today; // 오늘 이후면 포함
+  // 모집중인 그룹만 필터링 (오늘이 시작일~종료일 사이)
+  const recruitingGroups = groups.filter(group => {
+    if (!group.group_start_day || !group.group_end_day) return false;
+
+    const start = new Date(group.group_start_day);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(group.group_end_day);
+    end.setHours(0, 0, 0, 0);
+
+    return start > today;
   });
 
+  // 기간 필터링
   const filtered = useMemo(() => {
-    return activeGroups.filter(g => {
-      if (!g.group_start_day || !g.group_end_day) return false;
-
+    return recruitingGroups.filter(g => {
       const start = new Date(g.group_start_day);
       const end = new Date(g.group_end_day);
       const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -44,7 +49,7 @@ export default function AiGroupsSection() {
 
       return duration === active;
     });
-  }, [active, activeGroups]);
+  }, [active, recruitingGroups]);
 
   return (
     <section className="mx-auto w-[1024px]" aria-labelledby="ai-groups-heading">
@@ -82,7 +87,7 @@ export default function AiGroupsSection() {
             {filtered.slice(0, 8).map(item => (
               <li key={item.group_id}>
                 <div>
-                  <GroupCard item={item} as='div' />
+                  <GroupCard item={item} as="div" />
                 </div>
               </li>
             ))}

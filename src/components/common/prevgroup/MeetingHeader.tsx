@@ -66,9 +66,10 @@ function MeetingHeader({
   // 초기 렌더 시, DB에서 찜 상태 불러오기
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
-      if (!user || !groupId) return;
+      if (!user || !groupId || groupId === 'preview-temp-id') return;
+
       const isFav = await checkFavorite(groupId);
-      setFavorite(isFav);
+      setFavorite(isFavorite);
     };
 
     fetchFavoriteStatus();
@@ -85,11 +86,13 @@ function MeetingHeader({
     }
   };
 
-  // 이미 참가한 모임인지 확인
+  /**
+   * 미리 보기 스텝3
+   * 이미 참가한 모임인지 확인
+   */
   useEffect(() => {
     const checkMembership = async () => {
-      if (!user || !groupId) return;
-
+      if (!groupId || groupId === 'preview-temp-id') return;
       await fetchMembers(groupId);
     };
 

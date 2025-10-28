@@ -153,6 +153,11 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
 
   // 특정 그룹의 현재 멤버 수
   const fetchMemberCount = useCallback(async (groupId: string): Promise<number> => {
+    if (!groupId || groupId === 'preview-temp-id') {
+      console.warn('미리보기 모드: 멤버 조회를 건너뜀');
+      return 0;
+    }
+
     try {
       const { count, error } = await supabase
         .from('group_members')

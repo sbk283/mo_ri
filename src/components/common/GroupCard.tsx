@@ -140,7 +140,7 @@ export function GroupCard({
           </div>
           {/*  디데이 */}
           <div className="absolute font-semibold text-center left-3 bottom-3 bg-[#87898D] text-white rounded-sm px-2 text-sm">
-            {calculateDday(item.group_end_day)}
+            {calculateDday(item.group_start_day)}
           </div>
         </article>
       </Wrapper>

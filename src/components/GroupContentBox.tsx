@@ -100,7 +100,7 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
               </div>
             </div>
             {group.status === 'closed' ? (
-              <div className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[3px] border border-[#CCC] rounded-[5px] text-[#767676] text-[15px] bg-white">
+              <div className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] border rounded-[5px] bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] text-[15px] bg-white">
                 모임종료
               </div>
             ) : (

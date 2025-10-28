@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { GroupWithCategory } from '../types/group';
 import JoinGroupContentNon from './JoinGroupContentNon';
 import type { ReviewItem } from './common/modal/CreateReview';
 import CreateReview from './common/modal/CreateReview';
+import { supabase } from '../lib/supabase';
 
 interface JoinGroupContentBoxProps {
   groups: GroupWithCategory[];
@@ -15,9 +16,12 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
   const fmt = (d: string) => (d ? d.replace(/-/g, '.') : '');
   const navigate = useNavigate();
 
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null); // 직접 로그인 유저 관리
   const [modalOpen, setModalOpen] = useState(false);
   const [currentReview, setCurrentReview] = useState<ReviewItem | null>(null);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewedGroupMap, setReviewedGroupMap] = useState<Record<string, string>>({});
 
   const createEmptyReview = (): ReviewItem => ({
     id: '',
@@ -28,7 +32,49 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
     tags: [],
   });
 
+  // 로그인 유저 아이디 직접 불러오기
+  useEffect(() => {
+    async function fetchUser() {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data?.user) {
+        setCurrentUserId(null);
+      } else {
+        setCurrentUserId(data.user.id);
+      }
+    }
+    fetchUser();
+  }, []);
+
+  // 로그인 유저 변경 시마다 후기 데이터 가져오기
+  useEffect(() => {
+    async function fetchReviewed() {
+      if (!currentUserId) {
+        setReviewedGroupMap({});
+        return;
+      }
+      const { data, error } = await supabase
+        .from('group_reviews')
+        .select('group_id, review_id')
+        .eq('author_id', currentUserId);
+
+      if (error || !data) {
+        console.error('Failed to fetch reviewed groups:', error);
+        setReviewedGroupMap({});
+        return;
+      }
+      const map: Record<string, string> = {};
+      data.forEach(item => {
+        if (item.group_id && item.review_id) {
+          map[item.group_id] = item.review_id;
+        }
+      });
+      setReviewedGroupMap(map);
+    }
+    fetchReviewed();
+  }, [currentUserId]);
+
   const openCreateReviewModal = (group: GroupWithCategory) => {
+    if (reviewedGroupMap[String(group.group_id)] || isSubmitting) return;
     setCurrentGroupId(group.group_id);
     setCurrentReview(createEmptyReview());
     setModalOpen(true);
@@ -41,14 +87,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
           <div
             key={i}
             className="w-[1024px] h-[123px] border rounded-[5px] border-[#e5e7eb] p-[10px] relative flex animate-pulse"
-          >
-            <div className="w-[150px] h-[96px] rounded-[5px] bg-gray-200" />
-            <div className="px-4 flex-1">
-              <div className="h-4 w-2/3 bg-gray-200 rounded mt-2" />
-              <div className="h-4 w-1/2 bg-gray-200 rounded mt-3" />
-              <div className="h-3 w-1/3 bg-gray-200 rounded mt-4" />
-            </div>
-          </div>
+          />
         ))}
       </div>
     );
@@ -62,6 +101,8 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
     <>
       <div className="w-[1024px] mx-auto space-y-9">
         {groups.map(group => {
+          const hasReview = reviewedGroupMap[String(group.group_id)] !== undefined;
+
           const startDate = new Date(group.group_start_day);
           const endDate = new Date(group.group_end_day);
           const daysUntilOpen = Math.max(
@@ -91,7 +132,6 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
               key={group.group_id}
               className="relative flex border rounded-[5px] border-[#acacac] p-[13px] w-[1024px] h-[123px]"
             >
-              {/* 클릭 시 상세 페이지 이동 */}
               <div
                 onClick={() => navigate(`/groupcontent/${group.group_id}`)}
                 className="flex-1 flex cursor-pointer select-none"
@@ -126,19 +166,22 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                 </div>
               </div>
 
-              {/* 후기작성 버튼 (클릭 시 이벤트 전파 막고 모달 열기) */}
               {group.status === 'closed' && (
                 <button
-                  className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] border border-brand rounded-[5px] text-brand text-[15px] bg-white z-[999] hover:bg-brand hover:text-white transition duration-300 ease-in-out"
+                  disabled={hasReview || isSubmitting}
+                  className={
+                    `absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] rounded-[5px] text-[15px] z-[999] border transition duration-300 ease-in-out ` +
+                    (hasReview
+                      ? 'bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] cursor-not-allowed'
+                      : 'border-brand text-brand bg-white hover:bg-brand hover:text-white cursor-pointer')
+                  }
                   onClick={e => {
                     e.preventDefault();
                     e.stopPropagation();
-                    setCurrentReview(createEmptyReview());
-                    setCurrentGroupId(group.group_id);
-                    setModalOpen(true);
+                    if (!hasReview && !isSubmitting) openCreateReviewModal(group);
                   }}
                 >
-                  후기작성
+                  {hasReview ? '작성 완료' : isSubmitting ? '등록 중...' : '후기작성'}
                 </button>
               )}
             </div>
@@ -146,16 +189,18 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
         })}
       </div>
 
-      {/* 후기 작성 모달 */}
       {modalOpen && currentReview && currentGroupId && (
         <CreateReview
           open={modalOpen}
-          onClose={() => setModalOpen(false)}
-          review={currentReview}
-          groupId={currentGroupId}
-          onSuccess={({ review_id }) => {
-            // 후기 등록 성공 후 추가 후속 처리 가능
+          onClose={() => {
             setModalOpen(false);
+            setIsSubmitting(false);
+          }}
+          groupId={currentGroupId}
+          onSuccess={() => {
+            setModalOpen(false);
+            setIsSubmitting(false);
+            setReviewedGroupMap(prev => ({ ...prev, [currentGroupId!]: 'registered' }));
           }}
         />
       )}

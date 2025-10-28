@@ -106,8 +106,8 @@ function GroupMenu() {
       endDate.setHours(0, 0, 0, 0);
 
       if (selectedTab.label === '모집중') {
-        // 생성일 이전이거나 같고 시작일이 오늘 이후인 recruiting 모임
-        return group.status === 'recruiting' && createdAt <= today && startDate >= today;
+        // 생성일 이전이어야함. 시작일이 오늘 이후인 recruiting 모임
+        return group.status === 'recruiting' && createdAt < today && startDate > today;
       }
       if (selectedTab.label === '진행중') {
         // 시작일이 오늘이거나 과거이면서 종료일이 오늘 이후인 recruiting 모임

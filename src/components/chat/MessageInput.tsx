@@ -41,7 +41,7 @@ function MessageInput({ chatId, onSend }: MessageInputProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="border border-gray-300 rounded-bl-sm rounded-br-sm p-4 flex items-center"
+      className="border border-[#e9e9e9] rounded-bl-sm rounded-br-sm p-4 flex items-center"
     >
       <textarea
         ref={textareaRef}

@@ -36,8 +36,8 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
     <main className="w-[700px] p-6 flex flex-col">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#ECEEF4]
-                   border border-gray-300 border-b-0 rounded-tl-sm rounded-tr-sm"
+        className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar bg-[#F9FCFF]
+                   border border-[#e9e9e9] border-b-0 rounded-tl-sm rounded-tr-sm"
       >
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
@@ -77,8 +77,8 @@ function DirectChatRoom({ chatId }: DirectChatRoomProps) {
                       className={`relative px-4 py-2 max-w-[70%] text-sm leading-relaxed whitespace-pre-line shadow
                         ${
                           isMe
-                            ? 'bg-blue-500 text-white rounded-sm rounded-br-sm'
-                            : 'bg-gray-300 text-gray-900 rounded-sm rounded-bl-sm'
+                            ? 'bg-brand text-white font-medium rounded-sm rounded-br-sm'
+                            : 'bg-white text-gray-900 font-medium rounded-sm rounded-bl-sm'
                         }`}
                     >
                       {msg.content}

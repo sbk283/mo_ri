@@ -1,7 +1,7 @@
 //  카테고리 메뉴 사이드바
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { categorySlugMap, slugToCategoryMap } from '../constants/categorySlugs';
 import SearchBar from './search/SearchBar';
 

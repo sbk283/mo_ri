@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDirectChat } from '../../contexts/DirectChatContext';
 import { supabase } from '../../lib/supabase';
+import Modal from '../common/modal/Modal';
 
 interface HostProfile {
   nickname: string;
@@ -14,8 +15,12 @@ interface HostProfile {
 
 function DirectChatList() {
   const { user } = useAuth();
-  const { currentChat, fetchChats } = useDirectChat();
+  const { currentChat, fetchChats, setCurrentChat } = useDirectChat();
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
+
+  // 모달 상태 관리
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
   // 로그인 및 채팅 정보 로드
   useEffect(() => {
@@ -28,14 +33,14 @@ function DirectChatList() {
     const loadHostProfile = async () => {
       if (!currentChat) return;
 
-      const { data, error } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
         .select('nickname, avatar_url')
         .eq('user_id', currentChat.host_id)
         .maybeSingle();
 
-      if (error) {
-        console.error('모임장 정보 조회 실패:', error);
+      if (profileError) {
+        console.error('모임장 정보 조회 실패:', profileError);
         return;
       }
 
@@ -47,8 +52,8 @@ function DirectChatList() {
         .maybeSingle();
 
       setHostProfile({
-        nickname: data?.nickname ?? '모임장',
-        avatar_url: data?.avatar_url ?? '/profile_bg.png',
+        nickname: profileData?.nickname ?? '모임장',
+        avatar_url: profileData?.avatar_url ?? '/profile_bg.png',
         groupTitle: groupData?.group_title ?? '모임',
         groupSummary:
           groupData?.group_short_intro ??
@@ -71,47 +76,127 @@ function DirectChatList() {
   // 현재 로그인 유저가 호스트인지 판별
   const isHost = user?.id === currentChat.host_id;
 
-  return (
-    <aside className="w-[324px] p-5">
-      <div className="self-start pt-1 font-semibold text-[28px] pb-[14px] pl-1">채팅/문의</div>
-      <div className="pl-5 flex flex-col items-center">
-        {/* 프로필 이미지 */}
-        <img
-          src={hostProfile.avatar_url ?? '/profile_bg.png'}
-          alt="프로필"
-          className="w-32 h-32 mt-3 rounded-full object-cover border border-gray-300"
-        />
+  // 나가기 버튼 클릭 시 확인 모달 열기
+  const openLeaveModal = () => {
+    setIsLeaveModalOpen(true);
+  };
 
-        {/* 닉네임 + (호스트일 때만 왕관) */}
-        <div className="mt-4 flex items-center gap-2">
-          <h2 className="text-[20px] font-semibold text-brand whitespace-nowrap">
-            {hostProfile.nickname}
-          </h2>
-          {isHost && (
-            <div className="flex w-[23px] h-[13px] px-[5px] py-[2px] rounded-[11px] bg-[#0689E8] items-center justify-center">
-              <img src="/images/group_crown.svg" alt="모임장크라운" className="w-3 h-3" />
-            </div>
-          )}
+  // 실제 나가기 동작
+  const handleConfirmLeave = async () => {
+    if (!currentChat) return;
+
+    try {
+      const { error } = await supabase
+        .from('direct_participants')
+        .update({ left_at: new Date().toISOString() })
+        .eq('chat_id', currentChat.chat_id)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setIsLeaveModalOpen(false);
+      setIsSuccessModalOpen(true);
+
+      setTimeout(() => {
+        setCurrentChat(null);
+        fetchChats();
+      }, 1800);
+    } catch (err) {
+      console.error('채팅방 나가기 실패:', err);
+      setIsLeaveModalOpen(false);
+    }
+  };
+
+  return (
+    <>
+      <aside className="w-[324px] p-5">
+        <div className="self-start pt-1 font-semibold text-[28px] pb-[14px] pl-1 flex justify-between items-center">
+          <span>채팅/문의</span>
         </div>
 
-        {/* 구분선 */}
-        <div className="w-full border-b border-[#8c8c8c] my-4" />
+        <div className="pl-5 flex flex-col items-center">
+          {/* 프로필 이미지 */}
+          <img
+            src={hostProfile.avatar_url ?? '/profile_bg.png'}
+            alt="프로필"
+            className="w-32 h-32 mt-3 rounded-full object-cover border border-[#dedede]"
+          />
 
-        {/* 설명글 (호스트일 때만 출력) */}
-        {isHost && (
-          <>
-            <p className="text-[#3C3C3C] text-md font-medium text-center">
-              {hostProfile.groupTitle} 관리자 입니다.
-            </p>
-            <p className="mt-4 text-[#8C8C8C] text-sm font-medium leading-normal text-center">
-              {hostProfile.groupSummary}
-              <br />
-              비방이나 욕설 등 부적절한 메시지가 보이면 고객센터로 연락주세요.
-            </p>
-          </>
-        )}
-      </div>
-    </aside>
+          {/* 닉네임 + (호스트일 때만 왕관) */}
+          <div className="mt-4 flex items-center gap-2">
+            <h2 className="text-[20px] font-semibold text-brand whitespace-nowrap">
+              {hostProfile.nickname}
+            </h2>
+            {isHost && (
+              <div className="flex w-[23px] h-[13px] px-[5px] py-[2px] rounded-[11px] bg-[#0689E8] items-center justify-center">
+                <img src="/images/group_crown.svg" alt="모임장크라운" className="w-3 h-3" />
+              </div>
+            )}
+          </div>
+
+          {/* 구분선 */}
+          <div className="w-full border-b border-[#dedede] my-4" />
+
+          {/* 설명글 (호스트일 때만 출력) */}
+          {isHost && (
+            <>
+              <p className="text-[#3C3C3C] text-md font-medium text-center">
+                {hostProfile.groupTitle} 관리자 입니다.
+              </p>
+              <p className="mt-4 text-[#8C8C8C] text-sm font-medium leading-normal text-center">
+                {hostProfile.groupSummary}
+                <br />
+                비방이나 욕설 등 부적절한 메시지가 보이면 고객센터로 연락주세요.
+              </p>
+            </>
+          )}
+          {/* 나가기 버튼 (유저일 시에만 표기) */}
+          {!isHost && (
+            <button
+              onClick={openLeaveModal}
+              className="text-sm text-gray-500 text-white transition w-full h-8 bg-brand hover:bg-[#1362d0] rounded-sm"
+            >
+              나가기
+            </button>
+          )}
+        </div>
+      </aside>
+
+      {/* 나가기 확인 모달 */}
+      <Modal
+        isOpen={isLeaveModalOpen}
+        onClose={() => setIsLeaveModalOpen(false)}
+        title="채팅방 나가기"
+        message="채팅방을 나가시겠습니까?"
+        actions={[
+          {
+            label: '취소',
+            onClick: () => setIsLeaveModalOpen(false),
+            variant: 'secondary',
+          },
+          {
+            label: '나가기',
+            onClick: handleConfirmLeave,
+            variant: 'primary',
+          },
+        ]}
+      />
+
+      {/* 성공 모달 */}
+      <Modal
+        isOpen={isSuccessModalOpen}
+        onClose={() => setIsSuccessModalOpen(false)}
+        title="나가기 완료"
+        message="채팅방에서 나갔습니다."
+        actions={[
+          {
+            label: '확인',
+            onClick: () => setIsSuccessModalOpen(false),
+            variant: 'primary',
+          },
+        ]}
+      />
+    </>
   );
 }
 

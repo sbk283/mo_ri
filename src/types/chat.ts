@@ -17,6 +17,11 @@ export interface DirectChatWithGroup extends directChats {
   } | null;
 }
 
+export interface UserProfileMinimal {
+  nickname: string | null;
+  avatar_url: string | null;
+}
+
 // Context 타입
 export interface DirectChatContextType {
   chats: DirectChatWithGroup[];
@@ -105,6 +110,10 @@ export type directChatsInsert = Database['public']['Tables']['direct_chats']['In
 export type directMessages = Database['public']['Tables']['direct_messages']['Row'] & {
   nickname?: string | null;
   avatar_url?: string | null;
+  user_profiles?:
+    | UserProfileMinimal
+    | UserProfileMinimal[] // Supabase 조인 시 배열로 오는 경우
+    | null;
 };
 export type directMessagesInsert = Database['public']['Tables']['direct_messages']['Insert'];
 export type directParticipants = Database['public']['Tables']['direct_participants']['Row'];

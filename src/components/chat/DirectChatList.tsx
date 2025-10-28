@@ -1,10 +1,9 @@
-// DirectChatList.tsx (바꿔 붙이기)
-
 import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDirectChat } from '../../contexts/DirectChatContext';
 import { supabase } from '../../lib/supabase';
 import Modal from '../common/modal/Modal';
+import SuccessModal from '../common/modal/SuccessModal';
 import { DEFAULT_AVATAR, toAvatarUrl } from '../../utils/storage';
 
 interface HostProfile {
@@ -16,7 +15,7 @@ interface HostProfile {
 
 function DirectChatList() {
   const { user } = useAuth();
-  const { currentChat, fetchChats, setCurrentChat } = useDirectChat();
+  const { currentChat, fetchChats, fetchMessages, setCurrentChat } = useDirectChat();
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -33,14 +32,12 @@ function DirectChatList() {
     if (user) fetchChats();
   }, [user, fetchChats]);
 
-  // 상태 확인 로그 (문제 재현 시 꼭 확인)
+  // 새로고침 시 메시지 재로드 (상대방 메시지 안 보이는 문제 해결)
   useEffect(() => {
-    console.log('%c[currentChat state]', 'color: #0ea5e9; font-weight: bold;', {
-      currentChat,
-      userId: user?.id,
-      isHost,
-    });
-  }, [currentChat, user?.id, isHost]);
+    if (currentChat?.chat_id) {
+      fetchMessages(currentChat.chat_id);
+    }
+  }, [currentChat?.chat_id, fetchMessages]);
 
   // 호스트 프로필 로드 (현재 방 기준)
   useEffect(() => {
@@ -83,24 +80,18 @@ function DirectChatList() {
     })();
   }, [currentChat?.host_id, currentChat?.group_id]);
 
-  // 로딩/없음 처리
-  if (!currentChat) {
-    return (
-      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
-        채팅방을 선택해주세요.
-      </aside>
-    );
-  }
-  if (!hostProfile) {
-    return (
-      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
-        호스트 정보를 불러오는 중...
-      </aside>
-    );
-  }
+  // 성공 모달 자동 닫기 (1800ms)
+  useEffect(() => {
+    if (isSuccessModalOpen) {
+      const timer = setTimeout(() => setIsSuccessModalOpen(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccessModalOpen]);
 
+  // 채팅방 나가기 모달 열기
   const openLeaveModal = () => setIsLeaveModalOpen(true);
 
+  // 실제 나가기 처리
   const handleConfirmLeave = async () => {
     if (!currentChat || !user?.id) return;
     try {
@@ -124,6 +115,22 @@ function DirectChatList() {
       setIsLeaveModalOpen(false);
     }
   };
+
+  // 로딩/없음 처리
+  if (!currentChat) {
+    return (
+      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
+        채팅방을 선택해주세요.
+      </aside>
+    );
+  }
+  if (!hostProfile) {
+    return (
+      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
+        호스트 정보를 불러오는 중...
+      </aside>
+    );
+  }
 
   return (
     <>
@@ -186,6 +193,7 @@ function DirectChatList() {
         </div>
       </aside>
 
+      {/* 나가기 확인 모달 */}
       <Modal
         isOpen={isLeaveModalOpen}
         onClose={() => setIsLeaveModalOpen(false)}
@@ -197,14 +205,11 @@ function DirectChatList() {
         ]}
       />
 
-      <Modal
+      {/* 나가기 완료 모달 */}
+      <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
-        title="나가기 완료"
         message="채팅방에서 나갔습니다."
-        actions={[
-          { label: '확인', onClick: () => setIsSuccessModalOpen(false), variant: 'primary' },
-        ]}
       />
     </>
   );

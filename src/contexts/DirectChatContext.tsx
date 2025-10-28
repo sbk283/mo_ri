@@ -16,7 +16,6 @@ import type {
   directChatsInsert,
   UserProfileMinimal,
 } from '../types/chat';
-import { toAvatarUrl } from '../utils/storage';
 
 const DirectChatContext = createContext<DirectChatContextType | null>(null);
 
@@ -56,91 +55,53 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // 채팅방 목록 불러오기
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
+    try {
+      setLoading(true);
 
-    // 1) 채팅방 목록 + 마지막 메시지(1개)만
-    const { data, error } = await supabase
-      .from('direct_chats')
-      .select(
-        `
-      chat_id,
-      group_id,
-      host_id,
-      member_id,
-      created_at,
-      updated_at,
-      created_by,
-      groups(group_title),
-      direct_participants!inner(user_id,left_at),
-      direct_messages(content,created_at)
-    `,
-      )
-      .eq('direct_participants.user_id', user.id)
-      .is('direct_participants.left_at', null)
-      .order('created_at', { foreignTable: 'direct_messages', ascending: false })
-      .limit(1, { foreignTable: 'direct_messages' });
-
-    if (error) {
-      console.error('fetchChats error:', error.message);
-      return;
-    }
-
-    const rows = (data ?? []) as any[];
-
-    // 2) 각 row에서 "내가 아닌 상대"의 user_id를 수집
-    const partnerIds = Array.from(
-      new Set(rows.map(r => (user.id === r.host_id ? r.member_id : r.host_id)).filter(Boolean)),
-    );
-
-    // 3) 파트너 프로필을 한 번에 가져오기 (Room처럼 프로필에서 직접)
-    const { data: profiles, error: pErr } = await supabase
-      .from('user_profiles')
-      .select('user_id, nickname, avatar_url')
-      .in('user_id', partnerIds);
-
-    if (pErr) {
-      console.error('profiles fetch error:', pErr.message);
-    }
-
-    const profileMap = new Map<string, { nickname: string | null; avatar_url: string | null }>();
-    (profiles ?? []).forEach(p => {
-      profileMap.set(String(p.user_id), {
-        nickname: p.nickname ?? null,
-        avatar_url: p.avatar_url ?? null,
+      const { data, error } = await supabase
+        .from('direct_chats')
+        .select(
+          `
+    *,
+    groups!inner(group_title),
+    host:user_profiles!direct_chats_host_id_fkey(nickname, avatar_url),
+    member:user_profiles!direct_chats_member_id_fkey(nickname, avatar_url),
+    direct_participants!inner(user_id, left_at)
+  `,
+        )
+        .eq('direct_participants.user_id', user.id)
+        .is('direct_participants.left_at', null);
+      if (error) throw error;
+      const activeChats = (data ?? []).filter(chatObj => {
+        const participants = chatObj.direct_participants as {
+          user_id: string;
+          left_at: string | null;
+        }[];
+        const myParticipant = participants.find(participant => participant.user_id === user.id);
+        return myParticipant && myParticipant.left_at === null;
       });
-    });
 
-    // 4) 최종 매핑
-    const mapped: DirectChatWithGroup[] = rows.map(r => {
-      const iAmHost = user.id === r.host_id;
-      const partnerId: string = iAmHost ? String(r.member_id) : String(r.host_id);
-      const last =
-        Array.isArray(r.direct_messages) && r.direct_messages.length > 0
-          ? r.direct_messages[0]
-          : null;
+      // 명확한 매핑
+      const mappedChats: DirectChatWithGroup[] = activeChats.map(chatObj => {
+        const isHost = chatObj.host_id === user.id;
+        const partnerProfile = isHost ? chatObj.member : chatObj.host;
 
-      const partnerProfile = profileMap.get(partnerId) ?? { nickname: null, avatar_url: null };
+        return {
+          ...chatObj,
+          partnerNickname: partnerProfile?.nickname ?? '알 수 없음',
+          partnerAvatar: partnerProfile?.avatar_url ?? null,
+          groupTitle: chatObj.groups?.group_title ?? '모임',
+        };
+      });
 
-      return {
-        chat_id: String(r.chat_id),
-        group_id: String(r.group_id),
-        host_id: String(r.host_id),
-        member_id: String(r.member_id),
-        created_at: String(r.created_at),
-        updated_at: String(r.updated_at),
-        created_by: r.created_by ? String(r.created_by) : null,
-
-        groupTitle: r.groups?.[0]?.group_title ?? null,
-
-        // Room과 동일 소스(프로필)에서 직접 가져옴
-        partnerNickname: partnerProfile.nickname ?? '알 수 없음',
-        partnerAvatar: toAvatarUrl(partnerProfile.avatar_url),
-
-        lastMessage: last?.content ?? undefined,
-        lastMessageAt: last?.created_at ?? undefined,
-      };
-    });
-
-    setChats(mapped);
+      setChats(mappedChats);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('fetchChats error:', message);
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
   }, [user?.id]);
 
   // 메시지 불러오기
@@ -359,7 +320,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         },
       )
 
-      // 메시지가 대량 삭제될 때는 DELETE 이벤트가 N번 올 수 있으므로 보통은 무시함.
+      // 메시지가 대량 삭제될 때는 DELETE 이벤트가 N번 올 수 있으므로 보통은 무시한다.
       // .on(
       //   'postgres_changes',
       //   { event: 'DELETE', schema: 'public', table: 'direct_messages', filter: `chat_id=eq.${chatId}` },

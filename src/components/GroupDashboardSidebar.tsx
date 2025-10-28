@@ -1,12 +1,14 @@
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-export default function GroupDashboardSidebar() {
+interface GroupDashboardSidebarProps {
+  groupId: string;
+}
+
+export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { id } = useParams<{ id?: string }>();
 
-  // ✅ 안전하게 처리: 문자열 "undefined"도 걸러냄
-  const safeId = id && id !== 'undefined' && id !== 'null' ? id : null;
+  const safeId = groupId && groupId !== 'undefined' && groupId !== 'null' ? groupId : '';
 
   const categories = [
     {

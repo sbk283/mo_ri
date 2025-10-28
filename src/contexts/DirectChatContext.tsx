@@ -1,21 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useCallback,
-  useEffect,
-  type PropsWithChildren,
-} from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type PropsWithChildren } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import type {
-  DirectChatContextType,
-  DirectChatWithGroup,
-  directMessages,
-  directMessagesInsert,
-  directChatsInsert,
-  UserProfileMinimal,
-} from '../types/chat';
+import type { DirectChatContextType, DirectChatWithGroup, directMessages, directMessagesInsert, directChatsInsert, UserProfileMinimal } from '../types/chat';
 
 const DirectChatContext = createContext<DirectChatContextType | null>(null);
 
@@ -55,53 +41,137 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // 채팅방 목록 불러오기
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
-    try {
-      setLoading(true);
 
-      const { data, error } = await supabase
-        .from('direct_chats')
-        .select(
-          `
-    *,
-    groups!inner(group_title),
-    host:user_profiles!direct_chats_host_id_fkey(nickname, avatar_url),
-    member:user_profiles!direct_chats_member_id_fkey(nickname, avatar_url),
-    direct_participants!inner(user_id, left_at)
-  `,
-        )
-        .eq('direct_participants.user_id', user.id)
-        .is('direct_participants.left_at', null);
-      if (error) throw error;
-      const activeChats = (data ?? []).filter(chatObj => {
-        const participants = chatObj.direct_participants as {
-          user_id: string;
-          left_at: string | null;
-        }[];
-        const myParticipant = participants.find(participant => participant.user_id === user.id);
-        return myParticipant && myParticipant.left_at === null;
-      });
+    // 1) 채팅방 목록 + 마지막 메시지(1개)만
+    const { data, error } = await supabase
+      .from('direct_chats')
+      .select(
+        `
+      chat_id,
+      group_id,
+      host_id,
+      member_id,
+      created_at,
+      updated_at,
+      created_by,
+      groups(group_title),
+      direct_participants!inner(user_id,left_at),
+      direct_messages(content,created_at)
+    `,
+      )
+      .eq('direct_participants.user_id', user.id)
+      .is('direct_participants.left_at', null)
+      .order('created_at', { foreignTable: 'direct_messages', ascending: false })
+      .limit(1, { foreignTable: 'direct_messages' });
 
-      // 명확한 매핑
-      const mappedChats: DirectChatWithGroup[] = activeChats.map(chatObj => {
-        const isHost = chatObj.host_id === user.id;
-        const partnerProfile = isHost ? chatObj.member : chatObj.host;
-
-        return {
-          ...chatObj,
-          partnerNickname: partnerProfile?.nickname ?? '알 수 없음',
-          partnerAvatar: partnerProfile?.avatar_url ?? null,
-          groupTitle: chatObj.groups?.group_title ?? '모임',
-        };
-      });
-
-      setChats(mappedChats);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error('fetchChats error:', message);
-      setError(message);
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error('fetchChats error:', error.message);
+      return;
     }
+
+    const rows = (data ?? []) as any[];
+
+    // 2) 각 row에서 "내가 아닌 상대"의 user_id를 수집
+    const partnerIds = Array.from(
+      new Set(rows.map(r => (user.id === r.host_id ? r.member_id : r.host_id)).filter(Boolean)),
+    );
+
+    // 3) 파트너 프로필을 한 번에 가져오기 (Room처럼 프로필에서 직접)
+    const { data: profiles, error: pErr } = await supabase
+      .from('user_profiles')
+      .select('user_id, nickname, avatar_url')
+      .in('user_id', partnerIds);
+
+    if (pErr) {
+      console.error('profiles fetch error:', pErr.message);
+    }
+
+    const profileMap = new Map<string, { nickname: string | null; avatar_url: string | null }>();
+    (profiles ?? []).forEach(p => {
+      profileMap.set(String(p.user_id), {
+        nickname: p.nickname ?? null,
+        avatar_url: p.avatar_url ?? null,
+      });
+    });
+
+    // 4) avatar_url을 Room처럼 “있는 그대로” 쓰되, 키가 오면 public URL로만 바꿔주기
+    const toPublicAvatar = (raw?: string | null): string | null => {
+      if (!raw) return null;
+      const s = String(raw).trim();
+      if (!s || s === 'null') return null;
+
+      // 1) 이미 절대 URL이면 그대로 사용 (Room과 동일)
+      if (/^https?:\/\//i.test(s)) return s;
+
+      // 2) 선행 슬래시 제거
+      let cleaned = s.replace(/^\/+/, '');
+
+      // 3) 흔한 저장 실수 보정: 'object/public/avatars/...' 전체 경로가 키로 저장된 경우
+      //    -> 이 경우는 보통 이미 절대 URL이어야 하지만, 혹시 상대 경로로 들어온 케이스 대비
+      cleaned = cleaned.replace(/^object\/public\//, '');
+
+      // 4) 'public/avatars/xxx.png'처럼 'public/' 접두가 붙은 키 보정
+      cleaned = cleaned.replace(/^public\//, '');
+
+      // 5) bucket/key 형태 처리
+      const firstSlash = cleaned.indexOf('/');
+      if (firstSlash > 0) {
+        let bucket = cleaned.slice(0, firstSlash).trim();
+        let key = cleaned.slice(firstSlash + 1);
+
+        // 만약 잘못해서 'public/avatars/...'처럼 들어오면 위에서 public/를 제거했으니 여기선 넘어옴.
+        // 그래도 혹시 또 남아있으면 한 번 더 방어
+        if (bucket === 'public') {
+          const secondSlash = key.indexOf('/');
+          if (secondSlash > 0) {
+            bucket = key.slice(0, secondSlash);
+            key = key.slice(secondSlash + 1);
+          }
+        }
+
+        // 최종적으로 public/ 접두 또 제거
+        key = key.replace(/^public\//, '');
+
+        return supabase.storage.from(bucket).getPublicUrl(key).data?.publicUrl ?? null;
+      }
+
+      // 6) 슬래시가 전혀 없는 'abc.png' 같은 키면 avatars 버킷 가정
+      const keyOnly = cleaned.replace(/^public\//, '');
+      return supabase.storage.from('avatars').getPublicUrl(keyOnly).data?.publicUrl ?? null;
+    };
+
+    // 5) 최종 매핑
+    const mapped: DirectChatWithGroup[] = rows.map(r => {
+      const iAmHost = user.id === r.host_id;
+      const partnerId: string = iAmHost ? String(r.member_id) : String(r.host_id);
+      const last =
+        Array.isArray(r.direct_messages) && r.direct_messages.length > 0
+          ? r.direct_messages[0]
+          : null;
+
+      const partnerProfile = profileMap.get(partnerId) ?? { nickname: null, avatar_url: null };
+
+      return {
+        chat_id: String(r.chat_id),
+        group_id: String(r.group_id),
+        host_id: String(r.host_id),
+        member_id: String(r.member_id),
+        created_at: String(r.created_at),
+        updated_at: String(r.updated_at),
+        created_by: r.created_by ? String(r.created_by) : null,
+
+        groupTitle: r.groups?.[0]?.group_title ?? null,
+
+        // Room과 동일 소스(프로필)에서 직접 가져옴
+        partnerNickname: partnerProfile.nickname ?? '알 수 없음',
+        partnerAvatar: toPublicAvatar(partnerProfile.avatar_url),
+
+        lastMessage: last?.content ?? undefined,
+        lastMessageAt: last?.created_at ?? undefined,
+      };
+    });
+
+    setChats(mapped);
   }, [user?.id]);
 
   // 메시지 불러오기
@@ -320,7 +390,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         },
       )
 
-      // 메시지가 대량 삭제될 때는 DELETE 이벤트가 N번 올 수 있으므로 보통은 무시한다.
+      // 메시지가 대량 삭제될 때는 DELETE 이벤트가 N번 올 수 있으므로 보통은 무시함.
       // .on(
       //   'postgres_changes',
       //   { event: 'DELETE', schema: 'public', table: 'direct_messages', filter: `chat_id=eq.${chatId}` },

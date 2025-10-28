@@ -1,3 +1,4 @@
+import { useParams } from 'react-router-dom';
 import GroupDashboardSidebar from '../GroupDashboardSidebar';
 
 interface LayoutProps {
@@ -5,13 +6,19 @@ interface LayoutProps {
 }
 
 function GroupDashboardLayout({ children }: LayoutProps) {
+  // ✅ 모든 라우트에서 groupId or id 둘 다 커버
+  const params = useParams<{ id?: string; groupId?: string }>();
+  const routeId = params.groupId ?? params.id ?? '';
+
+  const safeGroupId = routeId && routeId !== 'undefined' && routeId !== 'null' ? routeId : '';
+
   return (
     <div className="pt-[120px] relative bg-[#F9FCFF]">
       <div className="mx-auto w-[1024px] relative flex">
         <main className="flex-1">{children}</main>
 
         <div className="absolute -left-[241px] top-0 w-[203px]">
-          <GroupDashboardSidebar />
+          <GroupDashboardSidebar groupId={safeGroupId} />
         </div>
       </div>
 

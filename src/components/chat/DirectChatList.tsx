@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useDirectChat } from '../../contexts/DirectChatContext';
 import { supabase } from '../../lib/supabase';
 import Modal from '../common/modal/Modal';
+import { DEFAULT_AVATAR, toAvatarUrl } from '../../utils/storage';
 
 interface HostProfile {
   nickname: string;
@@ -69,12 +70,8 @@ function DirectChatList() {
       }
 
       // storage 경로를 public URL 변환 (없으면 기본 이미지)
-      const raw = profileData?.avatar_url;
-      const avatar =
-        raw && raw !== 'null' && raw.trim() !== ''
-          ? supabase.storage.from('profile-images').getPublicUrl(raw).data?.publicUrl
-          : '/profile_bg.png';
-
+      const raw = profileData?.avatar_url ?? null;
+      const avatar = toAvatarUrl(raw);
       setHostProfile({
         nickname: profileData?.nickname ?? '모임장',
         avatar_url: avatar,
@@ -137,9 +134,18 @@ function DirectChatList() {
 
         <div className="pl-5 flex flex-col items-center">
           <img
-            src={hostProfile.avatar_url ?? '/profile_bg.png'}
+            src={
+              hostProfile.avatar_url && hostProfile.avatar_url.trim() !== ''
+                ? hostProfile.avatar_url
+                : DEFAULT_AVATAR
+            }
             alt="프로필"
             className="w-32 h-32 mt-3 rounded-full object-cover border border-[#dedede]"
+            loading="lazy"
+            onError={e => {
+              const el = e.currentTarget as HTMLImageElement;
+              if (!el.src.endsWith(DEFAULT_AVATAR)) el.src = DEFAULT_AVATAR;
+            }}
           />
 
           <div className="mt-4 flex items-center gap-2">

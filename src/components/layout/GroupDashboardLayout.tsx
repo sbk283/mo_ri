@@ -6,7 +6,6 @@ interface LayoutProps {
 }
 
 function GroupDashboardLayout({ children }: LayoutProps) {
-  // ✅ 모든 라우트에서 groupId or id 둘 다 커버
   const params = useParams<{ id?: string; groupId?: string }>();
   const routeId = params.groupId ?? params.id ?? '';
 

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useDirectChat } from '../../contexts/DirectChatContext';
+import { DEFAULT_AVATAR } from '../../utils/storage';
 
 interface ChatSidebarProps {
   onSelect: (chatId: string) => void;
@@ -10,24 +11,7 @@ function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
   const { chats, currentChat, setCurrentChat } = useDirectChat();
   const [search, setSearch] = useState('');
 
-  // 기본 아바타 경로 상수
-  // - 여러 곳에서 동일 경로를 사용할 때 하드코딩을 피하기 위해 상수로 분리
-  const DEFAULT_AVATAR = '/profile_bg.png';
 
-  // 아바타 경로를 결정하는 헬퍼
-  // - 유효한 프로필 이미지가 있으면 그대로 사용, 없으면 기본 아바타로 대체
-  const getAvatarSrc = (partnerAvatar?: string | null) => {
-    return partnerAvatar && partnerAvatar.trim() !== '' ? partnerAvatar : DEFAULT_AVATAR;
-  };
-
-  // 이미지 로드 실패 시 기본 이미지로 대체하는 핸들러
-  // - 이미 기본 이미지인 경우에는 다시 설정하지 않아 무한 루프를 방지
-  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-    const el = e.currentTarget;
-    if (!el.src.endsWith(DEFAULT_AVATAR)) {
-      el.src = DEFAULT_AVATAR;
-    }
-  };
 
   // 표시할 목록: 그룹 필터 → 검색어 필터 순으로 적용
   // - 검색어는 소문자로 변환해 부분 일치 검사
@@ -64,11 +48,18 @@ function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
             }`}
           >
             <img
-              src={getAvatarSrc(chat.partnerAvatar)}
+              src={
+                chat.partnerAvatar && chat.partnerAvatar.trim() !== ''
+                  ? chat.partnerAvatar
+                  : DEFAULT_AVATAR
+              }
               alt={chat.partnerNickname ?? '유저'}
               className="w-12 h-12 rounded-full object-cover"
               loading="lazy"
-              onError={handleImageError}
+              onError={e => {
+                const el = e.currentTarget as HTMLImageElement;
+                if (!el.src.endsWith(DEFAULT_AVATAR)) el.src = DEFAULT_AVATAR;
+              }}
             />
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-brand truncate">{chat.partnerNickname}</p>

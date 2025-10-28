@@ -1,7 +1,22 @@
-import { createContext, useContext, useState, useCallback, useEffect, type PropsWithChildren } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type PropsWithChildren,
+} from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import type { DirectChatContextType, DirectChatWithGroup, directMessages, directMessagesInsert, directChatsInsert, UserProfileMinimal } from '../types/chat';
+import type {
+  DirectChatContextType,
+  DirectChatWithGroup,
+  directMessages,
+  directMessagesInsert,
+  directChatsInsert,
+  UserProfileMinimal,
+} from '../types/chat';
+import { toAvatarUrl } from '../utils/storage';
 
 const DirectChatContext = createContext<DirectChatContextType | null>(null);
 
@@ -94,53 +109,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       });
     });
 
-    // 4) avatar_url을 Room처럼 “있는 그대로” 쓰되, 키가 오면 public URL로만 바꿔주기
-    const toPublicAvatar = (raw?: string | null): string | null => {
-      if (!raw) return null;
-      const s = String(raw).trim();
-      if (!s || s === 'null') return null;
-
-      // 1) 이미 절대 URL이면 그대로 사용 (Room과 동일)
-      if (/^https?:\/\//i.test(s)) return s;
-
-      // 2) 선행 슬래시 제거
-      let cleaned = s.replace(/^\/+/, '');
-
-      // 3) 흔한 저장 실수 보정: 'object/public/avatars/...' 전체 경로가 키로 저장된 경우
-      //    -> 이 경우는 보통 이미 절대 URL이어야 하지만, 혹시 상대 경로로 들어온 케이스 대비
-      cleaned = cleaned.replace(/^object\/public\//, '');
-
-      // 4) 'public/avatars/xxx.png'처럼 'public/' 접두가 붙은 키 보정
-      cleaned = cleaned.replace(/^public\//, '');
-
-      // 5) bucket/key 형태 처리
-      const firstSlash = cleaned.indexOf('/');
-      if (firstSlash > 0) {
-        let bucket = cleaned.slice(0, firstSlash).trim();
-        let key = cleaned.slice(firstSlash + 1);
-
-        // 만약 잘못해서 'public/avatars/...'처럼 들어오면 위에서 public/를 제거했으니 여기선 넘어옴.
-        // 그래도 혹시 또 남아있으면 한 번 더 방어
-        if (bucket === 'public') {
-          const secondSlash = key.indexOf('/');
-          if (secondSlash > 0) {
-            bucket = key.slice(0, secondSlash);
-            key = key.slice(secondSlash + 1);
-          }
-        }
-
-        // 최종적으로 public/ 접두 또 제거
-        key = key.replace(/^public\//, '');
-
-        return supabase.storage.from(bucket).getPublicUrl(key).data?.publicUrl ?? null;
-      }
-
-      // 6) 슬래시가 전혀 없는 'abc.png' 같은 키면 avatars 버킷 가정
-      const keyOnly = cleaned.replace(/^public\//, '');
-      return supabase.storage.from('avatars').getPublicUrl(keyOnly).data?.publicUrl ?? null;
-    };
-
-    // 5) 최종 매핑
+    // 4) 최종 매핑
     const mapped: DirectChatWithGroup[] = rows.map(r => {
       const iAmHost = user.id === r.host_id;
       const partnerId: string = iAmHost ? String(r.member_id) : String(r.host_id);
@@ -164,7 +133,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         // Room과 동일 소스(프로필)에서 직접 가져옴
         partnerNickname: partnerProfile.nickname ?? '알 수 없음',
-        partnerAvatar: toPublicAvatar(partnerProfile.avatar_url),
+        partnerAvatar: toAvatarUrl(partnerProfile.avatar_url),
 
         lastMessage: last?.content ?? undefined,
         lastMessageAt: last?.created_at ?? undefined,

@@ -94,7 +94,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
           }))}
           leader={{
             nickName: leaderNickName || '닉네임 정보 없음',
-            location: formData.group_region || '활동 지역 미입력',
+            location: formData.group_region || '활동 지역 무관',
             career:
               leaderCareers.length > 0
                 ? leaderCareers.map(career => ({

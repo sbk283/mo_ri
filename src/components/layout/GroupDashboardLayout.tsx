@@ -6,7 +6,7 @@ interface LayoutProps {
 
 function GroupDashboardLayout({ children }: LayoutProps) {
   return (
-    <div className="pt-[120px] relative bg-[#ECEEF4]">
+    <div className="pt-[120px] relative bg-[#F9FCFF]">
       <div className="mx-auto w-[1024px] relative flex">
         <main className="flex-1">{children}</main>
 

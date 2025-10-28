@@ -139,7 +139,7 @@ function NicknameEditModal({ currentNickname, onClose, onSave }: NicknameEditMod
               className={`text-sm py-[6px] px-[18px] rounded-[5px] font-semibold ${
                 !isAvailable || !!error
                   ? 'bg-brand text-white cursor-not-allowed'
-                  : 'bg-brand text-white hover:bg-brand-dark'
+                  : 'bg-brand text-white hover:bg-[#1362d0]'
               }`}
             >
               저장

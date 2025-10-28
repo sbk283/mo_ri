@@ -74,6 +74,20 @@ export function GroupCard({
     setPendingAction(null);
   };
 
+  // 상태 계산
+  const getStatus = (startDate: string, endDate: string) => {
+    const today = new Date();
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    if (today < start) return '예정';
+    else if (today >= start && today <= end) return 'recruiting';
+    else return 'closed';
+  };
+
+  const status = getStatus(item.group_start_day, item.group_end_day);
+
+  // d-day 계산
   const calculateDday = (endDate: string) => {
     const today = new Date();
     const end = new Date(endDate);
@@ -95,9 +109,9 @@ export function GroupCard({
             className={`absolute left-2 top-[1px] z-10 px-2
               rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]
               text-white text-md font-semibold
-              ${item.status === 'recruiting' ? 'bg-brand' : 'bg-brand-red'}`}
+                ${status === 'recruiting' ? 'bg-brand-red' : status === '예정' ? 'bg-brand' : 'bg-gray-500'}`}
           >
-            {item.status === 'recruiting' ? '모집중' : '모집예정'}
+            {status === 'recruiting' ? '모집마감' : status === '예정' ? '모집중' : '마감'}
           </div>
           {/* 이미지 */}
           <div className="relative">
@@ -129,7 +143,9 @@ export function GroupCard({
               <span className="text-[#D83737] font-semibold">
                 {item.categories_major?.category_major_name}
               </span>
-              <span className="text-[#767676]">{item.group_region}</span>
+              <span className="text-[#767676]">
+                {item.group_region ? item.group_region : '지역무관'}
+              </span>
             </header>
             <h3 className="items-center gap-1 text-lg truncate mb-[7px] font-bold ">
               {item.group_title}

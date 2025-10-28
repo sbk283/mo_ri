@@ -214,7 +214,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         .maybeSingle();
 
       if (selErr) throw selErr;
-
       // 관계 안전 처리
       const participants = Array.isArray(existing?.direct_participants)
         ? existing.direct_participants

@@ -314,7 +314,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           )}
         </div>
 
-        {/* 상세 모달 - 사라질 때도 애니메이션 */}
+        {/* 상세 모달 */}
         <AnimatePresence initial={false} mode="wait">
           {selected && (
             <ReviewDetailModal

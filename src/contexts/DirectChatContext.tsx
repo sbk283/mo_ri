@@ -197,48 +197,70 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
   // 채팅방 찾기, 생성
   const findOrCreateChat = useCallback(
-    async (groupId: string, hostId: string, memberId: string): Promise<string> => {
-      // 기존 채팅방 조회
+    async (groupId: string, hostIdParam: string | null, memberId: string): Promise<string> => {
+      // hostId 타입 확정 전 변수
+      let hostId: string | null = hostIdParam;
+
+      // hostId가 null이라면 group_members에서 조회
+      if (!hostId) {
+        const { data: hostRow, error: hostErr } = await supabase
+          .from('group_members')
+          .select('user_id')
+          .eq('group_id', groupId)
+          .eq('role', 'host')
+          .maybeSingle();
+
+        if (hostErr) {
+          console.error('호스트 조회 실패:', hostErr.message);
+          throw hostErr;
+        }
+        if (!hostRow?.user_id) {
+          throw new Error('호스트를 찾을 수 없습니다.');
+        }
+
+        // 여기서 string으로 확정
+        hostId = hostRow.user_id;
+      }
+
+      // 이제 hostId는 100% string
+      const confirmedHostId = hostId as string;
+
+      // 기존 채팅방 찾기
       const { data: existing, error: selErr } = await supabase
         .from('direct_chats')
         .select(
           `
-    chat_id,
-    direct_participants(user_id, left_at)
-  `,
+        chat_id,
+        direct_participants(user_id, left_at)
+      `,
         )
         .eq('group_id', groupId)
         .or(
-          `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+          `and(host_id.eq.${confirmedHostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${confirmedHostId})`,
         )
         .maybeSingle();
 
       if (selErr) throw selErr;
-      // 관계 안전 처리
+
       const participants = Array.isArray(existing?.direct_participants)
         ? existing.direct_participants
         : [];
-
       const bothLeft = participants.length === 2 && participants.every(p => p.left_at !== null);
 
-      // 방이 있고, 둘 다 나가지 않았다면 재활용
+      // 기존방 재사용
       if (existing?.chat_id && !bothLeft) {
-        console.log('reuse chat', existing.chat_id);
-
-        // 참가자 누락되면 추가 보장
-        if (user?.id === hostId) {
-          await ensureBothParticipants(existing.chat_id, hostId, memberId);
+        if (user?.id === confirmedHostId) {
+          await ensureBothParticipants(existing.chat_id, confirmedHostId, memberId);
         } else if (user?.id) {
           await ensureMyParticipant(existing.chat_id, user.id);
         }
         return existing.chat_id;
       }
 
-      // 새 방 생성
-      console.log('create new chat');
+      // 새 채팅방 생성
       const newChat: directChatsInsert = {
         group_id: groupId,
-        host_id: hostId,
+        host_id: confirmedHostId,
         member_id: memberId,
         created_by: user?.id ?? null,
       };
@@ -249,19 +271,11 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         .select('chat_id')
         .single();
 
-      if (insErr) {
-        console.error('chat insert error', insErr.message);
-        throw insErr;
-      }
+      if (insErr) throw insErr;
 
-      // 새 참가자 등록 보장
-      if (user?.id === hostId) {
-        await ensureBothParticipants(inserted.chat_id, hostId, memberId);
-      } else if (user?.id) {
-        await ensureMyParticipant(inserted.chat_id, user.id);
-      }
+      //  참가자 등록 보장
+      await ensureBothParticipants(inserted.chat_id, confirmedHostId, memberId);
 
-      console.log('new chat created', inserted.chat_id);
       return inserted.chat_id;
     },
     [user],

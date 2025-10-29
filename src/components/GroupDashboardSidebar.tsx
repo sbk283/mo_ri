@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 interface GroupDashboardSidebarProps {
   groupId: string;
@@ -7,8 +9,30 @@ interface GroupDashboardSidebarProps {
 export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [hostId, setHostId] = useState<string | null>(null);
 
   const safeId = groupId && groupId !== 'undefined' && groupId !== 'null' ? groupId : '';
+
+  useEffect(() => {
+    if (!safeId) return;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from('groups')
+        .select('created_by')
+        .eq('group_id', safeId)
+        .maybeSingle();
+
+      // console.log('host created_by data:', data, 'error:', error);
+
+      if (error) {
+        // console.error('호스트 조회 실패:', error.message);
+        return;
+      }
+
+      setHostId(data?.created_by ?? null);
+    })();
+  }, [safeId]);
 
   const categories = [
     {
@@ -29,7 +53,7 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
     {
       name: '채팅/문의',
       icon: '/talk_dark.svg',
-      path: safeId ? `/chat/${safeId}` : null,
+      path: safeId ? `/chat/${safeId}/${hostId}` : null,
     },
   ];
 
@@ -53,7 +77,7 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
               <li key={cat.name} className="text-lg font-semibold">
                 <button
                   onClick={() => {
-                    if (!cat.path) return; // ✅ id 없으면 이동 X
+                    if (!cat.path) return;
                     navigate(cat.path);
                   }}
                   disabled={!cat.path}

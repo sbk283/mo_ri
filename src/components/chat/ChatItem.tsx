@@ -1,8 +1,8 @@
-// ...과 드롭다운 컴포넌트 분리함.
 // src/components/chat/ChatItem.tsx
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_AVATAR } from '../../utils/storage';
+import { useDirectChat } from '../../contexts/DirectChatContext'; // ✅ 전역 상태 불러오기
 
 interface ChatItemProps {
   type: 'chat' | 'member';
@@ -10,15 +10,14 @@ interface ChatItemProps {
   partnerNickname: string;
   partnerAvatar?: string | null;
   lastMessage?: string | null;
-  unreadCount?: number;
   isActive?: boolean;
   isHost?: boolean;
   onClick: (chatId: string) => void;
 
-  // 드롭다운 이벤트 핸들러 (상황에 따라 다름)
-  onLeaveChat?: (chatId: string) => void; // 채팅 나가기
-  onKickMember?: () => void; // 모임 추방하기
-  onStartChat?: () => void; // 채팅 대화하기
+  // 드롭다운 이벤트 핸들러
+  onLeaveChat?: (chatId: string) => void;
+  onKickMember?: () => void;
+  onStartChat?: () => void;
 }
 
 export default function ChatItem({
@@ -27,7 +26,6 @@ export default function ChatItem({
   partnerNickname,
   partnerAvatar,
   lastMessage,
-  unreadCount = 0,
   isActive = false,
   isHost = false,
   onClick,
@@ -37,6 +35,10 @@ export default function ChatItem({
 }: ChatItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const avatar = partnerAvatar && partnerAvatar.trim() !== '' ? partnerAvatar : DEFAULT_AVATAR;
+
+  // 🔔 unreadCount 전역 상태 연결
+  const { unreadCounts } = useDirectChat();
+  const unreadCount = unreadCounts[chatId] ?? 0;
 
   return (
     <div

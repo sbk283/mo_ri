@@ -37,6 +37,9 @@ export interface DirectChatContextType {
   fetchMessages: (chatId: string) => Promise<void>;
   sendMessage: (chatId: string, content: string) => Promise<void>;
   findOrCreateChat: (groupId: string, hostId: string, memberId: string) => Promise<string>;
+
+  unreadCounts: Record<string, number>;
+  setUnreadCounts: React.Dispatch<React.SetStateAction<Record<string, number>>>;
 }
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];

@@ -52,6 +52,27 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // 새로운 상태: 채팅별 미읽음 카운트
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+
+  // 새 메시지 감지 시 미읽음 카운트 증가
+  const incrementUnread = useCallback((chatId: string) => {
+    setUnreadCounts(prev => ({
+      ...prev,
+      [chatId]: (prev[chatId] ?? 0) + 1,
+    }));
+  }, []);
+
+  // 채팅방을 열면 해당 채팅의 미읽음 카운트를 0으로 초기화
+  const resetUnread = useCallback((chatId: string) => {
+    setUnreadCounts(prev => {
+      if (!(chatId in prev)) return prev;
+      const updated = { ...prev };
+      delete updated[chatId];
+      return updated;
+    });
+  }, []);
+
   // 채팅방 목록 불러오기
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
@@ -166,6 +187,9 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         });
 
         setMessages(formattedMessages);
+
+        // 메시지를 열었으므로 해당 채팅의 미읽음 초기화
+        resetUnread(chatId);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         console.error('fetchMessages error:', message);
@@ -174,7 +198,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         setLoading(false);
       }
     },
-    [user?.id],
+    [user?.id, resetUnread],
   );
 
   // 메시지 전송
@@ -281,7 +305,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     [user],
   );
 
-  // 실시간 메세지 구독
+  // 개별 채팅 실시간 메세지 구독
   useEffect(() => {
     const chatId = currentChat?.chat_id;
     if (!chatId) return;
@@ -333,20 +357,36 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           fetchChats(); // 목록 갱신
         },
       )
-
-      // 메시지가 대량 삭제될 때는 DELETE 이벤트가 N번 올 수 있으므로 보통은 무시한다.
-      // .on(
-      //   'postgres_changes',
-      //   { event: 'DELETE', schema: 'public', table: 'direct_messages', filter: `chat_id=eq.${chatId}` },
-      //   () => { /* 필요하면 여기서 setMessages([]) */ }
-      // )
-
       .subscribe();
 
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
   }, [currentChat?.chat_id, fetchChats]);
+
+  // 🔔 전체 실시간 구독 (모든 새 direct_messages 감지 → 미읽음 카운트 증가)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const subscription = supabase
+      .channel('direct_messages_global')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+        payload => {
+          const newMessage = payload.new as directMessages;
+          // 내가 보낸 메시지는 무시
+          if (newMessage.sender_id !== user.id) {
+            incrementUnread(newMessage.chat_id);
+          }
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(subscription);
+    };
+  }, [user?.id, incrementUnread]);
 
   // 컨텍스트
   const value: DirectChatContextType = {
@@ -360,6 +400,8 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     fetchMessages,
     sendMessage,
     findOrCreateChat,
+    unreadCounts,
+    setUnreadCounts,
   };
 
   return <DirectChatContext.Provider value={value}>{children}</DirectChatContext.Provider>;

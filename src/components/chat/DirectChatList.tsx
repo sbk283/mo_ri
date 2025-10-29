@@ -168,19 +168,18 @@ function DirectChatList() {
 
           <div className="w-full border-b border-[#dedede] my-4" />
 
-          {isHost && (
-            <>
-              <p className="text-[#3C3C3C] text-md font-medium text-center">
-                {hostProfile.groupTitle} 관리자 입니다.
-              </p>
-              <p className="mt-4 text-[#8C8C8C] text-sm font-medium leading-normal text-center">
-                {hostProfile.groupSummary}
-                <br />
-                비방이나 욕설 등 부적절한 메시지가 보이면 고객센터로 연락주세요.
-              </p>
-            </>
-          )}
-
+          <p className="text-[#3C3C3C] text-md font-medium text-center">
+            {hostProfile.groupTitle} 모임장 입니다.
+          </p>
+          <p className="mt-4 text-[#8C8C8C] text-sm font-medium leading-normal text-center">
+            문의할 점이나 궁금하신 점이 있으시면
+            <br />
+            채팅을 통해 말씀해주세요.
+            <br />
+            <br />
+            비방이나 욕설 등 부적절한 메시지가 보이면 고객센터로 연락주세요.
+          </p>
+          <br />
           {/* 내가 호스트가 아닐 때만 나가기 버튼 노출함 */}
           {!isHost && (
             <button

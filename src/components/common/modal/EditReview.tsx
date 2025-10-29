@@ -1,6 +1,6 @@
 // src/components/common/modal/EditReview.tsx
 import { AnimatePresence, motion } from 'framer-motion';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReviewItem } from '../ReviewCard';
 
 interface EditModalProps {
@@ -15,15 +15,23 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
   const [content, setContent] = useState(review.content);
   const [selectedTags, setSelectedTags] = useState<string[]>(review.tags);
 
+  // 모달이 열릴 때마다 원본(review) 값으로 초기화
+  useEffect(() => {
+    if (!open) return;
+    setRating(review.rating);
+    setContent(review.content);
+    setSelectedTags(review.tags);
+  }, [open, review]);
+
   const availableTags = [
-    '강력추천',
-    '다같이활동',
-    '알찬커리큘럼',
-    '재참여하고싶어요',
-    '좋은분위기',
-    '초보자추천',
-    '전문적인운영',
-    '친절한모임장',
+    '초보자 추천',
+    '좋은 분위기',
+    '알찬 커리큘럼',
+    '친절한 모임장',
+    '전문적인 운영',
+    '재참여 하고싶어요',
+    '다양한 활동',
+    '강력 추천',
   ];
 
   const toggleTag = (tag: string) => {
@@ -38,6 +46,14 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
     });
   };
 
+  // 취소: 편집 상태를 원본으로 되돌리고 닫기
+  const handleCancel = () => {
+    setRating(review.rating);
+    setContent(review.content);
+    setSelectedTags(review.tags);
+    onClose();
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -47,7 +63,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={e => {
-            if (e.target === e.currentTarget) onClose();
+            if (e.target === e.currentTarget) handleCancel(); // 오버레이 클릭도 취소로 동작
           }}
         >
           <motion.div
@@ -75,7 +91,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                   </span>
                 </div>
 
-                {/* ⭐ SVG → IMG 변경 구간 */}
+                {/* 별점 */}
                 <div className="flex items-center gap-2 leading-normal mt-6">
                   <span className="mr-5 text-md font-semibold">별점</span>
                   {[1, 2, 3, 4, 5].map(n => (
@@ -99,13 +115,13 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               {/* 해시태그 선택 */}
               <div className="my-6">
                 <label className="block text-sm font-semibold mb-3">해시태그 선택</label>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   {availableTags.map(tag => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
-                      className={`px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
+                      className={`text-md px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
                         selectedTags.includes(tag)
                           ? 'bg-white text-[#0689E8] border-[#0689E8]'
                           : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
@@ -121,7 +137,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="my-6">
                 <label className="block mb-2 text-sm font-semibold">어떤 점이 좋았나요?</label>
                 <textarea
-                  className="w-full border border-[#A3A3A3] rounded-sm p-3 min-h-[145px] focus:outline-none focus:border-blue-500"
+                  className="w-full border border-[#A3A3A3] rounded-sm p-3 h-[145px] min-h-[145px] max-h-[145px] resize-none overflow-y-auto focus:outline-none focus:border-blue-500"
                   placeholder="모임의 어떤 점이 좋았는지 적어주세요."
                   value={content}
                   onChange={e => setContent(e.target.value)}
@@ -129,11 +145,11 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-[17px] justify-center">
+              <div className="flex gap-10 justify-center">
                 <button
                   type="button"
                   className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
-                  onClick={onClose}
+                  onClick={handleCancel}
                 >
                   취소하기
                 </button>

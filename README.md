@@ -70,6 +70,8 @@ npm install jspdf html2canvas
 npm install html2pdf.js
 npm install --save-dev @types/html2pdf.js
 
+npm install react-modal swiper
+
 ```
 
 # 작업 진행시

@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
+import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import type { Swiper as SwiperType } from 'swiper';
-import 'swiper/swiper-bundle.css';
+
+// Swiper v11+ 스타일 import
 
 if (typeof window !== 'undefined') {
   Modal.setAppElement('#root');
@@ -51,13 +51,13 @@ const modalStyles = {
     overflow: 'hidden',
     borderRadius: '12px',
     padding: 0,
-    width: '400px',
-    height: '450px',
+    width: '440px',
+    height: '640px',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
   },
 };
 
-export const MainModal: React.FC<BannerSliderModalProps> = ({
+export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
   banners,
   autoOpen = true,
   onClose,
@@ -119,7 +119,7 @@ export const MainModal: React.FC<BannerSliderModalProps> = ({
       isOpen={isOpen}
       onRequestClose={() => handleClose(false)}
       style={modalStyles}
-      closeTimeoutMS={500}
+      closeTimeoutMS={300}
       shouldCloseOnOverlayClick={true}
       shouldCloseOnEsc={true}
     >
@@ -132,6 +132,7 @@ export const MainModal: React.FC<BannerSliderModalProps> = ({
         ✕
       </button>
 
+      {/* Swiper 컨테이너 */}
       <div className="w-full h-full flex flex-col">
         <div className="flex-1 relative">
           <Swiper
@@ -182,15 +183,19 @@ export const MainModal: React.FC<BannerSliderModalProps> = ({
           </Swiper>
 
           {/* 네비게이션 버튼 */}
-          <div className="swiper-button-prev !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg after:!text-gray-800 after:!font-bold transition-all hover:scale-110" />
-          <div className="swiper-button-next !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg after:!text-gray-800 after:!font-bold transition-all hover:scale-110" />
+          <div className="swiper-button-prev !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+            <img className="translate-x-[-2px]" src="/images/left_arrow.svg" alt="prev" />
+          </div>
+          <div className="swiper-button-next !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+            <img className="rotate-180 translate-x-[2px]" src="/images/left_arrow.svg" alt="next" />
+          </div>
 
-          {/* Pagination */}
-          <div className="swiper-pagination !bottom-[105px]" />
+          {/* Pagination - 하단 고정 */}
+          <div className="swiper-pagination !bottom-3" />
 
-          {/* 슬라이드 카운터 */}
+          {/* 슬라이드 카운터 - 페이지네이션 위로 이동 */}
           {showCounter && (
-            <div className="absolute bottom-[70px] left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
+            <div className="absolute bottom-9 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
               {currentSlide} / {banners.length}
             </div>
           )}
@@ -203,7 +208,7 @@ export const MainModal: React.FC<BannerSliderModalProps> = ({
               onClick={() => handleClose(true)}
               className="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 transition-all hover:bg-black/5 rounded-md active:scale-98"
             >
-              🚫 오늘 하루 보지 않기
+              오늘 하루 보지 않기
             </button>
           </div>
         )}
@@ -212,4 +217,4 @@ export const MainModal: React.FC<BannerSliderModalProps> = ({
   );
 };
 
-export default MainModal;
+export default BannerSliderModal;

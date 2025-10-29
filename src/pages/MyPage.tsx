@@ -14,8 +14,17 @@ function MyPage() {
   const [name, setName] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [avatarUrl, setAvatarUrl] = useState<string>('/profile_bg.png');
-
   const [interests, setInterests] = useState<string[]>([]);
+
+  // 관리자 이메일 목록
+  const adminEmails = [
+    'wltjs6668@naver.com',
+    'dev.yachea@gmail.com',
+    'sbkcoding@gmail.com',
+    'lynn9702@naver.com',
+  ];
+  // 이메일 기반으로 관리자 여부 체크
+  const isAdmin = user ? adminEmails.includes(user.email ?? '') : false;
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -116,12 +125,14 @@ function MyPage() {
               {nickname} <span className="text-black">님 반가워요✨</span>
             </div>
             <div className="flex gap-2">
-              <Link
-                to={'/admin'}
-                className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"
-              >
-                관리자 페이지
-              </Link>
+              {isAdmin && (
+                <Link
+                  to={'/admin'}
+                  className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"
+                >
+                  관리자 페이지
+                </Link>
+              )}
               <Link
                 to={'/mypagesetting'}
                 className="bg-white border border-gray-300 py-[5px] px-[10px] rounded-[5px] text-gray-200 font-semibold"

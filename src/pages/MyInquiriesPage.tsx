@@ -240,7 +240,7 @@ function MyInquiriesPage() {
                   <div
                     className={`text-md ${
                       item.inquiry_status === 'answered'
-                        ? 'text-gray-400 font-semibold'
+                        ? 'text-brand font-semibold'
                         : 'text-gray-200 font-medium'
                     }`}
                   >

@@ -27,7 +27,7 @@ const Pill = ({
 
 const Star = ({ filled, index }: { filled: boolean; index: number }) => (
   <img
-    className="w-5 h-5 mb-[6px]"
+    className="w-5 h-5"
     src={filled ? '/images/star_gold.svg' : '/images/star_dark.svg'}
     alt={filled ? `${index}번째 노란별` : `${index}번째 빈별`}
   />

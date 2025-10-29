@@ -34,7 +34,7 @@ function formatYyDdMmHhMmSs(input: string | number | Date, tzOffsetMin = 0) {
   const hh = String(d.getHours()).padStart(2, '0');
   const mi = String(d.getMinutes()).padStart(2, '0');
   const ss = String(d.getSeconds()).padStart(2, '0');
-  return `${yy}-${dd}-${mm} ${hh}-${mi}-${ss}`;
+  return `${yy}-${dd}-${mm} ${hh}:${mi}:${ss}`;
 }
 
 export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: Props) {
@@ -103,7 +103,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                 <div className="flex items-center gap-2 min-w-0">
                   <h3 className="flex-1 min-w-0 text-lg font-bold truncate">{review.title}</h3>
                 </div>
-                <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm">
+                <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm text-center">
                   {review.category}
                 </span>
               </div>

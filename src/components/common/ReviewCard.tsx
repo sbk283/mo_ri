@@ -25,16 +25,25 @@ export function ReviewCard({
   className?: string;
   onClick?: (id: number) => void;
 }) {
+  const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    // 무한 루프 방지
+    if (img.dataset.fallbackApplied) return;
+    img.dataset.fallbackApplied = 'true';
+    img.src = '/images/no_image.jpg';
+  };
+
   return (
     <button
       type="button"
       onClick={() => onClick?.(item.id)}
       className={[
         'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-sm border border-[#A3A3A3] bg-white text-left',
-        'focus:outline-none focus:ring-2 focus:ring-[#2A91E5]',
+        'focus:outline-none',
         className,
       ].join(' ')}
       aria-label={`후기 카드: ${item.title}`}
+      title={item.title}
     >
       {/* 상단 헤더 영역 */}
       <div className="bg-[#2A91E5] h-[72px] pt-[14px] px-[27px] relative">
@@ -46,8 +55,9 @@ export function ReviewCard({
         </span>
         <img
           className="absolute top-8 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
-          src={item.src}
+          src={item.src || '/images/no_image.jpg'}
           alt="모임사진"
+          onError={handleImgError}
         />
       </div>
 
@@ -55,6 +65,7 @@ export function ReviewCard({
       <div className="px-[27px] py-[17px] relative h-[calc(280px-72px)]">
         <img className="mb-1" src={Colon} alt="따옴표" />
         <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.content}</p>
+
         {/* 작성자 하단 고정 */}
         <p className="absolute bottom-[27px] left-[27px] text-[#B8641B] text-sm">
           {item.created_id} 님의 후기

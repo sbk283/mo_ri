@@ -19,7 +19,7 @@ const Pill = ({
   const toneMap = {
     gray: 'bg-[#8C8C8C] border-[#8c8c8c] text-white leading-none text-[17px]',
     blue: 'bg-white text-brand border-brand leading-none text-[17px]',
-    amber: 'text-[#6C6C6C] border-[#6C6C6C] leading-none text-[16px]',
+    amber: 'text-[#6C6C6C] border-[#6C6C6C] leading-none text-md',
   } as const;
 
   return <span className={clsx(base, toneMap[tone])}>{children}</span>;
@@ -144,7 +144,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                     </div>
 
                     <motion.p
-                      className="text-md text-[#555] leading-6 whitespace-pre-line mb-4 mt-4"
+                      className="text-md text-[#555] leading-6 whitespace-pre-line my-8"
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.18, delay: 0.05 }}
@@ -165,7 +165,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                       ))}
                     </motion.div>
 
-                    <div className="absolute right-3 bottom-3 flex gap-6 px-[13px] py-1">
+                    <div className="absolute right-3 bottom-3 flex gap-3 px-[13px] py-1">
                       <button
                         type="button"
                         className="w-[56px] h-[30px] rounded-sm border border-[#6C6C6C] text-md text-[#6C6C6C]"

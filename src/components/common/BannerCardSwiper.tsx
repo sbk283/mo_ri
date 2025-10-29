@@ -23,6 +23,18 @@ function BannerCardSwiper({
   const swiperRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  //  오늘 날짜 기준으로 마감일이 지난 그룹 제외
+  const filteredGroups = useMemo(() => {
+    const today = new Date();
+    return groups.filter(group => {
+      // end_date 없으면 표시
+      if (!group.group_end_day) return true;
+      const end = new Date(group.group_end_day);
+      // end가 오늘 이후거나 오늘이면 표시
+      return end >= new Date(today.setHours(0, 0, 0, 0));
+    });
+  }, [groups]);
+
   const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
     () => ({
       0: { slidesPerView: 2, spaceBetween },
@@ -34,10 +46,17 @@ function BannerCardSwiper({
     [spaceBetween],
   );
 
-  if (!groups || groups.length === 0) return null;
+  // if (!filteredGroups || filteredGroups.length === 0) return null;
 
   const bps = breakpoints ?? defaultBps;
-  const visibleGroups = groups.slice(0, 8);
+  const visibleGroups = filteredGroups.slice(0, 8);
+  if (!filteredGroups || filteredGroups.length === 0) {
+    return (
+      <div className="w-[1024px] mx-auto text-center text-gray-400 py-10 border border-gray-700 rounded-lg">
+        현재 표시할 모임이 없습니다.(수정예정)
+      </div>
+    );
+  }
   const slidesPerView = swiperRef.current?.params?.slidesPerView || 4;
 
   return (

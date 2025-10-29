@@ -11,13 +11,16 @@ interface ChatSidebarProps {
 }
 
 function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
-  const { chats, currentChat, setCurrentChat, fetchChats } = useDirectChat();
+  const { chats, currentChat, setCurrentChat, fetchChats, findOrCreateChat } = useDirectChat();
   const [search, setSearch] = useState('');
 
   // 모달 상태 관리
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
   const [successModalOpen, setSuccessModalOpen] = useState(false);
   const [targetChatId, setTargetChatId] = useState<string | null>(null);
+
+  // 🆕 검색 결과(그룹 내 승인된 멤버 목록)
+  const [memberResults, setMemberResults] = useState<any[]>([]);
 
   // 표시할 채팅 목록 필터
   const visible = useMemo(() => {
@@ -79,6 +82,39 @@ function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
     }
   }, [successModalOpen]);
 
+  // 🆕 그룹 내 승인 멤버 닉네임 검색
+  useEffect(() => {
+    const fetchGroupMembers = async () => {
+      if (!groupId || !search.trim()) {
+        setMemberResults([]);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('group_members')
+        .select(
+          `
+          user_profiles(nickname, avatar_url, user_id)
+        `,
+        )
+        .eq('group_id', groupId)
+        .eq('member_status', 'approved')
+        .ilike('user_profiles.nickname', `%${search}%`);
+
+      if (error) {
+        console.error('멤버 검색 오류:', error.message);
+        return;
+      }
+
+      const extracted = (data ?? []).map(item => item.user_profiles).filter(Boolean);
+
+      setMemberResults(extracted);
+    };
+
+    const delay = setTimeout(() => fetchGroupMembers(), 300); // 검색 입력 지연
+    return () => clearTimeout(delay);
+  }, [search, groupId]);
+
   return (
     <aside className="w-[324px] p-5">
       <h2 className="self-start font-semibold text-[28px] pt-1 pb-[14px] pl-1">채팅/문의</h2>
@@ -90,6 +126,44 @@ function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
         placeholder="닉네임으로 검색"
         className="w-full mb-4 px-3 py-2 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-brand focus:outline-none placeholder:text-gray-300"
       />
+
+      {/* 🆕 검색 결과가 있을 때 표시 */}
+      {search && memberResults.length > 0 && (
+        <ul className="mb-4 border border-gray-200 rounded">
+          {memberResults.map(member => (
+            <li
+              key={member.user_id}
+              className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 cursor-pointer"
+              onClick={async () => {
+                // 클릭 시 해당 멤버와 1:1 채팅 시작
+                if (!groupId || !member.user_id) return;
+                const {
+                  data: { user },
+                } = await supabase.auth.getUser();
+                if (!user?.id) return;
+
+                // 🆕 호스트 or 멤버 관계 판단 후 채팅방 생성
+                const chatId = await findOrCreateChat(
+                  groupId,
+                  user.id, // 현재 사용자(호스트 or 멤버)
+                  member.user_id, // 클릭된 멤버
+                );
+                await fetchChats();
+                setSearch('');
+                setMemberResults([]);
+                onSelect(chatId);
+              }}
+            >
+              <img
+                src={member.avatar_url || '/profile_bg.png'}
+                alt="프로필"
+                className="w-8 h-8 rounded-full object-cover"
+              />
+              <span className="text-sm">{member.nickname}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <div className="divide-y divide-[#DADADA]">
         {visible.map(chat => (

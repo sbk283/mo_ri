@@ -12,6 +12,7 @@ interface ChatItemProps {
   lastMessage?: string | null;
   isActive?: boolean;
   isHost?: boolean;
+  unreadCount?: number;
   onClick: (chatId: string) => void;
 
   // 드롭다운 이벤트 핸들러

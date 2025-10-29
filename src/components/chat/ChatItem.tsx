@@ -1,8 +1,8 @@
-// src/components/chat/ChatItem.tsx
+// ..., 드롭다운
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DEFAULT_AVATAR } from '../../utils/storage';
-import { useDirectChat } from '../../contexts/DirectChatContext'; // ✅ 전역 상태 불러오기
+import { useDirectChat } from '../../contexts/DirectChatContext';
 
 interface ChatItemProps {
   type: 'chat' | 'member';

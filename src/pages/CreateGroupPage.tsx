@@ -95,7 +95,7 @@ function CreateGroupPage() {
   return (
     <div className="mx-auto w-[1024px] pt-28 pb-20">
       <motion.div layout className="bg-white rounded-lg shadow-card p-8">
-        <h1 className="text-2xl font-bold mb-6">모임 생성하기</h1>
+        <h1 className="text-2xl font-bold mb-6 ml-8">모임 생성하기</h1>
 
         <div className="mb-6">
           <StepIndicator currentStep={step} />

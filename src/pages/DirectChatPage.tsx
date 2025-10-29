@@ -27,7 +27,7 @@ function DirectChatPage() {
       return;
     }
 
-    const checkRole = async () => {
+    const checkRole = async (): Promise<void> => {
       const { data, error } = await supabase
         .from('group_members')
         .select('member_role')
@@ -58,11 +58,23 @@ function DirectChatPage() {
     if (!groupId || !targetUserId) return;
     if (isHost === null) return;
 
-    const initRoom = async () => {
-      const hostId = isHost ? user.id : targetUserId;
-      const memberId = isHost ? targetUserId : user.id;
+    const initRoom = async (): Promise<void> => {
+      // ✅ 수정: targetUserId가 자기 자신일 경우 방 생성 금지
+      if (user.id === targetUserId) {
+        console.warn('❌ 자기 자신과의 채팅은 생성할 수 없습니다.');
+        return;
+      }
 
-      const chatId = await findOrCreateChat(groupId, hostId, memberId);
+      // ✅ 수정: groupId와 targetUserId 유효성 체크 (undefined 방지)
+      if (!groupId || !targetUserId) {
+        console.warn('❌ groupId 또는 targetUserId가 없습니다. 채팅방 생성 중단');
+        return;
+      }
+
+      const hostId: string = isHost ? user.id : targetUserId;
+      const memberId: string = isHost ? targetUserId : user.id;
+
+      const chatId: string = await findOrCreateChat(groupId, hostId, memberId);
 
       // DirectChatList가 호스트 프로필을 그릴 수 있도록 최소 필드 세팅
       setCurrentChat({
@@ -81,7 +93,7 @@ function DirectChatPage() {
     void initRoom();
   }, [user?.id, groupId, targetUserId, isHost, findOrCreateChat, setCurrentChat]);
 
-  const handleSelectChat = (chatId: string) => {
+  const handleSelectChat = (chatId: string): void => {
     const chat = chats.find(c => c.chat_id === chatId) ?? null;
     setSelectedChatId(chatId);
     setCurrentChat(chat);

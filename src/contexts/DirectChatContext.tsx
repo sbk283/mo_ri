@@ -64,7 +64,6 @@ async function ensureMyParticipant(chatId: string, userId: string) {
 
 export function DirectChatProvider({ children }: PropsWithChildren) {
   const { user } = useAuth();
-
   // 상태 변수
   const [chats, setChats] = useState<DirectChatWithGroup[]>([]);
   const [messages, setMessages] = useState<directMessages[]>([]);
@@ -73,12 +72,29 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
-  // 채팅 목록 변경 시, unreadCounts 초기화
-  useEffect(() => {
-    if (chats.length > 0) {
-      const initial: Record<string, number> = {};
-      chats.forEach(c => (initial[c.chat_id] = 0));
-      setUnreadCounts(initial);
+  // 초기 집계: 현재 로그인 사용자의 채팅방별 미읽음 수를 RPC로 일괄 조회하여 전역 상태에 반영
+  const loadUnreadCounts = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_unread_counts');
+      if (error) throw error;
+
+      // RPC 결과를 Record 형태로 변환
+      const next: Record<string, number> = {};
+      for (const row of data ?? []) {
+        next[row.chat_id] = Number(row.unread) || 0;
+      }
+
+      // 현재 채팅 목록에 존재하지만 집계에 없으면 0으로 채움
+      setUnreadCounts(prev => {
+        const merged: Record<string, number> = { ...next };
+        for (const c of chats) {
+          if (merged[c.chat_id] == null) merged[c.chat_id] = 0;
+        }
+        return merged;
+      });
+    } catch (e) {
+      // 집계 실패 시에는 기존 값을 유지
+      console.error('loadUnreadCounts failed:', e);
     }
   }, [chats]);
 
@@ -117,6 +133,8 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
       if (!data || data.length === 0) {
         setChats([]);
+        // 목록이 비면 미읽음도 초기화
+        setUnreadCounts({});
         return;
       }
 
@@ -166,14 +184,18 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       });
 
       setChats(mappedChats);
+
+      // 목록 갱신 직후 미읽음 집계를 한 번만 수행
+      await loadUnreadCounts();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
       setChats([]);
+      setUnreadCounts({});
     } finally {
       setLoading(false);
     }
-  }, [user?.id]);
+  }, [user?.id, loadUnreadCounts]);
 
   useEffect(() => {
     fetchChatsRef.current = fetchChats;
@@ -190,7 +212,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       try {
         setLoading(true);
 
-        // 1) 내 참가 상태 확인: 나가있으면 화면 비움
+        // 내 참가 상태 확인: 나가있으면 화면 비움
         const { data: participantData, error: pErr } = await supabase
           .from('direct_participants')
           .select('left_at, joined_at')
@@ -205,10 +227,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           return;
         }
 
-        // 2) 참여 보장 (재참여 시 joined_at 갱신)
+        // 참여 보장 (재참여 시 joined_at 갱신)
         await ensureMyParticipant(chatId, user.id);
 
-        // 3) 갱신된 joined_at 재조회(정확한 컷오프 반영)
+        // 갱신된 joined_at 재조회(정확한 컷오프 반영)
         const { data: me } = await supabase
           .from('direct_participants')
           .select('joined_at')
@@ -219,7 +241,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         const joinedAt = me?.joined_at ?? participantData?.joined_at ?? new Date(0).toISOString();
         myJoinedAtRef.current = joinedAt;
 
-        // 4) 컷오프 이후 메시지만 불러오기
+        // 컷오프 이후 메시지만 불러오기
         const { data, error } = await supabase
           .from('direct_messages')
           .select(
@@ -234,7 +256,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         `,
           )
           .eq('chat_id', chatId)
-          .gte('created_at', joinedAt) // <<<<<<<<<< 핵심
+          .gte('created_at', joinedAt)
           .order('created_at', { ascending: true });
 
         if (error) throw error;
@@ -266,6 +288,22 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     [user?.id],
   );
 
+  // 채팅을 열었을 때 읽음 처리: 서버에 last_read_at을 찍고 전역 unreadCounts를 0으로 동기화
+  const markAsRead = useCallback(async (chatId: string) => {
+    try {
+      await supabase.rpc('mark_chat_read', { p_chat_id: chatId });
+      setUnreadCounts(prev => ({ ...prev, [chatId]: 0 }));
+    } catch (e) {
+      console.error('markAsRead failed:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    const id = currentChat?.chat_id;
+    if (!id) return;
+    fetchMessages(id).then(() => markAsRead(id));
+  }, [currentChat?.chat_id, fetchMessages, markAsRead]);
+
   // ------------------------------------------------------
   // 3. 메시지 전송 (자기 화면 즉시 반영)
   // ------------------------------------------------------
@@ -273,8 +311,14 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     async (chatId: string, content: string): Promise<void> => {
       if (!user?.id) return;
       try {
+        // 상대가 나가 있었다면 먼저 재참여 처리하여 joined_at이 메시지 생성 시각보다 앞서도록 보장
+        // 주의: rejoin_counterpart는 "left_at IS NOT NULL"일 때만 joined_at을 now()로 갱신하도록 서버에서 보강 권장
+        await supabase.rpc('rejoin_counterpart', { p_chat_id: chatId, p_sender: user.id });
+
+        // 내 참가 상태도 보장 (본인 레코드 없거나 나가있던 경우 복구)
         await ensureMyParticipant(chatId, user.id);
 
+        // 메시지 INSERT (이제 created_at >= 상대의 joined_at이 성립하므로 컷오프에 걸리지 않음)
         const insertData: directMessagesInsert = {
           chat_id: chatId,
           sender_id: user.id,
@@ -308,9 +352,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         // 본인 화면에 즉시 추가
         setMessages(prev => [...prev, enriched]);
-
-        // 새로 추가: 상대방이 나간 상태였다면 즉시 재참여 처리하여 대화가 이어지도록 함
-        await supabase.rpc('rejoin_counterpart', { p_chat_id: chatId, p_sender: user.id });
       } catch (err) {
         console.error('sendMessage error:', err);
       }
@@ -320,16 +361,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
   // ------------------------------------------------------
   // 4. 채팅방 생성 또는 재활용 (쌍당 1개 방 보장)
-  // - 같은 그룹에서 같은 쌍(host_id, member_id)은 1개만 존재
-  // - 양쪽이 나간 경우 RPC가 방을 삭제하므로, 그 후에는 새 방 생성 가능
-  // - DB에 (group_id, user_low, user_high) 유니크 인덱스가 있어 중복 생성 차단
-  // - upsert(onConflict)로 동시성까지 안전하게 처리
   // ------------------------------------------------------
   const findOrCreateChat = useCallback(
     async (groupId: string, hostId: string, memberId: string): Promise<string> => {
       try {
-        // 1) 먼저 기존 방 조회: 현재 존재하는 방이 있으면 그걸 사용
-        //    둘 다 나갔다면 RPC에서 방을 삭제하므로, 존재한다면 "활성" 방이라고 가정 가능
         const { data: existing, error: selErr } = await supabase
           .from('direct_chats')
           .select('chat_id')
@@ -342,14 +377,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         if (selErr) throw selErr;
 
         if (existing?.chat_id) {
-          // 기존 방을 재사용
           await ensureMyParticipant(existing.chat_id, user?.id ?? '');
           return existing.chat_id;
         }
 
-        // 2) 기존 방이 없으면 신규 생성 시도
-        //    저장 생성 열(user_low/user_high)을 기반으로 유니크 인덱스가 걸려 있으므로
-        //    동일 쌍에 대해 동시 요청이 오면 한쪽만 성공한다.
         const newChat: directChatsInsert = {
           group_id: groupId,
           host_id: hostId,
@@ -357,7 +388,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           created_by: user?.id ?? null,
         };
 
-        // onConflict에 저장 생성 열을 포함한 키 지정
         const { data: upserted, error: upsertErr } = await supabase
           .from('direct_chats')
           .upsert(newChat, { onConflict: 'group_id,user_low,user_high' })
@@ -366,12 +396,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         if (upsertErr) throw upsertErr;
 
-        // 3) 참가자 보장
         await ensureMyParticipant(upserted.chat_id, user?.id ?? '');
 
         return upserted.chat_id;
       } catch (err: unknown) {
-        // 4) 드물게 경쟁상황 등으로 에러가 나면, 마지막으로 다시 한번 기존 방을 조회해서 반환
         const { data: fallback } = await supabase
           .from('direct_chats')
           .select('chat_id')
@@ -396,10 +424,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // 5. 실시간 이벤트 처리
   // ------------------------------------------------------
   useEffect(() => {
-    const chatId = currentChat?.chat_id;
-    if (!chatId || !user?.id) return;
+    const activeChatId = currentChat?.chat_id;
+    if (!activeChatId || !user?.id) return;
 
-    const channelName = `direct_chat_${chatId}`;
+    const channelName = `direct_chat_${activeChatId}`;
     const realtimeChannel = supabase
       .channel(channelName)
 
@@ -409,34 +437,44 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         { event: 'INSERT', schema: 'public', table: 'direct_messages' },
         async payload => {
           const newMessage = payload.new as directMessages;
-          const chatId = currentChat?.chat_id;
-          if (!chatId || newMessage.chat_id !== chatId) return;
 
-          // 컷오프 이전 메시지는 무시
+          // 현재 선택된 채팅 이외의 메시지는 리스트 증분만 처리
+          const isCurrent = newMessage.chat_id === activeChatId;
+
+          // 컷오프 이전 메시지는 무시 (joined_at은 fetchMessages 시점 기준)
           const joinedAt = myJoinedAtRef.current;
           if (joinedAt && new Date(newMessage.created_at) < new Date(joinedAt)) {
             return;
           }
 
+          // 본인이 보낸 메시지는 미읽음 증가 대상이 아님
           if (newMessage.sender_id === user.id) return;
 
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('nickname, avatar_url')
-            .eq('user_id', newMessage.sender_id)
-            .maybeSingle();
+          if (isCurrent) {
+            // 현재 방이면 프로필 보강 후 즉시 렌더
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('nickname, avatar_url')
+              .eq('user_id', newMessage.sender_id)
+              .maybeSingle();
 
-          const enriched: directMessages = {
-            ...newMessage,
-            nickname: profile?.nickname ?? null,
-            avatar_url: profile?.avatar_url ?? null,
-          };
+            const enriched: directMessages = {
+              ...newMessage,
+              nickname: profile?.nickname ?? null,
+              avatar_url: profile?.avatar_url ?? null,
+            };
 
-          setMessages(prev => [...prev, enriched]);
-          setUnreadCounts(prev => ({
-            ...prev,
-            [chatId]: currentChat?.chat_id === chatId ? 0 : (prev[chatId] ?? 0) + 1,
-          }));
+            setMessages(prev => [...prev, enriched]);
+
+            // 현재 보고 있는 방이면 미읽음은 0 유지
+            setUnreadCounts(prev => ({ ...prev, [activeChatId]: 0 }));
+          } else {
+            // 다른 방이면 미읽음 수만 +1
+            setUnreadCounts(prev => ({
+              ...prev,
+              [newMessage.chat_id]: (prev[newMessage.chat_id] ?? 0) + 1,
+            }));
+          }
         },
       )
 
@@ -447,22 +485,22 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           event: '*',
           schema: 'public',
           table: 'direct_participants',
-          filter: `chat_id=eq.${chatId}`,
+          filter: `chat_id=eq.${activeChatId}`,
         },
-        async payload => {
+        payload => {
           const updated = payload.new as { user_id: string; left_at: string | null };
-          const currentUserId = user.id;
 
-          // 본인이 나간 경우에만 UI 비움
-          if (updated.user_id === currentUserId && updated.left_at) {
+          // 본인이 나간 경우: 현재 화면 정리 및 목록 새로고침
+          if (updated.user_id === user.id && updated.left_at) {
             setMessages([]);
             setCurrentChat(null);
+            setUnreadCounts(prev => ({ ...prev, [activeChatId]: 0 }));
             fetchChatsRef.current?.();
             return;
           }
 
-          // 상대방이 나간 경우엔 채팅 유지, 목록만 새로고침
-          if (updated.user_id !== currentUserId && updated.left_at) {
+          // 상대방이 나간 경우: 목록만 새로고침
+          if (updated.user_id !== user.id && updated.left_at) {
             fetchChatsRef.current?.();
           }
         },
@@ -475,11 +513,12 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           event: 'DELETE',
           schema: 'public',
           table: 'direct_chats',
-          filter: `chat_id=eq.${chatId}`,
+          filter: `chat_id=eq.${activeChatId}`,
         },
         () => {
           setMessages([]);
           setCurrentChat(null);
+          setUnreadCounts(prev => ({ ...prev, [activeChatId]: 0 }));
           fetchChatsRef.current?.();
         },
       )
@@ -492,8 +531,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
   // ------------------------------------------------------
   // 전역 참가 상태 구독: 내 direct_participants가 업데이트되면 목록 새로고침
-  // - 효과: 상대가 메시지를 보내면 rejoin_counterpart로 내 left_at이 NULL이 되고,
-  //         이 변화를 감지해 사이드바가 새로고침되어 방이 다시 나타남
   // ------------------------------------------------------
   useEffect(() => {
     if (!user?.id) return;
@@ -509,7 +546,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          // 내 참가 상태가 변하면 목록을 갱신한다
           fetchChatsRef.current?.();
         },
       )

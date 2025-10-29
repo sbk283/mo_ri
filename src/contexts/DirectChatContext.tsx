@@ -28,19 +28,50 @@ export const useDirectChat = () => {
 // 참가자 보장 (본인)
 async function ensureMyParticipant(chatId: string, userId: string) {
   if (!userId) return;
-  const { error } = await supabase
+
+  const { data: existing } = await supabase
     .from('direct_participants')
-    .upsert({ chat_id: chatId, user_id: userId });
-  if (error) console.error('ensureMyParticipant error:', error.message);
+    .select('left_at')
+    .eq('chat_id', chatId)
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (existing) {
+    if (existing.left_at !== null) {
+      const { error: updErr } = await supabase
+        .from('direct_participants')
+        .update({ left_at: null })
+        .eq('chat_id', chatId)
+        .eq('user_id', userId);
+      if (updErr) console.error('ensureMyParticipant restore error:', updErr.message);
+    }
+  } else {
+    const { error } = await supabase
+      .from('direct_participants')
+      .upsert({ chat_id: chatId, user_id: userId, left_at: null });
+    if (error) console.error('ensureMyParticipant insert error:', error.message);
+  }
 }
 
 // 양쪽 참가자 보장
 async function ensureBothParticipants(chatId: string, hostId: string, memberId: string) {
-  const { error } = await supabase.from('direct_participants').upsert([
-    { chat_id: chatId, user_id: hostId },
-    { chat_id: chatId, user_id: memberId },
-  ]);
-  if (error) console.error('ensureBothParticipants error:', error.message);
+  try {
+    const { data: sessionData, error: sessionError } = await supabase.auth.getUser();
+    if (sessionError) throw sessionError;
+    const currentUserId = sessionData.user?.id;
+    if (!currentUserId) return;
+
+    if (currentUserId === hostId) {
+      await ensureMyParticipant(chatId, hostId);
+    } else if (currentUserId === memberId) {
+      await ensureMyParticipant(chatId, memberId);
+    } else {
+      console.warn('ensureBothParticipants skipped: user not host/member of this chat');
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('ensureBothParticipants error:', message);
+  }
 }
 
 export function DirectChatProvider({ children }: PropsWithChildren) {
@@ -133,7 +164,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       try {
         setLoading(true);
 
-        // 현재 사용자가 이 채팅방에 남아 있는지 확인
         const { data: participantData } = await supabase
           .from('direct_participants')
           .select('left_at')
@@ -141,15 +171,31 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           .eq('user_id', user.id)
           .maybeSingle();
 
-        // 만약 나간 상태(left_at 존재)면 메시지 초기화
         if (participantData?.left_at) {
           console.log('이미 채팅방에서 나간 사용자입니다. 메시지를 비웁니다.');
           setMessages([]);
           return;
         }
 
-        // 참가자 유지 상태이면 메시지 불러오기
         await ensureMyParticipant(chatId, user.id);
+
+        // 참가자 상태 확인
+        const { data: participants, error: partErr } = await supabase
+          .from('direct_participants')
+          .select('user_id, left_at')
+          .eq('chat_id', chatId);
+
+        if (partErr) throw partErr;
+
+        // 둘 다 나간 경우만 종료로 인식
+        const bothLeft = participants?.every(p => p.left_at !== null);
+
+        if (bothLeft) {
+          console.warn('두 명 모두 나간 방입니다. 메시지 로드를 생략합니다.');
+          resetUnread(chatId);
+          setMessages([]);
+          return;
+        }
 
         const { data, error } = await supabase
           .from('direct_messages')
@@ -188,7 +234,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         setMessages(formattedMessages);
 
-        // 메시지를 열었으므로 해당 채팅의 미읽음 초기화
+        // 메시지를 열었으므로 미읽음 카운트 초기화
         resetUnread(chatId);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -222,10 +268,9 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // 채팅방 찾기, 생성
   const findOrCreateChat = useCallback(
     async (groupId: string, hostIdParam: string | null, memberId: string): Promise<string> => {
-      // hostId 타입 확정 전 변수
       let hostId: string | null = hostIdParam;
 
-      // hostId가 null이라면 group_members에서 조회
+      // hostId가 null이면 group_members에서 조회
       if (!hostId) {
         const { data: hostRow, error: hostErr } = await supabase
           .from('group_members')
@@ -234,22 +279,20 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           .eq('role', 'host')
           .maybeSingle();
 
-        if (hostErr) {
-          console.error('호스트 조회 실패:', hostErr.message);
-          throw hostErr;
-        }
-        if (!hostRow?.user_id) {
-          throw new Error('호스트를 찾을 수 없습니다.');
-        }
-
-        // 여기서 string으로 확정
+        if (hostErr) throw hostErr;
+        if (!hostRow?.user_id) throw new Error('호스트를 찾을 수 없습니다.');
         hostId = hostRow.user_id;
       }
 
-      // 이제 hostId는 100% string
       const confirmedHostId = hostId as string;
 
-      // 기존 채팅방 찾기
+      // 자기 자신 채팅 금지 (제약조건 방지)
+      if (confirmedHostId === memberId) {
+        console.warn('자기 자신과의 채팅은 불가능합니다.');
+        return '';
+      }
+
+      // 기존 채팅방 확인
       const { data: existing, error: selErr } = await supabase
         .from('direct_chats')
         .select(
@@ -269,16 +312,31 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       const participants = Array.isArray(existing?.direct_participants)
         ? existing.direct_participants
         : [];
+
+      // 각자 상태
+      const myP = participants.find(p => p.user_id === user?.id);
+      // const partnerP = participants.find(p => p.user_id !== user?.id);
+      const iLeft = myP?.left_at !== null && myP !== undefined;
+      // const partnerStillHere = partnerP && partnerP.left_at === null;
       const bothLeft = participants.length === 2 && participants.every(p => p.left_at !== null);
 
-      // 기존방 재사용
+      // 상황별 처리
+      // 기존방 존재 + 두명 다 안나감 → 재사용
       if (existing?.chat_id && !bothLeft) {
-        if (user?.id === confirmedHostId) {
-          await ensureBothParticipants(existing.chat_id, confirmedHostId, memberId);
-        } else if (user?.id) {
-          await ensureMyParticipant(existing.chat_id, user.id);
+        console.log('기존 채팅방 재사용');
+        // 내가 나갔던 경우 다시 참가 복구
+        if (iLeft) {
+          await ensureMyParticipant(existing.chat_id, user!.id);
         }
         return existing.chat_id;
+      }
+
+      // 기존방 존재 + 두명 다 나감 → 삭제 후 새로 생성
+      if (existing?.chat_id && bothLeft) {
+        console.log('🗑️ 두명 다 나간 방 → 삭제 후 새 생성');
+        await supabase.from('direct_participants').delete().eq('chat_id', existing.chat_id);
+        await supabase.from('direct_messages').delete().eq('chat_id', existing.chat_id);
+        await supabase.from('direct_chats').delete().eq('chat_id', existing.chat_id);
       }
 
       // 새 채팅방 생성
@@ -289,18 +347,38 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         created_by: user?.id ?? null,
       };
 
-      const { data: inserted, error: insErr } = await supabase
-        .from('direct_chats')
-        .insert(newChat)
-        .select('chat_id')
-        .single();
+      let inserted: { chat_id: string } | null = null;
 
-      if (insErr) throw insErr;
+      try {
+        const { data, error: insErr } = await supabase
+          .from('direct_chats')
+          .insert(newChat)
+          .select('chat_id')
+          .single();
+        if (insErr) throw insErr;
+        inserted = data;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message.includes('duplicate key')) {
+          const { data: retry } = await supabase
+            .from('direct_chats')
+            .select('chat_id')
+            .eq('group_id', groupId)
+            .or(
+              `and(host_id.eq.${confirmedHostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${confirmedHostId})`,
+            )
+            .maybeSingle();
+          if (retry) inserted = retry;
+          else throw err;
+        } else {
+          throw err;
+        }
+      }
 
-      //  참가자 등록 보장
-      await ensureBothParticipants(inserted.chat_id, confirmedHostId, memberId);
+      // 참가자 등록 보장
+      await ensureMyParticipant(inserted!.chat_id, user!.id);
+      await ensureMyParticipant(inserted!.chat_id, memberId);
 
-      return inserted.chat_id;
+      return inserted!.chat_id;
     },
     [user],
   );
@@ -313,8 +391,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     const channelName = `direct_chat_${chatId}`;
     const realtimeChannel = supabase
       .channel(channelName)
-
-      // 새 메시지 수신(기존 INSERT 구독 로직 유지)
       .on(
         'postgres_changes',
         {
@@ -325,7 +401,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         },
         async payload => {
           const newMessage = payload.new as directMessages;
-
           const { data: profile } = await supabase
             .from('user_profiles')
             .select('nickname, avatar_url')
@@ -341,20 +416,20 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           setMessages(prev => [...prev, enriched]);
         },
       )
-
-      // 방 자체가 삭제된 경우(두 사람 모두 나가면 RPC가 방/메시지/참여자 삭제)
+      // 참가자 나감 감지 → 목록 자동 갱신
       .on(
         'postgres_changes',
         {
-          event: 'DELETE',
+          event: 'UPDATE',
           schema: 'public',
-          table: 'direct_chats',
+          table: 'direct_participants',
           filter: `chat_id=eq.${chatId}`,
         },
-        () => {
-          setMessages([]);
-          setCurrentChat(null);
-          fetchChats(); // 목록 갱신
+        payload => {
+          const updated = payload.new as { chat_id: string; left_at: string | null };
+          if (updated.left_at) {
+            fetchChats(); // 멤버리스트 즉시 갱신
+          }
         },
       )
       .subscribe();
@@ -364,7 +439,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     };
   }, [currentChat?.chat_id, fetchChats]);
 
-  // 🔔 전체 실시간 구독 (모든 새 direct_messages 감지 → 미읽음 카운트 증가)
+  // 전역 실시간 구독 (모든 새 direct_messages 감지 → 미읽음 카운트 증가)
   useEffect(() => {
     if (!user?.id) return;
 
@@ -375,9 +450,16 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         { event: 'INSERT', schema: 'public', table: 'direct_messages' },
         payload => {
           const newMessage = payload.new as directMessages;
+
           // 내가 보낸 메시지는 무시
-          if (newMessage.sender_id !== user.id) {
+          if (newMessage.sender_id === user.id) return;
+
+          // 현재 열려 있는 채팅방이 아닐 경우만 미읽음 카운트 증가
+          if (currentChat?.chat_id !== newMessage.chat_id) {
             incrementUnread(newMessage.chat_id);
+          } else {
+            // 내가 보고 있는 방이면 읽음 처리
+            resetUnread(newMessage.chat_id);
           }
         },
       )
@@ -386,7 +468,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [user?.id, incrementUnread]);
+  }, [user?.id, currentChat?.chat_id, incrementUnread, resetUnread]);
 
   // 컨텍스트
   const value: DirectChatContextType = {

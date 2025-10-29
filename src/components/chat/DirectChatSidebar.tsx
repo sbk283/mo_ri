@@ -1,24 +1,65 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDirectChat } from '../../contexts/DirectChatContext';
+import Modal from '../common/modal/Modal';
+import SuccessModal from '../common/modal/SuccessModal';
+import ChatItem from './ChatItem';
+import { supabase } from '../../lib/supabase';
 
 interface ChatSidebarProps {
   onSelect: (chatId: string) => void;
+  groupId?: string;
 }
 
-function DirectChatSidebar({ onSelect }: ChatSidebarProps) {
-  const { chats, currentChat, setCurrentChat } = useDirectChat();
+function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
+  const { chats, currentChat, setCurrentChat, fetchChats } = useDirectChat();
   const [search, setSearch] = useState('');
 
-  // 호스트용 닉네임 검색 (user_profiles.nickname 기준)
-  const filteredChats = chats.filter(chat =>
-    chat.partnerNickname?.toLowerCase().includes(search.toLowerCase()),
-  );
+  // 모달 상태 관리
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
+  const [successModalOpen, setSuccessModalOpen] = useState(false);
+  const [targetChatId, setTargetChatId] = useState<string | null>(null);
+
+  // 표시할 채팅 목록 필터
+  const visible = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    const byGroup = groupId ? chats.filter(c => c.group_id === groupId) : chats;
+    if (!term) return byGroup;
+    return byGroup.filter(chat => (chat.partnerNickname ?? '').toLowerCase().includes(term));
+  }, [chats, groupId, search]);
+
+  // 채팅 나가기 버튼 클릭 → 모달 오픈
+  const handleLeaveChat = (chatId: string) => {
+    setTargetChatId(chatId);
+    setLeaveModalOpen(true);
+  };
+
+  // 실제 나가기 처리
+  const confirmLeaveChat = async () => {
+    if (!targetChatId) return;
+
+    // 실제 Supabase 삭제
+    await supabase.from('direct_chats').delete().eq('chat_id', targetChatId);
+
+    console.log(`채팅방 ${targetChatId} 나가기 완료`);
+    setLeaveModalOpen(false);
+    setSuccessModalOpen(true);
+
+    // 목록 갱신
+    fetchChats?.();
+  };
+
+  // 성공 모달 자동 닫기 (1800ms)
+  useEffect(() => {
+    if (successModalOpen) {
+      const timer = setTimeout(() => setSuccessModalOpen(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [successModalOpen]);
 
   return (
     <aside className="w-[324px] p-5">
       <h2 className="self-start font-semibold text-[28px] pt-1 pb-[14px] pl-1">채팅/문의</h2>
 
-      {/* 검색창 */}
       <input
         type="text"
         value={search}
@@ -28,31 +69,42 @@ function DirectChatSidebar({ onSelect }: ChatSidebarProps) {
       />
 
       <div className="divide-y divide-[#DADADA]">
-        {filteredChats.map(chat => (
-          <div
+        {visible.map(chat => (
+          <ChatItem
             key={chat.chat_id}
-            onClick={() => {
+            type="chat"
+            chatId={chat.chat_id}
+            partnerNickname={chat.partnerNickname ?? '유저'}
+            partnerAvatar={chat.partnerAvatar}
+            lastMessage={chat.lastMessage}
+            isActive={currentChat?.chat_id === chat.chat_id}
+            onClick={id => {
               setCurrentChat(chat);
-              onSelect(chat.chat_id);
+              onSelect(id);
             }}
-            className={`flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-100 ${
-              currentChat?.chat_id === chat.chat_id ? 'bg-gray-100' : ''
-            }`}
-          >
-            <img
-              src={chat.partnerAvatar ?? '/images/default_avatar.svg'}
-              alt={chat.partnerNickname ?? '유저'}
-              className="w-12 h-12 rounded-full object-cover"
-            />
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-brand truncate">{chat.partnerNickname}</p>
-              <p className="text-sm text-gray-500 truncate">
-                {chat.lastMessage ?? '대화 시작하기'}
-              </p>
-            </div>
-          </div>
+            onLeaveChat={handleLeaveChat}
+          />
         ))}
       </div>
+
+      {/* 채팅 나가기 확인 모달 */}
+      <Modal
+        isOpen={leaveModalOpen}
+        onClose={() => setLeaveModalOpen(false)}
+        title="채팅방을 나가시겠습니까?"
+        message="나가면 이 채팅방의 대화 내용이 사라집니다."
+        actions={[
+          { label: '취소', onClick: () => setLeaveModalOpen(false), variant: 'secondary' },
+          { label: '나가기', onClick: confirmLeaveChat, variant: 'primary' },
+        ]}
+      />
+
+      {/* 완료 모달 */}
+      <SuccessModal
+        isOpen={successModalOpen}
+        onClose={() => setSuccessModalOpen(false)}
+        message="채팅방에서 나갔습니다."
+      />
     </aside>
   );
 }

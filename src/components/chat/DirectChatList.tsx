@@ -1,10 +1,10 @@
-// 회원 (호스트가 아닐 때) 일 때 보여지는 사이드바
-
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useDirectChat } from '../../contexts/DirectChatContext';
 import { supabase } from '../../lib/supabase';
 import Modal from '../common/modal/Modal';
+import SuccessModal from '../common/modal/SuccessModal';
+import { DEFAULT_AVATAR, toAvatarUrl } from '../../utils/storage';
 
 interface HostProfile {
   nickname: string;
@@ -15,82 +15,91 @@ interface HostProfile {
 
 function DirectChatList() {
   const { user } = useAuth();
-  const { currentChat, fetchChats, setCurrentChat } = useDirectChat();
+  const { currentChat, fetchChats, fetchMessages, setCurrentChat } = useDirectChat();
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
 
-  // 모달 상태 관리
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
-  // 로그인 및 채팅 정보 로드
+  // 현재 로그인 사용자가 이 방의 호스트인지 (안전 계산)
+  const isHost = useMemo(() => {
+    if (!user?.id || !currentChat?.host_id) return false;
+    return user.id === currentChat.host_id;
+  }, [user?.id, currentChat?.host_id]);
+
+  // 초기 목록 로드(안전)
   useEffect(() => {
-    if (!user) return;
-    fetchChats(); // 혹시 안 불러온 상태 대비
+    if (user) fetchChats();
   }, [user, fetchChats]);
 
-  // 현재 선택된 채팅방의 호스트 정보 가져오기
+  // 새로고침 시 메시지 재로드 (상대방 메시지 안 보이는 문제 해결)
   useEffect(() => {
-    const loadHostProfile = async () => {
-      if (!currentChat) return;
+    if (currentChat?.chat_id) {
+      fetchMessages(currentChat.chat_id);
+    }
+  }, [currentChat?.chat_id, fetchMessages]);
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('nickname, avatar_url')
-        .eq('user_id', currentChat.host_id)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('모임장 정보 조회 실패:', profileError);
+  // 호스트 프로필 로드 (현재 방 기준)
+  useEffect(() => {
+    (async () => {
+      if (!currentChat?.host_id || !currentChat?.group_id) {
+        setHostProfile(null);
         return;
       }
 
-      // group_id로 모임 정보도 가져옴
-      const { data: groupData } = await supabase
-        .from('groups')
-        .select('group_title, group_short_intro')
-        .eq('group_id', currentChat.group_id)
-        .maybeSingle();
+      const [{ data: profileData, error: pErr }, { data: groupData }] = await Promise.all([
+        supabase
+          .from('user_profiles')
+          .select('nickname, avatar_url')
+          .eq('user_id', currentChat.host_id)
+          .maybeSingle(),
+        supabase
+          .from('groups')
+          .select('group_title, group_short_intro')
+          .eq('group_id', currentChat.group_id)
+          .maybeSingle(),
+      ]);
 
+      if (pErr) {
+        console.error('모임장 정보 조회 실패:', pErr.message);
+        setHostProfile(null);
+        return;
+      }
+
+      // storage 경로를 public URL 변환 (없으면 기본 이미지)
+      const raw = profileData?.avatar_url ?? null;
+      const avatar = toAvatarUrl(raw);
       setHostProfile({
         nickname: profileData?.nickname ?? '모임장',
-        avatar_url: profileData?.avatar_url ?? '/profile_bg.png',
+        avatar_url: avatar,
         groupTitle: groupData?.group_title ?? '모임',
         groupSummary:
           groupData?.group_short_intro ??
           '이 모임의 관리자입니다. 궁금한 점이 있으면 자유롭게 문의해주세요.',
       });
-    };
+    })();
+  }, [currentChat?.host_id, currentChat?.group_id]);
 
-    loadHostProfile();
-  }, [currentChat]);
+  // 성공 모달 자동 닫기 (1800ms)
+  useEffect(() => {
+    if (isSuccessModalOpen) {
+      const timer = setTimeout(() => setIsSuccessModalOpen(false), 1800);
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccessModalOpen]);
 
-  // 로딩 or 데이터 없음 처리
-  if (!currentChat || !hostProfile) {
-    return (
-      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
-        채팅방을 선택해주세요.
-      </aside>
-    );
-  }
+  // 채팅방 나가기 모달 열기
+  const openLeaveModal = () => setIsLeaveModalOpen(true);
 
-  // 현재 로그인 유저가 호스트인지 판별
-  const isHost = user?.id === currentChat.host_id;
-
-  // 나가기 버튼 클릭 시 확인 모달 열기
-  const openLeaveModal = () => {
-    setIsLeaveModalOpen(true);
-  };
-
-  // 실제 나가기 동작
+  // 실제 나가기 처리
   const handleConfirmLeave = async () => {
-    if (!currentChat) return;
-
+    if (!currentChat || !user?.id) return;
     try {
       const { error } = await supabase
         .from('direct_participants')
         .update({ left_at: new Date().toISOString() })
         .eq('chat_id', currentChat.chat_id)
-        .eq('user_id', user?.id);
+        .eq('user_id', user.id);
 
       if (error) throw error;
 
@@ -100,12 +109,28 @@ function DirectChatList() {
       setTimeout(() => {
         setCurrentChat(null);
         fetchChats();
-      }, 1800);
+      }, 1200);
     } catch (err) {
       console.error('채팅방 나가기 실패:', err);
       setIsLeaveModalOpen(false);
     }
   };
+
+  // 로딩/없음 처리
+  if (!currentChat) {
+    return (
+      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
+        채팅방을 선택해주세요.
+      </aside>
+    );
+  }
+  if (!hostProfile) {
+    return (
+      <aside className="w-[324px] p-5 flex items-center justify-center text-gray-400">
+        호스트 정보를 불러오는 중...
+      </aside>
+    );
+  }
 
   return (
     <>
@@ -115,14 +140,21 @@ function DirectChatList() {
         </div>
 
         <div className="pl-5 flex flex-col items-center">
-          {/* 프로필 이미지 */}
           <img
-            src={hostProfile.avatar_url ?? '/profile_bg.png'}
+            src={
+              hostProfile.avatar_url && hostProfile.avatar_url.trim() !== ''
+                ? hostProfile.avatar_url
+                : DEFAULT_AVATAR
+            }
             alt="프로필"
             className="w-32 h-32 mt-3 rounded-full object-cover border border-[#dedede]"
+            loading="lazy"
+            onError={e => {
+              const el = e.currentTarget as HTMLImageElement;
+              if (!el.src.endsWith(DEFAULT_AVATAR)) el.src = DEFAULT_AVATAR;
+            }}
           />
 
-          {/* 닉네임 + (호스트일 때만 왕관) */}
           <div className="mt-4 flex items-center gap-2">
             <h2 className="text-[20px] font-semibold text-brand whitespace-nowrap">
               {hostProfile.nickname}
@@ -134,10 +166,8 @@ function DirectChatList() {
             )}
           </div>
 
-          {/* 구분선 */}
           <div className="w-full border-b border-[#dedede] my-4" />
 
-          {/* 설명글 (호스트일 때만 출력) */}
           {isHost && (
             <>
               <p className="text-[#3C3C3C] text-md font-medium text-center">
@@ -150,11 +180,12 @@ function DirectChatList() {
               </p>
             </>
           )}
-          {/* 나가기 버튼 (유저일 시에만 표기) */}
+
+          {/* 내가 호스트가 아닐 때만 나가기 버튼 노출함 */}
           {!isHost && (
             <button
               onClick={openLeaveModal}
-              className="text-sm text-gray-500 text-white transition w-full h-8 bg-brand hover:bg-[#1362d0] rounded-sm"
+              className="text-sm text-white transition w-full h-8 bg-brand hover:bg-[#1362d0] rounded-sm"
             >
               나가기
             </button>
@@ -169,32 +200,16 @@ function DirectChatList() {
         title="채팅방 나가기"
         message="채팅방을 나가시겠습니까?"
         actions={[
-          {
-            label: '취소',
-            onClick: () => setIsLeaveModalOpen(false),
-            variant: 'secondary',
-          },
-          {
-            label: '나가기',
-            onClick: handleConfirmLeave,
-            variant: 'primary',
-          },
+          { label: '취소', onClick: () => setIsLeaveModalOpen(false), variant: 'secondary' },
+          { label: '나가기', onClick: handleConfirmLeave, variant: 'primary' },
         ]}
       />
 
-      {/* 성공 모달 */}
-      <Modal
+      {/* 나가기 완료 모달 */}
+      <SuccessModal
         isOpen={isSuccessModalOpen}
         onClose={() => setIsSuccessModalOpen(false)}
-        title="나가기 완료"
         message="채팅방에서 나갔습니다."
-        actions={[
-          {
-            label: '확인',
-            onClick: () => setIsSuccessModalOpen(false),
-            variant: 'primary',
-          },
-        ]}
       />
     </>
   );

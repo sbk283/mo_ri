@@ -152,20 +152,18 @@ const Header: React.FC = () => {
               <Link to="/grouplist" className="font-bold hover:text-brand">
                 모임리스트
               </Link>
+              {/* 마이페이지 */}
+              <Link to="/mypage">
+                <p className="font-bold hover:text-brand">마이페이지</p>
+              </Link>
             </nav>
 
             {isLoggedIn ? (
-              <div className="flex items-center gap-4">
-                <span className="font-medium text-blue-600">{nickname}님 반갑습니다!</span>
-
-                {/* 마이페이지 */}
-                <Link to="/mypage">
-                  <img src="/people.svg" alt="마이페이지" className="h-6 w-6" />
-                </Link>
-
+              <div className="flex items-center gap-3">
+                <span className="font-medium text-blue-600">{nickname}님 반가워요!</span>
                 {/* 채팅 알림 아이콘 */}
                 <button onClick={handlePanelOpen} className="relative focus:outline-none">
-                  <img src="/talk.svg" alt="채팅 알림" className="h-6 w-6" />
+                  <img src="/images/notification.svg" alt="채팅 알림" className="h-4 w-4" />
                   {unreadCount > 0 && (
                     <span className="absolute top-0 -right-0.5 w-2 h-2 bg-brand-red rounded-full" />
                   )}
@@ -174,7 +172,7 @@ const Header: React.FC = () => {
                 {/* 로그아웃 */}
                 <button
                   onClick={handleLogout}
-                  className="font-bold border px-5 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
+                  className="font-bold text-sm border px-3 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
                 >
                   로그아웃
                 </button>
@@ -182,7 +180,7 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="font-bold px-5 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
+                className="font-bold text-sm px-3 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
               >
                 로그인
               </Link>

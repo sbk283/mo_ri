@@ -72,37 +72,36 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   const [error, setError] = useState<string | null>(null);
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
-  // 초기 집계: 현재 로그인 사용자의 채팅방별 미읽음 수를 RPC로 일괄 조회하여 전역 상태에 반영
-  const loadUnreadCounts = useCallback(async () => {
+  // 2025-10-30 미읽음 집계: 함수 안정화를 위해 chats 의존성 제거
+  //          호출 측에서 최신 chatIds를 전달받아 병합 처리
+  const loadUnreadCounts = useCallback(async (chatIds: string[] = []) => {
     try {
       const { data, error } = await supabase.rpc('get_unread_counts');
       if (error) throw error;
 
-      // RPC 결과를 Record 형태로 변환
       const next: Record<string, number> = {};
       for (const row of data ?? []) {
         next[row.chat_id] = Number(row.unread) || 0;
       }
 
-      // 현재 채팅 목록에 존재하지만 집계에 없으면 0으로 채움
-      setUnreadCounts(prev => {
+      setUnreadCounts(() => {
         const merged: Record<string, number> = { ...next };
-        for (const c of chats) {
-          if (merged[c.chat_id] == null) merged[c.chat_id] = 0;
+        for (const id of chatIds) {
+          if (merged[id] == null) merged[id] = 0;
         }
         return merged;
       });
     } catch (e) {
-      // 집계 실패 시에는 기존 값을 유지
       console.error('loadUnreadCounts failed:', e);
     }
-  }, [chats]);
+  }, []);
 
   const fetchChatsRef = useRef<() => Promise<void>>();
 
   // ------------------------------------------------------
   // 1. 채팅방 목록 조회
   // ------------------------------------------------------
+  // 2025-10-30 함수 안정화: loadUnreadCounts가 chats에 의존하지 않도록 개선하여 fetchChats 참조가 불필요하게 바뀌지 않게 함
   const fetchChats = useCallback(async () => {
     if (!user?.id) return;
     try {
@@ -185,8 +184,9 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
       setChats(mappedChats);
 
-      // 목록 갱신 직후 미읽음 집계를 한 번만 수행
-      await loadUnreadCounts();
+      // 2025-10-30 목록 갱신 직후 최신 chatIds로 미읽음 집계 수행
+      const chatIdsForCounts = mappedChats.map(c => c.chat_id);
+      await loadUnreadCounts(chatIdsForCounts);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -530,7 +530,9 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   }, [currentChat?.chat_id, user?.id]);
 
   // ------------------------------------------------------
-  // 전역 참가 상태 구독: 내 direct_participants가 업데이트되면 목록 새로고침
+  // 전역 참가 상태 구독: 내 direct_participants 변화 감지
+  // 2025-10-30 joined_at/last_read_at 등 단순 업데이트로 인한 과도한 새로고침 방지
+  //          left_at 값 변화(퇴장/재입장) 같은 구조적 변경일 때만 목록 새로고침
   // ------------------------------------------------------
   useEffect(() => {
     if (!user?.id) return;
@@ -545,7 +547,11 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           table: 'direct_participants',
           filter: `user_id=eq.${user.id}`,
         },
-        () => {
+        payload => {
+          // 2025-10-30 left_at 값 변화가 없으면 무시 (joined_at/last_read_at 등은 목록 새로고침 불필요)
+          const oldLeft = (payload.old as { left_at: string | null } | null)?.left_at ?? null;
+          const newLeft = (payload.new as { left_at: string | null } | null)?.left_at ?? null;
+          if (oldLeft === newLeft) return;
           fetchChatsRef.current?.();
         },
       )

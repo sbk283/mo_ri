@@ -47,7 +47,7 @@ function GroupManagerSidebar() {
                 {/* 메인 클릭 시 처리 */}
                 <button
                   onClick={() => navigate(cat.path)}
-                  className={`flex items-center gap-[10px] py-[8px] text-lg w-full text-left ${
+                  className={`flex items-center gap-[10px] py-[8px] text-lg w-full text-left text-nowrap ${
                     isActiveMain ? 'text-brand' : 'text-[#555]'
                   }`}
                 >

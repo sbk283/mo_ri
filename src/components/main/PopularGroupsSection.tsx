@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Plus from '../../../public/images/plus.svg';
+// import Plus from '../../../public/images/plus.svg';
 import { supabase } from '../../lib/supabase';
 import type { groups } from '../../types/group';
 import SwiperGroupCard from '../common/SwiperGroupCard';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 export default function PopularGroupsSection() {
   const [groups, setGroups] = useState<groups[]>([]);
@@ -79,7 +80,7 @@ export default function PopularGroupsSection() {
 
         setGroups(sorted);
       } catch (err) {
-        console.error('🔥 인기 모임 불러오기 실패:', err);
+        console.error('인기 모임 불러오기 실패:', err);
       } finally {
         setLoading(false);
       }
@@ -96,13 +97,13 @@ export default function PopularGroupsSection() {
       <div className="mx-auto w-[1024px]">
         <header className="pt-[76px] pb-[22px]">
           <h2 id="popular-groups-heading" className="font-semibold text-lg">
-            Mo:ri 가 엄선한 인기모임!
+            지금 가장 주목받는 HOT한 모임
           </h2>
           <div className="mr-4">
             <div className="flex items-center gap-4">
-              <p className="font-semibold text-xxl">지금 바로 확인하세요!</p>
+              <p className="font-semibold text-xxl">지금 바로 함께하세요!</p>
               <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
-                <img src={Plus} alt="" aria-hidden="true" />
+                <img src="/public/images/plus.svg" alt="" aria-hidden="true" />
                 <span className="text-md">더보기</span>
               </Link>
             </div>
@@ -111,9 +112,15 @@ export default function PopularGroupsSection() {
 
         <div className="">
           {loading ? (
-            <p>로딩 중...</p>
+            <LoadingSpinner />
           ) : groups.length === 0 ? (
-            <p>표시할 그룹이 없습니다.</p>
+            <div className="flex items-center justify-center pb-14 pt-14 gap-10 shadow-card rounded-sm bg-white">
+              <img src="/images/popstar.svg" alt="모임 없음" className="w-[350px]" />
+              <div className="text-center">
+                <b className="text-xl">현재 주목받는 모임이 없습니다.</b>
+                <p className="pt-2 text-lg">더보기를 눌러 마음에 드는 모임을 추가해보세요!</p>
+              </div>
+            </div>
           ) : (
             <SwiperGroupCard loop={false} spaceBetween={12} groups={groups} />
           )}

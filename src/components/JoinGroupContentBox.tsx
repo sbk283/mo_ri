@@ -86,8 +86,15 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
         {Array.from({ length: 3 }).map((_, i) => (
           <div
             key={i}
-            className="w-[1024px] h-[123px] border rounded-[5px] border-[#e5e7eb] p-[10px] relative flex animate-pulse"
-          />
+            className="w-[1024px] h-[123px] border rounded-[5px] border-[#f5f5f7] p-[10px] relative flex animate-pulse"
+          >
+            <div className="w-[150px] h-[96px] rounded-[5px] bg-gray-100" />
+            <div className="px-4 flex-1">
+              <div className="h-4 w-2/3 bg-gray-100 rounded mt-2" />
+              <div className="h-4 w-1/2 bg-gray-100 rounded mt-3" />
+              <div className="h-3 w-1/3 bg-gray-100 rounded mt-4" />
+            </div>
+          </div>
         ))}
       </div>
     );

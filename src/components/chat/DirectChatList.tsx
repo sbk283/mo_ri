@@ -93,14 +93,11 @@ function DirectChatList() {
 
   // 실제 나가기 처리
   const handleConfirmLeave = async () => {
-    if (!currentChat || !user?.id) return;
+    if (!currentChat?.chat_id) return;
     try {
-      const { error } = await supabase
-        .from('direct_participants')
-        .update({ left_at: new Date().toISOString() })
-        .eq('chat_id', currentChat.chat_id)
-        .eq('user_id', user.id);
-
+      const { error } = await supabase.rpc('leave_direct_chat', {
+        p_chat_id: currentChat.chat_id,
+      });
       if (error) throw error;
 
       setIsLeaveModalOpen(false);

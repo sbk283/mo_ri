@@ -1,9 +1,11 @@
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/swiper-bundle.css';
+// import 'swiper/swiper-bundle.css';
 import GroupCard from './GroupCard';
 import type { GroupWithCategory } from '../../types/group';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import LoadingSpinner from './LoadingSpinner';
 
 type BannerCardSwiperProps = {
   groups: GroupWithCategory[];
@@ -22,6 +24,75 @@ function BannerCardSwiper({
 }: BannerCardSwiperProps) {
   const swiperRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [fetchedGroups, setFetchedGroups] = useState<GroupWithCategory[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchHotGroups = async () => {
+      try {
+        //  모집 중인 그룹 불러오기
+        const { data: recruitingGroups, error: groupError } = await supabase
+          .from('groups')
+          .select(
+            `
+            *,
+            categories_major(category_major_name),
+            categories_sub(category_sub_name)
+          `,
+          )
+          .eq('status', 'recruiting')
+          .eq('approved', true);
+
+        if (groupError) throw groupError;
+
+        //  찜 목록 가져오기 (favorite = true 인 것만)
+        const { data: favData, error: favError } = await supabase
+          .from('group_favorites')
+          .select('group_id')
+          .eq('favorite', true);
+
+        if (favError) throw favError;
+
+        //  group_id별 찜 수 계산
+        const favCountMap = favData.reduce(
+          (acc, cur) => {
+            acc[cur.group_id] = (acc[cur.group_id] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>,
+        );
+
+        //  그룹 데이터에 favorite_count 추가
+        const merged = recruitingGroups.map(g => ({
+          ...g,
+          favorite_count: favCountMap[g.group_id] || 0,
+        }));
+
+        // 찜 개수 기준으로 정렬 후 상위 10개만
+        const sorted = merged.sort((a, b) => b.favorite_count - a.favorite_count).slice(0, 10);
+
+        setFetchedGroups(sorted);
+      } catch (err) {
+        console.error('🔥 인기 모임 불러오기 실패:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHotGroups();
+  }, []);
+
+  //  오늘 날짜 기준으로 마감일이 지난 그룹 제외
+  const filteredGroups = useMemo(() => {
+    const today = new Date();
+    return groups.filter(group => {
+      // end_date 없으면 표시
+      if (!group.group_end_day) return true;
+      const end = new Date(group.group_end_day);
+      // end가 오늘 이후거나 오늘이면 표시
+      return end >= new Date(today.setHours(0, 0, 0, 0));
+    });
+  }, [groups]);
 
   const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
     () => ({
@@ -34,11 +105,27 @@ function BannerCardSwiper({
     [spaceBetween],
   );
 
-  if (!groups || groups.length === 0) return null;
+  // if (!filteredGroups || filteredGroups.length === 0) return null;
 
   const bps = breakpoints ?? defaultBps;
-  const visibleGroups = groups.slice(0, 8);
+  const visibleGroups = filteredGroups.slice(0, 8);
   const slidesPerView = swiperRef.current?.params?.slidesPerView || 4;
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!filteredGroups || filteredGroups.length === 0) {
+    return (
+      <div className="flex items-center justify-center pb-10 pt-10 gap-10 border border-gray-300 rounded-sm mb-[64px]">
+        <img src="/images/hotgroup.svg" alt="모임 없음" className="w-[300px]" />
+        <div className="text-center">
+          <b className="text-lg">현재 해당 카테고리에 등록된 모임이 없습니다</b>
+          <p className="pt-1 text-md">새로운 모임을 만들고 회원들과 활동을 시작해보세요!</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={['relative w-[1024px] mx-auto', className].join(' ')}>

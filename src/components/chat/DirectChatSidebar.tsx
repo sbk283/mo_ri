@@ -42,29 +42,12 @@ function DirectChatSidebar({ onSelect, groupId }: ChatSidebarProps) {
     } = await supabase.auth.getUser();
     if (!user?.id) return;
 
-    // 현재 유저 나가기 처리
-    await supabase
-      .from('direct_participants')
-      .update({ left_at: new Date().toISOString() })
-      .eq('chat_id', targetChatId)
-      .eq('user_id', user.id);
-
-    // 남은 사람 있는지 확인
-    const { data: remaining } = await supabase
-      .from('direct_participants')
-      .select('user_id')
-      .eq('chat_id', targetChatId)
-      .is('left_at', null);
-
-    // 아무도 안 남았으면 전체 삭제
-    if (!remaining || remaining.length === 0) {
-      console.log('모든 참가자가 나감 → 방 삭제');
-      await supabase.from('direct_messages').delete().eq('chat_id', targetChatId);
-      await supabase.from('direct_participants').delete().eq('chat_id', targetChatId);
-      await supabase.from('direct_chats').delete().eq('chat_id', targetChatId);
+    const { error } = await supabase.rpc('leave_direct_chat', { p_chat_id: targetChatId });
+    if (error) {
+      console.error('채팅방 나가기 실패:', error.message);
+    } else {
+      console.log(`${user.id} 사용자 채팅방 ${targetChatId} 나가기 완료`);
     }
-
-    console.log(`${user.id} 사용자 채팅방 ${targetChatId} 나가기 완료`);
 
     setLeaveModalOpen(false);
     setSuccessModalOpen(true);

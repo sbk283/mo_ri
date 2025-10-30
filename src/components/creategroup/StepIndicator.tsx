@@ -15,14 +15,14 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
           {/* 번호 + 라벨 */}
           <div
             className={`flex items-center gap-2 font-bold text-[20px] ${
-              currentStep === step.id ? 'text-brand' : 'text-brand-light'
+              currentStep === step.id ? 'text-brand' : 'text-brand'
             }`}
           >
             <span
               className={`flex items-center justify-center w-[62px] h-[39px] rounded-sm ${
                 currentStep === step.id
                   ? 'bg-brand text-white'
-                  : 'border-brand-light border text-brand-light'
+                  : 'border-brand border text-brand'
               }`}
             >
               {String(step.id).padStart(2, '0')}_

@@ -125,7 +125,7 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
         isOpen={open}
         onClose={() => setOpen(false)}
         title="🎉 모임이 등록되었습니다!"
-        message="이제 모임이 리스트에 바로 표시됩니다."
+        message="관리자 승인 후 모임 리스트에 표시됩니다."
         actions={[
           {
             label: '모임 리스트로 이동',

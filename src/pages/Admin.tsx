@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import PendingGroupsList from '../admin/PendingGroupsList';
 import { AnimatePresence, motion } from 'framer-motion';
+import AdminInquiryList from '../admin/AdminInquiryList';
 
 function Admin() {
   const tabs = useMemo(
@@ -15,7 +16,11 @@ function Admin() {
       },
       {
         label: '문의 내역 목록',
-        content: <div>문의내역 컴포넌트 작성 예정</div>,
+        content: (
+          <div>
+            <AdminInquiryList />
+          </div>
+        ),
       },
       {
         label: '회원 탈퇴 목록',
@@ -25,7 +30,16 @@ function Admin() {
     [],
   );
 
-  const [selectedTab, setSelectedTab] = useState(tabs[0]);
+  const [selectedTab, setSelectedTab] = useState(() => {
+    const saved = localStorage.getItem('adminSelectedTab');
+    return tabs.find(tab => tab.label === saved) || tabs[0];
+  });
+
+  // 탭 선택후 새로고침 하면 돌아가는거 방지
+  const handleTabClick = (tab: (typeof tabs)[0]) => {
+    setSelectedTab(tab);
+    localStorage.setItem('adminSelectedTab', tab.label);
+  };
 
   // underline 위치/너비 측정용
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -62,7 +76,7 @@ function Admin() {
                 key={tab.label}
                 ref={el => (tabRefs.current[i] = el)}
                 className={`cursor-pointer pt-1 ${tab.label === selectedTab.label ? 'text-brand text-lg font-bold' : 'text-gray-400 text-lg font-medium hover:text-brand'}`}
-                onClick={() => setSelectedTab(tab)}
+                onClick={() => handleTabClick(tab)}
               >
                 {tab.label}
               </li>

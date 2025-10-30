@@ -303,6 +303,26 @@ body,
   content: '' !important;
 }
 
+.swiper-button-prev-modal,
+.swiper-button-next-modal {
+  border: 1px solid #e5e5e5;
+  background: #fff;
+  box-shadow: 0 2px 8.8px 0 rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.swiper-button-next-modal:hover,
+.swiper-button-prev-modal:hover {
+  background: #f5f5f5;
+}
+
+.swiper-button-next-modal::after,
+.swiper-button-prev-modal::after {
+  content: '' !important;
+}
+
 /* 서비스소개페이지 스와이퍼 */
 .mySwiperServiceIt .swiper-slide {
   width: 500px !important;

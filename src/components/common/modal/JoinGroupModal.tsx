@@ -29,6 +29,57 @@ function JoinGroupModal({ isOpen, onClose, onSubmit, group }: JoinGroupModalProp
     if (!isOpen) setIntro('');
   }, [isOpen]);
 
+  // 지금 포커스가 "텍스트 입력 필드"인지 즉시 검사하는 헬퍼
+  // const isTextEditing = () => {
+  //   const el = document.activeElement as HTMLElement | null;
+  //   if (!el) return false;
+  //   const tag = el.tagName;
+  //   // input[type] 추출
+  //   const type = (el as HTMLInputElement).type?.toLowerCase?.() ?? '';
+  //   const isEditableInput =
+  //     tag === 'INPUT' &&
+  //     !['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'color', 'file'].includes(type);
+  //   const isTextarea = tag === 'TEXTAREA';
+  //   const isContentEditable = (el as any).isContentEditable === true;
+  //   const disabled = (el as HTMLInputElement).disabled || (el as HTMLInputElement).readOnly;
+  //   return (isEditableInput || isTextarea || isContentEditable) && !disabled;
+  // };
+
+  // Enter = 참가하기 (단, 텍스트 입력 중/IME 조합 중이면 무시), Esc = 닫기
+  // useEffect(() => {
+  //   if (!isOpen) return;
+  //   const onKey = (e: KeyboardEvent) => {
+  //     // 한글 입력(IME) 조합 중이면 무시
+  //     // @ts-ignore 일부 브라우저는 isComposing 지원
+  //     if ((e as any).isComposing) return;
+
+  //     if (e.key === 'Enter') {
+  //       // textarea/input 등에서 입력 중일 땐 줄바꿈/기본 동작 유지
+  //       if (isTextEditing()) return;
+  //       e.preventDefault();
+  //       onSubmit(intro);
+  //     }
+  //     if (e.key === 'Escape') {
+  //       e.preventDefault();
+  //       onClose();
+  //     }
+  //   };
+  //   window.addEventListener('keydown', onKey);
+  //   return () => window.removeEventListener('keydown', onKey);
+  // }, [isOpen, intro, onSubmit, onClose]);
+
+  // 윗부분 주석 푸실때 이 아래는 주석처리 하심됩니다. esc로 닫기.
+  useEffect(() => {
+    const onkey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onkey);
+    return () => window.removeEventListener('keydown', onkey);
+  }, [onClose]);
+
   if (!isOpen) return null;
 
   return (

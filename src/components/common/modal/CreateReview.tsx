@@ -156,11 +156,15 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
     );
   };
 
+  // ======= 의미 있는 입력(공백 외 문자) 검증 =======
+  const hasMeaningfulText = (s: string) => /\S/.test(s);
+
   const handleSubmit = async () => {
-    if (!content.trim()) {
+    if (!hasMeaningfulText(content)) {
       setErrMsg('후기 내용을 입력해주세요.');
       return;
     }
+    if (submitting || successOpen) return;
     setSubmitting(true);
     setErrMsg(null);
 
@@ -191,16 +195,12 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
         if (tagErr) throw tagErr;
       }
 
-      // 성공 모달 표시 → 1.2s 후 자동 닫힘 + 상위 콜백 + 모달 닫기
+      // 성공 모달 표시 → 2s 후 자동 닫힘 + 상위 콜백 + 모달 닫기
       setSuccessOpen(true);
       successTimerRef.current = window.setTimeout(() => {
-        // 성공 모달 닫기
         setSuccessOpen(false);
-        // 상위 알림
         onSuccess?.({ review_id });
-        // 작성 모달 닫기
         onClose();
-        // 폼 리셋
         setRating(5);
         setContent('');
         setSelectedCodes([]);
@@ -213,6 +213,45 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
     }
   };
 
+  // ======= 포커스가 입력이 아닐 때 Enter → 저장, ESC → 닫기 =======
+  const isEditableElement = (el: Element | null | undefined) => {
+    if (!el) return false;
+    const tag = (el as HTMLElement).tagName?.toLowerCase() ?? '';
+    const editable = (el as HTMLElement).isContentEditable === true;
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || editable;
+  };
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!open) return;
+
+      if (e.key === 'Escape') {
+        if (successOpen) return; // 성공 모달 떠 있으면 무시
+        e.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (e.key === 'Enter') {
+        // @ts-ignore: 일부 브라우저에서 isComposing 존재
+        if ((e as any).isComposing) return;
+        if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+
+        const active = document.activeElement as HTMLElement | null;
+        if (isEditableElement(active)) return; // 입력 포커스면 무시
+        if (submitting || successOpen) return;
+
+        e.preventDefault();
+        handleSubmit();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, submitting, successOpen, content]);
+
   const groupTitle = groupInfo?.group_title ?? '(제목 없음)';
   const categoryName = groupInfo?.categories_major?.category_major_name ?? '기타';
 
@@ -223,7 +262,6 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
         isOpen={successOpen}
         message="등록이 완료되었습니다!"
         onClose={() => {
-          // 사용자가 직접 닫았을 때도 동일 처리
           if (successTimerRef.current) {
             window.clearTimeout(successTimerRef.current);
             successTimerRef.current = null;
@@ -294,7 +332,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
                 {/* 해시태그 선택 */}
                 <div className="my-6">
-                  <label className="block text-sm font-semibold mb-3">해시태그 선택</label>
+                  <label className="block text.sm font-semibold mb-3">해시태그 선택</label>
                   <div className="flex flex-wrap gap-3">
                     {tagDict.length === 0 ? (
                       <p className="text-gray-400 text-sm">태그를 불러오는 중...</p>

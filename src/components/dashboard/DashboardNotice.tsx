@@ -410,7 +410,7 @@ export function DashboardNotice({
 
                       {!isHost && (
                         <span
-                          className={`w-[50px] h-[25px] rounded-full font-semibold text-white text-sm flex items-center justify-center mr-7 leading-none ${
+                          className={`w-[50px] py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center mr-7 leading-4 ${
                             n.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
                           }`}
                         >
@@ -456,7 +456,7 @@ export function DashboardNotice({
                   <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>
                   {!isHost && (
                     <span
-                      className={`px-2 py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-2 ${
+                      className={`w-[50px] py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-4 ${
                         current?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
                       }`}
                     >

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Swiper as SwiperClass } from 'swiper';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/swiper-bundle.css';
+// import 'swiper/swiper-bundle.css';
 import ConfirmModal from '../modal/ConfirmModal';
 import JoinGroupModal from '../modal/JoinGroupModal';
 import ShareModal from '../modal/ShareModal';

@@ -133,7 +133,7 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white shadow-card">
+      <header className="fixed top-0 left-0 right-0 z-60 bg-white shadow-card">
         <div className="mx-auto flex w-[1024px] h-[70px] justify-between items-center py-4">
           {/* 로고 */}
           <Link to="/">

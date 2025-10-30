@@ -95,6 +95,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     exit: { x: '100%', transition: { duration: 0.3, ease: 'easeIn' } },
   };
 
+  // 2025-10-30 알림에서 채팅으로 진입 시 URL에 chatId를 두 번째 파라미터로 전달
   // 채팅방으로 이동하는 함수
   const handleNavigateChat = (groupId: string, chatId: string): void => {
     navigate(`/chat/${groupId}/${chatId}`);

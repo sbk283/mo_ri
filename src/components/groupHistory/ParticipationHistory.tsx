@@ -28,8 +28,10 @@ const ParticipationHistory = forwardRef<{ selectAll: () => void }, Participation
         setLoading(true);
         try {
           const groups = await fetchUserGroups(user.id);
+          const approvedGroups = groups.filter(g => g.approved === true);
+
           // isChecked 필드 추가
-          const groupsWithCheck = groups.map(g => ({ ...g, isChecked: false }));
+          const groupsWithCheck = approvedGroups.map(g => ({ ...g, isChecked: false }));
           setGroupItems(groupsWithCheck);
         } catch (err) {
           console.error('참여 모임 불러오기 실패:', err);

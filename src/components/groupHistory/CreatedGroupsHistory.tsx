@@ -30,10 +30,13 @@ const CreatedGroupsHistory = forwardRef<{ selectAll: () => void }, CreatedGroups
           // ParticipationHistory와 동일한 로직 사용
           const allGroups = await fetchUserGroups(user.id);
 
-          // created_by가 본인인 모임만 필터링
-          const createdGroups = allGroups.filter(g => g.created_by === user.id);
-
-          const groupsWithCheck = createdGroups.map(g => ({ ...g, isChecked: false }));
+          // // created_by가 본인인 모임만 필터링
+          // const createdGroups = allGroups.filter(g => g.created_by === user.id);
+          // created_by가 본인 & approved = true인 모임만 필터링
+          const createdApprovedGroups = allGroups.filter(
+            g => g.created_by === user.id && g.approved === true,
+          );
+          const groupsWithCheck = createdApprovedGroups.map(g => ({ ...g, isChecked: false }));
           setGroupItems(groupsWithCheck);
         } catch (err) {
           console.error('생성한 모임 불러오기 실패:', err);

@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import LoadingSpinner from './LoadingSpinner';
 
 type BannerCardSwiperProps = {
-  // groups: GroupWithCategory[];
+  groups: GroupWithCategory[];
   spaceBetween?: number;
   breakpoints?: NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>;
   loop?: boolean;
@@ -16,7 +16,7 @@ type BannerCardSwiperProps = {
 };
 
 function BannerCardSwiper({
-  // groups,
+  groups,
   spaceBetween = 12,
   loop = false,
   className = '',
@@ -24,7 +24,7 @@ function BannerCardSwiper({
 }: BannerCardSwiperProps) {
   const swiperRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [groups, setGroups] = useState<GroupWithCategory[]>([]);
+  const [fetchedGroups, setFetchedGroups] = useState<GroupWithCategory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +40,8 @@ function BannerCardSwiper({
             categories_sub(category_sub_name)
           `,
           )
-          .eq('status', 'recruiting');
+          .eq('status', 'recruiting')
+          .eq('approved', true);
 
         if (groupError) throw groupError;
 
@@ -70,7 +71,7 @@ function BannerCardSwiper({
         // 찜 개수 기준으로 정렬 후 상위 10개만
         const sorted = merged.sort((a, b) => b.favorite_count - a.favorite_count).slice(0, 10);
 
-        setGroups(sorted);
+        setFetchedGroups(sorted);
       } catch (err) {
         console.error('🔥 인기 모임 불러오기 실패:', err);
       } finally {

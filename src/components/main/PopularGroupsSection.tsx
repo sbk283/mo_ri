@@ -79,7 +79,7 @@ export default function PopularGroupsSection() {
 
         setGroups(sorted);
       } catch (err) {
-        console.error('🔥 인기 모임 불러오기 실패:', err);
+        console.error('인기 모임 불러오기 실패:', err);
       } finally {
         setLoading(false);
       }

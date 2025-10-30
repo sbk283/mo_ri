@@ -29,38 +29,52 @@ export const GroupProvider: React.FC<PropsWithChildren> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   // 그룹 목록 조회
-  const fetchGroups = useCallback(async (slug?: string) => {
+  const fetchGroups = useCallback(async (slug?: string): Promise<void> => {
     try {
       setLoading(true);
+      setError(null);
 
-      let query = supabase.from('groups').select(`
-  *,
-  categories_major:categories_major!inner (category_major_name, category_major_slug),
-  categories_sub:categories_sub!inner (category_sub_name, category_sub_slug)
-`);
+      // 기본 쿼리: 그룹 + 카테고리 조인 + 승인된 그룹만
+      let query = supabase
+        .from('groups')
+        .select(
+          `
+        *,
+        categories_major:categories_major!inner (category_major_name, category_major_slug),
+        categories_sub:categories_sub!inner (category_sub_name, category_sub_slug)
+      `,
+        )
+        .eq('approved', true); // 관리자 승인된 모임만 조회
 
+      // 카테고리별 필터 적용
       if (slug && slug !== 'all') {
         const korName = slugToCategoryMap[slug];
         if (korName) {
+          // 메인 카테고리 (운동/스터디/취미/봉사)
           if (['운동/건강', '스터디/학습', '취미/여가', '봉사/사회참여'].includes(korName)) {
             query = query.eq('categories_major.category_major_name', korName);
-          } else {
+          }
+          // 서브 카테고리
+          else {
             query = query.eq('categories_sub.category_sub_name', korName);
           }
         }
       }
 
+      // 최신순 정렬
       const { data, error } = await query.order('group_created_at', { ascending: false });
       if (error) throw error;
 
-      const mapped = (data ?? []).map(g => ({
+      // 데이터 매핑: 카테고리 정보 병합
+      const mapped: GroupWithCategory[] = (data ?? []).map(g => ({
         ...g,
         category_major_name: g.categories_major?.category_major_name ?? '카테고리 없음',
         category_sub_name: g.categories_sub?.category_sub_name ?? '',
       }));
 
+      // 상태 업데이트
       setGroups(mapped);
-    } catch (err: unknown) {
+    } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
         console.error('fetchGroups error:', err.message);

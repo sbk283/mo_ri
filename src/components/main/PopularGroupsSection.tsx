@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import Plus from '../../../public/images/plus.svg';
+// import Plus from '../../../public/images/plus.svg';
 import { supabase } from '../../lib/supabase';
 import type { groups } from '../../types/group';
 import SwiperGroupCard from '../common/SwiperGroupCard';
@@ -102,7 +102,7 @@ export default function PopularGroupsSection() {
             <div className="flex items-center gap-4">
               <p className="font-semibold text-xxl">지금 바로 확인하세요!</p>
               <Link to="/grouplist" className="flex text-sm gap-1 pb-auto items-center">
-                <img src={Plus} alt="" aria-hidden="true" />
+                <img src="/public/images/plus.svg" alt="" aria-hidden="true" />
                 <span className="text-md">더보기</span>
               </Link>
             </div>

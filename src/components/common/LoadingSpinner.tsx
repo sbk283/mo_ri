@@ -1,4 +1,4 @@
-// components/common/LoadingSpinner.tsx
+// 로딩 스피너
 import { motion } from 'framer-motion';
 
 function LoadingSpinner() {

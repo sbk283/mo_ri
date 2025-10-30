@@ -10,7 +10,7 @@ import { homeBanners } from '../data/bannerData';
 function Index() {
   return (
     <div>
-      <MainModal banners={homeBanners} autoOpen={true} enableDoNotShowToday={false} />
+      <MainModal banners={homeBanners} autoOpen={true} enableDoNotShowToday={true} />
       <IntroSection />
       <CategorySection />
       <PopularGroupsSection />

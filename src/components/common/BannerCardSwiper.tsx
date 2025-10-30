@@ -1,6 +1,6 @@
 import { Navigation } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/swiper-bundle.css';
+// import 'swiper/swiper-bundle.css';
 import GroupCard from './GroupCard';
 import type { GroupWithCategory } from '../../types/group';
 import { useMemo, useRef, useState } from 'react';

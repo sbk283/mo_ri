@@ -12,6 +12,7 @@ interface ChatItemProps {
   lastMessage?: string | null;
   isActive?: boolean;
   isHost?: boolean;
+  unreadCount?: number;
   onClick: (chatId: string) => void;
 
   // 드롭다운 이벤트 핸들러
@@ -36,7 +37,7 @@ export default function ChatItem({
   const [menuOpen, setMenuOpen] = useState(false);
   const avatar = partnerAvatar && partnerAvatar.trim() !== '' ? partnerAvatar : DEFAULT_AVATAR;
 
-  // 🔔 unreadCount 전역 상태 연결
+  // unreadCount 전역 상태 연결
   const { unreadCounts } = useDirectChat();
   const unreadCount = unreadCounts[chatId] ?? 0;
 

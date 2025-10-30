@@ -9,6 +9,7 @@ import LoadingSpinner from './LoadingSpinner';
 
 type BannerCardSwiperProps = {
   groups: GroupWithCategory[];
+  loading: boolean;
   spaceBetween?: number;
   breakpoints?: NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>;
   loop?: boolean;
@@ -17,6 +18,7 @@ type BannerCardSwiperProps = {
 
 function BannerCardSwiper({
   groups,
+  loading,
   spaceBetween = 12,
   loop = false,
   className = '',
@@ -24,28 +26,16 @@ function BannerCardSwiper({
 }: BannerCardSwiperProps) {
   const swiperRef = useRef<any>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [fetchedGroups, setFetchedGroups] = useState<GroupWithCategory[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [hotGroups, setHotGroups] = useState<GroupWithCategory[]>([]);
+  const [fetching, setFetching] = useState(true);
 
+  // 찜 수 fetch + 병합 + 상위 8개 정렬
   useEffect(() => {
-    const fetchHotGroups = async () => {
+    const fetchFavorites = async () => {
       try {
-        //  모집 중인 그룹 불러오기
-        const { data: recruitingGroups, error: groupError } = await supabase
-          .from('groups')
-          .select(
-            `
-            *,
-            categories_major(category_major_name),
-            categories_sub(category_sub_name)
-          `,
-          )
-          .eq('status', 'recruiting')
-          .eq('approved', true);
+        setFetching(true);
 
-        if (groupError) throw groupError;
-
-        //  찜 목록 가져오기 (favorite = true 인 것만)
+        // favorite = true 데이터만
         const { data: favData, error: favError } = await supabase
           .from('group_favorites')
           .select('group_id')
@@ -53,7 +43,7 @@ function BannerCardSwiper({
 
         if (favError) throw favError;
 
-        //  group_id별 찜 수 계산
+        // group_id별 찜 수 계산
         const favCountMap = favData.reduce(
           (acc, cur) => {
             acc[cur.group_id] = (acc[cur.group_id] || 0) + 1;
@@ -62,37 +52,40 @@ function BannerCardSwiper({
           {} as Record<string, number>,
         );
 
-        //  그룹 데이터에 favorite_count 추가
-        const merged = recruitingGroups.map(g => ({
+        // 그룹에 favorite_count 추가
+        const merged = groups.map(g => ({
           ...g,
           favorite_count: favCountMap[g.group_id] || 0,
         }));
 
-        // 찜 개수 기준으로 정렬 후 상위 10개만
-        const sorted = merged.sort((a, b) => b.favorite_count - a.favorite_count).slice(0, 10);
+        // 찜 수 기준 내림차순 정렬 + 상위 8개
+        const sorted = merged
+          .sort((a, b) => (b.favorite_count || 0) - (a.favorite_count || 0))
+          .slice(0, 8);
 
-        setFetchedGroups(sorted);
+        setHotGroups(sorted);
       } catch (err) {
         console.error('🔥 인기 모임 불러오기 실패:', err);
+        setHotGroups(groups.slice(0, 8)); // 실패 시 그냥 props에서 상위 8개
       } finally {
-        setLoading(false);
+        setFetching(false);
       }
     };
 
-    fetchHotGroups();
-  }, []);
+    if (groups.length > 0) fetchFavorites();
+  }, [groups]);
 
   //  오늘 날짜 기준으로 마감일이 지난 그룹 제외
   const filteredGroups = useMemo(() => {
     const today = new Date();
-    return groups.filter(group => {
+    return (hotGroups ?? []).filter(group => {
       // end_date 없으면 표시
       if (!group.group_end_day) return true;
       const end = new Date(group.group_end_day);
       // end가 오늘 이후거나 오늘이면 표시
       return end >= new Date(today.setHours(0, 0, 0, 0));
     });
-  }, [groups]);
+  }, [hotGroups]);
 
   const defaultBps = useMemo<NonNullable<React.ComponentProps<typeof Swiper>['breakpoints']>>(
     () => ({
@@ -105,17 +98,13 @@ function BannerCardSwiper({
     [spaceBetween],
   );
 
-  // if (!filteredGroups || filteredGroups.length === 0) return null;
-
   const bps = breakpoints ?? defaultBps;
   const visibleGroups = filteredGroups.slice(0, 8);
   const slidesPerView = swiperRef.current?.params?.slidesPerView || 4;
 
-  if (loading) {
-    return <LoadingSpinner />;
-  }
+  if (loading || fetching) return <LoadingSpinner />;
 
-  if (!filteredGroups || filteredGroups.length === 0) {
+  if (!visibleGroups || visibleGroups.length === 0) {
     return (
       <div className="flex items-center justify-center pb-10 pt-10 gap-10 border border-gray-300 rounded-sm mb-[64px]">
         <img src="/images/hotgroup.svg" alt="모임 없음" className="w-[300px]" />

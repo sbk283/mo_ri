@@ -20,6 +20,7 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
   const [selectedSort, setSelectedSort] = useState('최신순');
   const { groups, loading, fetchGroups } = useGroup();
   const { fetchMemberCount } = useGroupMember();
+
   // 검색
   const [searchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
@@ -111,7 +112,7 @@ function GroupListLayout({ mainCategory, activeCategory, slug }: GroupListLayout
             {/* 중앙 Swiper */}
             <section className="mb-12 w-[1024px]">
               <h2 className="text-lg font-bold mb-4">해당 카테고리의 인기있는 TOP8</h2>
-              <BannerCardSwiper />
+              <BannerCardSwiper groups={groups} loading={loading} />
             </section>
 
             {/* 리스트 */}

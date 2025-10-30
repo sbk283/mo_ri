@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -68,8 +68,6 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
-  const prevRef = useRef(null);
-  const nextRef = useRef(null);
 
   useEffect(() => {
     if (autoOpen) {
@@ -142,8 +140,8 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
             spaceBetween={0}
             slidesPerView={1}
             navigation={{
-              nextEl: '.swiper-button-next-modal',
-              prevEl: '.swiper-button-prev-modal',
+              nextEl: '.swiper-button-next',
+              prevEl: '.swiper-button-prev',
             }}
             pagination={{
               clickable: true,
@@ -169,34 +167,24 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
                     alt={banner.title || `배너 ${banner.id}`}
                     className="w-full h-full object-cover"
                   />
-                  {(banner.title || banner.description) && (
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/60 to-transparent p-6 pt-10 text-white">
-                      {banner.title && (
-                        <h3 className="text-xl font-bold mb-2 drop-shadow-lg">{banner.title}</h3>
-                      )}
-                      {banner.description && (
-                        <p className="text-sm opacity-95 drop-shadow-md">{banner.description}</p>
-                      )}
-                    </div>
-                  )}
                 </div>
               </SwiperSlide>
             ))}
           </Swiper>
 
           {/* 네비게이션 버튼 */}
-          <div
-            ref={prevRef}
-            className="swiper-button-prev-modal !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110"
-          >
-            <img className="translate-x-[-2px]" src="/images/left_arrow.svg" alt="prev" />
-          </div>
-          <div
-            ref={nextRef}
-            className="swiper-button-next-modal !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110"
-          >
-            <img className="rotate-180 translate-x-[2px]" src="/images/left_arrow.svg" alt="next" />
-          </div>
+          {/* <div className="relative -top-1/2">
+            <div className="swiper-button-prev ab  !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+              <img className="translate-x-[-2px]" src="/images/left_arrow.svg" alt="prev" />
+            </div>
+            <div className="swiper-button-next !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+              <img
+                className="rotate-180 translate-x-[2px]"
+                src="/images/left_arrow.svg"
+                alt="next"
+              />
+            </div>
+          </div> */}
 
           {/* 슬라이드 카운터 */}
           {showCounter && (
@@ -211,7 +199,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
           <div className="w-full h-[50px] bg-gray-100 flex items-center justify-center border-t border-gray-200 flex-shrink-0">
             <button
               onClick={() => handleClose(true)}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 transition-all hover:bg-black/5 rounded-md active:scale-98"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 transition-all rounded-md active:scale-98"
             >
               오늘 하루 보지 않기
             </button>

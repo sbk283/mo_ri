@@ -1,6 +1,4 @@
-// 공유하기 모달
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -11,24 +9,41 @@ interface ShareModalProps {
 function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
 
+  // ESC 키로 닫기
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
     } catch (err) {
       console.error('링크 복사 실패:', err);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      onClick={onClose} // 바깥 클릭 시 닫기
+    >
       {/* 배경 */}
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40" />
 
       {/* 모달 */}
-      <div className="relative z-10 w-[420px] rounded-xl bg-white p-6 shadow-lg">
+      <div
+        className="relative z-10 w-[420px] rounded-xl bg-white p-6 shadow-lg"
+        onClick={e => e.stopPropagation()} // 모달 내부 클릭은 닫기 방지
+      >
         <h2 className="mb-4 text-xl font-bold">공유하기</h2>
 
         {/* 링크 영역 */}

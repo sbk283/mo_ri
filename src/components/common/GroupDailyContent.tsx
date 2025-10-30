@@ -661,11 +661,11 @@ export default function GroupDailyContent({
                   <div className="flex items-center gap-1">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      fill={liked ? 'currentColor' : 'none'}
+                      fill="#6c6c6c"
                       viewBox="0 0 24 24"
                       strokeWidth="1.5"
                       stroke="currentColor"
-                      className="w-[15px] h-[15px] mb-1"
+                      className="w-[15px] h-[15px]"
                     >
                       <path
                         strokeLinecap="round"
@@ -889,11 +889,11 @@ export default function GroupDailyContent({
                           <div className="flex items-center gap-1 text-sm text-[#8c8c8c] justify-center">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              fill={liked ? 'currentColor' : 'none'}
+                              fill="#6c6c6c"
                               viewBox="0 0 24 24"
                               strokeWidth="1.5"
                               stroke="currentColor"
-                              className="w-[13px] h-[13px] mb-1"
+                              className="w-[13px] h-[13px]"
                             >
                               <path
                                 strokeLinecap="round"

@@ -1,4 +1,4 @@
-// 일정 등록/수정 모달
+import { useEffect } from 'react';
 import { Modal, DatePicker, TimePicker, Input, Checkbox, Button } from 'antd';
 import { Dayjs } from 'dayjs';
 
@@ -31,6 +31,27 @@ function ScheduleModal({
   titleText = '일정을 등록해 주세요.',
   submitText = '확인',
 }: ScheduleModalProps) {
+  // 키보드 이벤트 등록 (Enter → 등록, ESC → 취소)
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onCancel();
+      } else if (e.key === 'Enter') {
+        // Input이나 textarea에서 기본 submit 방지
+        const target = e.target as HTMLElement;
+        const tag = target.tagName.toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea') {
+          e.preventDefault();
+          onSubmit();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, onCancel, onSubmit]);
+
   return (
     <Modal
       open={open}

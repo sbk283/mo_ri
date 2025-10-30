@@ -5,6 +5,7 @@ import GroupPagination from '../common/GroupPagination';
 import { supabase } from '../../lib/supabase';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
 import type { Notice } from '../../types/notice';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 const ITEMS_PER_PAGE = 10;
 const BUCKET = 'group-post-images';
@@ -97,7 +98,6 @@ export function DashboardNotice({
   const [loading, setLoading] = useState(true);
   const [myUserId, setMyUserId] = useState<string | null>(null);
 
-  // 호스트 여부
   useEffect(() => {
     let ignore = false;
     (async () => {
@@ -120,16 +120,15 @@ export function DashboardNotice({
     };
   }, [groupId]);
 
-  // 작성 트리거
   useEffect(() => {
     if (createRequestKey > prevKey.current && isHost) setCreating(true);
     prevKey.current = createRequestKey;
   }, [createRequestKey, isHost]);
+
   useEffect(() => {
     onCraftingChange?.(creating);
   }, [creating, onCraftingChange]);
 
-  // 목록 불러오기(읽음/조회수 포함) — 좋아요 로직 제거
   const reload = async (): Promise<NoticeRow[]> => {
     if (!groupId) return [];
     setLoading(true);
@@ -146,7 +145,6 @@ export function DashboardNotice({
         .order('post_created_at', { ascending: false });
       if (postsErr) throw postsErr;
 
-      // 읽음
       let readSet = new Set<string>();
       if (userId && posts?.length) {
         const ids = posts.map(p => p.post_id);
@@ -183,7 +181,6 @@ export function DashboardNotice({
     void reload();
   }, [groupId, boardType]);
 
-  // 페이지네이션
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [items.length]);
   const totalPages = useMemo(
@@ -195,7 +192,6 @@ export function DashboardNotice({
     return items.slice(start, start + ITEMS_PER_PAGE);
   }, [page, items]);
 
-  // 상세
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
 
@@ -217,7 +213,6 @@ export function DashboardNotice({
         );
       const { data: inserted, error: insErr } = await base.select('post_id');
       if (!wasRead && inserted && inserted.length > 0) {
-        // 읽음으로 바꾸면서 조회수 +1
         setItems(prev =>
           prev.map((cur, i) =>
             i === idx ? { ...cur, isRead: true, views: (cur.views ?? 0) + 1 } : cur,
@@ -226,11 +221,7 @@ export function DashboardNotice({
       } else {
         setItems(prev => prev.map((cur, i) => (i === idx ? { ...cur, isRead: true } : cur)));
       }
-      if (
-        insErr && // @ts-ignore
-        insErr.code !== '23505'
-      )
-        console.error('insert read error', insErr);
+      if (insErr && (insErr as any).code !== '23505') console.error('insert read error', insErr);
     }
 
     setDetailIdx(idx);
@@ -244,7 +235,6 @@ export function DashboardNotice({
     setCreating(false);
   };
 
-  // 작성/수정/삭제 (좋아요 관련 제거)
   const handleCreateSave = async (next: Notice) => {
     if (!groupId || !isHost) return;
     const { data: u } = await supabase.auth.getUser();
@@ -291,11 +281,7 @@ export function DashboardNotice({
         { onConflict: 'post_id,user_id', ignoreDuplicates: true },
       );
     const { data: inserted, error: insErr } = await base.select('post_id');
-    if (
-      insErr && // @ts-ignore
-      insErr.code !== '23505'
-    )
-      console.error('insert read error', insErr);
+    if (insErr && (insErr as any).code !== '23505') console.error('insert read error', insErr);
 
     if (inserted && inserted.length > 0) {
       setItems(prev =>
@@ -362,7 +348,6 @@ export function DashboardNotice({
 
   const current = detailIdx != null ? items[detailIdx] : null;
 
-  // 렌더
   return (
     <div className="w-[975px] bg-white overflow-hidden">
       <AnimatePresence mode="wait">
@@ -389,7 +374,9 @@ export function DashboardNotice({
             transition={{ duration: 0.18 }}
           >
             {loading ? (
-              <div className="p-6 text-center text-gray-500">불러오는 중…</div>
+              <div className="py-16">
+                <LoadingSpinner />
+              </div>
             ) : items.length === 0 ? (
               <div className="p-6 text-center text-gray-500">등록된 공지가 없습니다.</div>
             ) : (
@@ -423,7 +410,7 @@ export function DashboardNotice({
 
                       {!isHost && (
                         <span
-                          className={`w-[50px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center mr-7 ${
+                          className={`w-[50px] h-[25px] rounded-full font-semibold text-white text-sm flex items-center justify-center mr-7 leading-none ${
                             n.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
                           }`}
                         >
@@ -433,6 +420,7 @@ export function DashboardNotice({
                     </div>
                   ))}
                 </div>
+                <hr className="border-0 border-b border-[#A3A3A3]" />
 
                 <GroupPagination page={page} totalPages={totalPages} onPageChange={setPage} />
               </>
@@ -468,7 +456,7 @@ export function DashboardNotice({
                   <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>
                   {!isHost && (
                     <span
-                      className={`w-[52px] h-[25px] rounded-full font-bold text-white text-sm flex items-center justify-center leading-none ${
+                      className={`px-2 py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-2 ${
                         current?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
                       }`}
                     >

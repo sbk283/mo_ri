@@ -1,6 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useRef } from 'react';
 
 export type ConfirmModalProps = {
   open: boolean;
@@ -11,7 +10,6 @@ export type ConfirmModalProps = {
   onConfirm: () => void;
   onClose: () => void;
   preventBackdropClose?: boolean;
-  portalTarget?: Element | null;
 };
 
 export default function ConfirmModal({
@@ -23,17 +21,16 @@ export default function ConfirmModal({
   onConfirm,
   onClose,
   preventBackdropClose = false,
-  portalTarget,
 }: ConfirmModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   // ESC 닫기
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
+      // 엔터 눌러서 찜 취소
+      if (e.key === 'Enter') onConfirm();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -84,11 +81,8 @@ export default function ConfirmModal({
   }, [open]);
 
   const ease = [0.22, 0.61, 0.36, 1] as const;
-  const portalEl =
-    portalTarget ??
-    (typeof document !== 'undefined' ? document.body : (null as unknown as Element));
 
-  const modalNode = (
+  return (
     <AnimatePresence>
       {open && (
         <motion.div
@@ -168,7 +162,4 @@ export default function ConfirmModal({
       )}
     </AnimatePresence>
   );
-
-  if (!mounted || !portalEl) return null;
-  return createPortal(modalNode, portalEl);
 }

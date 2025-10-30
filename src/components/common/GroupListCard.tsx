@@ -39,8 +39,7 @@ function GroupListCard({
   const currentCount =
     memberCounts[group_id] !== undefined ? memberCounts[group_id] : (member_count ?? 0);
 
-  useEffect(() => {
-  }, [memberCounts[group_id]]);
+  useEffect(() => {}, [memberCounts[group_id]]);
 
   // 최신 모임 인원
   useEffect(() => {
@@ -50,10 +49,7 @@ function GroupListCard({
     subscribeToGroup(group_id);
   }, [group_id, fetchMemberCount, subscribeToGroup]);
 
-  const mainImage =
-    image_urls && image_urls.length > 0
-      ? image_urls[0]
-      : '/nullbg.jpg';
+  const mainImage = image_urls && image_urls.length > 0 ? image_urls[0] : '/nullbg.jpg';
 
   const statusLabel = {
     recruiting: '모집중',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Modal from 'react-modal';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -68,6 +68,8 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const prevRef = useRef(null);
+  const nextRef = useRef(null);
 
   useEffect(() => {
     if (autoOpen) {
@@ -140,8 +142,8 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
             spaceBetween={0}
             slidesPerView={1}
             navigation={{
-              nextEl: '.swiper-button-next',
-              prevEl: '.swiper-button-prev',
+              nextEl: '.swiper-button-next-modal',
+              prevEl: '.swiper-button-prev-modal',
             }}
             pagination={{
               clickable: true,
@@ -183,19 +185,22 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
           </Swiper>
 
           {/* 네비게이션 버튼 */}
-          <div className="swiper-button-prev !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+          <div
+            ref={prevRef}
+            className="swiper-button-prev-modal !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110"
+          >
             <img className="translate-x-[-2px]" src="/images/left_arrow.svg" alt="prev" />
           </div>
-          <div className="swiper-button-next !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110">
+          <div
+            ref={nextRef}
+            className="swiper-button-next-modal !w-10 !h-10 !bg-white/90 hover:!bg-white rounded-full after:!text-lg !text-gray-800 after:!font-bold transition-all hover:scale-110"
+          >
             <img className="rotate-180 translate-x-[2px]" src="/images/left_arrow.svg" alt="next" />
           </div>
 
-          {/* Pagination - 하단 고정 */}
-          <div className="swiper-pagination !bottom-3" />
-
-          {/* 슬라이드 카운터 - 페이지네이션 위로 이동 */}
+          {/* 슬라이드 카운터 */}
           {showCounter && (
-            <div className="absolute bottom-9 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
               {currentSlide} / {banners.length}
             </div>
           )}

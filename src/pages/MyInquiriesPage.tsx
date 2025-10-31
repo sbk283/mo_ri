@@ -26,8 +26,9 @@ function MyInquiriesPage() {
 
   // 모달 상태
   const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'delete' | 'save' | 'cancel' | null>(null);
+  const [modalType, setModalType] = useState<'delete' | 'save' | 'cancel' | 'alert' | null>(null);
   const [targetId, setTargetId] = useState<string | null>(null);
+  const [modalMessage, setModalMessage] = useState('');
 
   // 문의 유형 선택
   const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
@@ -165,7 +166,25 @@ function MyInquiriesPage() {
     setEditInquiry(id);
   };
 
-  const handleSaveClick = () => openModal('save');
+  const handleSaveClick = () => {
+    //  문의 유형 유효성 검사 추가
+    if (!inquiryMajor) {
+      setModalType('alert');
+      setModalMessage('문의 유형(대분류)을 선택해주세요.');
+      setModalOpen(true);
+
+      return;
+    }
+    if (!inquirySub) {
+      setModalType('alert');
+      setModalMessage('문의 유형(중분류)을 선택해주세요.');
+      setModalOpen(true);
+
+      return;
+    }
+    // 모든 값이 있으면 모달 열기
+    openModal('save');
+  };
   const handleCancelClick = () => openModal('cancel');
   const handleDeleteClick = (id: string) => openModal('delete', id);
 
@@ -452,20 +471,26 @@ function MyInquiriesPage() {
               <ConfirmModal
                 open={modalOpen}
                 onClose={() => setModalOpen(false)}
-                onConfirm={handleConfirm}
+                onConfirm={modalType === 'alert' ? () => setModalOpen(false) : handleConfirm}
                 title={
                   modalType === 'delete'
                     ? '문의 내역을 삭제하시겠습니까?'
                     : modalType === 'save'
                       ? '수정 내용을 저장하시겠습니까?'
-                      : '수정을 취소하시겠습니까?'
+                      : modalType === 'cancel'
+                        ? '수정을 취소하시겠습니까?'
+                        : ''
                 }
                 message={
-                  modalType === 'delete'
-                    ? '삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?'
-                    : modalType === 'save'
-                      ? '수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?'
-                      : '변경된 내용이 사라집니다.\n정말 취소하시겠습니까?'
+                  modalType === 'alert'
+                    ? modalMessage
+                    : modalType === 'delete'
+                      ? '삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?'
+                      : modalType === 'save'
+                        ? '수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?'
+                        : modalType === 'cancel'
+                          ? '변경된 내용이 사라집니다.\n정말 취소하시겠습니까?'
+                          : ''
                 }
                 confirmText="확인"
                 cancelText="취소"

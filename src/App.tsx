@@ -31,12 +31,12 @@ import RefundPolicypage from './pages/policies/RefundPolicypage';
 import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
 import TermsPage from './pages/policies/TermsPage';
 import YouthPolicyPage from './pages/policies/YouthPolicyPage';
-import ReviewListPage from './pages/ReviewsListPage';
 import ServiceIntroducePage from './pages/ServiceIntroducePage';
 import SignUpPage from './pages/SignUpPage';
 import Admin from './pages/Admin';
 import AdminProtected from './components/AdminProtected';
 import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
+import ReviewsListPage from './pages/ReviewsListPage';
 
 // 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
 // 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
@@ -97,7 +97,7 @@ function App() {
               }
             />
             {/* 리뷰 더보기 리스트 페이지 */}
-            <Route path="/reviews" element={<ReviewListPage />} />
+            <Route path="/reviews" element={<ReviewsListPage />} />
             {/* 모임관리 > 후기리뷰 */}
             <Route
               path="/groupreviews"

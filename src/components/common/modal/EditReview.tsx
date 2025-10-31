@@ -86,7 +86,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="my-6">
                 <div className="flex items-center">
                   <label className="text-xl font-semibold mr-3 ">{review.title}</label>
-                  <span className="text-white bg-[#D83737] h-[28px] text-md px-2 py-1 rounded-sm">
+                  <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
                     {review.category}
                   </span>
                 </div>

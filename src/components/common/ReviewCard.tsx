@@ -1,12 +1,11 @@
 // src/components/common/ReviewCard.tsx
-import Colon from '../../../public/colon.svg';
 
 export type ReviewItem = {
   id: number;
   title: string;
   category: string;
   status: '진행중' | '종료';
-  src: string;
+  src: string; // ← 작성자 프로필 이미지 URL
   rating: 1 | 2 | 3 | 4 | 5;
   period: string;
   content: string;
@@ -27,7 +26,6 @@ export function ReviewCard({
 }) {
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
-    // 무한 루프 방지
     if (img.dataset.fallbackApplied) return;
     img.dataset.fallbackApplied = 'true';
     img.src = '/images/no_image.jpg';
@@ -53,17 +51,20 @@ export function ReviewCard({
         <span className="border border-brand-red bg-white text-brand-red font-semibold text-sm px-[4px] py-[1px] rounded-sm">
           {item.category}
         </span>
+
+        {/* 작성자 프로필 */}
         <img
           className="absolute top-8 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
           src={item.src || '/images/no_image.jpg'}
-          alt="모임사진"
+          alt={`${item.created_id} 프로필`}
           onError={handleImgError}
+          loading="lazy"
         />
       </div>
 
       {/* 본문 영역 */}
       <div className="px-[27px] py-[17px] relative h-[calc(280px-72px)]">
-        <img className="mb-1" src={Colon} alt="따옴표" />
+        <img className="mb-1" src="../colon.svg" alt="따옴표" />
         <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.content}</p>
 
         {/* 작성자 하단 고정 */}

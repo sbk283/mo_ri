@@ -382,7 +382,7 @@ export function DashboardNotice({
             ) : (
               <>
                 <div className="flex justify-between items-center py-2 bg-[#F4F4F4] border-b border-b-[#A3A3A3] text-[#808080]">
-                  <div className="w-[600px] truncate font-semibold pl-7 text-md">제목</div>
+                  <div className="w-[600px] truncate font-semiboㅅld pl-7 text-md">제목</div>
                   <div className="w-[120px] text-center text-md">작성일자</div>
                   <div className="w-[80px] text-center text-md">조회수</div>
                   {!isHost && <div className="w-[50px] text-center mr-7 text-sm">상태</div>}
@@ -453,7 +453,9 @@ export function DashboardNotice({
             <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[450px]">
               <header className="px-8 pt-6">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-bold text-gray-800 leading-none">{current?.title}</h1>
+                  <h1 className="text-xl font-bold text-gray-800 leading-none mb-3">
+                    {current?.title}
+                  </h1>
                   {!isHost && (
                     <span
                       className={`w-[50px] py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-4 ${

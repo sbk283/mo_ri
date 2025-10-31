@@ -1,3 +1,4 @@
+// DailyDetailRichTextEditor.tsx
 import React, {
   useCallback,
   useRef,
@@ -9,6 +10,7 @@ import React, {
 } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import '../css/custom-quill.css';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
@@ -21,11 +23,28 @@ interface DailyDetailRichTextEditorProps {
   height?: number;
   requireNotEmpty?: boolean;
   onValidityChange?: (valid: boolean) => void;
-  groupId?: string; // 선택형으로 변경
+  groupId?: string;
 }
 
 const BUCKET = 'group-post-images';
 const ROOT_PREFIX = 'daily';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+/** 문자열만으로(에디터 없이) 콘텐츠 유무 판단 */
+const isContentNonEmptyFromString = (raw?: string | null): boolean => {
+  if (!raw) return false;
+  const s = String(raw);
+
+  // HTML <img> or Markdown image
+  if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(s)) return true;
+  if (/!\[[^\]]*]\(([^)\s]+)(?:\s+"[^"]*")?\)/.test(s)) return true;
+
+  const text = s
+    .replace(/<[^>]*>/g, '')
+    .replace(/[\u200B\u00A0]/g, '')
+    .trim();
+  return text.length > 0;
+};
 
 const checkEditorContent = (quillRef: React.MutableRefObject<ReactQuill | null>): boolean => {
   const editor = quillRef.current?.getEditor?.();
@@ -36,6 +55,21 @@ const checkEditorContent = (quillRef: React.MutableRefObject<ReactQuill | null>)
   return (
     Array.isArray(ops) &&
     ops.some(op => op?.insert && typeof op.insert === 'object' && 'image' in op.insert)
+  );
+};
+
+/** 간단 디바운스 */
+const useDebouncedCallback = (fn: (...args: any[]) => void, delay = 120) => {
+  const t = useRef<number | null>(null);
+  const saved = useRef(fn);
+  useEffect(() => void (saved.current = fn), [fn]);
+
+  return useCallback(
+    (...args: any[]) => {
+      if (t.current) window.clearTimeout(t.current);
+      t.current = window.setTimeout(() => saved.current(...args), delay);
+    },
+    [delay],
   );
 };
 
@@ -58,16 +92,34 @@ const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo
     const params = useParams<{ id: string }>();
     const resolvedGroupId = (groupId ?? params.id ?? '').trim();
 
+    // 1) 초기 마운트
     useEffect(() => setIsMounted(true), []);
+
+    // 2) 초기 value만으로 미리 유효성 세팅 (quill 준비 전 보호)
     useEffect(() => {
+      if (!onValidityChange) return;
+      const initialValid = isContentNonEmptyFromString(value);
+      onValidityChange(initialValid);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // 최초 1회
+
+    // 3) 값이 바뀔 때마다(타이핑/붙여넣기 등) quill 기준으로 재판정 (디바운스)
+    const pushValidity = useDebouncedCallback(() => {
       onValidityChange?.(checkEditorContent(quillRef));
-    }, [value, onValidityChange]);
+    }, 120);
+
+    useEffect(() => {
+      pushValidity();
+    }, [value, pushValidity]);
 
     const uploadImageToSupabase = useCallback(
       async (file: File): Promise<string> => {
         if (!resolvedGroupId) throw new Error('groupId가 없습니다.');
         const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-        const name = crypto.randomUUID();
+        const name =
+          typeof crypto !== 'undefined' && 'randomUUID' in crypto
+            ? crypto.randomUUID()
+            : `${Date.now()}`;
         const path = `${ROOT_PREFIX}/${resolvedGroupId}/${name}.${ext}`;
 
         const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, {
@@ -114,7 +166,14 @@ const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo
         const accepted: File[] = [];
 
         for (const file of list) {
-          if (!file.type.startsWith('image/')) continue;
+          if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드 가능합니다.');
+            continue;
+          }
+          if (file.size > MAX_IMAGE_SIZE) {
+            alert('파일 크기는 5MB 이하여야 합니다.');
+            continue;
+          }
           try {
             const url = await uploadImageToSupabase(file);
             insertOrReplaceAtSelection(editor, url);
@@ -186,17 +245,31 @@ const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo
             [{ header: [1, 2, 3, false] }],
             ['bold', 'italic', 'underline', 'strike'],
             [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ color: [] }, { align: [] }],
             ['link', 'image'],
             ['clean'],
           ],
           handlers: { image: imageHandler },
         },
+        clipboard: { matchVisual: false },
       }),
       [imageHandler],
     );
 
     const formats = useMemo(
-      () => ['header', 'bold', 'italic', 'underline', 'strike', 'list', 'bullet', 'link', 'image'],
+      () => [
+        'header',
+        'bold',
+        'italic',
+        'underline',
+        'strike',
+        'list',
+        'bullet',
+        'link',
+        'image',
+        'color',
+        'align',
+      ],
       [],
     );
 
@@ -215,8 +288,14 @@ const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo
           theme="snow"
           value={value || ''}
           onChange={next => {
-            onValidityChange?.(checkEditorContent(quillRef));
             onChange(next);
+            // 입력 시 유효성 디바운스 갱신
+            onValidityChange && (void 0, onValidityChange); // 타입 만족용 no-op
+            // 실제 디바운스 실행
+            setTimeout(() => {
+              // quillRef 기준으로 체크
+              onValidityChange?.(checkEditorContent(quillRef));
+            }, 0);
           }}
           modules={modules as any}
           formats={formats}
@@ -224,6 +303,10 @@ const DailyDetailRichTextEditor: React.FC<DailyDetailRichTextEditorProps> = memo
           readOnly={disabled}
           style={{ height: `${height}px` }}
         />
+        {/* 필요하면 안내 표시
+        {requireNotEmpty && !checkEditorContent(quillRef) && (
+          <div className="text-red-500 text-sm mt-2">내용(텍스트 또는 이미지)이 필요합니다.</div>
+        )} */}
       </div>
     );
   },

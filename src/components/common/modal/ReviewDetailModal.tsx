@@ -1,7 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import goodImg from '/images/good.png';
 
 export type ReviewDetail = {
   id: number;
@@ -163,7 +162,7 @@ export default function ReviewDetailModal({ open, review, onClose, onEmpathy }: 
                 onClick={() => onEmpathy?.(review.id)}
                 className="w-[112px] h-[32px] inline-flex justify-center items-center rounded-sm bg-[#0689E8] text-white font-semibold text-md hover:brightness-95"
               >
-                <img src={goodImg} alt="공감하기" className="w-4 h-4 mr-1" />
+                <img src="/images/good.png" alt="공감하기" className="w-4 h-4 mr-1" />
                 공감하기
               </button>
             </div>

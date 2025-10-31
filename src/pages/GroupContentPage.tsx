@@ -5,19 +5,45 @@ import DashboardDetail from '../components/dashboard/DashboardDetail';
 import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+
+type TabLabel = '공지사항' | '모임일상';
+type TabParam = 'notice' | 'daily';
+
+const labelToParam = (label: TabLabel): TabParam => (label === '공지사항' ? 'notice' : 'daily');
+const paramToLabel = (param?: string | null): TabLabel =>
+  param === 'daily' ? '모임일상' : '공지사항';
 
 function GroupContentPage() {
   const { id: groupId } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 탭 상태
-  const [selectedTabLabel, setSelectedTabLabel] = useState<'공지사항' | '모임일상'>('공지사항');
+  // 탭 상태: URL ?tab=notice|daily 로 복원/동기화
+  const [selectedTabLabel, setSelectedTabLabel] = useState<TabLabel>('공지사항');
+
+  useEffect(() => {
+    // 마운트 시 URL에서 탭 복원
+    const tab = searchParams.get('tab');
+    setSelectedTabLabel(paramToLabel(tab));
+  }, [groupId]); // 그룹 바뀌면 다시 한 번 동기화
+
+  useEffect(() => {
+    // 탭 변경 시 URL을 업데이트(히스토리 replace)
+    const next = labelToParam(selectedTabLabel);
+    const prev = searchParams.get('tab');
+    if (prev !== next) {
+      // groupId 외 다른 쿼리 유지하려면 객체 복사
+      const sp = new URLSearchParams(searchParams);
+      sp.set('tab', next);
+      setSearchParams(sp, { replace: true });
+    }
+  }, [selectedTabLabel, searchParams, setSearchParams]);
 
   // 각 탭 작성 중 여부 (버튼 숨김)
   const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);

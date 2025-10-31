@@ -30,7 +30,7 @@ type ReviewRow = {
   } | null;
 };
 
-type ProfileRow = { user_id: string; nickname: string | null };
+type ProfileRow = { user_id: string; nickname: string | null; avatar_url: string | null };
 type TagDict = { tag_code: string; label: string };
 type TagRow = { review_id: string; tag_code: string };
 type LikeRow = { review_id: string };
@@ -51,6 +51,9 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   const [labelByCode, setLabelByCode] = useState<Record<string, string>>({});
   const [modalTags, setModalTags] = useState<string[] | null>(null);
 
+  // ★ 모달용 "모임 이미지" 저장 (numId → group first image)
+  const [groupSrcByNumId, setGroupSrcByNumId] = useState<Record<number, string>>({});
+
   const withEmpathy = (it: ReviewItem) => ({ ...it, empathy: empathyByNumId[it.id] ?? 0 });
 
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
         const _labelByCode = Object.fromEntries((dict ?? []).map(d => [d.tag_code, d.label]));
         if (!ignore) setLabelByCode(_labelByCode);
 
-        // 2) 리뷰 + 그룹 + 대카테고리 조인 추가
+        // 2) 리뷰 + 그룹 + 대카테고리 조인
         const selectSQL = `
   review_id, group_id, author_id, rating, pros_text, created_at,
   groups:group_id (
@@ -99,22 +102,27 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
             setEmpathyByNumId({});
             setLikedByNumId(new Set());
             setNumToReviewId({});
+            setGroupSrcByNumId({});
           }
           return;
         }
 
-        // 3) 작성자 닉네임
+        // 3) 작성자 닉네임 + 프로필 이미지
         const authorIds = [...new Set(rows.map(r => r.author_id))];
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('user_id, nickname')
+          .select('user_id, nickname, avatar_url')
           .in('user_id', authorIds)
           .returns<ProfileRow[]>();
+
         const nicknameByUserId = Object.fromEntries(
           (profiles ?? []).map(p => [p.user_id, p.nickname ?? '익명']),
         );
+        const avatarByUserId = Object.fromEntries(
+          (profiles ?? []).map(p => [p.user_id, p.avatar_url ?? '']),
+        );
 
-        // 4) 리뷰별 태그(모두 로드 — 제한 없음)
+        // 4) 리뷰별 태그
         const reviewIds = rows.map(r => r.review_id);
         const { data: tagRows } = await supabase
           .from('group_review_tags')
@@ -152,8 +160,10 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           if (mine?.length) myLiked = new Set(mine.map(x => x.review_id));
         }
 
-        // 7) 화면 매핑 (category를 대카테고리로)
+        // 7) 화면 매핑
         const numMap: Record<number, string> = {};
+        const groupSrcMap: Record<number, string> = {};
+
         const mapped: ReviewItem[] = rows.map((r, idx) => {
           const g = r.groups;
           const statusKor: ReviewItem['status'] =
@@ -168,11 +178,18 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           // 대카테고리명
           const major = g?.categories_sub?.categories_major?.category_major_name?.trim() || '기타';
 
+          // 카드용: 작성자 프로필
+          const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
+
+          // 모달용: 모임 이미지(첫 장)
+          const groupFirstImage = g?.image_urls?.[0] || NO_IMAGE;
+          groupSrcMap[numId] = groupFirstImage;
+
           return {
             id: numId,
             title: g?.group_title ?? '(제목 없음)',
             category: major,
-            src: g?.image_urls?.[0] || NO_IMAGE,
+            src: avatar, // 카드 우상단 = 작성자 프로필
             status: statusKor,
             rating,
             period: start && end ? `${start} - ${end}` : '',
@@ -184,7 +201,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           };
         });
 
-        // 8) 베스트 4 추출(공감 높은 순) — 리뷰에도 그대로 포함
+        // 베스트 4
         const best = [...mapped].sort((a, b) => (b.empathy ?? 0) - (a.empathy ?? 0)).slice(0, 4);
         const rest = mapped;
 
@@ -203,6 +220,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setNumToReviewId(numMap);
           setEmpathyByNumId(eMap => ({ ...eMap, ...empathyByNum }));
           setLikedByNumId(likedByNum);
+          setGroupSrcByNumId(groupSrcMap); // ★ 모달용 그룹 이미지 저장
         }
       } catch (e) {
         console.error('[ReviewsListPage] load error', e);
@@ -212,6 +230,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setEmpathyByNumId({});
           setLikedByNumId(new Set());
           setNumToReviewId({});
+          setGroupSrcByNumId({});
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -307,7 +326,8 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     id: v.id,
     title: v.title,
     category: v.category,
-    src: v.src,
+    // ★ 카드와 다르게, 모달에서는 "모임 이미지" 사용
+    src: groupSrcByNumId[v.id] || NO_IMAGE,
     rating: v.rating,
     period: v.period ?? '',
     content: v.content,
@@ -321,7 +341,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     if (openId == null) return null;
     const found = [...bestItems, ...items].find(v => v.id === openId);
     return found ? toDetail(found) : null;
-  }, [openId, bestItems, items, empathyByNumId, modalTags]);
+  }, [openId, bestItems, items, empathyByNumId, modalTags, groupSrcByNumId]);
 
   const sortOptions = ['최신순', '인기순'];
   const mapLabelToValue = (label: string): 'latest' | 'popular' =>

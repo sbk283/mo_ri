@@ -295,9 +295,9 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
               >
                 <div className="h-[72px] bg-[#D7EAFE]" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-gray-200 rounded" />
-                  <div className="h-3 bg-gray-200 rounded w-5/6" />
-                  <div className="h-3 bg-gray-200 rounded w-4/6" />
+                  <div className="h-4 bg-gray-100 rounded" />
+                  <div className="h-3 bg-gray-100 rounded w-5/6" />
+                  <div className="h-3 bg-gray-100 rounded w-4/6" />
                 </div>
               </div>
             ))

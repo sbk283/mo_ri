@@ -303,7 +303,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                 <div className="my-6">
                   <div className="flex items-center">
                     <label className="text-xl font-semibold mr-3">{groupTitle}</label>
-                    <span className="text-white bg-[#D83737] h-[28px] text-md px-2 py-1 rounded-sm">
+                    <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
                       {categoryName}
                     </span>
                   </div>

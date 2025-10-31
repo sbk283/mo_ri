@@ -1,3 +1,4 @@
+// NoticeDetailRichTextEditor.tsx
 import React, {
   useCallback,
   useRef,
@@ -9,6 +10,7 @@ import React, {
 } from 'react';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+import '../css/custom-quill.css';
 import { useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
@@ -21,13 +23,13 @@ interface NoticeDetailRichTextEditorProps {
   height?: number;
   requireNotEmpty?: boolean;
   onValidityChange?: (valid: boolean) => void;
-
   // groupId는 선택. 없으면 URL 파라미터(id)에서 가져옴
   groupId?: string;
 }
 
 const BUCKET = 'group-post-images';
 const ROOT_PREFIX = 'notice';
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
 const checkEditorContent = (quillRef: React.MutableRefObject<ReactQuill | null>): boolean => {
   const editor = quillRef.current?.getEditor?.();
@@ -112,11 +114,20 @@ const NoticeDetailRichTextEditor: React.FC<NoticeDetailRichTextEditorProps> = me
         }
         const editor = quillRef.current?.getEditor?.();
         if (!editor || !files?.length) return;
+
         const list = Array.from(files);
         const accepted: File[] = [];
 
         for (const file of list) {
-          if (!file.type.startsWith('image/')) continue;
+          if (!file.type.startsWith('image/')) {
+            alert('이미지 파일만 업로드 가능합니다.');
+            continue;
+          }
+          if (file.size > MAX_IMAGE_SIZE) {
+            alert('파일 크기는 5MB 이하여야 합니다.');
+            continue;
+          }
+
           try {
             const url = await uploadImageToSupabase(file);
             insertOrReplaceAtSelection(editor, url);
@@ -138,6 +149,7 @@ const NoticeDetailRichTextEditor: React.FC<NoticeDetailRichTextEditorProps> = me
       ],
     );
 
+    // 이미지 버튼 핸들러(파일 선택 → 유효성 검사 → Supabase 업로드 → 본문 삽입)
     const imageHandler = useCallback(() => {
       if (!resolvedGroupId) {
         console.error('[NoticeEditor] image upload clicked without groupId');
@@ -188,17 +200,32 @@ const NoticeDetailRichTextEditor: React.FC<NoticeDetailRichTextEditorProps> = me
             [{ header: [1, 2, 3, false] }],
             ['bold', 'italic', 'underline', 'strike'],
             [{ list: 'ordered' }, { list: 'bullet' }],
+            [{ color: [] }, { align: [] }], // ← 색상/정렬 추가
             ['link', 'image'],
             ['clean'],
           ],
           handlers: { image: imageHandler },
         },
+        // 시각적 매칭 끔(불필요한 <p> 래핑 등 줄임)
+        clipboard: { matchVisual: false },
       }),
       [imageHandler],
     );
 
     const formats = useMemo(
-      () => ['header', 'bold', 'italic', 'underline', 'strike', 'list', 'bullet', 'link', 'image'],
+      () => [
+        'header',
+        'bold',
+        'italic',
+        'underline',
+        'strike',
+        'list',
+        'bullet',
+        'link',
+        'image',
+        'color',
+        'align',
+      ],
       [],
     );
 
@@ -226,6 +253,9 @@ const NoticeDetailRichTextEditor: React.FC<NoticeDetailRichTextEditorProps> = me
           readOnly={disabled}
           style={{ height: `${height}px` }}
         />
+        {/* {requireNotEmpty && !checkEditorContent(quillRef) && (
+          <div className="text-red-500 text-sm mt-2">내용(텍스트 또는 이미지)이 필요합니다.</div>
+        )} */}
       </div>
     );
   },

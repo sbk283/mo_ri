@@ -87,13 +87,35 @@ const stripAllImages = (content?: string | null): string => {
 
 type DailyWithPostId = Daily & {
   postId: string;
-  userId: string; // 권한 판별용
-  groupId: string; // 필요시 확장
+  userId: string;
+  groupId: string;
   viewCount: number;
 };
 
 // 리스트 재인덱싱 (id = 1..N)
 const reindex = (arr: DailyWithPostId[]) => arr.map((it, idx) => ({ ...it, id: idx + 1 }));
+
+/** ======== 실시간 보정 유틸 ======== */
+// 채널 SUBSCRIBED 보장
+const ensureSubscribed = (ch: any) =>
+  new Promise<any>(resolve => {
+    // supabase-js v2: ch.state === 'joined'
+    if ((ch as any).state === 'joined') return resolve(ch);
+    ch.subscribe((status: string) => {
+      if (status === 'SUBSCRIBED') resolve(ch);
+    });
+  });
+
+// "방금 내가 토글한" 이벤트면 리스너에서 무시 (중복 반영 방지)
+const LOCAL_ACTION_WINDOW_MS = 900;
+const localActionRef: React.MutableRefObject<Record<string, number>> = { current: {} } as any;
+const markLocalAction = (postId: string) => {
+  localActionRef.current[postId] = Date.now();
+};
+const isFreshLocalAction = (postId: string) => {
+  const t = localActionRef.current[postId] ?? 0;
+  return Date.now() - t < LOCAL_ACTION_WINDOW_MS;
+};
 
 export default function GroupDailyContent({
   groupId,
@@ -107,6 +129,7 @@ export default function GroupDailyContent({
   // useCurrentUser는 { id, nickname, profileImageUrl }를 반환한다고 가정
   const user = useCurrentUser();
   const currentUserId = user?.id ?? null;
+  const currentAvatar = user?.profileImageUrl ?? null;
 
   const [isCreating, setIsCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
@@ -131,6 +154,22 @@ export default function GroupDailyContent({
   // 좋아요 상태/카운트 맵
   const [likeCountMap, setLikeCountMap] = useState<Record<string, number>>({});
   const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({});
+
+  // ===== Realtime: 그룹 브로드캐스트 채널 & 포스트별 송신 채널 =====
+  const likesChannelRef = useRef<any | null>(null);
+  const postSendersRef = useRef<Record<string, { ch: any; ready: Promise<any> }>>({});
+
+  const getPostSender = (postId: string) => {
+    const hit = postSendersRef.current[postId];
+    if (hit) return hit;
+    const ch = supabase.channel(`daily_post_${postId}`, {
+      config: { broadcast: { self: false } },
+    });
+    const ready = ensureSubscribed(ch);
+    const pack = { ch, ready };
+    postSendersRef.current[postId] = pack;
+    return pack;
+  };
 
   // 목록 로드
   useEffect(() => {
@@ -201,15 +240,19 @@ export default function GroupDailyContent({
       const postIds = (data ?? []).map((r: any) => r.post_id) as string[];
       if (postIds.length > 0) {
         await loadLikeStats(postIds);
+        setupLikesRealtime(postIds); // 구독 준비
       } else {
         setLikeCountMap({});
         setLikedByMe({});
+        teardownLikesRealtime();
       }
     })();
 
     return () => {
       ignore = true;
+      teardownLikesRealtime();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId, currentUserId]);
 
   // 좋아요 통계 로더
@@ -247,39 +290,113 @@ export default function GroupDailyContent({
     setItems(prev => prev.map(it => ({ ...it, likedCount: countMap[it.postId] ?? 0 })));
   };
 
+  /** 그룹 단위 실시간 구독(브로드캐스트) — 깜빡임 제거 포함 */
+  const teardownLikesRealtime = () => {
+    try {
+      if (likesChannelRef.current) {
+        supabase.removeChannel(likesChannelRef.current);
+      }
+      likesChannelRef.current = null;
+    } catch {
+      // no-op
+    }
+  };
+
+  const setupLikesRealtime = (postIds: string[]) => {
+    teardownLikesRealtime();
+    if (!groupId || postIds.length === 0) return;
+
+    // group broadcast room (self: true로 내가 쏜 것도 받지만, fresh guard로 무시)
+    const ch = supabase.channel(`daily_group_${groupId}`, {
+      config: { broadcast: { self: true } },
+    });
+
+    const onAdd = (msg: any) => {
+      const { postId, userId, avatarUrl } = (msg.payload ?? {}) as {
+        postId: string;
+        userId?: string | null;
+        avatarUrl?: string | null;
+      };
+      if (!postId) return;
+      if (!postIds.includes(postId)) return;
+
+      // 내가 방금 토글한 건 리스너에서 무시
+      if (isFreshLocalAction(postId)) return;
+
+      setLikeCountMap(prev => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+      setItems(prev =>
+        prev.map(it =>
+          it.postId === postId ? { ...it, likedCount: (it.likedCount ?? 0) + 1 } : it,
+        ),
+      );
+      // 내 상태 동기화
+      if (currentUserId && userId === currentUserId) {
+        setLikedByMe(prev => ({ ...prev, [postId]: true }));
+      }
+    };
+
+    const onRemove = (msg: any) => {
+      const { postId, userId } = (msg.payload ?? {}) as {
+        postId: string;
+        userId?: string | null;
+      };
+      if (!postId) return;
+      if (!postIds.includes(postId)) return;
+      if (isFreshLocalAction(postId)) return;
+
+      setLikeCountMap(prev => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 0) - 1) }));
+      setItems(prev =>
+        prev.map(it =>
+          it.postId === postId ? { ...it, likedCount: Math.max(0, (it.likedCount ?? 0) - 1) } : it,
+        ),
+      );
+      if (currentUserId && userId === currentUserId) {
+        setLikedByMe(prev => ({ ...prev, [postId]: false }));
+      }
+    };
+
+    ch.on('broadcast', { event: 'like:add' }, onAdd);
+    ch.on('broadcast', { event: 'like:remove' }, onRemove);
+
+    likesChannelRef.current = ch;
+    // SUBSCRIBED 보장
+    ensureSubscribed(ch).then(() => {
+      // console.log('[daily likes realtime] ready:', groupId);
+    });
+  };
+
   // 조회수
   const viewedKey = (postId: string) => `viewed_${postId}_${today()}`;
   const hasViewed = (postId: string) => {
-    try {
-      return sessionStorage.getItem(viewedKey(postId)) === '1';
-    } catch {
-      return false;
-    }
+    // 세션키 안씀(요구사항 변경), 백엔드 카운터로 충분 → 항상 false 반환
+    return false;
   };
-  const markViewed = (postId: string) => {
-    try {
-      sessionStorage.setItem(viewedKey(postId), '1');
-    } catch {}
+  const markViewed = (_postId: string) => {
+    // noop (세션키 미사용)
   };
 
   const bumpViewCount = async (postId: string) => {
     if (!groupId || hasViewed(postId)) return;
-    const { data: sel, error: selErr } = await supabase
-      .from('group_posts')
-      .select('view_count')
-      .eq('post_id', postId)
-      .single();
 
-    if (!selErr) {
-      const next = (sel?.view_count ?? 0) + 1;
-      const { error: updErr } = await supabase
-        .from('group_posts')
-        .update({ view_count: next })
-        .eq('post_id', postId);
-      if (!updErr) {
-        setItems(prev => prev.map(it => (it.postId === postId ? { ...it, viewCount: next } : it)));
-        markViewed(postId);
-      }
+    // DB가 daily_reads 트리거로 카운터 올림 — 프론트는 낙관 반영만
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u?.user?.id;
+    if (!uid) return;
+
+    // 최초 읽음만 insert 되게 PK(post_id,user_id) + RLS가 막아줌
+    const { error } = await supabase
+      .from('group_daily_reads')
+      .upsert(
+        { post_id: postId, user_id: uid },
+        { onConflict: 'post_id,user_id', ignoreDuplicates: true },
+      );
+
+    if (!error) {
+      // 낙관 반영 1
+      setItems(prev =>
+        prev.map(it => (it.postId === postId ? { ...it, viewCount: (it.viewCount ?? 0) + 1 } : it)),
+      );
+      markViewed(postId);
     }
   };
 
@@ -296,6 +413,7 @@ export default function GroupDailyContent({
     const nextLiked = !wasLiked;
 
     // 낙관적 업데이트
+    markLocalAction(postId);
     setLikedByMe(prev => ({ ...prev, [postId]: nextLiked }));
     setLikeCountMap(prev => ({
       ...prev,
@@ -310,7 +428,6 @@ export default function GroupDailyContent({
     );
     onDetailSync?.(nextLiked);
 
-    // 서버 반영
     if (wasLiked) {
       const { error } = await supabase
         .from('group_post_likes')
@@ -331,6 +448,26 @@ export default function GroupDailyContent({
         console.error('[like] unlike error', error);
         return { ok: false, liked: true };
       }
+
+      // 실시간 브로드캐스트 — 구독 완료 후 전송
+      if (likesChannelRef.current) {
+        await ensureSubscribed(likesChannelRef.current);
+        likesChannelRef.current.send({
+          type: 'broadcast',
+          event: 'like:remove',
+          payload: { postId, userId: currentUserId },
+        });
+      }
+      {
+        const { ch, ready } = getPostSender(postId);
+        await ready;
+        ch.send({
+          type: 'broadcast',
+          event: 'like:remove',
+          payload: { postId, userId: currentUserId },
+        });
+      }
+
       return { ok: true, liked: false };
     } else {
       const { error } = await supabase
@@ -352,6 +489,25 @@ export default function GroupDailyContent({
         console.error('[like] like error', error);
         return { ok: false, liked: false };
       }
+
+      if (likesChannelRef.current) {
+        await ensureSubscribed(likesChannelRef.current);
+        likesChannelRef.current.send({
+          type: 'broadcast',
+          event: 'like:add',
+          payload: { postId, userId: currentUserId, avatarUrl: currentAvatar },
+        });
+      }
+      {
+        const { ch, ready } = getPostSender(postId);
+        await ready;
+        ch.send({
+          type: 'broadcast',
+          event: 'like:add',
+          payload: { postId, userId: currentUserId, avatarUrl: currentAvatar },
+        });
+      }
+
       return { ok: true, liked: true };
     }
   };
@@ -442,10 +598,7 @@ export default function GroupDailyContent({
       return re;
     });
 
-    // 생성 직후 화면에서 "조회수 1" 낙관 반영
-    setItems(prev => prev.map(it => (it.postId === newItem.postId ? { ...it, viewCount: 1 } : it)));
-
-    // 서버 카운터도 +1 (세션키로 당일 중복 방지 + 상태 반영)
+    // 생성 직후 조회수 낙관 반영 + 트리거 유발
     void bumpViewCount(newItem.postId);
 
     setIsCreating(false);
@@ -454,7 +607,9 @@ export default function GroupDailyContent({
 
   // 수정 저장
   const handleUpdateSave = async (next: DailyWithPostId) => {
-    if (!currentUserId || currentUserId !== next.userId) {
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u?.user?.id;
+    if (!uid || uid !== next.userId) {
       alert('작성자만 수정할 수 있습니다.');
       return;
     }
@@ -463,7 +618,7 @@ export default function GroupDailyContent({
       .from('group_posts')
       .update({ post_title: next.title, post_body_md: next.content })
       .eq('post_id', next.postId)
-      .eq('user_id', currentUserId);
+      .eq('user_id', uid);
 
     if (error) {
       console.error('[GroupDailyContent] update error', error);
@@ -483,7 +638,9 @@ export default function GroupDailyContent({
     const target = items.find(it => it.postId === postId);
     if (!target) return;
 
-    if (!currentUserId || currentUserId !== target.userId) {
+    const { data: u } = await supabase.auth.getUser();
+    const uid = u?.user?.id;
+    if (!uid || uid !== target.userId) {
       alert('작성자만 삭제할 수 있습니다.');
       return;
     }
@@ -492,7 +649,7 @@ export default function GroupDailyContent({
       .from('group_posts')
       .delete()
       .eq('post_id', postId)
-      .eq('user_id', currentUserId);
+      .eq('user_id', uid);
 
     if (error) {
       console.error('[GroupDailyContent] delete error', error);
@@ -531,14 +688,14 @@ export default function GroupDailyContent({
     const liked = !!likedByMe[d.postId];
     const likeCount = likeCountMap[d.postId] ?? d.likedCount ?? 0;
 
-    // 좋아요한 멤버(유저ID 기준) 상태
+    // 좋아요한 멤버(유저ID 기준) 상태 — 디자인 그대로 유지
     type LikerEntry = { userId: string; avatarUrl: string | null };
     const [likers, setLikers] = useState<{ entries: LikerEntry[]; total: number }>({
       entries: [],
       total: 0,
     });
 
-    // 공통 fetch 함수 (초기/토글 후 모두 사용)
+    // 공통 fetch 함수 (초기/보정용)
     const fetchLikers = async () => {
       const { data: likeRows, error: likeErr } = await supabase
         .from('group_post_likes')
@@ -586,18 +743,88 @@ export default function GroupDailyContent({
       return () => {
         ignore = true;
       };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [d.postId]);
 
-    // 버튼 핸들러: 낙관 반영 + 서버확정 후 항상 재조회
+    // 디테일 전용 실시간 룸(브로드캐스트) — 내 이벤트는 fresh guard로 무시
+    useEffect(() => {
+      const ch = supabase.channel(`daily_post_${d.postId}_detail`, {
+        config: { broadcast: { self: true } },
+      });
+
+      ch.on('broadcast', { event: 'like:add' }, msg => {
+        const { postId, userId, avatarUrl } = (msg.payload as any) ?? {};
+        if (postId !== d.postId) return;
+        if (isFreshLocalAction(postId)) return;
+
+        setLikeCountMap(prev => ({ ...prev, [postId]: (prev[postId] ?? 0) + 1 }));
+        setItems(prev =>
+          prev.map(it =>
+            it.postId === postId ? { ...it, likedCount: (it.likedCount ?? 0) + 1 } : it,
+          ),
+        );
+        setLikers(prev => {
+          if (prev.entries.some(e => e.userId === userId)) return prev;
+          return {
+            entries: [{ userId, avatarUrl: avatarUrl ?? null }, ...prev.entries].slice(0, 128),
+            total: prev.total + 1,
+          };
+        });
+        if (currentUserId && userId === currentUserId) {
+          setLikedByMe(prev => ({ ...prev, [postId]: true }));
+        }
+      });
+
+      ch.on('broadcast', { event: 'like:remove' }, msg => {
+        const { postId, userId } = (msg.payload as any) ?? {};
+        if (postId !== d.postId) return;
+        if (isFreshLocalAction(postId)) return;
+
+        setLikeCountMap(prev => ({ ...prev, [postId]: Math.max(0, (prev[postId] ?? 0) - 1) }));
+        setItems(prev =>
+          prev.map(it =>
+            it.postId === postId
+              ? { ...it, likedCount: Math.max(0, (it.likedCount ?? 0) - 1) }
+              : it,
+          ),
+        );
+        setLikers(prev => {
+          const has = prev.entries.some(e => e.userId === userId);
+          return {
+            entries: prev.entries.filter(e => e.userId !== userId),
+            total: Math.max(0, prev.total - (has ? 1 : 0)),
+          };
+        });
+        if (currentUserId && userId === currentUserId) {
+          setLikedByMe(prev => ({ ...prev, [postId]: false }));
+        }
+      });
+
+      let mounted = true;
+      ensureSubscribed(ch).then(() => {
+        if (!mounted) supabase.removeChannel(ch);
+      });
+
+      return () => {
+        mounted = false;
+        try {
+          supabase.removeChannel(ch);
+        } catch {}
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [d.postId, currentUserId]);
+
+    // 버튼 핸들러: 낙관 반영 + 서버확정 후 느린 보정만
     const handleToggleLikeDetail = async () => {
       const me = currentUserId ?? '__me__';
-      const myAvatar = user?.profileImageUrl ?? null;
+      const myAvatar = currentAvatar ?? null;
 
       // 낙관적: 화면 즉시 반응 (아바타 목록도 반영)
+      const likedNow = !liked;
       setLikers(prev => {
         const hasMe = prev.entries.some(e => e.userId === me);
-        if (!liked) {
-          if (hasMe) return prev;
+        if (likedNow) {
+          if (hasMe) return { ...prev, total: prev.total }; // 이미 있음
           return {
             entries: [{ userId: me, avatarUrl: myAvatar }, ...prev.entries],
             total: prev.total + 1,
@@ -611,11 +838,12 @@ export default function GroupDailyContent({
         }
       });
 
-      // 서버 토글
       await toggleLike(d.postId);
 
-      // 서버 상태로 최종 동기화
-      await fetchLikers();
+      // 최종 스냅샷 보정(중복 렌더 줄이려고 약간 지연)
+      setTimeout(() => {
+        void fetchLikers();
+      }, 600);
     };
 
     const MAX_VISIBLE = 12;
@@ -743,7 +971,7 @@ export default function GroupDailyContent({
                   <div className="inline-block border-b-[1px] border-[#A3A3A3] w-[910px]" />
                 </div>
 
-                {/* 보더 라인 아래: 좋아요한 멤버 섹션 */}
+                {/* 보더 라인 아래: 좋아요한 멤버 섹션 (디자인 그대로) */}
                 <section className="px-8 pb-8 pt-4 mt-auto flex flex-col justify-end min-h-[120px]">
                   <span className="block text-lg text-[#3C3C3C] font-semibold mb-2">
                     좋아요한 멤버
@@ -841,7 +1069,6 @@ export default function GroupDailyContent({
                 <div className="grid grid-cols-3 auto-rows-fr gap-3 py-6">
                   {pageItems.map(daily => {
                     const likeCount = likeCountMap[daily.postId] ?? daily.likedCount ?? 0;
-                    const liked = !!likedByMe[daily.postId];
                     const thumb = resolveStorageUrl(daily.imageUrl) ?? daily.imageUrl;
                     return (
                       <button

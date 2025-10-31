@@ -108,7 +108,7 @@ function MyPageFAQPage() {
           {/*  1:1문의 버튼 고고씽 */}
           <Link
             to={'/inquiry'}
-            className=" bg-brand  px-[41px] py-[8px] rounded-[5px] block w-[195px] mx-auto mt-[50px] text-white font-medium text-xl "
+            className=" bg-brand  px-[41px] py-[8px] rounded-[5px] inline-block mx-auto mt-[50px] text-white font-medium text-xl "
           >
             1:1 문의 하기
           </Link>

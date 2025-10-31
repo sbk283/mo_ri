@@ -42,7 +42,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
       .from('groups')
       .select('group_title')
       .eq('created_by', userId)
-      .eq('status', 'approved')
+      .eq('approved', true)
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -53,10 +53,10 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   const fetchInquiryReply = useCallback(async (): Promise<void> => {
     if (!userId) return;
     const { count, error } = await supabase
-      .from('inquiries')
+      .from('user_inquiries')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .eq('has_reply', true);
+      .eq('inquiry_status', 'answered');
     if (!error && count && count > 0) setHasInquiryReply(true);
     else setHasInquiryReply(false);
   }, [userId]);
@@ -156,7 +156,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
         <>
           {/* 오버레이 */}
           <motion.div
-            className="fixed inset-0 bg-black/30 z-40"
+            className="fixed inset-0 bg-black/30 z-20"
             onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

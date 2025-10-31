@@ -80,7 +80,7 @@ function DirectChatPage() {
     const initRoom = async (): Promise<void> => {
       // 수정: targetUserId가 자기 자신일 경우 방 생성 금지
       if (user.id === targetUserId) {
-        console.warn('❌ 자기 자신과의 채팅은 생성할 수 없습니다.');
+        console.warn('자기 자신과의 채팅은 생성할 수 없습니다.');
         // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지 (self-chat 분기)
         initializedKeyRef.current = key;
         return;

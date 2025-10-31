@@ -69,7 +69,6 @@ const Header: React.FC = () => {
     setShowPanel(false);
     if (!user?.id) return;
 
-    // 읽음 처리용 RPC
     const { error } = await supabase.rpc('mark_notifications_read', {
       p_user_id: user.id,
     });
@@ -79,13 +78,14 @@ const Header: React.FC = () => {
       return;
     }
 
-    // 모든 알림 읽음 처리 후 헤더 빨간 점 초기화
+    // 읽음 처리 후 빨간점 제거
     setUnreadCount(0);
   };
 
-  // 초기 세션 로드 및 프로필 실시간 감시
+  // 단일 useEffect: 세션 로드 + 프로필 구독 + 알림 구독 + 초기 unread 카운트
   useEffect(() => {
     let profileChannel: RealtimeChannel | null = null;
+    let notificationChannel: RealtimeChannel | null = null;
 
     const setup = async (): Promise<void> => {
       await initUserSession();
@@ -97,6 +97,17 @@ const Header: React.FC = () => {
       if (session?.user) {
         const userId = session.user.id;
 
+        // 0. 초기 unread 카운트 불러오기
+        const { count, error: countError } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId);
+
+        if (!countError && count !== null) {
+          setUnreadCount(count);
+        }
+
+        // 1. 프로필 실시간 감시
         profileChannel = supabase
           .channel(`user_profiles:${userId}`)
           .on(
@@ -113,6 +124,50 @@ const Header: React.FC = () => {
             },
           )
           .subscribe();
+
+        // 2. 알림 실시간 감시 (notifications 테이블)
+        notificationChannel = supabase
+          .channel(`notifications:${userId}`)
+          .on(
+            'postgres_changes',
+            {
+              event: '*', // INSERT + UPDATE + DELETE 모두 수신
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${userId}`,
+            },
+            payload => {
+              // 새 알림 또는 상태변경 시 빨간 점 추가
+              if (payload.eventType === 'INSERT') {
+                setUnreadCount(prev => prev + 1);
+              }
+
+              // 문의 답변 완료와 같은 UPDATE 이벤트 처리
+              if (payload.eventType === 'UPDATE') {
+                const updated = payload.new;
+                if (updated.type === 'inquiry_reply') {
+                  setUnreadCount(prev => prev + 1);
+                }
+              }
+            },
+          )
+          .subscribe();
+        // notificationChannel = supabase
+        //   .channel(`notifications:${userId}`)
+        //   .on(
+        //     'postgres_changes',
+        //     {
+        //       event: 'INSERT',
+        //       schema: 'public',
+        //       table: 'notifications',
+        //       filter: `user_id=eq.${userId}`,
+        //     },
+        //     () => {
+        //       // 새 알림 발생 시 빨간 점 추가
+        //       setUnreadCount(prev => prev + 1);
+        //     },
+        //   )
+        //   .subscribe();
       }
     };
 
@@ -122,9 +177,11 @@ const Header: React.FC = () => {
       initUserSession();
     });
 
+    // 클린업
     return () => {
       listener.subscription.unsubscribe();
       if (profileChannel) supabase.removeChannel(profileChannel);
+      if (notificationChannel) supabase.removeChannel(notificationChannel);
     };
   }, []);
 
@@ -152,24 +209,25 @@ const Header: React.FC = () => {
               <Link to="/grouplist" className="font-bold hover:text-brand">
                 모임리스트
               </Link>
-              {/* 마이페이지 */}
-              <Link to="/mypage">
-                <p className="font-bold hover:text-brand">마이페이지</p>
+              <Link to="/mypage" className="font-bold hover:text-brand">
+                마이페이지
               </Link>
             </nav>
 
+            {/* 로그인 상태 */}
             {isLoggedIn ? (
               <div className="flex items-center gap-3">
                 <span className="font-medium text-blue-600">{nickname}님 반가워요!</span>
-                {/* 채팅 알림 아이콘 */}
+
+                {/* 알림 아이콘 */}
                 <button onClick={handlePanelOpen} className="relative focus:outline-none">
-                  <img src="/images/notification.svg" alt="채팅 알림" className="h-4 w-4" />
+                  <img src="/images/notification.svg" alt="알림" className="h-4 w-4" />
                   {unreadCount > 0 && (
                     <span className="absolute top-0 -right-0.5 w-2 h-2 bg-brand-red rounded-full" />
                   )}
                 </button>
 
-                {/* 로그아웃 */}
+                {/* 로그아웃 버튼 */}
                 <button
                   onClick={handleLogout}
                   className="font-bold text-sm border px-3 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"

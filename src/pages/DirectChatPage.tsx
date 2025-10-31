@@ -6,7 +6,7 @@ import DirectChatSidebar from '../components/chat/DirectChatSidebar';
 import DirectChatList from '../components/chat/DirectChatList';
 import DirectChatRoom from '../components/chat/DirectChatRoom';
 import { useAuth } from '../contexts/AuthContext';
-import { useDirectChat } from '../contexts/DirectChatContext';
+import { ensureMyParticipant, useDirectChat } from '../contexts/DirectChatContext';
 import { supabase } from '../lib/supabase';
 
 function DirectChatPage() {
@@ -17,7 +17,9 @@ function DirectChatPage() {
   // /chat/:groupId/:targetUserId -> 둘 다 있음
   const { groupId, targetUserId } = useParams<{ groupId?: string; targetUserId?: string }>();
 
-  const { chats, fetchChats, setCurrentChat, findOrCreateChat } = useDirectChat();
+  // const { chats, fetchChats, setCurrentChat, findOrCreateChat } = useDirectChat();
+  const { chats, fetchChats, fetchMessages, setCurrentChat, findOrCreateChat } = useDirectChat();
+
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean | null>(null);
   // 2025-10-30 동일 파라미터 조합에 대한 중복 초기화 방지 키 저장
@@ -61,64 +63,129 @@ function DirectChatPage() {
     if (!groupId || !targetUserId) return;
     if (isHost === null) return;
 
-    // 2025-10-30 동일 파라미터 조합으로 중복 초기화 방지
     const key = `${groupId}:${targetUserId}:${isHost}`;
     if (initializedKeyRef.current === key) return;
 
-    // 2025-10-30 알림 패널에서 넘어올 때 second param이 chatId인 경우 처리
-    // 알림 클릭 경로: /chat/:groupId/:chatId → 기존 effect가 targetUserId로 해석하므로 우선 chatId 매칭을 시도한다
-    const existingByChatId = chats.find(c => c.chat_id === targetUserId) ?? null;
-    // 2025-10-30 알림 진입: URL의 두 번째 파라미터를 chatId로 인식해 현재 채팅 설정
-    if (existingByChatId) {
-      setCurrentChat(existingByChatId);
-      setSelectedChatId(existingByChatId.chat_id);
-      // 2025-10-30 동일 파라미터 재실행 방지 키 기록
-      initializedKeyRef.current = key;
-      return;
-    }
+    const run = async () => {
+      const chatIdFromUrl = targetUserId;
 
-    const initRoom = async (): Promise<void> => {
-      // 수정: targetUserId가 자기 자신일 경우 방 생성 금지
+      // 1) 로컬 캐시에 이미 있으면 그대로 사용
+      const existingLocal = chats.find(c => c.chat_id === chatIdFromUrl);
+      if (existingLocal) {
+        await ensureMyParticipant(existingLocal.chat_id, user.id);
+        setCurrentChat(existingLocal);
+        setSelectedChatId(existingLocal.chat_id);
+        await fetchMessages(existingLocal.chat_id);
+        initializedKeyRef.current = key;
+        return;
+      }
+
+      // 2) Supabase에서도 한번 더 직접 조회 (새로고침 직후 대비)
+      const { data: existingRemote } = await supabase
+        .from('direct_chats')
+        .select('chat_id, group_id, host_id, member_id')
+        .eq('chat_id', chatIdFromUrl)
+        .maybeSingle();
+
+      if (existingRemote) {
+        await ensureMyParticipant(existingRemote.chat_id, user.id);
+        setCurrentChat(existingRemote);
+        setSelectedChatId(existingRemote.chat_id);
+        await fetchMessages(existingRemote.chat_id);
+        initializedKeyRef.current = key;
+        return;
+      }
+
+      // 3) 그래도 없을 때만 새로 생성
       if (user.id === targetUserId) {
         console.warn('자기 자신과의 채팅은 생성할 수 없습니다.');
-        // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지 (self-chat 분기)
         initializedKeyRef.current = key;
         return;
       }
 
-      // 수정: groupId와 targetUserId 유효성 체크 (undefined 방지)
-      if (!groupId || !targetUserId) {
-        console.warn('groupId 또는 targetUserId가 없습니다. 채팅방 생성 중단');
-        // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지 (invalid params 분기)
-        initializedKeyRef.current = key;
-        return;
-      }
+      const hostId = isHost ? user.id : targetUserId;
+      const memberId = isHost ? targetUserId : user.id;
 
-      const hostId: string = isHost ? user.id : targetUserId;
-      const memberId: string = isHost ? targetUserId : user.id;
-
-      const chatId: string = await findOrCreateChat(groupId, hostId, memberId);
-
-      // DirectChatList가 호스트 프로필을 그릴 수 있도록 최소 필드 세팅
-      setCurrentChat({
-        chat_id: chatId,
-        group_id: groupId,
-        host_id: hostId,
-        member_id: memberId,
-      });
-
+      const chatId = await findOrCreateChat(groupId, hostId, memberId);
+      setCurrentChat({ chat_id: chatId, group_id: groupId, host_id: hostId, member_id: memberId });
       setSelectedChatId(chatId);
-
-      // 디버깅용
-      console.log('[init-chat]', { groupId, hostId, memberId, chatId });
-
-      // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지
       initializedKeyRef.current = key;
     };
 
-    void initRoom();
-    // 2025-10-30 무한 루프 방지를 위해 chats 의존성 제거 (fetchChats 결과로 재호출되는 문제)
-  }, [user?.id, groupId, targetUserId, isHost, findOrCreateChat, setCurrentChat]);
+    void run();
+  }, [
+    user?.id,
+    groupId,
+    targetUserId,
+    isHost,
+    findOrCreateChat,
+    setCurrentChat,
+    chats,
+    fetchMessages,
+  ]);
+  // useEffect(() => {
+  //   if (!user?.id) return;
+  //   if (!groupId || !targetUserId) return;
+  //   if (isHost === null) return;
+
+  //   // 2025-10-30 동일 파라미터 조합으로 중복 초기화 방지
+  //   const key = `${groupId}:${targetUserId}:${isHost}`;
+  //   if (initializedKeyRef.current === key) return;
+
+  //   // 2025-10-30 알림 패널에서 넘어올 때 second param이 chatId인 경우 처리
+  //   // 알림 클릭 경로: /chat/:groupId/:chatId → 기존 effect가 targetUserId로 해석하므로 우선 chatId 매칭을 시도한다
+  //   const existingByChatId = chats.find(c => c.chat_id === targetUserId) ?? null;
+  //   // 2025-10-30 알림 진입: URL의 두 번째 파라미터를 chatId로 인식해 현재 채팅 설정
+  //   if (existingByChatId) {
+  //     setCurrentChat(existingByChatId);
+  //     setSelectedChatId(existingByChatId.chat_id);
+  //     // 2025-10-30 동일 파라미터 재실행 방지 키 기록
+  //     initializedKeyRef.current = key;
+  //     return;
+  //   }
+
+  //   const initRoom = async (): Promise<void> => {
+  //     // 수정: targetUserId가 자기 자신일 경우 방 생성 금지
+  //     if (user.id === targetUserId) {
+  //       console.warn('자기 자신과의 채팅은 생성할 수 없습니다.');
+  //       // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지 (self-chat 분기)
+  //       initializedKeyRef.current = key;
+  //       return;
+  //     }
+
+  //     // 수정: groupId와 targetUserId 유효성 체크 (undefined 방지)
+  //     if (!groupId || !targetUserId) {
+  //       console.warn('groupId 또는 targetUserId가 없습니다. 채팅방 생성 중단');
+  //       // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지 (invalid params 분기)
+  //       initializedKeyRef.current = key;
+  //       return;
+  //     }
+
+  //     const hostId: string = isHost ? user.id : targetUserId;
+  //     const memberId: string = isHost ? targetUserId : user.id;
+
+  //     const chatId: string = await findOrCreateChat(groupId, hostId, memberId);
+
+  //     // DirectChatList가 호스트 프로필을 그릴 수 있도록 최소 필드 세팅
+  //     setCurrentChat({
+  //       chat_id: chatId,
+  //       group_id: groupId,
+  //       host_id: hostId,
+  //       member_id: memberId,
+  //     });
+
+  //     setSelectedChatId(chatId);
+
+  //     // 디버깅용
+  //     console.log('[init-chat]', { groupId, hostId, memberId, chatId });
+
+  //     // 2025-10-30 동일 파라미터 조합에 대한 중복 실행 방지
+  //     initializedKeyRef.current = key;
+  //   };
+
+  //   void initRoom();
+  //   // 2025-10-30 무한 루프 방지를 위해 chats 의존성 제거 (fetchChats 결과로 재호출되는 문제)
+  // }, [user?.id, groupId, targetUserId, isHost, findOrCreateChat, setCurrentChat]);
 
   const handleSelectChat = (chatId: string): void => {
     const chat = chats.find(c => c.chat_id === chatId) ?? null;

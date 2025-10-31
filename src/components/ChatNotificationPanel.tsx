@@ -4,15 +4,19 @@ import { useNavigate } from 'react-router-dom';
 import type { PostgrestSingleResponse } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import { FiMessageSquare, FiCheckCircle, FiInfo, FiTrash2 } from 'react-icons/fi';
+import { FiMessageSquare, FiCheckCircle, FiInfo, FiHeart, FiStar, FiTrash2 } from 'react-icons/fi';
 
-interface ChatNotification {
-  chat_id: string;
-  group_id: string;
-  group_title: string;
+// 전체 알림 데이터 타입
+interface Notification {
+  type: string;
+  title: string | null;
+  message: string | null;
+  group_id: string | null;
+  target_id: string | null;
   sender_nickname: string | null;
   last_message: string | null;
-  unread: number;
+  unread: number | null;
+  created_at: string | null;
 }
 
 interface ChatNotificationPanelProps {
@@ -29,70 +33,46 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   onUnreadChange,
 }) => {
   const navigate = useNavigate();
-  const [notifications, setNotifications] = useState<ChatNotification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [showGroupApproval, setShowGroupApproval] = useState(true);
-  const [hasInquiryReply, setHasInquiryReply] = useState(false);
-  const [approvedGroup, setApprovedGroup] = useState<string>('');
 
-  // 그룹 승인 알림 (항상 있음)
-  const fetchApprovedGroup = useCallback(async (): Promise<void> => {
-    if (!userId) return;
-    const { data, error } = await supabase
-      .from('groups')
-      .select('group_title')
-      .eq('created_by', userId)
-      .eq('approved', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (!error && data?.group_title) setApprovedGroup(data.group_title);
-  }, [userId]);
-
-  // 문의답변 알림 확인
-  const fetchInquiryReply = useCallback(async (): Promise<void> => {
-    if (!userId) return;
-    const { count, error } = await supabase
-      .from('user_inquiries')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('inquiry_status', 'answered');
-    if (!error && count && count > 0) setHasInquiryReply(true);
-    else setHasInquiryReply(false);
-  }, [userId]);
-
-  // 채팅 알림 불러오기
+  // 1. 알림 데이터 불러오기 (통합 RPC 호출)
   const fetchNotifications = useCallback(async (): Promise<void> => {
     if (!userId) return;
     setLoading(true);
-    const { data, error }: PostgrestSingleResponse<ChatNotification[]> = await supabase.rpc(
-      'get_chat_notifications',
+
+    const { data, error }: PostgrestSingleResponse<Notification[]> = await supabase.rpc(
+      'get_all_notifications',
       { p_user_id: userId },
     );
+
     if (error) {
       console.error('알림 불러오기 실패:', error.message);
       setLoading(false);
       return;
     }
+
     const result = data ?? [];
     setNotifications(result);
+
+    // 전체 안읽은 채팅 메시지 합산
     const totalUnread = result.reduce((sum, n) => sum + (n.unread || 0), 0);
     if (onUnreadChange) onUnreadChange(totalUnread);
+
     setLoading(false);
   }, [userId, onUnreadChange]);
 
+  // 2. 패널이 열릴 때 데이터 갱신
   useEffect(() => {
-    if (open) {
-      fetchNotifications();
-      fetchApprovedGroup();
-      fetchInquiryReply();
-    }
-  }, [open, fetchNotifications, fetchApprovedGroup, fetchInquiryReply]);
+    if (open) fetchNotifications();
+  }, [open, fetchNotifications]);
 
-  // 실시간 감시
+  // 3. 실시간 감시 (direct_messages, notifications)
   useEffect(() => {
     if (!userId) return;
-    const channel = supabase
+
+    // 3-1. 새 메시지 알림 감시
+    const chatChannel = supabase
       .channel('realtime:direct_messages')
       .on(
         'postgres_changes',
@@ -103,12 +83,55 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
         },
       )
       .subscribe();
+
+    // 3-2. 일반 알림 감시 (좋아요, 리뷰, 문의, 승인 등)
+    const notifyChannel = supabase
+      .channel(`notifications:${userId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => fetchNotifications(),
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(chatChannel);
+      supabase.removeChannel(notifyChannel);
     };
   }, [userId, fetchNotifications]);
 
-  // 패널 전체 슬라이드 모션
+  // 4. 알림 클릭 시 페이지 이동
+  const handleNavigate = (n: Notification): void => {
+    switch (n.type) {
+      case 'chat':
+        if (n.group_id && n.target_id) navigate(`/chat/${n.group_id}/${n.target_id}`);
+        break;
+      case 'review_like':
+      case 'review':
+        navigate('/reviews');
+        break;
+      case 'post_like':
+      case 'favorite':
+        navigate('/grouplist');
+        break;
+      case 'group_approved':
+        if (n.group_id) navigate('/groupmanager');
+        break;
+      case 'inquiry_reply':
+        navigate('/inquiry/history');
+        break;
+      default:
+        break;
+    }
+    onClose();
+  };
+
+  // 5. 모션 설정 (패널 / 카드 전환)
   const panelVariants: Variants = {
     hidden: { x: '100%' },
     visible: { x: 0, transition: { duration: 0.4, ease: 'easeOut' } },
@@ -118,38 +141,21 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   const cardExitMotion = {
     x: 150,
     opacity: 0,
-    transition: {
-      duration: 0.4,
-      ease: 'easeInOut' as Transition['ease'],
-    },
+    transition: { duration: 0.4, ease: 'easeInOut' as Transition['ease'] },
   };
 
-  const handleNavigateChat = (groupId: string, chatId: string): void => {
-    navigate(`/chat/${groupId}/${chatId}`);
-    onClose();
-  };
-
-  const handleHideGroupApproval = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowGroupApproval(false);
-  };
-
-  const handleHideInquiry = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setHasInquiryReply(false);
-  };
-
+  // 6. 전체 삭제 (패널 내에서만 초기화)
   const handleClearAll = () => {
     setNotifications([]);
-    setShowGroupApproval(false);
-    setHasInquiryReply(false);
     if (onUnreadChange) onUnreadChange(0);
   };
 
+  // 7. 오버레이 클릭 방지
   const handlePanelClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
+  // 8. 렌더링
   return (
     <AnimatePresence>
       {open && (
@@ -163,7 +169,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
             exit={{ opacity: 0 }}
           />
 
-          {/* 오른쪽 패널 */}
+          {/* 패널 */}
           <motion.div
             className="fixed top-0 right-0 h-full w-[400px] max-w-[90vw] bg-gradient-to-b from-gray-50 to-white shadow-2xl z-50 p-6 overflow-y-auto rounded-l-sm"
             onClick={handlePanelClick}
@@ -181,7 +187,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
                   className="flex items-center gap-1 text-sm text-gray-500 hover:text-brand transition"
                 >
                   <FiTrash2 className="w-4 h-4" />
-                  <p className="font-medium hover:text-brand transition">전체삭제</p>
+                  <p className="font-medium">전체삭제</p>
                 </button>
                 <button
                   onClick={onClose}
@@ -192,83 +198,50 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
               </div>
             </div>
 
+            {/* 로딩 중일 때 */}
             {loading ? (
               <div className="flex justify-center items-center h-[60vh]">
                 <LoadingSpinner />
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {/* 그룹 생성 승인 카드 */}
-                <AnimatePresence>
-                  {showGroupApproval && (
-                    <motion.div
-                      key="group-approval"
-                      onClick={handleHideGroupApproval}
-                      className="bg-white border border-gray-300 rounded-sm p-4 shadow-sm hover:shadow-md transition cursor-pointer"
-                      initial={{ opacity: 1, x: 0 }}
-                      exit={cardExitMotion}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <FiCheckCircle className="w-5 h-5 text-green-500" />
-                        <h3 className="text-lg font-semibold text-gray-800">그룹 생성 승인</h3>
-                      </div>
-                      <p className="text-sm text-gray-700">
-                        그룹 <span className="font-medium text-brand">{approvedGroup}</span> 생성
-                        신청이 승인되었습니다.
-                      </p>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
-                {/* 채팅 알림 */}
+                {/* 알림 카드 목록 */}
                 <AnimatePresence>
                   {notifications.map(n => (
-                    <motion.li
-                      key={n.chat_id}
+                    <motion.div
+                      key={`${n.type}-${n.created_at}-${n.target_id}`}
                       layout
                       exit={cardExitMotion}
-                      onClick={() => handleNavigateChat(n.group_id, n.chat_id)}
-                      className={`flex items-start justify-between bg-white border border-gray-300 rounded-sm p-4 shadow-sm cursor-pointer hover:shadow-md transition ${
-                        n.unread > 0 ? 'bg-blue-50 hover:bg-blue-100' : 'hover:bg-gray-50'
+                      onClick={() => handleNavigate(n)}
+                      className={`bg-white border border-gray-300 rounded-sm p-4 shadow-sm hover:shadow-md transition cursor-pointer ${
+                        n.unread && n.unread > 0
+                          ? 'bg-blue-50 hover:bg-blue-100'
+                          : 'hover:bg-gray-50'
                       }`}
                     >
-                      <div>
-                        <p className="font-semibold text-gray-800 mb-1">{n.group_title}</p>
-                        <p className="text-sm text-gray-600 truncate max-w-[240px]">
-                          {(n.sender_nickname || '알 수 없음') +
-                            ' : ' +
-                            (n.last_message || '메시지가 없습니다.')}
-                        </p>
+                      <div className="flex items-center gap-2 mb-2">
+                        {n.type === 'chat' && <FiMessageSquare className="text-brand" />}
+                        {n.type === 'group_approved' && (
+                          <FiCheckCircle className="text-green-500" />
+                        )}
+                        {n.type === 'inquiry_reply' && <FiInfo className="text-blue-500" />}
+                        {n.type === 'review_like' && <FiHeart className="text-red-500" />}
+                        {n.type === 'post_like' && <FiStar className="text-yellow-500" />}
                       </div>
-                      {n.unread > 0 && (
-                        <span className="bg-brand-red text-white text-xs font-bold rounded-full px-2 py-0.5">
+
+                      <p className="font-semibold text-gray-800 mb-1">{n.title}</p>
+                      <p className="text-sm text-gray-600 truncate max-w-[280px]">
+                        {n.message || '내용이 없습니다.'}
+                      </p>
+
+                      {/* 채팅 알림일 경우 읽지 않은 메시지 수 표시 */}
+                      {n.type === 'chat' && n.unread && n.unread > 0 && (
+                        <span className="mt-2 inline-block bg-brand-red text-white text-xs font-bold rounded-full px-2 py-0.5">
                           {n.unread}
                         </span>
                       )}
-                    </motion.li>
-                  ))}
-                </AnimatePresence>
-
-                {/* 문의 답변 알림 */}
-                <AnimatePresence>
-                  {hasInquiryReply && (
-                    <motion.div
-                      key="inquiry-reply"
-                      onClick={handleHideInquiry}
-                      className="bg-white border border-gray-300 rounded-sm p-4 shadow-sm hover:shadow-md transition cursor-pointer"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0, transition: { duration: 0.3 } }}
-                      exit={cardExitMotion}
-                    >
-                      <div className="flex items-center gap-2 mb-2">
-                        <FiInfo className="w-5 h-5 text-brand" />
-                        <h3 className="text-lg font-semibold text-gray-800">문의 답변 완료</h3>
-                      </div>
-                      <p className="text-sm text-gray-700">
-                        작성하신 문의의 답변이 완료되었습니다.
-                      </p>
                     </motion.div>
-                  )}
+                  ))}
                 </AnimatePresence>
               </div>
             )}

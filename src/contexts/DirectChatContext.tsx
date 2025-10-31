@@ -27,7 +27,7 @@ export const useDirectChat = () => {
 };
 
 // 참가자 보장 (존재X → insert, 존재하지만 나가있음 → 재참여로 전환: left_at=NULL, joined_at=now())
-async function ensureMyParticipant(chatId: string, userId: string) {
+export async function ensureMyParticipant(chatId: string, userId: string) {
   if (!userId) return;
   try {
     const { data: existing } = await supabase
@@ -365,60 +365,102 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   const findOrCreateChat = useCallback(
     async (groupId: string, hostId: string, memberId: string): Promise<string> => {
       try {
-        const { data: existing, error: selErr } = await supabase
+        // 1️⃣ 기존 방 존재 여부 확인
+        const { data: existing } = await supabase
           .from('direct_chats')
           .select('chat_id')
           .eq('group_id', groupId)
           .or(
-            `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+            `and(host_id.eq.${hostId},member_id.eq.${memberId}),
+           and(host_id.eq.${memberId},member_id.eq.${hostId})`,
           )
           .maybeSingle();
-
-        if (selErr) throw selErr;
 
         if (existing?.chat_id) {
           await ensureMyParticipant(existing.chat_id, user?.id ?? '');
           return existing.chat_id;
         }
 
-        const newChat: directChatsInsert = {
-          group_id: groupId,
-          host_id: hostId,
-          member_id: memberId,
-          created_by: user?.id ?? null,
-        };
-
-        const { data: upserted, error: upsertErr } = await supabase
+        // 2️⃣ 없으면 insert (upsert ❌)
+        const { data: inserted, error } = await supabase
           .from('direct_chats')
-          .upsert(newChat, { onConflict: 'group_id,user_low,user_high' })
+          .insert({
+            group_id: groupId,
+            host_id: hostId,
+            member_id: memberId,
+            created_by: user?.id ?? null,
+          })
           .select('chat_id')
           .single();
 
-        if (upsertErr) throw upsertErr;
+        if (error) throw error;
 
-        await ensureMyParticipant(upserted.chat_id, user?.id ?? '');
-
-        return upserted.chat_id;
-      } catch (err: unknown) {
-        const { data: fallback } = await supabase
-          .from('direct_chats')
-          .select('chat_id')
-          .eq('group_id', groupId)
-          .or(
-            `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
-          )
-          .maybeSingle();
-
-        if (fallback?.chat_id) {
-          await ensureMyParticipant(fallback.chat_id, user?.id ?? '');
-          return fallback.chat_id;
-        }
+        await ensureMyParticipant(inserted.chat_id, user?.id ?? '');
+        return inserted.chat_id;
+      } catch (err: any) {
         console.error('findOrCreateChat error:', err);
         throw err;
       }
     },
     [user?.id],
   );
+  // const findOrCreateChat = useCallback(
+  //   async (groupId: string, hostId: string, memberId: string): Promise<string> => {
+  //     try {
+  //       const { data: existing, error: selErr } = await supabase
+  //         .from('direct_chats')
+  //         .select('chat_id')
+  //         .eq('group_id', groupId)
+  //         .or(
+  //           `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+  //         )
+  //         .maybeSingle();
+
+  //       if (selErr) throw selErr;
+
+  //       if (existing?.chat_id) {
+  //         await ensureMyParticipant(existing.chat_id, user?.id ?? '');
+  //         return existing.chat_id;
+  //       }
+
+  //       const newChat: directChatsInsert = {
+  //         group_id: groupId,
+  //         host_id: hostId,
+  //         member_id: memberId,
+  //         created_by: user?.id ?? null,
+  //       };
+
+  //       const { data: upserted, error: upsertErr } = await supabase
+  //         .from('direct_chats')
+  //         .upsert(newChat, { onConflict: 'group_id,user_low,user_high' })
+  //         .select('chat_id')
+  //         .single();
+
+  //       if (upsertErr) throw upsertErr;
+
+  //       await ensureMyParticipant(upserted.chat_id, user?.id ?? '');
+
+  //       return upserted.chat_id;
+  //     } catch (err: unknown) {
+  //       const { data: fallback } = await supabase
+  //         .from('direct_chats')
+  //         .select('chat_id')
+  //         .eq('group_id', groupId)
+  //         .or(
+  //           `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+  //         )
+  //         .maybeSingle();
+
+  //       if (fallback?.chat_id) {
+  //         await ensureMyParticipant(fallback.chat_id, user?.id ?? '');
+  //         return fallback.chat_id;
+  //       }
+  //       console.error('findOrCreateChat error:', err);
+  //       throw err;
+  //     }
+  //   },
+  //   [user?.id],
+  // );
 
   // ------------------------------------------------------
   // 5. 실시간 이벤트 처리

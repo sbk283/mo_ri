@@ -177,7 +177,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                 <button
                   disabled={hasReview || isSubmitting}
                   className={
-                    `absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] rounded-[5px] text-[15px] z-[999] border transition duration-300 ease-in-out ` +
+                    `absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] rounded-[5px] text-[15px] z-[5] border transition duration-300 ease-in-out ` +
                     (hasReview
                       ? 'bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] cursor-not-allowed'
                       : 'border-brand text-brand bg-white hover:bg-brand hover:text-white cursor-pointer')

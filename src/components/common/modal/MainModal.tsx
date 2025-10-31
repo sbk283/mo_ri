@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
+import { useNavigate } from 'react-router-dom';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { Swiper, SwiperSlide } from 'swiper/react';
 
@@ -52,7 +53,7 @@ const modalStyles = {
     borderRadius: '12px',
     padding: 0,
     width: '440px',
-    height: '640px',
+    height: '690px',
     boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
   },
 };
@@ -68,6 +69,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (autoOpen) {
@@ -110,7 +112,13 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 
   const handleBannerClick = (banner: Banner) => {
     if (banner.link) {
-      window.open(banner.link, '_blank', 'noopener,noreferrer');
+      if (banner.link.startsWith('http')) {
+        // 외부 링크는 새탭 (원하는 경우)
+        window.open(banner.link, '_blank', 'noopener,noreferrer');
+      } else {
+        // 내부 경로는 현재 탭 이동
+        navigate(banner.link);
+      }
     }
   };
 
@@ -120,7 +128,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
       onRequestClose={() => handleClose(false)}
       style={modalStyles}
       closeTimeoutMS={300}
-      shouldCloseOnOverlayClick={true}
+      shouldCloseOnOverlayClick={false}
       shouldCloseOnEsc={true}
     >
       {/* 닫기 버튼 */}
@@ -188,7 +196,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 
           {/* 슬라이드 카운터 */}
           {showCounter && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white px-3 py-1.5 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/40 text-white px-2.5 py-1 rounded-full text-xs font-semibold z-10 backdrop-blur-sm pointer-events-none">
               {currentSlide} / {banners.length}
             </div>
           )}
@@ -199,7 +207,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
           <div className="w-full h-[50px] bg-gray-100 flex items-center justify-center border-t border-gray-200 flex-shrink-0">
             <button
               onClick={() => handleClose(true)}
-              className="text-gray-600 hover:text-gray-900 text-sm font-medium px-4 py-2 transition-all rounded-md active:scale-98"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium w-full h-full transition-all rounded-md active:scale-98"
             >
               오늘 하루 보지 않기
             </button>

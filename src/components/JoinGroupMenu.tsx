@@ -119,7 +119,7 @@ function JoinGroupMenu() {
 
       if (selectedTab.label === '모집중') {
         // 모집중: recruiting이고, 시작일은 오늘 이후, 생성일 이전
-        return group.status === 'recruiting' && createdAt <= today && startDate > today;
+        return group.status === 'recruiting' && startDate > today;
       }
       if (selectedTab.label === '진행중') {
         return (

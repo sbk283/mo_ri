@@ -63,6 +63,15 @@ function MeetingHeader({
   const { addFavorite, removeFavorite, checkFavorite } = useGroupFavorite();
   const [favorite, setFavorite] = useState(isFavorite);
 
+  const [currentCount, capacity] = participants.split("/").map(Number);
+  const isFull = currentCount >= capacity;
+
+  // 모임 종료 여부 계산
+  const [startDateStr, endDateStr] = duration.split(" ~ ");
+  const now = new Date();
+  const endDate = new Date(endDateStr);
+  const isEnded = now > endDate;
+
   // 초기 렌더 시, DB에서 찜 상태 불러오기
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
@@ -164,6 +173,7 @@ function MeetingHeader({
 
   const handleJoinClick = () => {
     if (mode === "preview") return;
+    if (isAlreadyJoined || isFull || isEnded) return;
 
     // 이미 참가한 경우
     if (isAlreadyJoined) {
@@ -276,14 +286,24 @@ function MeetingHeader({
 
           <button
             onClick={handleJoinClick}
-            disabled={isAlreadyJoined}
+            disabled={isAlreadyJoined || isFull || isEnded}
             className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
               isAlreadyJoined
                 ? "bg-[#777] text-white cursor-not-allowed"
-                : "bg-brand text-white hover:bg-blue-600"
+                : isFull
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : isEnded
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-brand text-white hover:bg-blue-600"
             }`}
           >
-            {isAlreadyJoined ? "참가완료" : "참가하기"}
+            {isAlreadyJoined
+              ? "참가완료"
+              : isFull
+                ? "정원 마감"
+                : isEnded
+                  ? "모임 종료"
+                  : "참가하기"}
           </button>
         </div>
       </div>
@@ -310,15 +330,17 @@ function MeetingHeader({
           desc: summary,
         }}
       />
-      {/* <SuccessModal
+      <SuccessModal
         isOpen={joinSuccess}
         onClose={() => setJoinSuccess(false)}
         message="참가 신청 완료!"
-      /> */}
+        type="success"
+      />
       <SuccessModal
         isOpen={errorOpen}
         onClose={() => setErrorOpen(false)}
         message={errorMessage}
+        type="error"
       />
       <ConfirmModal
         open={confirmOpen}

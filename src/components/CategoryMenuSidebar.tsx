@@ -75,6 +75,7 @@ function CategoryMenuSidebar() {
 
   return (
     <motion.aside
+      // 반응형: 모바일에서는 숨기고, lg 이상에서만 보이게
       className="fixed top-[120px] left-[calc(50%-812px+24px)] w-[235px] z-40 hidden lg:block"
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}

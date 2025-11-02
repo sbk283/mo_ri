@@ -4,7 +4,7 @@ interface SuccessModalProps {
   isOpen: boolean;
   message?: string;
   onClose: () => void;
-  type?: "success" | "error"; // ✅ 추가 (성공/실패 타입)
+  type?: "success" | "error"; // 추가 (성공/실패 타입)
 }
 
 function SuccessModal({
@@ -33,7 +33,7 @@ function SuccessModal({
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ✅ 성공일 때: 체크 / 실패일 때: X 애니메이션 */}
+            {/* 성공일 때: 체크 / 실패일 때: X 애니메이션 */}
             {type === "success" ? (
               <motion.svg
                 xmlns="http://www.w3.org/2000/svg"

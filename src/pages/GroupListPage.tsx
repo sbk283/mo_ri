@@ -2,7 +2,6 @@ import { useParams } from "react-router-dom";
 import CategoryMenuSidebar from "../components/CategoryMenuSidebar";
 import GroupListLayout from "../components/layout/GroupListLayout";
 import { slugToCategoryMap } from "../constants/categorySlugs";
-
 function GroupListPage(): JSX.Element {
   const { slug } = useParams<{ slug: string }>();
 
@@ -36,10 +35,12 @@ function GroupListPage(): JSX.Element {
     ) ?? "전체보기";
 
   return (
-    <div className="mx-auto flex w-[1024px] gap-6 py-[56px] min-h-screen">
+    // 반응형 적용: 모바일에서는 flex-col, 데스크탑에서는 row
+    <div className="mx-auto flex flex-col lg:flex-row w-full lg:w-[1024px] gap-6 px-4 py-[56px] min-h-screen">
+      {/* 사이드바는 모바일에서는 숨김 */}
       <CategoryMenuSidebar />
 
-      {/* mainCategory 추가로 전달 */}
+      {/* mainCategory 전달 */}
       <GroupListLayout
         mainCategory={mainCategory}
         activeCategory={activeCategory}

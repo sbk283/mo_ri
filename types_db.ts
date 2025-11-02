@@ -88,6 +88,8 @@ export type Database = {
           host_id: string
           member_id: string
           updated_at: string
+          user_high: string | null
+          user_low: string | null
         }
         Insert: {
           chat_id?: string
@@ -97,6 +99,8 @@ export type Database = {
           host_id: string
           member_id: string
           updated_at?: string
+          user_high?: string | null
+          user_low?: string | null
         }
         Update: {
           chat_id?: string
@@ -106,6 +110,8 @@ export type Database = {
           host_id?: string
           member_id?: string
           updated_at?: string
+          user_high?: string | null
+          user_low?: string | null
         }
         Relationships: [
           {
@@ -216,6 +222,32 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "user_profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      group_daily_reads: {
+        Row: {
+          post_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          post_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          post_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_daily_reads_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "group_posts"
+            referencedColumns: ["post_id"]
           },
         ]
       }
@@ -617,6 +649,42 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          group_id: string | null
+          id: string
+          is_read: boolean | null
+          message: string | null
+          target_id: string | null
+          title: string | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          target_id?: string | null
+          title?: string | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string | null
+          target_id?: string | null
+          title?: string | null
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       post_reports: {
         Row: {
           post_id: string
@@ -925,6 +993,53 @@ export type Database = {
     }
     Functions: {
       auto_close_expired_groups: { Args: never; Returns: undefined }
+      create_notification: {
+        Args: {
+          p_group_id?: string
+          p_message: string
+          p_target_id?: string
+          p_title: string
+          p_type: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      ensure_both_participants: {
+        Args: { p_chat_id: string }
+        Returns: undefined
+      }
+      get_all_notifications: {
+        Args: { p_user_id: string }
+        Returns: {
+          created_at: string
+          group_id: string
+          last_message: string
+          message: string
+          sender_nickname: string
+          target_id: string
+          title: string
+          type: string
+          unread: number
+        }[]
+      }
+      get_chat_notifications: {
+        Args: { p_user_id: string }
+        Returns: {
+          chat_id: string
+          group_id: string
+          group_title: string
+          last_message: string
+          sender_nickname: string
+          unread: number
+        }[]
+      }
+      get_unread_counts: {
+        Args: never
+        Returns: {
+          chat_id: string
+          unread: number
+        }[]
+      }
       is_group_host: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: boolean
@@ -932,6 +1047,26 @@ export type Database = {
       is_group_member: {
         Args: { p_group_id: string; p_user_id: string }
         Returns: boolean
+      }
+      is_member_of_post: {
+        Args: { p_post_id: string; p_user_id: string }
+        Returns: boolean
+      }
+      leave_direct_chat: {
+        Args: { p_chat_id: string }
+        Returns: {
+          both_users_left: boolean
+          is_cleaned: boolean
+        }[]
+      }
+      mark_chat_read: { Args: { p_chat_id: string }; Returns: undefined }
+      mark_notifications_read: {
+        Args: { p_user_id: string }
+        Returns: undefined
+      }
+      rejoin_counterpart: {
+        Args: { p_chat_id: string; p_sender: string }
+        Returns: undefined
       }
       unaccent: { Args: { "": string }; Returns: string }
     }

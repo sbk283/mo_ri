@@ -27,7 +27,7 @@ function CategoryMenuSidebar() {
     {
       name: "취미/여가",
       icon: "/images/hobby_dark.svg",
-      sub: ["예술/창작", "음악/공연/문화", "요리/제과/제빵", "게임/오락"],
+      sub: ["예술/창작", "음악/공연/문화", "요리/제과·제빵", "게임/오락"],
     },
     {
       name: "봉사/사회참여",

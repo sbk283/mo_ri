@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { FiMessageSquare, FiCheckCircle, FiInfo, FiHeart, FiStar, FiTrash2 } from 'react-icons/fi';
 
-// 전체 알림 데이터 타입
 interface Notification {
   type: string;
   title: string | null;
@@ -36,7 +35,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // 1. 알림 데이터 불러오기 (통합 RPC 호출)
+  // 🔹 알림 불러오기
   const fetchNotifications = useCallback(async (): Promise<void> => {
     if (!userId) return;
     setLoading(true);
@@ -55,23 +54,22 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     const result = data ?? [];
     setNotifications(result);
 
-    // 전체 안읽은 채팅 메시지 합산
+    // 전체 unread 합산
     const totalUnread = result.reduce((sum, n) => sum + (n.unread || 0), 0);
     if (onUnreadChange) onUnreadChange(totalUnread);
 
     setLoading(false);
   }, [userId, onUnreadChange]);
 
-  // 2. 패널이 열릴 때 데이터 갱신
+  // 패널 열릴 때마다 갱신
   useEffect(() => {
     if (open) fetchNotifications();
   }, [open, fetchNotifications]);
 
-  // 3. 실시간 감시 (direct_messages, notifications)
+  // 🔹 실시간 감시
   useEffect(() => {
     if (!userId) return;
 
-    // 3-1. 새 메시지 알림 감시
     const chatChannel = supabase
       .channel('realtime:direct_messages')
       .on(
@@ -84,7 +82,6 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
       )
       .subscribe();
 
-    // 3-2. 일반 알림 감시 (좋아요, 리뷰, 문의, 승인 등)
     const notifyChannel = supabase
       .channel(`notifications:${userId}`)
       .on(
@@ -95,7 +92,22 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
           table: 'notifications',
           filter: `user_id=eq.${userId}`,
         },
-        () => fetchNotifications(),
+        async () => {
+          await fetchNotifications();
+
+          // 🔹 최신 unreadCount를 Header로 전달
+          if (onUnreadChange) {
+            const { count, error } = await supabase
+              .from('notifications')
+              .select('*', { count: 'exact', head: true })
+              .eq('user_id', userId)
+              .eq('is_read', false);
+
+            if (!error && count !== null) {
+              onUnreadChange(count);
+            }
+          }
+        },
       )
       .subscribe();
 
@@ -105,7 +117,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     };
   }, [userId, fetchNotifications]);
 
-  // 4. 알림 클릭 시 페이지 이동
+  // 알림 클릭 시 이동
   const handleNavigate = (n: Notification): void => {
     switch (n.type) {
       case 'chat':
@@ -120,18 +132,16 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
         navigate('/grouplist');
         break;
       case 'group_approved':
-        if (n.group_id) navigate('/groupmanager');
+        navigate('/groupmanager');
         break;
       case 'inquiry_reply':
         navigate('/inquiry/history');
-        break;
-      default:
         break;
     }
     onClose();
   };
 
-  // 5. 모션 설정 (패널 / 카드 전환)
+  // Motion variants
   const panelVariants: Variants = {
     hidden: { x: '100%' },
     visible: { x: 0, transition: { duration: 0.4, ease: 'easeOut' } },
@@ -144,23 +154,18 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     transition: { duration: 0.4, ease: 'easeInOut' as Transition['ease'] },
   };
 
-  // 6. 전체 삭제 (패널 내에서만 초기화)
+  // 전체 삭제
   const handleClearAll = () => {
     setNotifications([]);
     if (onUnreadChange) onUnreadChange(0);
   };
 
-  // 7. 오버레이 클릭 방지
-  const handlePanelClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+  const handlePanelClick = (e: React.MouseEvent) => e.stopPropagation();
 
-  // 8. 렌더링
   return (
     <AnimatePresence>
       {open && (
         <>
-          {/* 오버레이 */}
           <motion.div
             className="fixed inset-0 bg-black/30 z-20"
             onClick={onClose}
@@ -169,7 +174,6 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
             exit={{ opacity: 0 }}
           />
 
-          {/* 패널 */}
           <motion.div
             className="fixed top-0 right-0 h-full w-[400px] max-w-[90vw] bg-gradient-to-b from-gray-50 to-white shadow-2xl z-50 p-6 overflow-y-auto rounded-l-sm"
             onClick={handlePanelClick}
@@ -178,7 +182,6 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
             animate="visible"
             exit="exit"
           >
-            {/* 헤더 */}
             <div className="flex justify-between items-center mb-8 border-b border-gray-300 pb-3">
               <h2 className="text-2xl font-bold text-brand">알림</h2>
               <div className="flex items-center gap-3">
@@ -198,14 +201,12 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
               </div>
             </div>
 
-            {/* 로딩 중일 때 */}
             {loading ? (
               <div className="flex justify-center items-center h-[60vh]">
                 <LoadingSpinner />
               </div>
             ) : (
               <div className="flex flex-col gap-6">
-                {/* 알림 카드 목록 */}
                 <AnimatePresence>
                   {notifications.map(n => (
                     <motion.div
@@ -230,12 +231,17 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
                       </div>
 
                       <p className="font-semibold text-gray-800 mb-1">{n.title}</p>
-                      <p className="text-sm text-gray-600 truncate max-w-[280px]">
-                        {n.message || '내용이 없습니다.'}
+                      <p
+                        className={`text-sm truncate max-w-[280px] ${
+                          n.type === 'chat' ? 'text-gray-800 font-medium' : 'text-gray-600'
+                        }`}
+                      >
+                        {n.type === 'chat'
+                          ? n.last_message || n.message || '내용이 없습니다.'
+                          : n.message || '내용이 없습니다.'}
                       </p>
 
-                      {/* 채팅 알림일 경우 읽지 않은 메시지 수 표시 */}
-                      {n.type === 'chat' && n.unread && n.unread > 0 && (
+                      {n.type === 'chat' && Number(n.unread) > 0 && (
                         <span className="mt-2 inline-block bg-brand-red text-white text-xs font-bold rounded-full px-2 py-0.5">
                           {n.unread}
                         </span>

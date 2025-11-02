@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
+import type { Session, User } from '@supabase/supabase-js';
 import { getProfile } from '../lib/profile';
 import { supabase } from '../lib/supabase';
 import ChatNotificationPanel from './ChatNotificationPanel';
@@ -19,7 +19,7 @@ const Header: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const navigate = useNavigate();
 
-  // 사용자 세션 초기화
+  // ✅ 사용자 세션 초기화
   const initUserSession = async (): Promise<void> => {
     const {
       data: { session },
@@ -53,7 +53,7 @@ const Header: React.FC = () => {
     setLoading(false);
   };
 
-  // 로그아웃
+  // ✅ 로그아웃
   const handleLogout = async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
     if (error) console.error('로그아웃 실패:', error.message);
@@ -61,10 +61,8 @@ const Header: React.FC = () => {
     window.location.reload();
   };
 
-  // 알림 패널 열기
+  // ✅ 알림 패널 열기/닫기
   const handlePanelOpen = (): void => setShowPanel(true);
-
-  // 알림 패널 닫기 (읽음 처리)
   const handlePanelClose = async (): Promise<void> => {
     setShowPanel(false);
     if (!user?.id) return;
@@ -78,111 +76,30 @@ const Header: React.FC = () => {
       return;
     }
 
-    // 읽음 처리 후 빨간점 제거
-    setUnreadCount(0);
+    setUnreadCount(0); // 빨간 점 제거
   };
 
-  // 단일 useEffect: 세션 로드 + 프로필 구독 + 알림 구독 + 초기 unread 카운트
+  // ✅ 초기 unreadCount 가져오기 (Header에서만 1회)
   useEffect(() => {
-    let profileChannel: RealtimeChannel | null = null;
-    let notificationChannel: RealtimeChannel | null = null;
+    if (!user?.id) return;
+    const userId = user.id;
 
-    const setup = async (): Promise<void> => {
-      await initUserSession();
+    const initUnreadCount = async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_read', false);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        const userId = session.user.id;
-
-        // 0. 초기 unread 카운트 불러오기
-        const { count, error: countError } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId);
-
-        if (!countError && count !== null) {
-          setUnreadCount(count);
-        }
-
-        // 1. 프로필 실시간 감시
-        profileChannel = supabase
-          .channel(`user_profiles:${userId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'user_profiles',
-              filter: `user_id=eq.${userId}`,
-            },
-            async () => {
-              const updated = await getProfile(userId);
-              if (updated?.nickname) setNickname(updated.nickname);
-            },
-          )
-          .subscribe();
-
-        // 2. 알림 실시간 감시 (notifications 테이블)
-        notificationChannel = supabase
-          .channel(`notifications:${userId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: '*', // INSERT + UPDATE + DELETE 모두 수신
-              schema: 'public',
-              table: 'notifications',
-              filter: `user_id=eq.${userId}`,
-            },
-            payload => {
-              // 새 알림 또는 상태변경 시 빨간 점 추가
-              if (payload.eventType === 'INSERT') {
-                setUnreadCount(prev => prev + 1);
-              }
-
-              // 문의 답변 완료와 같은 UPDATE 이벤트 처리
-              if (payload.eventType === 'UPDATE') {
-                const updated = payload.new;
-                if (updated.type === 'inquiry_reply') {
-                  setUnreadCount(prev => prev + 1);
-                }
-              }
-            },
-          )
-          .subscribe();
-        // notificationChannel = supabase
-        //   .channel(`notifications:${userId}`)
-        //   .on(
-        //     'postgres_changes',
-        //     {
-        //       event: 'INSERT',
-        //       schema: 'public',
-        //       table: 'notifications',
-        //       filter: `user_id=eq.${userId}`,
-        //     },
-        //     () => {
-        //       // 새 알림 발생 시 빨간 점 추가
-        //       setUnreadCount(prev => prev + 1);
-        //     },
-        //   )
-        //   .subscribe();
-      }
+      if (!error && count !== null) setUnreadCount(count);
     };
 
-    setup();
+    initUnreadCount();
+  }, [user]);
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      initUserSession();
-    });
-
-    // 클린업
-    return () => {
-      listener.subscription.unsubscribe();
-      if (profileChannel) supabase.removeChannel(profileChannel);
-      if (notificationChannel) supabase.removeChannel(notificationChannel);
-    };
+  // ✅ 최초 세션 로드
+  useEffect(() => {
+    initUserSession();
   }, []);
 
   if (loading) return null;
@@ -227,7 +144,7 @@ const Header: React.FC = () => {
                   )}
                 </button>
 
-                {/* 로그아웃 버튼 */}
+                {/* 로그아웃 */}
                 <button
                   onClick={handleLogout}
                   className="font-bold text-sm border px-3 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"

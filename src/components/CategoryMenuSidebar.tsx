@@ -27,7 +27,7 @@ function CategoryMenuSidebar() {
     {
       name: "취미/여가",
       icon: "/images/hobby_dark.svg",
-      sub: ["예술/창작", "음악/공연/문화", "요리/제과/제빵", "게임/오락"],
+      sub: ["예술/창작", "음악/공연/문화", "요리/제과·제빵", "게임/오락"],
     },
     {
       name: "봉사/사회참여",
@@ -75,6 +75,7 @@ function CategoryMenuSidebar() {
 
   return (
     <motion.aside
+      // 반응형: 모바일에서는 숨기고, lg 이상에서만 보이게
       className="fixed top-[120px] left-[calc(50%-812px+24px)] w-[235px] z-40 hidden lg:block"
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}

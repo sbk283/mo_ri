@@ -1,20 +1,20 @@
-import { useEffect, useRef, useState } from 'react';
-import type { Swiper as SwiperClass } from 'swiper';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import { useEffect, useRef, useState } from "react";
+import type { Swiper as SwiperClass } from "swiper";
+import { Swiper, SwiperSlide } from "swiper/react";
 // import 'swiper/swiper-bundle.css';
-import ConfirmModal from '../modal/ConfirmModal';
-import JoinGroupModal from '../modal/JoinGroupModal';
-import ShareModal from '../modal/ShareModal';
-import SuccessModal from '../modal/SuccessModal';
-import MeetingCard from './MeetingCard';
-import { useGroupMember } from '../../../contexts/GroupMemberContext';
-import { useAuth } from '../../../contexts/AuthContext';
-import { useGroupFavorite } from '../../../hooks/useGroupFavorite';
+import ConfirmModal from "../modal/ConfirmModal";
+import JoinGroupModal from "../modal/JoinGroupModal";
+import ShareModal from "../modal/ShareModal";
+import SuccessModal from "../modal/SuccessModal";
+import MeetingCard from "./MeetingCard";
+import { useGroupMember } from "../../../contexts/GroupMemberContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import { useGroupFavorite } from "../../../hooks/useGroupFavorite";
 
 export interface MeetingHeaderProps {
   groupId: string;
   title: string;
-  status: '모집중' | '모집종료' | '모임종료';
+  status: "모집중" | "모집종료" | "모임종료";
   category: string;
   subCategory: string;
   summary?: string;
@@ -23,7 +23,7 @@ export interface MeetingHeaderProps {
   participants: string; // "2/10"
   images: string[];
   isFavorite: boolean;
-  mode: 'detail' | 'preview';
+  mode: "detail" | "preview";
   onFavoriteToggle: () => void;
   onApply: () => void;
 }
@@ -44,7 +44,7 @@ function MeetingHeader({
   onFavoriteToggle,
 }: MeetingHeaderProps) {
   const [selectedImage, setSelectedImage] = useState<string>(
-    images.length > 0 ? images[0] : '/nullbg.jpg',
+    images.length > 0 ? images[0] : "/nullbg.jpg",
   );
 
   const [shareOpen, setShareOpen] = useState(false);
@@ -63,13 +63,22 @@ function MeetingHeader({
   const { addFavorite, removeFavorite, checkFavorite } = useGroupFavorite();
   const [favorite, setFavorite] = useState(isFavorite);
 
+  const [currentCount, capacity] = participants.split("/").map(Number);
+  const isFull = currentCount >= capacity;
+
+  // 모임 종료 여부 계산
+  const [startDateStr, endDateStr] = duration.split(" ~ ");
+  const now = new Date();
+  const endDate = new Date(endDateStr);
+  const isEnded = now > endDate;
+
   // 초기 렌더 시, DB에서 찜 상태 불러오기
   useEffect(() => {
     const fetchFavoriteStatus = async () => {
-      if (!user || !groupId || groupId === 'preview-temp-id') return;
+      if (!user || !groupId || groupId === "preview-temp-id") return;
 
       const isFav = await checkFavorite(groupId);
-      setFavorite(isFavorite);
+      setFavorite(isFav ?? false);
     };
 
     fetchFavoriteStatus();
@@ -92,7 +101,7 @@ function MeetingHeader({
    */
   useEffect(() => {
     const checkMembership = async () => {
-      if (!groupId || groupId === 'preview-temp-id') return;
+      if (!groupId || groupId === "preview-temp-id") return;
       await fetchMembers(groupId);
     };
 
@@ -103,13 +112,15 @@ function MeetingHeader({
   useEffect(() => {
     if (!user) return;
 
-    const joined = members.some(m => m.user_id === user.id && m.member_status === 'approved');
+    const joined = members.some(
+      (m) => m.user_id === user.id && m.member_status === "approved",
+    );
 
     setIsAlreadyJoined(joined);
   }, [members, user]);
 
   const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (joinSuccess) {
@@ -120,7 +131,7 @@ function MeetingHeader({
 
   // "이미 참가한 모임입니다." 자동 닫기 (1.5초 후)
   useEffect(() => {
-    if (errorOpen && errorMessage === '이미 참가한 모임입니다.') {
+    if (errorOpen && errorMessage === "이미 참가한 모임입니다.") {
       const timer = setTimeout(() => setErrorOpen(false), 1500);
       return () => clearTimeout(timer);
     }
@@ -128,17 +139,17 @@ function MeetingHeader({
 
   // 참가 처리
   const handleJoinSubmit = async (intro: string) => {
-    console.log('참가 신청 시도:', intro);
+    console.log("참가 신청 시도:", intro);
     const result = await joinGroup(groupId);
 
-    if (result === 'success') {
+    if (result === "success") {
       setJoinSuccess(true);
       setIsAlreadyJoined(true);
-    } else if (result === 'already') {
-      setErrorMessage('이미 참가한 모임입니다.');
+    } else if (result === "already") {
+      setErrorMessage("이미 참가한 모임입니다.");
       setErrorOpen(true);
     } else {
-      setErrorMessage('참가에 실패했습니다. 다시 시도해주세요.');
+      setErrorMessage("참가에 실패했습니다. 다시 시도해주세요.");
       setErrorOpen(true);
     }
 
@@ -151,17 +162,18 @@ function MeetingHeader({
   };
 
   const handleShareClick = () => {
-    if (mode === 'preview') return;
+    if (mode === "preview") return;
     setShareOpen(true);
   };
 
   const handleFavoriteClick = () => {
-    if (mode === 'preview') return;
+    if (mode === "preview") return;
     setConfirmOpen(true);
   };
 
   const handleJoinClick = () => {
-    if (mode === 'preview') return;
+    if (mode === "preview") return;
+    if (isAlreadyJoined || isFull || isEnded) return;
 
     // 이미 참가한 경우
     if (isAlreadyJoined) {
@@ -186,14 +198,14 @@ function MeetingHeader({
         {images.length > 1 && (
           <div className="mt-2 w-full relative">
             <Swiper
-              key={images.join('|')}
+              key={images.join("|")}
               breakpoints={{
                 0: { slidesPerView: 3, spaceBetween: 8 },
                 640: { slidesPerView: 4, spaceBetween: 10 },
                 1024: { slidesPerView: 5, spaceBetween: 12 },
               }}
               className="w-full"
-              onSwiper={sw => (swiperRef.current = sw)}
+              onSwiper={(sw) => (swiperRef.current = sw)}
             >
               {images.map((img, idx) => (
                 <SwiperSlide key={idx} className="!w-auto">
@@ -216,7 +228,11 @@ function MeetingHeader({
               onClick={() => swiperRef.current?.slideNext()}
               className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-[60%] !-right-5 z-50"
             >
-              <img src="/images/swiper_next.svg" alt="next" className="w-[9px] h-[15px]" />
+              <img
+                src="/images/swiper_next.svg"
+                alt="next"
+                className="w-[9px] h-[15px]"
+              />
             </button>
           </div>
         )}
@@ -226,50 +242,78 @@ function MeetingHeader({
       <div className="min-w-0">
         <MeetingCard
           groupId={groupId}
-          groupCapacity={Number(participants.split('/')[1])}
+          groupCapacity={Number(participants.split("/")[1])}
           title={title}
           status={status}
-          summary={summary ?? ''}
+          summary={summary ?? ""}
           category={category}
           subCategory={subCategory}
           dday={dday}
           participants={participants}
           duration={duration}
-          width={mode === 'preview' ? '553px' : '680px'}
-          height={mode === 'preview' ? '200px' : '180px'}
+          width={mode === "preview" ? "553px" : "680px"}
+          height={mode === "preview" ? "200px" : "180px"}
         />
 
         <div className="flex gap-4 mt-4 justify-end">
-          <button onClick={handleShareClick} className="flex flex-col items-center gap-1">
+          <button
+            onClick={handleShareClick}
+            className="flex flex-col items-center gap-1"
+          >
             <img src="/images/share_dark.svg" alt="공유" className="w-6 h-6" />
             <span className="text-md font-medium text-[#777]">공유하기</span>
           </button>
 
-          <button onClick={handleFavoriteToggle} className="flex flex-col items-center gap-1">
+          <button
+            onClick={handleFavoriteToggle}
+            className="flex flex-col items-center gap-1"
+          >
             {favorite ? (
-              <img src="/images/star_gold.svg" alt="찜하기" className="w-6 h-6" />
+              <img
+                src="/images/star_gold.svg"
+                alt="찜하기"
+                className="w-6 h-6"
+              />
             ) : (
-              <img src="/images/star_dark.svg" alt="찜 해제" className="w-6 h-6" />
+              <img
+                src="/images/star_dark.svg"
+                alt="찜 해제"
+                className="w-6 h-6"
+              />
             )}
             <span className="text-md font-medium text-[#777]">찜하기</span>
           </button>
 
           <button
             onClick={handleJoinClick}
-            disabled={isAlreadyJoined}
+            disabled={isAlreadyJoined || isFull || isEnded}
             className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
               isAlreadyJoined
-                ? 'bg-[#777] text-white cursor-not-allowed'
-                : 'bg-brand text-white hover:bg-blue-600'
+                ? "bg-[#777] text-white cursor-not-allowed"
+                : isFull
+                  ? "bg-gray-400 text-white cursor-not-allowed"
+                  : isEnded
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-brand text-white hover:bg-blue-600"
             }`}
           >
-            {isAlreadyJoined ? '참가완료' : '참가하기'}
+            {isAlreadyJoined
+              ? "참가완료"
+              : isFull
+                ? "정원 마감"
+                : isEnded
+                  ? "모임 종료"
+                  : "참가하기"}
           </button>
         </div>
       </div>
 
       {/* 모달들 */}
-      <ShareModal isOpen={shareOpen} onClose={() => setShareOpen(false)} shareUrl={shareUrl} />
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        shareUrl={shareUrl}
+      />
       <JoinGroupModal
         isOpen={open}
         onClose={() => setOpen(false)}
@@ -280,22 +324,30 @@ function MeetingHeader({
           status,
           category,
           subCategory,
-          memberLimit: Number(participants.split('/')[1]),
+          memberLimit: Number(participants.split("/")[1]),
           duration,
           dday,
           desc: summary,
         }}
       />
-      {/* <SuccessModal
+      <SuccessModal
         isOpen={joinSuccess}
         onClose={() => setJoinSuccess(false)}
         message="참가 신청 완료!"
-      /> */}
-      <SuccessModal isOpen={errorOpen} onClose={() => setErrorOpen(false)} message={errorMessage} />
+        type="success"
+      />
+      <SuccessModal
+        isOpen={errorOpen}
+        onClose={() => setErrorOpen(false)}
+        message={errorMessage}
+        type="error"
+      />
       <ConfirmModal
         open={confirmOpen}
         title="찜을 해제하시겠습니까?"
-        message={'해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?'}
+        message={
+          "해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?"
+        }
         onConfirm={handleConfirmModal}
         onClose={() => setConfirmOpen(false)}
       />

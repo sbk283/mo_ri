@@ -1,5 +1,5 @@
 // 마이페이지 관심사 변경 모달
-import { Modal } from 'antd';
+import { Modal } from "antd";
 
 interface InterestModalProps {
   open: boolean;
@@ -10,20 +10,25 @@ interface InterestModalProps {
 
 const MAX = 5;
 
-const InterestModal = ({ open, onClose, selected, toggleInterest }: InterestModalProps) => {
+const InterestModal = ({
+  open,
+  onClose,
+  selected,
+  toggleInterest,
+}: InterestModalProps) => {
   const interestOptions = [
-    '구기활동',
-    '실내활동',
-    '힐링/건강관리',
-    '실외활동',
-    '학습/공부',
-    'IT',
-    '예술/창작',
-    '음악/공연/문화',
-    '요리/제과·제빵',
-    '게임/오락',
-    '복지/나눔',
-    '캠페인',
+    "구기활동",
+    "실내활동",
+    "힐링/건강관리",
+    "실외활동",
+    "학습/공부",
+    "IT",
+    "예술/창작",
+    "음악/공연/문화",
+    "요리/제과·제빵",
+    "게임/오락",
+    "복지/나눔",
+    "캠페인",
   ];
 
   const isMax = selected.length >= MAX;
@@ -56,11 +61,15 @@ const InterestModal = ({ open, onClose, selected, toggleInterest }: InterestModa
         <span className="text-gray-400">
           선택 {selected.length}/{MAX}
         </span>
-        {isMax && <span className="ml-2 text-red-500">최대 {MAX}개까지 선택 가능합니다.</span>}
+        {isMax && (
+          <span className="ml-2 text-red-500">
+            최대 {MAX}개까지 선택 가능합니다.
+          </span>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-2 mt-2">
-        {interestOptions.map(item => {
+        {interestOptions.map((item) => {
           const active = selected.includes(item);
           const disable = !active && isMax;
           return (
@@ -71,12 +80,14 @@ const InterestModal = ({ open, onClose, selected, toggleInterest }: InterestModa
               aria-pressed={active}
               aria-disabled={disable}
               className={[
-                'py-[6px] px-[12px] rounded-[5px] border transition',
+                "py-[6px] px-[12px] rounded-[5px] border transition",
                 active
-                  ? 'bg-brand text-white border-brand'
-                  : 'text-gray-500 border-gray-300 hover:border-brand',
-                disable ? 'opacity-50 cursor-not-allowed hover:border-gray-300' : 'cursor-pointer',
-              ].join(' ')}
+                  ? "bg-brand text-white border-brand"
+                  : "text-gray-500 border-gray-300 hover:border-brand",
+                disable
+                  ? "opacity-50 cursor-not-allowed hover:border-gray-300"
+                  : "cursor-pointer",
+              ].join(" ")}
             >
               {item}
             </button>

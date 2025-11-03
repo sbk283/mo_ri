@@ -14,7 +14,7 @@ export const categorySlugMap: Record<string, string> = {
   "IT": "tech",
   "예술/창작": "creative-arts",
   "음악/공연/문화": "culture",
-  "요리/제과/제빵": "culinary",
+  "요리/제과·제빵": "culinary",
   "게임/오락": "gaming",
   "복지/나눔": "community-service",
   "캠페인": "advocacy",

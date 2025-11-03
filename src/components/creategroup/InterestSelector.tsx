@@ -88,7 +88,7 @@ function InterestSelector({ major, sub, onChange }: InterestSelectorProps) {
                     key={m.id}
                     onClick={() => {
                       onChange('interestMajor', m.name);
-                      onChange('major_id', m.id); // ✅ FK 저장
+                      onChange('major_id', m.id);
                       onChange('interestSub', '');
                       onChange('sub_id', '');
                       setMajorOpen(false);

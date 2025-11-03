@@ -5,7 +5,7 @@ import DashboardDetail from '../components/dashboard/DashboardDetail';
 import { DashboardNotice } from '../components/dashboard/DashboardNotice';
 import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 type TabLabel = '공지사항' | '모임일상';
@@ -18,32 +18,55 @@ const paramToLabel = (param?: string | null): TabLabel =>
 function GroupContentPage() {
   const { id: groupId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+
+  // 상세 뷰 관련 쿼리키들(탭 전환 시 제거할 목록)
+  const DETAIL_KEYS = ['post', 'view', 'mode', 'edit'] as const;
 
   // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 탭 상태: URL ?tab=notice|daily 로 복원/동기화
+  // 탭 상태
   const [selectedTabLabel, setSelectedTabLabel] = useState<TabLabel>('공지사항');
 
-  useEffect(() => {
-    // 마운트 시 URL에서 탭 복원
-    const tab = searchParams.get('tab');
-    setSelectedTabLabel(paramToLabel(tab));
-  }, [groupId]); // 그룹 바뀌면 다시 한 번 동기화
+  // URL에 탭을 기록하면서 상세 파라미터를 제거
+  const setTabAndClearDetail = (tabParam: TabParam, opts?: { replace?: boolean }) => {
+    const sp = new URLSearchParams(location.search);
+    sp.set('tab', tabParam);
+    DETAIL_KEYS.forEach(k => sp.delete(k)); // ← 핵심: 탭 바꾸면 상세 파라미터 제거
 
-  useEffect(() => {
-    // 탭 변경 시 URL을 업데이트(히스토리 replace)
-    const next = labelToParam(selectedTabLabel);
-    const prev = searchParams.get('tab');
-    if (prev !== next) {
-      // groupId 외 다른 쿼리 유지하려면 객체 복사
-      const sp = new URLSearchParams(searchParams);
-      sp.set('tab', next);
-      setSearchParams(sp, { replace: true });
+    const nextSearch = `?${sp.toString()}`;
+    const nextUrl = `${location.pathname}${nextSearch}${location.hash || ''}`;
+    const currUrl = `${location.pathname}${location.search}${location.hash || ''}`;
+    if (nextUrl !== currUrl) {
+      navigate(
+        { pathname: location.pathname, search: nextSearch },
+        { replace: opts?.replace ?? false },
+      );
     }
-  }, [selectedTabLabel, searchParams, setSearchParams]);
+  };
+
+  // 마운트/그룹 변경 시 URL에서 탭 복원(없거나 이상하면 보정)
+  useEffect(() => {
+    const sp = new URLSearchParams(location.search);
+    const tabParam = (sp.get('tab') as TabParam | null) ?? null;
+    const label = paramToLabel(tabParam);
+    setSelectedTabLabel(label);
+
+    const normalized = labelToParam(label);
+    if (!tabParam || tabParam !== normalized) {
+      // 탭 값 없거나 비정상이면 정규화하면서 상세 파라미터도 같이 제거
+      setTabAndClearDetail(normalized, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupId]);
+
+  // 탭 클릭 시: 상태 + URL 동기화(상세 파라미터 제거)
+  const handleTabClick = (label: TabLabel) => {
+    setSelectedTabLabel(label);
+    setTabAndClearDetail(labelToParam(label));
+  };
 
   // 각 탭 작성 중 여부 (버튼 숨김)
   const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);
@@ -160,6 +183,9 @@ function GroupContentPage() {
 
   // 상단 "작성하기" 버튼
   const handleCreateClick = () => {
+    // 작성하기 눌러도 상세 파라미터 남아있으면 혼란 줄 수 있으니 탭 유지 + 상세 제거(Optional)
+    setTabAndClearDetail(labelToParam(selectedTabLabel), { replace: true });
+
     if (selectedTabLabel === '공지사항') setNoticeCreateTick(t => t + 1);
     else setDailyCreateTick(t => t + 1);
   };
@@ -171,7 +197,7 @@ function GroupContentPage() {
       ? roleLoaded && isHost // 공지: 호스트만
       : true); // 일상: 기존 로직 유지
 
-  // === 모임 나가기: member_status 를 'left' 로 업데이트 ===
+  // === 모임 나가기 ===
   const handleLeaveGroup = async () => {
     const ok = window.confirm('정말로 모임을 탈퇴하시겠어요?');
     if (!ok) return;
@@ -194,7 +220,7 @@ function GroupContentPage() {
       .update({ member_status: 'left' })
       .eq('group_id', groupId)
       .eq('user_id', userId)
-      .neq('member_status', 'left'); // 이미 left면 중복 업데이트 방지
+      .neq('member_status', 'left');
 
     if (error) {
       console.error('[GroupContentPage] leave error:', error);
@@ -240,7 +266,7 @@ function GroupContentPage() {
                       key={item.label}
                       ref={el => (tabRefs.current[i] = el)}
                       className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
-                      onClick={() => setSelectedTabLabel(item.label)}
+                      onClick={() => handleTabClick(item.label)}
                     >
                       <p
                         className={`text-xl font-bold transition-colors duration-200 ${

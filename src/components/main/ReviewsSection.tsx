@@ -1,9 +1,10 @@
-// src/sections/ReviewsSection.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ReviewCard, type ReviewItem } from '../common/ReviewCard';
 import ReviewDetailModal, { type ReviewDetail } from '../common/modal/ReviewDetailModal';
+import ErrorModal from '../common/modal/ErrorModal';
+import SuccessModal from '../common/modal/SuccessModal';
 import { supabase } from '../../lib/supabase';
 
 const NO_IMAGE = '/images/no_image.jpg';
@@ -32,7 +33,7 @@ type ReviewRow = {
   } | null;
 };
 
-type ProfileRow = { user_id: string; nickname: string | null };
+type ProfileRow = { user_id: string; nickname: string | null; avatar_url: string | null };
 type TagDict = { tag_code: string; label: string };
 type TagRow = { review_id: string; tag_code: string };
 type LikeRow = { review_id: string };
@@ -48,6 +49,29 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
   const [empathyByNumId, setEmpathyByNumId] = useState<Record<number, number>>({});
   const [likedByNumId, setLikedByNumId] = useState<Set<number>>(new Set());
   const [numToReviewId, setNumToReviewId] = useState<Record<number, string>>({});
+
+  // 상세에서 사용할 "그룹 이미지(첫 장)" 맵: review_id → image url
+  const [groupImageByReviewId, setGroupImageByReviewId] = useState<Record<string, string>>({});
+  // ✅ 상세에서 사용할 "작성자 아바타" 맵: numId → avatar url
+  const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<Record<number, string>>({});
+
+  // 실패/성공 모달 상태
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('공감이 반영되었습니다!');
+  const AUTO_CLOSE_MS = 1700;
+
+  const openError = (msg: string) => {
+    setErrorMsg(msg);
+    setErrorOpen(true);
+    setTimeout(() => setErrorOpen(false), AUTO_CLOSE_MS);
+  };
+  const openSuccess = (msg: string) => {
+    setSuccessMsg(msg);
+    setSuccessOpen(true);
+    setTimeout(() => setSuccessOpen(false), AUTO_CLOSE_MS);
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -91,20 +115,26 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
             setEmpathyByNumId({});
             setLikedByNumId(new Set());
             setNumToReviewId({});
+            setGroupImageByReviewId({});
+            setAuthorAvatarByNumId({});
             setLoading(false);
           }
           return;
         }
 
-        // 3) 작성자 닉네임
+        // 3) 작성자 닉네임 + 아바타
         const authorIds = [...new Set(rows.map(r => r.author_id))];
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('user_id, nickname')
+          .select('user_id, nickname, avatar_url')
           .in('user_id', authorIds)
           .returns<ProfileRow[]>();
+
         const nicknameByUserId = Object.fromEntries(
           (profiles ?? []).map(p => [p.user_id, p.nickname ?? '익명']),
+        );
+        const avatarByUserId = Object.fromEntries(
+          (profiles ?? []).map(p => [p.user_id, p.avatar_url ?? NO_IMAGE]),
         );
 
         // 4) 리뷰별 태그
@@ -145,8 +175,11 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           myLikedSet = new Set((mine ?? []).map(x => x.review_id));
         }
 
-        // 7) 화면 매핑 (id: 1..N)
+        // 7) 화면 매핑 (id: 1..N) + 상세용 그룹이미지 & 작성자 아바타 맵
         const numMap: Record<number, string> = {};
+        const groupImgMap: Record<string, string> = {};
+        const authorAvatarMap: Record<number, string> = {};
+
         const mapped: ReviewItem[] = rows.map((r, idx) => {
           const g = r.groups;
           const start = fmt(g?.group_start_day);
@@ -157,11 +190,19 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           const numId = idx + 1;
           numMap[numId] = r.review_id;
 
+          // 카드(미리보기) 이미지: 작성자 프로필
+          const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
+          authorAvatarMap[numId] = avatar; // ✅
+
+          // 상세(모달) 이미지: 그룹 이미지 첫 장
+          const groupFirstImage = g?.image_urls?.[0] || NO_IMAGE;
+          groupImgMap[r.review_id] = groupFirstImage;
+
           return {
             id: numId,
             title: g?.group_title ?? '(제목 없음)',
             category: major,
-            src: g?.image_urls?.[0] || NO_IMAGE,
+            src: avatar, // 카드 썸네일 = 프로필
             status: statusKor(g?.status),
             rating,
             period: start && end ? `${start} - ${end}` : '',
@@ -199,6 +240,8 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           setNumToReviewId(numMap);
           setEmpathyByNumId(empathyByNum);
           setLikedByNumId(likedNums);
+          setGroupImageByReviewId(groupImgMap);
+          setAuthorAvatarByNumId(authorAvatarMap); // ✅
         }
       } catch (e) {
         console.error('[ReviewsSection] load error', e);
@@ -207,6 +250,8 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           setEmpathyByNumId({});
           setLikedByNumId(new Set());
           setNumToReviewId({});
+          setGroupImageByReviewId({});
+          setAuthorAvatarByNumId({});
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -218,28 +263,34 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
     };
   }, []);
 
-  // 상세 변환
-  const toDetail = (v: ReviewItem): ReviewDetail => ({
-    id: v.id,
-    title: v.title,
-    category: v.category,
-    src: v.src,
-    rating: v.rating,
-    period: v.period ?? '',
-    content: v.content,
-    tags: v.tags ?? [],
-    creator_id: v.created_id,
-    created_at: v.created_at ?? '',
-    empathy: empathyByNumId[v.id] ?? v.empathy ?? 0,
-  });
+  // 상세 변환: 상세는 그룹이미지 + 작성자 아바타 전달
+  const toDetail = (v: ReviewItem): ReviewDetail => {
+    const rid = numToReviewId[v.id];
+    const groupSrc = (rid && groupImageByReviewId[rid]) || NO_IMAGE;
+
+    return {
+      id: v.id,
+      title: v.title,
+      category: v.category,
+      src: groupSrc, // 모달 배경
+      rating: v.rating,
+      period: v.period ?? '',
+      content: v.content,
+      tags: v.tags ?? [],
+      creator_id: v.created_id,
+      creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE, // ✅ 작성자 아바타
+      created_at: v.created_at ?? '',
+      empathy: empathyByNumId[v.id] ?? v.empathy ?? 0,
+    };
+  };
 
   const selected: ReviewDetail | null = useMemo(() => {
     if (openId == null) return null;
     const found = topItems.find(v => v.id === openId);
     return found ? toDetail(found) : null;
-  }, [openId, topItems, empathyByNumId]);
+  }, [openId, topItems, empathyByNumId, numToReviewId, groupImageByReviewId, authorAvatarByNumId]);
 
-  // DB 공감
+  // DB 공감 (중복/미로그인 모달 처리 + 성공 모달)
   const handleEmpathy = async (numId: number) => {
     const rid = numToReviewId[numId];
     if (!rid) return;
@@ -247,11 +298,11 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
     const { data: u } = await supabase.auth.getUser();
     const myId = u?.user?.id;
     if (!myId) {
-      alert('로그인이 필요합니다.');
+      openError('로그인이 필요합니다.\n로그인 후 이용해 주세요.');
       return;
     }
     if (likedByNumId.has(numId)) {
-      alert('이미 공감했습니다.');
+      openError('이미 공감했습니다.\n같은 리뷰는 한 번만 공감할 수 있어요.');
       return;
     }
 
@@ -259,13 +310,13 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
     // @ts-ignore 중복 코드 허용(23505)
     if (error && error.code !== '23505') {
       console.error('[ReviewsSection] empathy insert error', error);
-      alert('공감 처리 중 오류가 발생했습니다.');
+      openError('공감 처리 중 오류가 발생했습니다.');
       return;
     }
 
-    // 로컬 반영
     setEmpathyByNumId(prev => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
     setLikedByNumId(prev => new Set(prev).add(numId));
+    openSuccess('공감이 반영되었습니다!');
   };
 
   return (
@@ -349,7 +400,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           <div className="flex gap-[31px] absolute right-[35px]">
             <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
               <a
-                href="https://greenart.co.kr/?ACE_REF=adwords_g&ACE_KW=%EA%B7%B8%EB%A6%B0%EC%BB%B4%ED%93%A8%ED%84%B0%EC%95%84%ED%8A%B8%ED%95%99%EC%9B%90&gad_source=1&gad_campaignid=16820849449&gbraid=0AAAAADsHW8xXw-LjNJLTj-a4cz89UEwrZ&gclid=CjwKCAjwlaTGBhANEiwAoRgXBSJt5jhL98x5f0HeijEpTTFfMbSh92Ajsj93QWomKrWQLhbmuKCJEhoCmZ8QAvD_BwE"
+                href="https://greenart.co.kr/?ACE_REF=adwords_g&ACE_KW=%EA%B7%B8%EB%A6%B0%EC%BB%B4%ED%93%A8%ED%84%B0%EC%95%84%ED%8A%B8%ED%95%99%EC%9B%90"
                 target="_blank"
               >
                 <img
@@ -371,7 +422,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
                 />
               </a>
             </div>
-            <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow-hidden">
+            <div className="w-[213px] h-[187px] rounded-[5px] bg-gray-300 overflow:hidden">
               <a
                 href="https://docs.google.com/forms/d/e/1FAIpQLSfArAWTcEHht9c693B3wVQWWl-15gaT9seoM6JsCWUnpBqCTA/viewform?pli=1"
                 target="_blank"
@@ -386,6 +437,14 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           </div>
         </div>
       </div>
+
+      {/* 실패/성공 모달 */}
+      <ErrorModal isOpen={errorOpen} message={errorMsg} onClose={() => setErrorOpen(false)} />
+      <SuccessModal
+        isOpen={successOpen}
+        message={successMsg}
+        onClose={() => setSuccessOpen(false)}
+      />
     </div>
   );
 }

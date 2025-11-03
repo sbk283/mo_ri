@@ -1,10 +1,11 @@
-// src/pages/ReviewsListPage.tsx
 import { useEffect, useMemo, useState } from 'react';
 import { ReviewCard, type ReviewItem } from '../components/common/ReviewCard';
 import ReviewDetailModal, { type ReviewDetail } from '../components/common/modal/ReviewDetailModal';
 import ArrayDropdown from '../components/common/ArrayDropdown';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { supabase } from '../lib/supabase';
+import ErrorModal from '../components/common/modal/ErrorModal';
+import SuccessModal from '../components/common/modal/SuccessModal';
 
 const fmt = (d?: string | null) => (d ? d.replace(/-/g, '.') : '');
 const NO_IMAGE = '/images/no_image.jpg';
@@ -51,19 +52,46 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   const [labelByCode, setLabelByCode] = useState<Record<string, string>>({});
   const [modalTags, setModalTags] = useState<string[] | null>(null);
 
-  // ★ 모달용 "모임 이미지" 저장 (numId → group first image)
+  // 모달용 "모임 이미지" 저장 (numId → group first image)
   const [groupSrcByNumId, setGroupSrcByNumId] = useState<Record<number, string>>({});
+  // ✅ 모달/상세용 "작성자 아바타" 저장 (numId → avatar url)
+  const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<Record<number, string>>({});
+
+  // ErrorModal 상태
+  const [errorLoginOpen, setErrorLoginOpen] = useState(false);
+  const [errorDupLikeOpen, setErrorDupLikeOpen] = useState(false);
+  // SuccessModal 상태
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('공감이 반영되었습니다!');
+
+  const AUTO_CLOSE_MS = 1700;
+
+  useEffect(() => {
+    if (!errorLoginOpen) return;
+    const t = setTimeout(() => setErrorLoginOpen(false), AUTO_CLOSE_MS);
+    return () => clearTimeout(t);
+  }, [errorLoginOpen]);
+
+  useEffect(() => {
+    if (!errorDupLikeOpen) return;
+    const t = setTimeout(() => setErrorDupLikeOpen(false), AUTO_CLOSE_MS);
+    return () => clearTimeout(t);
+  }, [errorDupLikeOpen]);
+
+  useEffect(() => {
+    if (!successOpen) return;
+    const t = setTimeout(() => setSuccessOpen(false), AUTO_CLOSE_MS);
+    return () => clearTimeout(t);
+  }, [successOpen]);
 
   const withEmpathy = (it: ReviewItem) => ({ ...it, empathy: empathyByNumId[it.id] ?? 0 });
 
   useEffect(() => {
     let ignore = false;
-
     (async () => {
       setLoading(true);
       try {
         const { data: u } = await supabase.auth.getUser();
-        const myId = u?.user?.id ?? null;
 
         // 1) 태그 사전
         const { data: dict } = await supabase
@@ -103,6 +131,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
             setLikedByNumId(new Set());
             setNumToReviewId({});
             setGroupSrcByNumId({});
+            setAuthorAvatarByNumId({});
           }
           return;
         }
@@ -150,6 +179,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
         // 6) 내가 공감한 리뷰
         let myLiked = new Set<string>();
+        const myId = u?.user?.id ?? null;
         if (myId) {
           const { data: mine } = await supabase
             .from('review_likes')
@@ -163,6 +193,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
         // 7) 화면 매핑
         const numMap: Record<number, string> = {};
         const groupSrcMap: Record<number, string> = {};
+        const authorAvatarMap: Record<number, string> = {};
 
         const mapped: ReviewItem[] = rows.map((r, idx) => {
           const g = r.groups;
@@ -175,11 +206,10 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           const numId = idx + 1;
           numMap[numId] = r.review_id;
 
-          // 대카테고리명
           const major = g?.categories_sub?.categories_major?.category_major_name?.trim() || '기타';
-
-          // 카드용: 작성자 프로필
           const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
+
+          authorAvatarMap[numId] = avatar; // ✅ 작성자 아바타 저장
 
           // 모달용: 모임 이미지(첫 장)
           const groupFirstImage = g?.image_urls?.[0] || NO_IMAGE;
@@ -189,7 +219,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
             id: numId,
             title: g?.group_title ?? '(제목 없음)',
             category: major,
-            src: avatar, // 카드 우상단 = 작성자 프로필
+            src: avatar, // 카드 썸네일 = 작성자 프로필
             status: statusKor,
             rating,
             period: start && end ? `${start} - ${end}` : '',
@@ -201,11 +231,9 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           };
         });
 
-        // 베스트 4
         const best = [...mapped].sort((a, b) => (b.empathy ?? 0) - (a.empathy ?? 0)).slice(0, 4);
         const rest = mapped;
 
-        // 공감/내공감 화면 상태
         const empathyByNum: Record<number, number> = {};
         const likedByNum = new Set<number>();
         Object.entries(numMap).forEach(([numIdStr, rid]) => {
@@ -220,7 +248,8 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setNumToReviewId(numMap);
           setEmpathyByNumId(eMap => ({ ...eMap, ...empathyByNum }));
           setLikedByNumId(likedByNum);
-          setGroupSrcByNumId(groupSrcMap); // ★ 모달용 그룹 이미지 저장
+          setGroupSrcByNumId(groupSrcMap);
+          setAuthorAvatarByNumId(authorAvatarMap); // ✅
         }
       } catch (e) {
         console.error('[ReviewsListPage] load error', e);
@@ -231,18 +260,18 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setLikedByNumId(new Set());
           setNumToReviewId({});
           setGroupSrcByNumId({});
+          setAuthorAvatarByNumId({});
         }
       } finally {
         if (!ignore) setLoading(false);
       }
     })();
-
     return () => {
       ignore = true;
     };
   }, [groupId]);
 
-  // 모달 열릴 때 해당 리뷰 태그 재조회(최신 DB 기준으로 덮어쓰기)
+  // 모달 열릴 때 해당 리뷰 태그 재조회
   useEffect(() => {
     (async () => {
       if (openId == null) {
@@ -299,25 +328,28 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     const { data: u } = await supabase.auth.getUser();
     const myId = u?.user?.id;
     if (!myId) {
-      alert('로그인이 필요합니다.');
+      setErrorLoginOpen(true);
       return;
     }
     if (likedByNumId.has(numId)) {
-      alert('이미 공감했습니다.');
+      setErrorDupLikeOpen(true);
       return;
     }
 
     const { error } = await supabase
       .from('review_likes')
       .insert({ review_id: reviewId, user_id: myId });
-    // @ts-ignore 중복 코드 허용(23505)
+    // @ts-ignore 중복코드(23505) 허용
     if (error && error.code !== '23505') {
       console.error('empathy insert error', error);
       return;
     }
 
+    // 성공 처리: 카운트/상태 반영 + 성공 모달
     setEmpathyByNumId(prev => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
     setLikedByNumId(prev => new Set(prev).add(numId));
+    setSuccessMsg('공감이 반영되었습니다!');
+    setSuccessOpen(true);
   };
 
   // 상세 변환 (모달은 항상 modalTags 우선)
@@ -326,13 +358,13 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     id: v.id,
     title: v.title,
     category: v.category,
-    // ★ 카드와 다르게, 모달에서는 "모임 이미지" 사용
-    src: groupSrcByNumId[v.id] || NO_IMAGE,
+    src: groupSrcByNumId[v.id] || NO_IMAGE, // 모달 배경: 그룹 이미지
     rating: v.rating,
     period: v.period ?? '',
     content: v.content,
     tags: modalTags ?? v.tags ?? [],
     creator_id: v.created_id,
+    creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE, // ✅ 작성자 아바타 전달
     created_at: v.created_at ?? DEFAULT_CREATED_AT,
     empathy: empathyByNumId[v.id] ?? 0,
   });
@@ -341,7 +373,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     if (openId == null) return null;
     const found = [...bestItems, ...items].find(v => v.id === openId);
     return found ? toDetail(found) : null;
-  }, [openId, bestItems, items, empathyByNumId, modalTags, groupSrcByNumId]);
+  }, [openId, bestItems, items, empathyByNumId, modalTags, groupSrcByNumId, authorAvatarByNumId]);
 
   const sortOptions = ['최신순', '인기순'];
   const mapLabelToValue = (label: string): 'latest' | 'popular' =>
@@ -414,6 +446,23 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           ))}
         </ul>
       )}
+
+      {/* 실패/성공 모달 */}
+      <ErrorModal
+        isOpen={errorLoginOpen}
+        message={'로그인이 필요합니다.\n로그인 후 이용해 주세요.'}
+        onClose={() => setErrorLoginOpen(false)}
+      />
+      <ErrorModal
+        isOpen={errorDupLikeOpen}
+        message={'이미 공감했습니다.\n같은 리뷰는 한 번만 공감할 수 있어요.'}
+        onClose={() => setErrorDupLikeOpen(false)}
+      />
+      <SuccessModal
+        isOpen={successOpen}
+        message={successMsg}
+        onClose={() => setSuccessOpen(false)}
+      />
     </div>
   );
 }

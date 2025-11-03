@@ -3,16 +3,18 @@ import { Modal } from "antd";
 
 interface InterestModalProps {
   open: boolean;
-  onClose: () => void;
   selected: string[];
   toggleInterest: (item: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
 }
 
 const MAX = 5;
 
 const InterestModal = ({
   open,
-  onClose,
+  onSave,
+  onCancel,
   selected,
   toggleInterest,
 }: InterestModalProps) => {
@@ -37,22 +39,22 @@ const InterestModal = ({
     <Modal
       title="관심사 선택"
       open={open}
-      onCancel={onClose}
+      onCancel={onCancel}
       className="p-2 items-center"
       footer={[
         <button
           key="cancel"
-          onClick={onClose}
+          onClick={onCancel}
           className="text-sm text-gray-400 py-[6px] px-[14px] border border-gray-400 rounded-[5px]"
         >
           취소
         </button>,
         <button
           key="ok"
-          onClick={onClose}
+          onClick={onSave}
           className="text-sm text-white bg-brand py-[6px] px-[14px] rounded-[5px] ml-[10px] mr-[10px]"
         >
-          완료
+          저장
         </button>,
       ]}
     >

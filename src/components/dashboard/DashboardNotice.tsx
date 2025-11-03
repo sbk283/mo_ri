@@ -1,11 +1,13 @@
 // src/components/dashboard/DashboardNotice.tsx
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import GroupPagination from '../common/GroupPagination';
 import { supabase } from '../../lib/supabase';
 import GroupContentDetailEdit from './GroupContentDetailEdit';
 import type { Notice } from '../../types/notice';
 import LoadingSpinner from '../common/LoadingSpinner';
+import NoticeDetailView from './NoticeDetailView';
 
 const ITEMS_PER_PAGE = 10;
 const BUCKET = 'group-post-images';
@@ -90,6 +92,8 @@ export function DashboardNotice({
   createRequestKey?: number;
   onCraftingChange?: (v: boolean) => void;
 }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [isHost, setIsHost] = useState(false);
   const [creating, setCreating] = useState(false);
   const prevKey = useRef(createRequestKey);
@@ -97,6 +101,16 @@ export function DashboardNotice({
   const [items, setItems] = useState<NoticeRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  // 쿼리 파라미터 헬퍼 (URL만 건드림, UI 변경 없음)
+  const setQS = (next: Record<string, string | undefined>, replace = false) => {
+    const cur = new URLSearchParams(searchParams);
+    Object.entries(next).forEach(([k, v]) => {
+      if (v == null) cur.delete(k);
+      else cur.set(k, v);
+    });
+    setSearchParams(cur, { replace });
+  };
 
   useEffect(() => {
     let ignore = false;
@@ -181,6 +195,7 @@ export function DashboardNotice({
     void reload();
   }, [groupId, boardType]);
 
+  // 페이지네이션
   const [page, setPage] = useState(1);
   useEffect(() => setPage(1), [items.length]);
   const totalPages = useMemo(
@@ -192,8 +207,22 @@ export function DashboardNotice({
     return items.slice(start, start + ITEMS_PER_PAGE);
   }, [page, items]);
 
+  // 상세/편집 상태
   const [detailIdx, setDetailIdx] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
+
+  // [핵심] URL → 상태 복원
+  useEffect(() => {
+    const postId = searchParams.get('post');
+    // view가 edit이어도, 새로고침 시에는 상세로만 복원 (요구사항 2)
+    if (!postId || items.length === 0) return;
+
+    const idx = items.findIndex(n => n.post_id === postId);
+    if (idx >= 0) {
+      setDetailIdx(idx);
+      setEditing(false); // 새로고침 복원 시 무조건 상세
+    }
+  }, [items, searchParams]);
 
   const openDetail = async (localId: number) => {
     const idx = items.findIndex(n => n.id === localId);
@@ -227,12 +256,18 @@ export function DashboardNotice({
     setDetailIdx(idx);
     setEditing(false);
     setCreating(false);
+
+    // URL에 상세 상태 기록 (새로고침 유지)
+    setQS({ post: t.post_id, view: 'detail' });
   };
 
   const closeDetail = () => {
     setDetailIdx(null);
     setEditing(false);
     setCreating(false);
+
+    // 리스트로 돌아가면 URL 상태 제거
+    setQS({ post: undefined, view: undefined });
   };
 
   const handleCreateSave = async (next: Notice) => {
@@ -267,9 +302,11 @@ export function DashboardNotice({
       setPage(1);
       setDetailIdx(null);
       setEditing(false);
+      setQS({ post: undefined, view: undefined });
       return;
     }
 
+    // 방금 생성한 글이 정렬상 맨 위라고 가정
     const first = list[0];
     setPage(1);
     setCreating(false);
@@ -299,6 +336,9 @@ export function DashboardNotice({
 
     setDetailIdx(first.id - 1);
     setEditing(false);
+
+    // 생성 직후에도 상세 상태 URL 기록
+    setQS({ post: first.post_id, view: 'detail' });
   };
 
   const handleDetailSave = async (next: Notice) => {
@@ -325,13 +365,15 @@ export function DashboardNotice({
     );
     setEditing(false);
     setCreating(false);
+
+    // 저장 후에도 상세 상태 유지
+    setQS({ post: target.post_id, view: 'detail' }, true);
   };
 
   const handleDetailDelete = async () => {
     if (detailIdx == null) return;
     const target = items[detailIdx];
     if (!target) return;
-    if (!window.confirm('삭제할까요?')) return;
 
     const { error } = await supabase.from('group_posts').delete().eq('post_id', target.post_id);
     if (error) {
@@ -344,6 +386,9 @@ export function DashboardNotice({
     setDetailIdx(null);
     setEditing(false);
     setCreating(false);
+
+    // 삭제하면 상세 상태 제거
+    setQS({ post: undefined, view: undefined });
   };
 
   const current = detailIdx != null ? items[detailIdx] : null;
@@ -437,7 +482,10 @@ export function DashboardNotice({
             {current && (
               <GroupContentDetailEdit
                 notice={current}
-                onCancel={() => setEditing(false)}
+                onCancel={() => {
+                  setEditing(false);
+                  setQS({ post: current.post_id, view: 'detail' }, true);
+                }}
                 onSave={handleDetailSave}
               />
             )}
@@ -450,66 +498,19 @@ export function DashboardNotice({
             exit={{ y: -10, opacity: 0 }}
             transition={{ duration: 0.18 }}
           >
-            <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[450px]">
-              <header className="px-8 pt-6">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-xl font-bold text-gray-800 leading-none mb-3">
-                    {current?.title}
-                  </h1>
-                  {!isHost && (
-                    <span
-                      className={`w-[50px] py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-4 ${
-                        current?.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
-                      }`}
-                    >
-                      {current?.isRead ? '읽음' : '안읽음'}
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center text-[#8C8C8C] text-sm gap-3">
-                  <span>{current?.date}</span>
-                  <span>조회수 {current?.views ?? 0}</span>
-                </div>
-              </header>
-
-              <div className="text-center">
-                <div className="inline-block border-b border-[#A3A3A3] w-[910px]" />
-              </div>
-
-              <section className="px-8 py-10 text-gray-800 leading-relaxed">
-                <div
-                  dangerouslySetInnerHTML={{ __html: current?.content || '' }}
-                  className="prose max-w-none ql-editor"
-                  style={{ padding: 0 }}
-                />
-              </section>
-            </article>
-
-            <footer className="pt-6 flex text-left justify-start">
-              <button onClick={closeDetail} className="text-[#8C8C8C] py-2 text-md">
-                &lt; 목록으로
-              </button>
-
-              {(boardType !== 'notice' || isHost) && (
-                <div className="ml-auto flex py-2">
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm"
-                    onClick={handleDetailDelete}
-                  >
-                    삭제
-                  </motion.button>
-                  <motion.button
-                    whileTap={{ scale: 0.96 }}
-                    className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm"
-                    onClick={() => setEditing(true)}
-                  >
-                    수정
-                  </motion.button>
-                </div>
-              )}
-            </footer>
+            {current && (
+              <NoticeDetailView
+                notice={current}
+                isHost={isHost}
+                boardType={boardType}
+                onBack={closeDetail}
+                onEdit={() => {
+                  setEditing(true);
+                  setQS({ post: current.post_id, view: 'edit' });
+                }}
+                onDelete={handleDetailDelete}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

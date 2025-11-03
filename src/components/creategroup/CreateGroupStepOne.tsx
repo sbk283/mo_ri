@@ -54,7 +54,7 @@ function CreateGroupStepOne({ formData, onChange, onPrev, onNext }: Props) {
       const next = { ...prev, [field]: value };
       const regionString = combineRegion(next.sido, next.sigungu);
       onChange('group_region', regionString);
-      console.log('지역 변경됨:', regionString);
+      // console.log('지역 변경됨:', regionString);
       return next;
     });
   };

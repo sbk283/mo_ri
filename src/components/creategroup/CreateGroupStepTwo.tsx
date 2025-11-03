@@ -19,7 +19,7 @@ function CreateGroupStepTwo({ formData, onChange, onPrev, onNext }: StepTwoProps
 
   // 본문 이미지 핸들러
   const handleImagesChange = useCallback((images: File[]) => {
-    console.log('본문 이미지:', images);
+    // console.log('본문 이미지:', images);
   }, []);
 
   // 간략 소개

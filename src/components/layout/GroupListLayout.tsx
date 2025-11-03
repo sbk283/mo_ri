@@ -97,7 +97,7 @@ function GroupListLayout({
 
   return (
     // 반응형: 모바일에서는 padding 줄이고, 너비 100%
-    <div className="mx-auto flex flex-col lg:flex-row w-full lg:w-[1024px] gap-10 px-4 py-[56px]">
+    <div className="mx-auto flex flex-col lg:flex-row w-full lg:w-[1024px] gap-10 -mx-4 py-[64px]">
       <main className="flex-1">
         {/* 헤더 */}
         <header className="mb-10">

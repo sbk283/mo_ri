@@ -1,8 +1,9 @@
 // src/components/notice/GroupContentDetailEdit.tsx
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Notice } from '../../types/notice';
 import NoticeDetailRichTextEditor from '../NoticeDetailRichTextEditor';
+import ConfirmModal from '../common/modal/ConfirmModal';
 
 type Props = {
   notice: Notice;
@@ -12,26 +13,93 @@ type Props = {
 
 const TITLE_LIMIT = 50;
 
+// 정규화 유틸
+const zws = /\u200B/g;
+const nbsp = /\u00A0/g;
+const brParas = /<p><br><\/p>/gi;
+const trimBr = /^(<br\s*\/?>)+|(<br\s*\/?>)+$/gi;
+
+const normTitle = (s?: string | null) => (s ?? '').replace(/\s+/g, ' ').trim();
+const normContent = (raw?: string | null) =>
+  (raw ?? '').replace(zws, '').replace(nbsp, ' ').replace(brParas, '').replace(trimBr, '').trim();
+
+const hasMeaningfulContent = (raw?: string | null) => {
+  const s = normContent(raw);
+  if (!s) return false;
+  if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(s)) return true;
+  if (/!\[[^\]]*]\(([^)\s]+)(?:\s*"[^"]*")?\)/.test(s)) return true;
+  const text = s.replace(/<[^>]*>/g, '').trim();
+  return text.length > 0;
+};
+
 export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Props) {
   const [form, setForm] = useState<Notice>({ ...notice });
-  const [isContentValid, setIsContentValid] = useState(false);
+  const [isContentValid, setIsContentValid] = useState<boolean>(
+    hasMeaningfulContent(notice.content),
+  );
 
+  const isCreate = (notice?.id ?? 0) === 0;
   const titleLength = form.title?.length ?? 0;
-  const isTitleEmpty = (form.title ?? '').trim().length === 0;
+  const isTitleEmpty = normTitle(form.title).length === 0;
   const isTitleOver = titleLength > TITLE_LIMIT;
 
-  const isFormValid = useMemo(
-    () => !isTitleEmpty && !isTitleOver && isContentValid,
-    [isTitleEmpty, isTitleOver, isContentValid],
+  // 초기 스냅샷(정규화 후 저장)
+  const initial = useRef<{ title: string; content: string }>({ title: '', content: '' });
+  useEffect(() => {
+    initial.current = {
+      title: normTitle(notice.title),
+      content: normContent(notice.content),
+    };
+    setForm({ ...notice });
+    setIsContentValid(hasMeaningfulContent(notice.content));
+  }, [notice.id]);
+
+  // 변경 플래그: 제목/내용 각각 비교
+  const changedTitle = useMemo(() => normTitle(form.title) !== initial.current.title, [form.title]);
+  const changedContent = useMemo(
+    () => normContent(form.content) !== initial.current.content,
+    [form.content],
   );
+
+  // 버튼 활성화 조건
+  const isFormValid = useMemo(() => {
+    if (isCreate) {
+      // 새 글: 유효성 충족하면 활성화
+      return !isTitleEmpty && !isTitleOver && isContentValid;
+    }
+    // 수정: 제목 또는 내용 중 하나라도 변경 + 유효성
+    return (changedTitle || changedContent) && !isTitleEmpty && !isTitleOver && isContentValid;
+  }, [isCreate, isTitleEmpty, isTitleOver, isContentValid, changedTitle, changedContent]);
 
   const update = <K extends keyof Notice>(key: K, value: Notice[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
+  // 모달 제어
+  const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
+  const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
+
+  const handleRequestCancel = () => {
+    // 작성/수정 모두 변경 사항 있으면 확인
+    if (changedTitle || changedContent) setOpenCancelConfirm(true);
+    else onCancel();
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isFormValid) return;
-    onSave(form);
+    setOpenSaveConfirm(true);
+  };
+
+  const handleConfirmSave = () => {
+    setOpenSaveConfirm(false);
+    const next = {
+      ...form,
+      title: normTitle(form.title),
+      content: normContent(form.content),
+    };
+    onSave(next);
+    // 스냅샷 갱신
+    initial.current = { title: next.title, content: next.content };
   };
 
   return (
@@ -80,7 +148,7 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
         <motion.button
           type="button"
           whileTap={{ scale: 0.96 }}
-          onClick={onCancel}
+          onClick={handleRequestCancel}
           className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-[#0689E8] border border-[#0689E8] rounded-sm"
         >
           취소
@@ -88,7 +156,7 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
 
         <motion.button
           type="submit"
-          whileTap={{ scale: 0.96 }}
+          whileTap={{ scale: isFormValid ? 0.96 : 1 }}
           disabled={!isFormValid}
           className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
             ${
@@ -97,9 +165,40 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
                 : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
             }`}
         >
-          저장
+          {isCreate ? '작성' : '저장'}
         </motion.button>
       </footer>
+
+      <ConfirmModal
+        open={openCancelConfirm}
+        title={isCreate ? '작성 중입니다.' : '수정 사항이 있습니다.'}
+        message={
+          isCreate
+            ? '작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?'
+            : '변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?'
+        }
+        confirmText="취소"
+        cancelText={isCreate ? '계속작성' : '계속하기'}
+        onConfirm={() => {
+          setOpenCancelConfirm(false);
+          onCancel();
+        }}
+        onClose={() => setOpenCancelConfirm(false)}
+      />
+
+      <ConfirmModal
+        open={openSaveConfirm}
+        title={isCreate ? '작성하시겠습니까?' : '저장하시겠습니까?'}
+        message={
+          isCreate
+            ? '현재 내용을 게시물로 작성합니다.\n진행할까요?'
+            : '현재 수정 내용을 저장합니다.\n계속 진행할까요?'
+        }
+        confirmText={isCreate ? '작성' : '저장'}
+        cancelText="취소"
+        onConfirm={handleConfirmSave}
+        onClose={() => setOpenSaveConfirm(false)}
+      />
     </motion.form>
   );
 }

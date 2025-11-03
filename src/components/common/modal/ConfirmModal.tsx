@@ -133,7 +133,7 @@ export default function ConfirmModal({
               <button
                 type="button"
                 className="
-                  w-[78px] h-[40px] px-[13px] py-[7px]
+                  w-[80px] h-[40px] px-[13px] py-[7px]
                   inline-flex items-center justify-center
                   rounded-sm border border-[#0762E5]
                   text-[#0762E5] font-semibold
@@ -147,7 +147,7 @@ export default function ConfirmModal({
               <button
                 type="button"
                 className="
-                  w-[78px] h-[40px] px-[13px] py-[7px]
+                  w-[80px] h-[40px] px-[13px] py-[7px]
                   inline-flex items-center justify-center
                   rounded-sm bg-[#0762E5] text-white font-semibold
                   shadow-sm hover:brightness-105 active:scale-[0.98] transition

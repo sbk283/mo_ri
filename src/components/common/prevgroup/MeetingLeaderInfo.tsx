@@ -11,7 +11,7 @@ function MeetingLeaderInfo({
 }: MeetingLeaderInfoProps) {
   return (
     <div>
-      <h4 className="font-semibold mb-2">모임장에 관한 정보</h4>
+      <h4 className="font-semibold mb-2 text-xl">모임장에 관한 정보</h4>
       <table className="w-full border border-[#c0c0c0] border-collapse">
         <tbody>
           {/* 이름 */}

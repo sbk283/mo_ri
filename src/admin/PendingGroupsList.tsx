@@ -1,10 +1,14 @@
-import { useEffect, useState } from 'react';
-import type { groups } from '../types/group';
-import { supabase } from '../lib/supabase';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import { useEffect, useState } from "react";
+import type { groups } from "../types/group";
+import { supabase } from "../lib/supabase";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { notifyGroupApproved } from "../lib/notificationHandlers";
 
 type GroupWithCategory = groups & {
-  categories_major?: { category_major_name: string; category_major_slug: string };
+  categories_major?: {
+    category_major_name: string;
+    category_major_slug: string;
+  };
   categories_sub?: { category_sub_name: string; category_sub_slug: string };
   created_by?: { name: string; nickname: string };
 };
@@ -18,7 +22,7 @@ function PendingGroupsList() {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from('groups')
+          .from("groups")
           .select(
             `
               *,
@@ -27,13 +31,13 @@ function PendingGroupsList() {
               categories_sub ( category_sub_name, category_sub_slug )
             `,
           )
-          .eq('approved', false)
-          .order('group_created_at', { ascending: false });
+          .eq("approved", false)
+          .order("group_created_at", { ascending: false });
 
         if (error) throw error;
         setPendingGroups((data as GroupWithCategory[]) ?? []);
       } catch (err) {
-        console.error('🔥 승인 대기 그룹 불러오기 실패:', err);
+        console.error("🔥 승인 대기 그룹 불러오기 실패:", err);
       } finally {
         setLoading(false);
       }
@@ -45,37 +49,75 @@ function PendingGroupsList() {
   // 승인 완료
   const handleApprove = async (groupId: string) => {
     try {
+      // 해당 그룹 정보 가져오기 (알림용)
+      const { data: group, error: fetchError } = await supabase
+        .from("groups")
+        .select("group_id, group_title, created_by")
+        .eq("group_id", groupId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // DB 승인 업데이트
       const { data, error } = await supabase
-        .from('groups')
+        .from("groups")
         .update({ approved: true })
-        .eq('group_id', groupId)
+        .eq("group_id", groupId)
         .select();
 
       if (error) throw error;
 
+      // 승인 알림 전송
+      if (group?.created_by && group?.group_id && group?.group_title) {
+        await notifyGroupApproved({
+          creatorId: group.created_by,
+          groupId: group.group_id,
+          groupTitle: group.group_title,
+        });
+
+        // 승인 완료 알림
+        window.dispatchEvent(
+          new CustomEvent("notification:new", {
+            detail: {
+              type: "group_approved",
+              title: "그룹 승인 완료",
+              message: `당신의 모임 "${group.group_title}"이 승인되었습니다.`,
+              targetUser: group.created_by,
+            },
+          }),
+        );
+      }
+
       // console.log('승인 완료 DB 반영:', data);
-      setPendingGroups(prev => prev.filter(group => group.group_id !== groupId));
-      alert('모임이 승인되었습니다.');
+      setPendingGroups((prev) =>
+        prev.filter((group) => group.group_id !== groupId),
+      );
+      alert("모임이 승인되었습니다.");
     } catch (err) {
-      console.error('🔥 승인 실패:', err);
-      alert('승인 처리 중 오류가 발생했습니다.');
+      console.error("🔥 승인 실패:", err);
+      alert("승인 처리 중 오류가 발생했습니다.");
     }
   };
 
   // 승인 거부
   const handleReject = async (groupId: string) => {
-    if (!confirm('정말 이 모임 신청을 거부하시겠습니까?')) return;
+    if (!confirm("정말 이 모임 신청을 거부하시겠습니까?")) return;
 
     try {
-      const { error } = await supabase.from('groups').delete().eq('group_id', groupId);
+      const { error } = await supabase
+        .from("groups")
+        .delete()
+        .eq("group_id", groupId);
 
       if (error) throw error;
 
-      setPendingGroups(prev => prev.filter(group => group.group_id !== groupId));
-      alert('모임 신청이 거부되었습니다.');
+      setPendingGroups((prev) =>
+        prev.filter((group) => group.group_id !== groupId),
+      );
+      alert("모임 신청이 거부되었습니다.");
     } catch (err) {
-      console.error('🔥 거부 실패:', err);
-      alert('거부 처리 중 오류가 발생했습니다.');
+      console.error("🔥 거부 실패:", err);
+      alert("거부 처리 중 오류가 발생했습니다.");
     }
   };
   return (
@@ -88,19 +130,26 @@ function PendingGroupsList() {
         </div>
       ) : (
         <div className="space-y-3">
-          {pendingGroups.map(group => (
-            <div key={group.group_id} className="border border-gray-300 p-4 rounded-sm shadow-sm ">
+          {pendingGroups.map((group) => (
+            <div
+              key={group.group_id}
+              className="border border-gray-300 p-4 rounded-sm shadow-sm "
+            >
               <div className="flex gap-40 mb-2 flex-wrap">
                 <div>
-                  <label className="font-medium text-md text-brand">모임생성 신청자 : </label>
+                  <label className="font-medium text-md text-brand">
+                    모임생성 신청자 :{" "}
+                  </label>
                   <span className="text-md font-semibold text-gray-400">
-                    {group.created_by?.name || '알 수 없음'}
+                    {group.created_by?.name || "알 수 없음"}
                   </span>
                 </div>
                 <div>
-                  <label className="font-medium text-md  text-brand">모임 카테고리 : </label>
+                  <label className="font-medium text-md  text-brand">
+                    모임 카테고리 :{" "}
+                  </label>
                   <span className="text-md font-semibold text-gray-400">
-                    {group.categories_major?.category_major_name} {'>'}{' '}
+                    {group.categories_major?.category_major_name} {">"}{" "}
                     {group.categories_sub?.category_sub_name}
                   </span>
                 </div>
@@ -108,11 +157,17 @@ function PendingGroupsList() {
 
               <div className=" ">
                 <div className="mb-2">
-                  <label className="font-medium text-md text-brand">모임 이름 : </label>
-                  <span className="text-md font-semibold text-gray-400">{group.group_title}</span>
+                  <label className="font-medium text-md text-brand">
+                    모임 이름 :{" "}
+                  </label>
+                  <span className="text-md font-semibold text-gray-400">
+                    {group.group_title}
+                  </span>
                 </div>
                 <div>
-                  <label className="font-medium text-md  text-brand">모임 소개 : </label>
+                  <label className="font-medium text-md  text-brand">
+                    모임 소개 :{" "}
+                  </label>
                   <span className="text-md font-semibold text-gray-400">
                     {group.group_short_intro}
                   </span>
@@ -123,17 +178,17 @@ function PendingGroupsList() {
                     <label className="font-semibold block mb-3 text-md">
                       모임 썸네일 이미지
                       <span className="font-medium text-gray-200 text-sm">
-                        {'  '}
+                        {"  "}
                         (클릭 시 확인 가능)
                       </span>
                     </label>
 
                     <div className="flex flex-wrap gap-2 border-t p-2">
                       {group.image_urls.map((url, idx) => {
-                        const fileUrl = url.startsWith('http')
+                        const fileUrl = url.startsWith("http")
                           ? url
                           : `https://eetunrwteziztszaezhd.supabase.co/storage/v1/object/public/${url}`;
-                        const fileName = fileUrl.split('/').pop();
+                        const fileName = fileUrl.split("/").pop();
 
                         return (
                           <a
@@ -144,8 +199,14 @@ function PendingGroupsList() {
                             className="flex items-center mt-1 bg-white border border-gray-300 p-1 rounded hover:bg-gray-50 transition-colors"
                             title={fileName}
                           >
-                            <img src="/images/file_blue.svg" alt="파일" className="mr-2 w-4 h-4" />
-                            <span className="truncate max-w-[100px] text-[10px]">{fileName}</span>
+                            <img
+                              src="/images/file_blue.svg"
+                              alt="파일"
+                              className="mr-2 w-4 h-4"
+                            />
+                            <span className="truncate max-w-[100px] text-[10px]">
+                              {fileName}
+                            </span>
                           </a>
                         );
                       })}
@@ -155,26 +216,34 @@ function PendingGroupsList() {
               </div>
 
               <div className="mb-3">
-                <label className="font-semibold text-md ">모임 커리큘럼 상세 내용</label>
+                <label className="font-semibold text-md ">
+                  모임 커리큘럼 상세 내용
+                </label>
                 <div className=" p-2 border-t mt-3">
                   {group.curriculum
                     ? (() => {
                         try {
                           const curriculumData =
-                            typeof group.curriculum === 'string'
+                            typeof group.curriculum === "string"
                               ? JSON.parse(group.curriculum)
                               : group.curriculum;
 
                           return Array.isArray(curriculumData)
                             ? curriculumData.map(
                                 (
-                                  item: { title: string; detail: string; files?: string[] },
+                                  item: {
+                                    title: string;
+                                    detail: string;
+                                    files?: string[];
+                                  },
                                   index: number,
                                 ) => (
                                   <div key={index} className="mb-3">
                                     <strong className="text-brand">
-                                      {index + 1} .{''}
-                                      <span className="text-black font-bold">{item.title} :</span>
+                                      {index + 1} .{""}
+                                      <span className="text-black font-bold">
+                                        {item.title} :
+                                      </span>
                                     </strong>
                                     {item.detail}
                                     {/* 커리큘럼 내부 이미지 */}
@@ -187,7 +256,7 @@ function PendingGroupsList() {
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="flex items-center mt-1 bg-white border border-gray-300 p-1 rounded hover:bg-gray-50 transition-colors"
-                                            title={url.split('/').pop()}
+                                            title={url.split("/").pop()}
                                           >
                                             <img
                                               src="/images/file_blue.svg"
@@ -195,7 +264,7 @@ function PendingGroupsList() {
                                               className="mr-2 w-4 h-4"
                                             />
                                             <span className="truncate max-w-[100px] text-[10px]">
-                                              {url.split('/').pop()}
+                                              {url.split("/").pop()}
                                             </span>
                                           </a>
                                         ))}
@@ -204,12 +273,12 @@ function PendingGroupsList() {
                                   </div>
                                 ),
                               )
-                            : '커리큘럼 형식 오류';
+                            : "커리큘럼 형식 오류";
                         } catch {
-                          return '커리큘럼 파싱 오류';
+                          return "커리큘럼 파싱 오류";
                         }
                       })()
-                    : '커리큘럼 없음'}
+                    : "커리큘럼 없음"}
                 </div>
               </div>
 

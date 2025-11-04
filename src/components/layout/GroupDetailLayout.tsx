@@ -94,7 +94,7 @@ function GroupDetailLayout() {
             const summary = careerData
               .map(
                 c =>
-                  `${c.company_name} (${c.start_date ?? '시작일 미정'} ~ ${c.end_date ?? '종료일 미정'})`,
+                  `${c.company_name}`,
               )
               .join('\n'); // 줄바꿈으로 연결
 

@@ -105,7 +105,37 @@ export async function notifyInquiryReply({
 }
 
 /**
- * 그룹 생성 승인 알림 (그룹 생성자에게)
+ * 그룹 승인신청 알림 (관리자에게)
+ */
+export async function notifyGroupRequest({
+  adminUserId,
+  creatorNickname,
+  groupId,
+  groupTitle,
+}: {
+  adminUserId: string; // 알림을 받을 관리자 user_id
+  creatorNickname: string;
+  groupId: string;
+  groupTitle: string;
+}) {
+  try {
+    const { error } = await supabase.rpc("create_notification", {
+      p_user_id: adminUserId, // 관리자에게 알림
+      p_type: "group_request",
+      p_title: "그룹 승인 요청",
+      p_message: `${creatorNickname}님이 "${groupTitle}" 모임 승인을 요청했습니다.`,
+      p_group_id: groupId,
+      p_target_id: groupId,
+    });
+    if (error) throw error;
+    console.log("[notifyGroupRequest] 그룹 승인요청 알림 insert 완료");
+  } catch (err) {
+    console.error("[notifyGroupRequest] 오류:", err);
+  }
+}
+
+/**
+ * 그룹 생성 승인 완료 알림 (그룹 생성자에게)
  */
 export async function notifyGroupApproved({
   creatorId,

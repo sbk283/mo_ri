@@ -129,7 +129,7 @@ export default function ConfirmModal({
               {message}
             </p>
 
-            <div className="absolute bottom-[43px] left-0 right-0 flex items-center justify-center gap-6">
+            <div className="absolute bottom-[43px] left-0 right-0 flex items-center justify-center gap-3">
               <button
                 type="button"
                 className="

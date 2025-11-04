@@ -193,8 +193,8 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
             open={confirmOpen}
             onClose={() => setConfirmOpen(false)}
             onConfirm={handleConfirmDelete}
-            title="리뷰를 삭제하시겠어요?"
-            message={'삭제하면 다시 작성할 수 없어요.\n정말 삭제할까요?'}
+            title="리뷰를 삭제하시겠습니까??"
+            message={'리뷰를 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'}
             confirmText="삭제"
             cancelText="취소"
             preventBackdropClose={true}

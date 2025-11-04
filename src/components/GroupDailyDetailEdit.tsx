@@ -43,8 +43,13 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
   const isTitleEmpty = normTitle(form.title).length === 0;
   const isTitleOver = titleLength > TITLE_LIMIT;
 
-  // 초기 스냅샷
+  // 초기 스냅샷 (원본)
   const initial = useRef<{ title: string; content: string }>({ title: '', content: '' });
+
+  // 실제로 수정이 있었는지 여부
+  const [dirty, setDirty] = useState(false);
+
+  // daily가 바뀔 때마다 초기값/폼/유효성/dirty 초기화
   useEffect(() => {
     initial.current = {
       title: normTitle(daily.title),
@@ -52,37 +57,67 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
     };
     setForm({ ...daily });
     setIsContentValid(hasMeaningfulContent(daily.content));
-  }, [daily.id]);
+    setDirty(false);
+  }, [daily.id, daily.title, daily.content]);
 
-  // 변경 플래그
-  const changedTitle = useMemo(() => normTitle(form.title) !== initial.current.title, [form.title]);
-  const changedContent = useMemo(
-    () => normContent(form.content) !== initial.current.content,
-    [form.content],
-  );
+  // 현재 폼 값 기준으로 dirty 다시 계산
+  const recomputeDirty = (nextTitle?: string | null, nextContent?: string | null) => {
+    const base = initial.current;
+    const currentTitle = normTitle(nextTitle ?? form.title);
+    const currentContent = normContent(nextContent ?? form.content);
+    const baseTitle = base.title;
+    const baseContent = base.content;
+
+    const nextDirty = currentTitle !== baseTitle || currentContent !== baseContent;
+    setDirty(nextDirty);
+  };
+
+  const update = <K extends keyof Daily>(key: K, value: Daily[K]) =>
+    setForm(prev => ({ ...prev, [key]: value }));
+
+  // 제목 변경
+  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    update('title', value as any);
+    recomputeDirty(value, undefined);
+  };
+
+  // 내용 변경
+  const handleContentChange = (value: string) => {
+    update('content', value as any);
+    recomputeDirty(undefined, value);
+  };
 
   // 버튼 활성화
   const isFormValid = useMemo(() => {
     if (isCreate) {
+      // 새 작성: 그냥 유효성만
       return !isTitleEmpty && !isTitleOver && isContentValid;
     }
-    return (changedTitle || changedContent) && !isTitleEmpty && !isTitleOver && isContentValid;
-  }, [isCreate, isTitleEmpty, isTitleOver, isContentValid, changedTitle, changedContent]);
-
-  const update = <K extends keyof Daily>(key: K, value: Daily[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
+    // 수정: 실제 변경(dirty)이 있어야 함
+    return dirty && !isTitleEmpty && !isTitleOver && isContentValid;
+  }, [isCreate, dirty, isTitleEmpty, isTitleOver, isContentValid]);
 
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
 
   const handleRequestCancel = () => {
-    if (changedTitle || changedContent) setOpenCancelConfirm(true);
+    if (isCreate) {
+      // 새 작성: 아무것도 안 썼으면 바로 닫고, 뭔가 있으면 물어봄
+      const hasAny = normTitle(form.title).length > 0 || hasMeaningfulContent(form.content ?? '');
+      if (hasAny) setOpenCancelConfirm(true);
+      else onCancel();
+      return;
+    }
+
+    // 수정 모드: dirty일 때만 모달, 아니면 바로 닫기
+    if (dirty) setOpenCancelConfirm(true);
     else onCancel();
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return;
+    if (!isFormValid) return; // 비활성 상태면 아무것도 안 함
     setOpenSaveConfirm(true);
   };
 
@@ -94,7 +129,9 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
       content: normContent(form.content),
     };
     onSave(next);
+    // (이 컴포넌트 보통 바로 닫힐 테지만 방어적으로 초기값 갱신)
     initial.current = { title: next.title, content: next.content };
+    setDirty(false);
   };
 
   return (
@@ -113,7 +150,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
             <input
               aria-label="제목"
               value={form.title ?? ''}
-              onChange={e => update('title', e.target.value)}
+              onChange={handleTitleChange}
               className={`flex-1 border rounded px-3 py-2 text-lg font-semibold ${
                 isTitleOver ? 'border-red-400' : 'border-gray-300'
               }`}
@@ -130,7 +167,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
           <DetailRichTextEditor
             key={`daily-content-${daily.id}`}
             value={form.content ?? ''}
-            onChange={v => update('content', v)}
+            onChange={handleContentChange}
             placeholder="내용을 입력해주세요."
             disabled={false}
             requireNotEmpty
@@ -160,20 +197,20 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
                 : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
             }`}
         >
-          {isCreate ? '작성' : '저장'}
+          {isCreate ? '등록' : '등록'}
         </motion.button>
       </footer>
 
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? '작성 중입니다.' : '수정 사항이 있습니다.'}
+        title={isCreate ? '취소하시겠습니까?' : '취소하시겠습니까?'}
         message={
           isCreate
             ? '작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?'
             : '변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?'
         }
         confirmText="취소"
-        cancelText={isCreate ? '계속작성' : '계속하기'}
+        cancelText={isCreate ? '확인' : '확인'}
         onConfirm={() => {
           setOpenCancelConfirm(false);
           onCancel();
@@ -183,13 +220,13 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? '작성하시겠습니까?' : '저장하시겠습니까?'}
+        title={isCreate ? '등록하시겠습니까?' : '등록하시겠습니까?'}
         message={
           isCreate
-            ? '현재 내용을 게시물로 작성합니다.\n진행할까요?'
-            : '현재 수정 내용을 저장합니다.\n계속 진행할까요?'
+            ? '현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?'
+            : '현재 수정 내용을 저장합니다.\n등록하시겠습니까?'
         }
-        confirmText={isCreate ? '작성' : '저장'}
+        confirmText={isCreate ? '등록' : '등록'}
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

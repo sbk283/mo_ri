@@ -61,6 +61,7 @@ export default function AiGroupsSection() {
           </h2>
           <div className=" flex justify-between items-center">
             <div className="flex items-center gap-4">
+
               <p className="font-semibold text-xxl">
                 기간별 모임으로 시작해 보세요
               </p>
@@ -68,6 +69,7 @@ export default function AiGroupsSection() {
                 to="/grouplist"
                 className="flex text-sm gap-1 pb-auto items-center"
               >
+
                 <img src="/images/plus.svg" alt="더보기" />
                 <span className="text-md">더보기</span>
               </Link>

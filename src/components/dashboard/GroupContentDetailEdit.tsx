@@ -165,20 +165,20 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
                 : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
             }`}
         >
-          {isCreate ? '작성' : '저장'}
+          {isCreate ? '등록' : '등록'}
         </motion.button>
       </footer>
 
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? '작성 중입니다.' : '수정 사항이 있습니다.'}
+        title={isCreate ? '취소하시겠습니까?' : '취소하시겠습니까?'}
         message={
           isCreate
             ? '작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?'
             : '변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?'
         }
-        confirmText="취소"
-        cancelText={isCreate ? '계속작성' : '계속하기'}
+        confirmText="확인"
+        cancelText={isCreate ? '취소' : '취소'}
         onConfirm={() => {
           setOpenCancelConfirm(false);
           onCancel();
@@ -188,13 +188,13 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? '작성하시겠습니까?' : '저장하시겠습니까?'}
+        title={isCreate ? '등록하시겠습니까?' : '등록하시겠습니까?'}
         message={
           isCreate
-            ? '현재 내용을 게시물로 작성합니다.\n진행할까요?'
-            : '현재 수정 내용을 저장합니다.\n계속 진행할까요?'
+            ? '현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?'
+            : '현재 수정 내용을 저장합니다.\n등록하시겠습니까?'
         }
-        confirmText={isCreate ? '작성' : '저장'}
+        confirmText={isCreate ? '등록' : '등록'}
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import type { Session, User, RealtimeChannel } from '@supabase/supabase-js';
-import { getProfile } from '../lib/profile';
-import { supabase } from '../lib/supabase';
-import ChatNotificationPanel from './ChatNotificationPanel';
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import type { Session, User } from "@supabase/supabase-js";
+import { getProfile } from "../lib/profile";
+import { supabase } from "../lib/supabase";
+import ChatNotificationPanel from "./ChatNotificationPanel";
 
 interface UserProfile {
   user_id: string;
@@ -13,10 +13,11 @@ interface UserProfile {
 
 const Header: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [nickname, setNickname] = useState<string>('');
+  const [nickname, setNickname] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [showPanel, setShowPanel] = useState<boolean>(false);
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // 사용자 세션 초기화
@@ -27,7 +28,7 @@ const Header: React.FC = () => {
 
     if (!session?.user) {
       setUser(null);
-      setNickname('');
+      setNickname("");
       setLoading(false);
       return;
     }
@@ -40,14 +41,15 @@ const Header: React.FC = () => {
     if (profile?.is_active === false) {
       await supabase.auth.signOut();
       setUser(null);
-      setNickname('');
+      setNickname("");
       setLoading(false);
       return;
     }
 
     const metadata = currentUser.user_metadata ?? {};
-    const socialName: string = metadata.full_name || metadata.name || metadata.nickname || '';
-    const fallback: string = currentUser.email?.split('@')[0] || '';
+    const socialName: string =
+      metadata.full_name || metadata.name || metadata.nickname || "";
+    const fallback: string = currentUser.email?.split("@")[0] || "";
     setNickname(profile?.nickname || socialName || fallback);
 
     setLoading(false);
@@ -56,76 +58,50 @@ const Header: React.FC = () => {
   // 로그아웃
   const handleLogout = async (): Promise<void> => {
     const { error } = await supabase.auth.signOut();
-    if (error) console.error('로그아웃 실패:', error.message);
-    navigate('/');
+    if (error) console.error("로그아웃 실패:", error.message);
+    navigate("/");
     window.location.reload();
   };
 
-  // 알림 패널 열기
+  // 알림 패널 열기/닫기
   const handlePanelOpen = (): void => setShowPanel(true);
-
-  // 알림 패널 닫기 (읽음 처리)
   const handlePanelClose = async (): Promise<void> => {
     setShowPanel(false);
     if (!user?.id) return;
 
-    // 읽음 처리용 RPC
-    const { error } = await supabase.rpc('mark_notifications_read', {
+    const { error } = await supabase.rpc("mark_notifications_read", {
       p_user_id: user.id,
     });
 
     if (error) {
-      console.error('읽음 처리 실패:', error.message);
+      console.error("읽음 처리 실패:", error.message);
       return;
     }
 
-    // 모든 알림 읽음 처리 후 헤더 빨간 점 초기화
-    setUnreadCount(0);
+    setUnreadCount(0); // 빨간 점 제거
   };
 
-  // 초기 세션 로드 및 프로필 실시간 감시
+  // 초기 unreadCount 가져오기 (Header에서만 1회)
   useEffect(() => {
-    let profileChannel: RealtimeChannel | null = null;
+    if (!user?.id) return;
+    const userId = user.id;
 
-    const setup = async (): Promise<void> => {
-      await initUserSession();
+    const initUnreadCount = async () => {
+      const { count, error } = await supabase
+        .from("notifications")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("is_read", false);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (session?.user) {
-        const userId = session.user.id;
-
-        profileChannel = supabase
-          .channel(`user_profiles:${userId}`)
-          .on(
-            'postgres_changes',
-            {
-              event: 'UPDATE',
-              schema: 'public',
-              table: 'user_profiles',
-              filter: `user_id=eq.${userId}`,
-            },
-            async () => {
-              const updated = await getProfile(userId);
-              if (updated?.nickname) setNickname(updated.nickname);
-            },
-          )
-          .subscribe();
-      }
+      if (!error && count !== null) setUnreadCount(count);
     };
 
-    setup();
+    initUnreadCount();
+  }, [user]);
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      initUserSession();
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-      if (profileChannel) supabase.removeChannel(profileChannel);
-    };
+  // 최초 세션 로드
+  useEffect(() => {
+    initUserSession();
   }, []);
 
   if (loading) return null;
@@ -134,14 +110,19 @@ const Header: React.FC = () => {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 z-30 bg-white shadow-card">
-        <div className="mx-auto flex w-[1024px] h-[70px] justify-between items-center py-4">
+        {/* 반응형 대응: 1024px 이상에서는 중앙 정렬 + 유동폭, 이하에서는 패딩 적용 */}
+        <div className="mx-auto flex max-w-[1100px] w-full h-[70px] justify-between items-center py-4 px-4 md:px-6 lg:px-8">
           {/* 로고 */}
           <Link to="/">
-            <img src="/images/mori_logo.svg" className="h-[24px] w-[75px]" alt="mori_logo" />
+            <img
+              src="/images/mori_logo.svg"
+              className="h-[24px] w-[75px]"
+              alt="mori_logo"
+            />
           </Link>
 
           {/* 메뉴 */}
-          <div className="flex items-center gap-10">
+          <div className="hidden md:flex items-center gap-10">
             <nav className="flex gap-6 text-gray-700">
               <Link to="/groupmanager" className="font-bold hover:text-brand">
                 모임관리
@@ -152,18 +133,28 @@ const Header: React.FC = () => {
               <Link to="/grouplist" className="font-bold hover:text-brand">
                 모임리스트
               </Link>
-              {/* 마이페이지 */}
-              <Link to="/mypage">
-                <p className="font-bold hover:text-brand">마이페이지</p>
+              <Link to="/mypage" className="font-bold hover:text-brand">
+                마이페이지
               </Link>
             </nav>
 
+            {/* 로그인 상태 */}
             {isLoggedIn ? (
               <div className="flex items-center gap-3">
-                <span className="font-medium text-blue-600">{nickname}님 반가워요!</span>
-                {/* 채팅 알림 아이콘 */}
-                <button onClick={handlePanelOpen} className="relative focus:outline-none">
-                  <img src="/images/notification.svg" alt="채팅 알림" className="h-4 w-4" />
+                <span className="font-medium text-blue-600">
+                  {nickname}님 반가워요!
+                </span>
+
+                {/* 알림 아이콘 */}
+                <button
+                  onClick={handlePanelOpen}
+                  className="relative focus:outline-none"
+                >
+                  <img
+                    src="/images/notification.svg"
+                    alt="알림"
+                    className="h-4 w-4"
+                  />
                   {unreadCount > 0 && (
                     <span className="absolute top-0 -right-0.5 w-2 h-2 bg-brand-red rounded-full" />
                   )}
@@ -180,6 +171,100 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
+                className="font-bold text-sm px-3 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
+              >
+                로그인
+              </Link>
+            )}
+          </div>
+
+          {/* 모바일 메뉴 버튼 */}
+          <button
+            className="block md:hidden focus:outline-none transform transition-transform duration-300"
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+          >
+            <img
+              src="/images/hamburger_menu.svg"
+              alt="hamburger_menu"
+              className="w-5 h-5 "
+            />
+          </button>
+        </div>
+
+        {/* 모바일 메뉴 드롭다운 (768px 이하 전용) */}
+        <div
+          className={`md:hidden bg-white border-t border-gray-300 shadow-md px-4 overflow-hidden transform transition-all duration-500 ease-in-out ${
+            isMenuOpen
+              ? "max-h-[500px] opacity-100 translate-y-0"
+              : "max-h-0 opacity-0 -translate-y-2"
+          }`}
+        >
+          <div className="flex flex-col py-4 space-y-4">
+            <nav className="flex flex-col items-center gap-4 text-gray-700">
+              <Link
+                to="/groupmanager"
+                className="font-bold hover:text-brand"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                모임관리
+              </Link>
+              <Link
+                to="/reviews"
+                className="font-bold hover:text-brand"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                후기리뷰
+              </Link>
+              <Link
+                to="/grouplist"
+                className="font-bold hover:text-brand"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                모임리스트
+              </Link>
+              <Link
+                to="/mypage"
+                className="font-bold hover:text-brand"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                마이페이지
+              </Link>
+            </nav>
+
+            {/* 로그인 상태 (모바일) */}
+            {isLoggedIn ? (
+              <div className="flex flex-col items-center gap-3">
+                <span className="font-medium text-blue-600">
+                  {nickname}님 반가워요!
+                </span>
+
+                {/* 알림 아이콘 */}
+                <button
+                  onClick={handlePanelOpen}
+                  className="relative focus:outline-none"
+                >
+                  <img
+                    src="/images/notification.svg"
+                    alt="알림"
+                    className="h-4 w-4"
+                  />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-0 -right-0.5 w-2 h-2 bg-brand-red rounded-full" />
+                  )}
+                </button>
+
+                {/* 로그아웃 버튼 */}
+                <button
+                  onClick={handleLogout}
+                  className="font-bold text-sm border px-3 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
+                >
+                  로그아웃
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/login"
+                onClick={() => setIsMenuOpen(false)}
                 className="font-bold text-sm px-3 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
               >
                 로그인

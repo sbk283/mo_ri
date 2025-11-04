@@ -9,7 +9,7 @@ import NotFoundFloatingBits from '../components/NotFoundloatingBits';
 function NotFoundPage() {
   const navigate = useNavigate();
 
-  // ✅ 기존 SearchBar의 onSearch 로직과 동일하게
+  // 기존 SearchBar의 onSearch 로직과 동일하게
   const handleSearch = (term: string) => {
     if (!term.trim()) return;
     navigate(`/grouplist?search=${encodeURIComponent(term.trim())}`);

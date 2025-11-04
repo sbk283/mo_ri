@@ -1,32 +1,32 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabase";
 
 interface GroupDashboardSidebarProps {
   groupId: string;
 }
 
-export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebarProps) {
+export default function GroupDashboardSidebar({
+  groupId,
+}: GroupDashboardSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [hostId, setHostId] = useState<string | null>(null);
 
-  const safeId = groupId && groupId !== 'undefined' && groupId !== 'null' ? groupId : '';
+  const safeId =
+    groupId && groupId !== "undefined" && groupId !== "null" ? groupId : "";
 
   useEffect(() => {
     if (!safeId) return;
 
     (async () => {
       const { data, error } = await supabase
-        .from('groups')
-        .select('created_by')
-        .eq('group_id', safeId)
+        .from("groups")
+        .select("created_by")
+        .eq("group_id", safeId)
         .maybeSingle();
 
-      // console.log('host created_by data:', data, 'error:', error);
-
       if (error) {
-        // console.error('호스트 조회 실패:', error.message);
         return;
       }
 
@@ -36,23 +36,23 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
 
   const categories = [
     {
-      name: '게시판',
-      icon: '/grouplist_dark.svg',
+      name: "게시판",
+      icon: "/grouplist_dark.svg",
       path: safeId ? `/groupcontent/${safeId}` : null,
     },
     {
-      name: '모임 일정',
-      icon: '/schedule_dark.svg',
+      name: "모임 일정",
+      icon: "/schedule_dark.svg",
       path: safeId ? `/groupschedule/${safeId}` : null,
     },
     {
-      name: '모임 멤버',
-      icon: '/people_dark.svg',
+      name: "모임 멤버",
+      icon: "/people_dark.svg",
       path: safeId ? `/groupmember/${safeId}` : null,
     },
     {
-      name: '채팅/문의',
-      icon: '/talk_dark.svg',
+      name: "채팅/문의",
+      icon: "/talk_dark.svg",
       path: safeId ? `/chat/${safeId}/${hostId}` : null,
     },
   ];
@@ -70,7 +70,7 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
 
         {/* 메뉴 리스트 */}
         <ul className="px-[23px] mb-[30px] mt-[10px]">
-          {categories.map(cat => {
+          {categories.map((cat) => {
             const isActive = cat.path ? location.pathname === cat.path : false;
 
             return (
@@ -82,11 +82,11 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
                   }}
                   disabled={!cat.path}
                   className={`flex items-center gap-[10px] py-[8px] text-lg w-full text-left transition-colors ${
-                    isActive ? 'text-brand' : 'text-[#555]'
-                  } ${!cat.path ? 'opacity-40 cursor-not-allowed' : 'hover:text-brand'}`}
+                    isActive ? "text-brand" : "text-[#555]"
+                  } ${!cat.path ? "opacity-40 cursor-not-allowed" : "hover:text-brand"}`}
                 >
                   <img
-                    src={isActive ? cat.icon.replace('_dark', '') : cat.icon}
+                    src={isActive ? cat.icon.replace("_dark", "") : cat.icon}
                     alt={cat.name}
                     className="w-4 h-4"
                   />
@@ -99,7 +99,9 @@ export default function GroupDashboardSidebar({ groupId }: GroupDashboardSidebar
 
         {/* id 없을 때 안내문 */}
         {!safeId && (
-          <p className="text-center text-gray-400 text-sm px-3">현재 선택된 모임이 없습니다.</p>
+          <p className="text-center text-gray-400 text-sm px-3">
+            현재 선택된 모임이 없습니다.
+          </p>
         )}
       </nav>
     </aside>

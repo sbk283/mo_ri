@@ -27,7 +27,7 @@ export const useDirectChat = () => {
 };
 
 // 참가자 보장 (존재X → insert, 존재하지만 나가있음 → 재참여로 전환: left_at=NULL, joined_at=now())
-async function ensureMyParticipant(chatId: string, userId: string) {
+export async function ensureMyParticipant(chatId: string, userId: string) {
   if (!userId) return;
   try {
     const { data: existing } = await supabase
@@ -150,7 +150,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         for (const msg of lastMsgs ?? []) {
           if (!lastMap.has(msg.chat_id)) {
-            lastMap.set(msg.chat_id, { content: msg.content, created_at: msg.created_at });
+            lastMap.set(msg.chat_id, {
+              content: msg.content,
+              created_at: msg.created_at,
+            });
           }
         }
       }
@@ -313,7 +316,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       try {
         // 상대가 나가 있었다면 먼저 재참여 처리하여 joined_at이 메시지 생성 시각보다 앞서도록 보장
         // 주의: rejoin_counterpart는 "left_at IS NOT NULL"일 때만 joined_at을 now()로 갱신하도록 서버에서 보강 권장
-        await supabase.rpc('rejoin_counterpart', { p_chat_id: chatId, p_sender: user.id });
+        await supabase.rpc('rejoin_counterpart', {
+          p_chat_id: chatId,
+          p_sender: user.id,
+        });
 
         // 내 참가 상태도 보장 (본인 레코드 없거나 나가있던 경우 복구)
         await ensureMyParticipant(chatId, user.id);
@@ -362,6 +368,122 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // ------------------------------------------------------
   // 4. 채팅방 생성 또는 재활용 (쌍당 1개 방 보장)
   // ------------------------------------------------------
+  // const findOrCreateChat = useCallback(
+  //   async (
+  //     groupId: string,
+  //     hostId: string,
+  //     memberId: string,
+  //   ): Promise<string> => {
+  //     try {
+  //       // 1️⃣ 기존 방 존재 여부 확인 (host/member 순서 무관)
+  //       //    주의: .or()는 개행/스페이스 없이 한 줄로!
+  //       const orFilter = `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`;
+
+  //       const { data: existing, error: selErr } = await supabase
+  //         .from("direct_chats")
+  //         .select("chat_id")
+  //         .eq("group_id", groupId)
+  //         .or(orFilter)
+  //         .limit(1)
+  //         .maybeSingle();
+
+  //       if (selErr) {
+  //         // select 문법 오류 등은 여기서 드러남 (400 방지)
+  //         throw selErr;
+  //       }
+
+  //       if (existing?.chat_id) {
+  //         await ensureMyParticipant(existing.chat_id, user?.id ?? "");
+  //         return existing.chat_id;
+  //       }
+
+  //       // 2️⃣ 없으면 insert (upsert ❌) — 동시성 충돌(23505) 시 재조회로 회복
+  //       const { data: inserted, error: insErr } = await supabase
+  //         .from("direct_chats")
+  //         .insert({
+  //           group_id: groupId,
+  //           host_id: hostId,
+  //           member_id: memberId,
+  //           created_by: user?.id ?? null,
+  //         })
+  //         .select("chat_id")
+  //         .single();
+
+  //       if (insErr) {
+  //         // 동시성으로 누군가 먼저 만든 경우: 23505 → 곧바로 재조회
+  //         // (DB 유니크 인덱스: idx_direct_chats_unique_pair_norm)
+  //         // 다른 에러면 그대로 throw
+  //         // @ts-ignore - supabase error code 문자열 접근
+  //         if (insErr.code === "23505") {
+  //           const { data: fallback } = await supabase
+  //             .from("direct_chats")
+  //             .select("chat_id")
+  //             .eq("group_id", groupId)
+  //             .or(orFilter)
+  //             .limit(1)
+  //             .maybeSingle();
+
+  //           if (fallback?.chat_id) {
+  //             await ensureMyParticipant(fallback.chat_id, user?.id ?? "");
+  //             return fallback.chat_id;
+  //           }
+  //         }
+  //         throw insErr;
+  //       }
+
+  //       await ensureMyParticipant(inserted.chat_id, user?.id ?? "");
+  //       return inserted.chat_id;
+  //     } catch (err) {
+  //       console.error("findOrCreateChat error:", err);
+  //       throw err;
+  //     }
+  //   },
+  //   [user?.id],
+  // );
+
+  // const findOrCreateChat = useCallback(
+  //   async (groupId: string, hostId: string, memberId: string): Promise<string> => {
+  //     try {
+  //       // 1️⃣ 기존 방 존재 여부 확인
+  //       const { data: existing } = await supabase
+  //         .from('direct_chats')
+  //         .select('chat_id')
+  //         .eq('group_id', groupId)
+  //         .or(
+  //           `and(host_id.eq.${hostId},member_id.eq.${memberId}),
+  //          and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+  //         )
+  //         .maybeSingle();
+
+  //       if (existing?.chat_id) {
+  //         await ensureMyParticipant(existing.chat_id, user?.id ?? '');
+  //         return existing.chat_id;
+  //       }
+
+  //       // 2️⃣ 없으면 insert (upsert ❌)
+  //       const { data: inserted, error } = await supabase
+  //         .from('direct_chats')
+  //         .insert({
+  //           group_id: groupId,
+  //           host_id: hostId,
+  //           member_id: memberId,
+  //           created_by: user?.id ?? null,
+  //         })
+  //         .select('chat_id')
+  //         .single();
+
+  //       if (error) throw error;
+
+  //       await ensureMyParticipant(inserted.chat_id, user?.id ?? '');
+  //       return inserted.chat_id;
+  //     } catch (err: any) {
+  //       console.error('findOrCreateChat error:', err);
+  //       throw err;
+  //     }
+  //   },
+  //   [user?.id],
+  // );
+
   const findOrCreateChat = useCallback(
     async (groupId: string, hostId: string, memberId: string): Promise<string> => {
       try {
@@ -488,7 +610,10 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           filter: `chat_id=eq.${activeChatId}`,
         },
         payload => {
-          const updated = payload.new as { user_id: string; left_at: string | null };
+          const updated = payload.new as {
+            user_id: string;
+            left_at: string | null;
+          };
 
           // 본인이 나간 경우: 현재 화면 정리 및 목록 새로고침
           if (updated.user_id === user.id && updated.left_at) {

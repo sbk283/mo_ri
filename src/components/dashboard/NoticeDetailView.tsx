@@ -92,7 +92,7 @@ export default function NoticeDetailView({
       <ConfirmModal
         open={openConfirm}
         title="정말 삭제하시겠습니까?"
-        message={'삭제 후 되돌릴 수 없습니다.\n이 공지글을 삭제할까요?'}
+        message={'삭제 후 되돌릴 수 없습니다.\n이 게시글을 삭제하시겠습니까?'}
         confirmText="삭제"
         cancelText="취소"
         onConfirm={() => {

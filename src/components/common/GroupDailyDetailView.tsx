@@ -269,12 +269,12 @@ export default function GroupDailyDetailView({
               </div>
 
               {/* 좋아요한 멤버 섹션 (항상 서버 조인 데이터만 사용) */}
-              <section className="px-8 pb-8 pt-4 mt-auto flex flex-col justify-end min-h-[120px]">
+              <section className="px-8 pb-8 pt-4 mt-auto min-h-[120px]">
                 <span className="block text-lg text-[#3C3C3C] font-semibold mb-2">
                   좋아요한 멤버
                 </span>
 
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 min-h-[32px]">
                   {likers.total > 0 ? (
                     <>
                       {visibleEntries.map(e => (
@@ -336,7 +336,7 @@ export default function GroupDailyDetailView({
       <ConfirmModal
         open={openConfirm}
         title="정말 삭제하시겠습니까?"
-        message={'삭제 후 되돌릴 수 없습니다.\n이 게시글을 삭제할까요?'}
+        message={'삭제 후 되돌릴 수 없습니다.\n이 게시글을 삭제하시겠습니까?'}
         confirmText="삭제"
         cancelText="취소"
         onConfirm={async () => {

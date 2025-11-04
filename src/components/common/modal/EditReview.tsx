@@ -10,6 +10,8 @@ interface EditModalProps {
   review: ReviewItem;
 }
 
+const MAX_CONTENT_LENGTH = 500;
+
 function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
   const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(review.rating);
   const [content, setContent] = useState(review.content);
@@ -54,6 +56,12 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
     onClose();
   };
 
+  const handleContentChange = (value: string) => {
+    // 500글자 이상은 잘라서 저장
+    const next = value.slice(0, MAX_CONTENT_LENGTH);
+    setContent(next);
+  };
+
   return (
     <AnimatePresence>
       {open && (
@@ -80,7 +88,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                 <p className="mt-2 text-md">여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.</p>
               </div>
 
-              <div className="border border-[#6C6C6C] mb-8"></div>
+              <div className="border border-[#6C6C6C] mb-8" />
 
               {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
@@ -140,8 +148,11 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                   className="w-full border border-[#A3A3A3] rounded-sm p-3 h-[145px] min-h-[145px] max-h-[145px] resize-none overflow-y-auto focus:outline-none focus:border-blue-500"
                   placeholder="모임의 어떤 점이 좋았는지 적어주세요."
                   value={content}
-                  onChange={e => setContent(e.target.value)}
+                  onChange={e => handleContentChange(e.target.value)}
                 />
+                <div className="mt-1 text-right text-xs text-[#8C8C8C]">
+                  {content.length}/{MAX_CONTENT_LENGTH}
+                </div>
               </div>
 
               {/* 버튼 */}

@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { ReviewCard, type ReviewItem } from '../common/ReviewCard';
 import ReviewDetailModal, { type ReviewDetail } from '../common/modal/ReviewDetailModal';
-import ErrorModal from '../common/modal/ErrorModal';
-import SuccessModal from '../common/modal/SuccessModal';
 import { supabase } from '../../lib/supabase';
 
 const NO_IMAGE = '/images/no_image.jpg';
@@ -42,36 +40,19 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
   const [topItems, setTopItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // 모달
+  // 상세 모달
   const [openId, setOpenId] = useState<number | null>(null);
 
   // 공감 (DB 기반)
   const [empathyByNumId, setEmpathyByNumId] = useState<Record<number, number>>({});
   const [likedByNumId, setLikedByNumId] = useState<Set<number>>(new Set());
   const [numToReviewId, setNumToReviewId] = useState<Record<number, string>>({});
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   // 상세에서 사용할 "그룹 이미지(첫 장)" 맵: review_id → image url
   const [groupImageByReviewId, setGroupImageByReviewId] = useState<Record<string, string>>({});
-  // ✅ 상세에서 사용할 "작성자 아바타" 맵: numId → avatar url
+  // 상세에서 사용할 "작성자 아바타" 맵: numId → avatar url
   const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<Record<number, string>>({});
-
-  // 실패/성공 모달 상태
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('공감이 반영되었습니다!');
-  const AUTO_CLOSE_MS = 1700;
-
-  const openError = (msg: string) => {
-    setErrorMsg(msg);
-    setErrorOpen(true);
-    setTimeout(() => setErrorOpen(false), AUTO_CLOSE_MS);
-  };
-  const openSuccess = (msg: string) => {
-    setSuccessMsg(msg);
-    setSuccessOpen(true);
-    setTimeout(() => setSuccessOpen(false), AUTO_CLOSE_MS);
-  };
 
   useEffect(() => {
     let ignore = false;
@@ -81,6 +62,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
       try {
         const { data: u } = await supabase.auth.getUser();
         const myId = u?.user?.id ?? null;
+        if (!ignore) setIsLoggedIn(!!myId);
 
         // 1) 태그 사전
         const { data: dict } = await supabase
@@ -192,7 +174,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
 
           // 카드(미리보기) 이미지: 작성자 프로필
           const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
-          authorAvatarMap[numId] = avatar; // ✅
+          authorAvatarMap[numId] = avatar;
 
           // 상세(모달) 이미지: 그룹 이미지 첫 장
           const groupFirstImage = g?.image_urls?.[0] || NO_IMAGE;
@@ -241,7 +223,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           setEmpathyByNumId(empathyByNum);
           setLikedByNumId(likedNums);
           setGroupImageByReviewId(groupImgMap);
-          setAuthorAvatarByNumId(authorAvatarMap); // ✅
+          setAuthorAvatarByNumId(authorAvatarMap);
         }
       } catch (e) {
         console.error('[ReviewsSection] load error', e);
@@ -278,7 +260,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
       content: v.content,
       tags: v.tags ?? [],
       creator_id: v.created_id,
-      creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE, // ✅ 작성자 아바타
+      creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE,
       created_at: v.created_at ?? '',
       empathy: empathyByNumId[v.id] ?? v.empathy ?? 0,
     };
@@ -290,33 +272,29 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
     return found ? toDetail(found) : null;
   }, [openId, topItems, empathyByNumId, numToReviewId, groupImageByReviewId, authorAvatarByNumId]);
 
-  // DB 공감 (중복/미로그인 모달 처리 + 성공 모달)
+  // DB 공감 (로그인/중복은 버튼 노출/비활성화로 제어)
   const handleEmpathy = async (numId: number) => {
     const rid = numToReviewId[numId];
     if (!rid) return;
 
     const { data: u } = await supabase.auth.getUser();
     const myId = u?.user?.id;
-    if (!myId) {
-      openError('로그인이 필요합니다.\n로그인 후 이용해 주세요.');
-      return;
-    }
-    if (likedByNumId.has(numId)) {
-      openError('이미 공감했습니다.\n같은 리뷰는 한 번만 공감할 수 있어요.');
-      return;
-    }
+    if (!myId) return; // 비로그인은 어차피 버튼 안 보임
+    if (likedByNumId.has(numId)) return; // 이미 공감한 경우도 그냥 무시
 
     const { error } = await supabase.from('review_likes').insert({ review_id: rid, user_id: myId });
     // @ts-ignore 중복 코드 허용(23505)
     if (error && error.code !== '23505') {
       console.error('[ReviewsSection] empathy insert error', error);
-      openError('공감 처리 중 오류가 발생했습니다.');
       return;
     }
 
     setEmpathyByNumId(prev => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
-    setLikedByNumId(prev => new Set(prev).add(numId));
-    openSuccess('공감이 반영되었습니다!');
+    setLikedByNumId(prev => {
+      const next = new Set(prev);
+      next.add(numId);
+      return next;
+    });
   };
 
   return (
@@ -374,6 +352,8 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
               review={selected}
               onClose={() => setOpenId(null)}
               onEmpathy={() => handleEmpathy(selected.id)}
+              showEmpathyButton={isLoggedIn}
+              empathyDisabled={!isLoggedIn || likedByNumId.has(selected.id)}
             />
           )}
         </AnimatePresence>
@@ -437,14 +417,6 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
           </div>
         </div>
       </div>
-
-      {/* 실패/성공 모달 */}
-      <ErrorModal isOpen={errorOpen} message={errorMsg} onClose={() => setErrorOpen(false)} />
-      <SuccessModal
-        isOpen={successOpen}
-        message={successMsg}
-        onClose={() => setSuccessOpen(false)}
-      />
     </div>
   );
 }

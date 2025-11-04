@@ -7,6 +7,7 @@ import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
 import GroupDailyContent from '../components/common/GroupDailyContent';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import ConfirmModal from '../components/common/modal/ConfirmModal';
 
 type TabLabel = '공지사항' | '모임일상';
 type TabParam = 'notice' | 'daily';
@@ -34,7 +35,7 @@ function GroupContentPage() {
   const setTabAndClearDetail = (tabParam: TabParam, opts?: { replace?: boolean }) => {
     const sp = new URLSearchParams(location.search);
     sp.set('tab', tabParam);
-    DETAIL_KEYS.forEach(k => sp.delete(k)); // ← 핵심: 탭 바꾸면 상세 파라미터 제거
+    DETAIL_KEYS.forEach(k => sp.delete(k)); // 탭 바꾸면 상세 파라미터 제거
 
     const nextSearch = `?${sp.toString()}`;
     const nextUrl = `${location.pathname}${nextSearch}${location.hash || ''}`;
@@ -61,6 +62,18 @@ function GroupContentPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groupId]);
+
+  // 현재 URL에 상세 관련 쿼리(post, view, mode, edit) 있는지 여부
+  const hasDetailParam = useMemo(() => {
+    const sp = new URLSearchParams(location.search);
+    return DETAIL_KEYS.some(k => sp.has(k));
+  }, [location.search]);
+
+  // 탭 + 상세존재 여부에 따라 key를 바꿔서 강제 리마운트
+  const tabKey = useMemo(
+    () => `${selectedTabLabel}-${hasDetailParam ? 'detail' : 'list'}`,
+    [selectedTabLabel, hasDetailParam],
+  );
 
   // 탭 클릭 시: 상태 + URL 동기화(상세 파라미터 제거)
   const handleTabClick = (label: TabLabel) => {
@@ -183,7 +196,7 @@ function GroupContentPage() {
 
   // 상단 "작성하기" 버튼
   const handleCreateClick = () => {
-    // 작성하기 눌러도 상세 파라미터 남아있으면 혼란 줄 수 있으니 탭 유지 + 상세 제거(Optional)
+    // 작성하기 눌러도 상세 파라미터 남아있으면 혼란 줄 수 있으니 탭 유지 + 상세 제거
     setTabAndClearDetail(labelToParam(selectedTabLabel), { replace: true });
 
     if (selectedTabLabel === '공지사항') setNoticeCreateTick(t => t + 1);
@@ -197,21 +210,30 @@ function GroupContentPage() {
       ? roleLoaded && isHost // 공지: 호스트만
       : true); // 일상: 기존 로직 유지
 
-  // === 모임 나가기 ===
-  const handleLeaveGroup = async () => {
-    const ok = window.confirm('정말로 모임을 탈퇴하시겠어요?');
-    if (!ok) return;
+  // === 모임 나가기 모달 상태 ===
+  const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
+  const openLeaveModal = () => {
+    if (isHost) {
+      alert('호스트(관리자)는 모임을 탈퇴할 수 없습니다.');
+      return;
+    }
+    setLeaveModalOpen(true);
+  };
+
+  const handleLeaveGroup = async () => {
     const { data: u } = await supabase.auth.getUser();
     const userId = u?.user?.id;
 
     if (!userId || !groupId) {
       alert('유효하지 않은 요청입니다.');
+      setLeaveModalOpen(false);
       return;
     }
 
     if (isHost) {
       alert('호스트(관리자)는 모임을 탈퇴할 수 없습니다.');
+      setLeaveModalOpen(false);
       return;
     }
 
@@ -225,10 +247,12 @@ function GroupContentPage() {
     if (error) {
       console.error('[GroupContentPage] leave error:', error);
       alert('모임 탈퇴 중 오류가 발생했습니다.');
+      setLeaveModalOpen(false);
       return;
     }
 
     alert('모임에서 탈퇴되었습니다.');
+    setLeaveModalOpen(false);
     navigate('/');
   };
 
@@ -294,7 +318,7 @@ function GroupContentPage() {
               <main className="flex justify-center min-h-[300px]">
                 <AnimatePresence mode="wait">
                   <motion.div
-                    key={selectedTabLabel}
+                    key={tabKey}
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
@@ -311,13 +335,24 @@ function GroupContentPage() {
           {!isHost && (
             <button
               className="text-sm ml-auto mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition"
-              onClick={handleLeaveGroup}
+              onClick={openLeaveModal}
             >
               모임나가기
             </button>
           )}
         </div>
       </GroupDashboardLayout>
+
+      {/* 모임 나가기 확인 모달 */}
+      <ConfirmModal
+        open={leaveModalOpen}
+        title="모임을 탈퇴하시겠어요?"
+        message={'탈퇴하면 더 이상 이 모임에 가입할 수 없습니다.\n정말 탈퇴하시겠습니까?'}
+        confirmText="나가기"
+        cancelText="취소"
+        onConfirm={handleLeaveGroup}
+        onClose={() => setLeaveModalOpen(false)}
+      />
     </div>
   );
 }

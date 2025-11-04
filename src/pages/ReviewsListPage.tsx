@@ -4,8 +4,6 @@ import ReviewDetailModal, { type ReviewDetail } from '../components/common/modal
 import ArrayDropdown from '../components/common/ArrayDropdown';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import { supabase } from '../lib/supabase';
-import ErrorModal from '../components/common/modal/ErrorModal';
-import SuccessModal from '../components/common/modal/SuccessModal';
 
 const fmt = (d?: string | null) => (d ? d.replace(/-/g, '.') : '');
 const NO_IMAGE = '/images/no_image.jpg';
@@ -54,35 +52,10 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
   // 모달용 "모임 이미지" 저장 (numId → group first image)
   const [groupSrcByNumId, setGroupSrcByNumId] = useState<Record<number, string>>({});
-  // ✅ 모달/상세용 "작성자 아바타" 저장 (numId → avatar url)
+  // 모달/상세용 "작성자 아바타" 저장 (numId → avatar url)
   const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<Record<number, string>>({});
 
-  // ErrorModal 상태
-  const [errorLoginOpen, setErrorLoginOpen] = useState(false);
-  const [errorDupLikeOpen, setErrorDupLikeOpen] = useState(false);
-  // SuccessModal 상태
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [successMsg, setSuccessMsg] = useState('공감이 반영되었습니다!');
-
-  const AUTO_CLOSE_MS = 1700;
-
-  useEffect(() => {
-    if (!errorLoginOpen) return;
-    const t = setTimeout(() => setErrorLoginOpen(false), AUTO_CLOSE_MS);
-    return () => clearTimeout(t);
-  }, [errorLoginOpen]);
-
-  useEffect(() => {
-    if (!errorDupLikeOpen) return;
-    const t = setTimeout(() => setErrorDupLikeOpen(false), AUTO_CLOSE_MS);
-    return () => clearTimeout(t);
-  }, [errorDupLikeOpen]);
-
-  useEffect(() => {
-    if (!successOpen) return;
-    const t = setTimeout(() => setSuccessOpen(false), AUTO_CLOSE_MS);
-    return () => clearTimeout(t);
-  }, [successOpen]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   const withEmpathy = (it: ReviewItem) => ({ ...it, empathy: empathyByNumId[it.id] ?? 0 });
 
@@ -92,6 +65,8 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
       setLoading(true);
       try {
         const { data: u } = await supabase.auth.getUser();
+        const myId = u?.user?.id ?? null;
+        if (!ignore) setIsLoggedIn(!!myId);
 
         // 1) 태그 사전
         const { data: dict } = await supabase
@@ -179,7 +154,6 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
         // 6) 내가 공감한 리뷰
         let myLiked = new Set<string>();
-        const myId = u?.user?.id ?? null;
         if (myId) {
           const { data: mine } = await supabase
             .from('review_likes')
@@ -209,7 +183,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           const major = g?.categories_sub?.categories_major?.category_major_name?.trim() || '기타';
           const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
 
-          authorAvatarMap[numId] = avatar; // ✅ 작성자 아바타 저장
+          authorAvatarMap[numId] = avatar; // 작성자 아바타 저장
 
           // 모달용: 모임 이미지(첫 장)
           const groupFirstImage = g?.image_urls?.[0] || NO_IMAGE;
@@ -249,7 +223,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setEmpathyByNumId(eMap => ({ ...eMap, ...empathyByNum }));
           setLikedByNumId(likedByNum);
           setGroupSrcByNumId(groupSrcMap);
-          setAuthorAvatarByNumId(authorAvatarMap); // ✅
+          setAuthorAvatarByNumId(authorAvatarMap);
         }
       } catch (e) {
         console.error('[ReviewsListPage] load error', e);
@@ -320,21 +294,15 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     });
   }, [items, empathyByNumId, sortMode]);
 
-  // 공감 클릭
+  // 공감 클릭 (상세 모달에서만 호출)
   const handleEmpathy = async (numId: number) => {
     const reviewId = numToReviewId[numId];
     if (!reviewId) return;
 
     const { data: u } = await supabase.auth.getUser();
     const myId = u?.user?.id;
-    if (!myId) {
-      setErrorLoginOpen(true);
-      return;
-    }
-    if (likedByNumId.has(numId)) {
-      setErrorDupLikeOpen(true);
-      return;
-    }
+    if (!myId) return; // 비로그인은 버튼 안 보임
+    if (likedByNumId.has(numId)) return;
 
     const { error } = await supabase
       .from('review_likes')
@@ -345,11 +313,13 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
       return;
     }
 
-    // 성공 처리: 카운트/상태 반영 + 성공 모달
+    // 성공 처리: 카운트/상태 반영
     setEmpathyByNumId(prev => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
-    setLikedByNumId(prev => new Set(prev).add(numId));
-    setSuccessMsg('공감이 반영되었습니다!');
-    setSuccessOpen(true);
+    setLikedByNumId(prev => {
+      const next = new Set(prev);
+      next.add(numId);
+      return next;
+    });
   };
 
   // 상세 변환 (모달은 항상 modalTags 우선)
@@ -364,7 +334,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     content: v.content,
     tags: modalTags ?? v.tags ?? [],
     creator_id: v.created_id,
-    creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE, // ✅ 작성자 아바타 전달
+    creator_avatar: authorAvatarByNumId[v.id] || NO_IMAGE, // 작성자 아바타 전달
     created_at: v.created_at ?? DEFAULT_CREATED_AT,
     empathy: empathyByNumId[v.id] ?? 0,
   });
@@ -415,12 +385,15 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
         </ul>
       )}
 
+      {/* 상세 모달 */}
       {selected && (
         <ReviewDetailModal
           open
           review={selected}
           onClose={() => setOpenId(null)}
           onEmpathy={() => handleEmpathy(selected.id)}
+          showEmpathyButton={isLoggedIn}
+          empathyDisabled={!isLoggedIn || likedByNumId.has(selected.id)}
         />
       )}
 
@@ -446,23 +419,6 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           ))}
         </ul>
       )}
-
-      {/* 실패/성공 모달 */}
-      <ErrorModal
-        isOpen={errorLoginOpen}
-        message={'로그인이 필요합니다.\n로그인 후 이용해 주세요.'}
-        onClose={() => setErrorLoginOpen(false)}
-      />
-      <ErrorModal
-        isOpen={errorDupLikeOpen}
-        message={'이미 공감했습니다.\n같은 리뷰는 한 번만 공감할 수 있어요.'}
-        onClose={() => setErrorDupLikeOpen(false)}
-      />
-      <SuccessModal
-        isOpen={successOpen}
-        message={successMsg}
-        onClose={() => setSuccessOpen(false)}
-      />
     </div>
   );
 }

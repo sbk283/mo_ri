@@ -84,20 +84,29 @@ const Header: React.FC = () => {
   // 초기 unreadCount 가져오기 (Header에서만 1회)
   useEffect(() => {
     if (!user?.id) return;
-    const userId = user.id;
 
-    const initUnreadCount = async () => {
-      const { count, error } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_read", false);
+    const channel = supabase
+      .channel(`header_notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          console.log("[Header] 새 알림 감지:", payload.new);
+          // 새 알림이면 count +1
+          setUnreadCount((prev) => prev + 1);
+        },
+      )
+      .subscribe();
 
-      if (!error && count !== null) setUnreadCount(count);
+    return () => {
+      supabase.removeChannel(channel);
     };
-
-    initUnreadCount();
-  }, [user]);
+  }, [user?.id]);
 
   // 최초 세션 로드
   useEffect(() => {

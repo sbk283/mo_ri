@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '../../contexts/AuthContext';
-import { useDirectChat } from '../../contexts/DirectChatContext';
-import { supabase } from '../../lib/supabase';
-import Modal from '../common/modal/Modal';
-import SuccessModal from '../common/modal/SuccessModal';
-import { DEFAULT_AVATAR, toAvatarUrl } from '../../utils/storage';
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext";
+import { useDirectChat } from "../../contexts/DirectChatContext";
+import { supabase } from "../../lib/supabase";
+import { DEFAULT_AVATAR, toAvatarUrl } from "../../utils/storage";
+import Modal from "../common/modal/Modal";
+import SuccessModal from "../common/modal/SuccessModal";
 
 interface HostProfile {
   nickname: string;
@@ -14,8 +15,10 @@ interface HostProfile {
 }
 
 function DirectChatList() {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { currentChat, fetchChats, fetchMessages, setCurrentChat } = useDirectChat();
+  const { currentChat, fetchChats, fetchMessages, setCurrentChat } =
+    useDirectChat();
   const [hostProfile, setHostProfile] = useState<HostProfile | null>(null);
 
   const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
@@ -47,21 +50,22 @@ function DirectChatList() {
         return;
       }
 
-      const [{ data: profileData, error: pErr }, { data: groupData }] = await Promise.all([
-        supabase
-          .from('user_profiles')
-          .select('nickname, avatar_url')
-          .eq('user_id', currentChat.host_id)
-          .maybeSingle(),
-        supabase
-          .from('groups')
-          .select('group_title, group_short_intro')
-          .eq('group_id', currentChat.group_id)
-          .maybeSingle(),
-      ]);
+      const [{ data: profileData, error: pErr }, { data: groupData }] =
+        await Promise.all([
+          supabase
+            .from("user_profiles")
+            .select("nickname, avatar_url")
+            .eq("user_id", currentChat.host_id)
+            .maybeSingle(),
+          supabase
+            .from("groups")
+            .select("group_title, group_short_intro")
+            .eq("group_id", currentChat.group_id)
+            .maybeSingle(),
+        ]);
 
       if (pErr) {
-        console.error('모임장 정보 조회 실패:', pErr.message);
+        console.error("모임장 정보 조회 실패:", pErr.message);
         setHostProfile(null);
         return;
       }
@@ -70,15 +74,15 @@ function DirectChatList() {
       const raw = profileData?.avatar_url ?? null;
       const avatar = toAvatarUrl(raw);
       setHostProfile({
-        nickname: profileData?.nickname ?? '모임장',
+        nickname: profileData?.nickname ?? "모임장",
         avatar_url: avatar,
-        groupTitle: groupData?.group_title ?? '모임',
+        groupTitle: groupData?.group_title ?? "모임",
         groupSummary:
           groupData?.group_short_intro ??
-          '이 모임의 관리자입니다. 궁금한 점이 있으면 자유롭게 문의해주세요.',
+          "이 모임의 관리자입니다. 궁금한 점이 있으면 자유롭게 문의해주세요.",
       });
     })();
-  }, [currentChat?.host_id, currentChat?.group_id]);
+  }, [currentChat?.host_id, currentChat?.group_id, isHost]);
 
   // 성공 모달 자동 닫기 (1800ms)
   useEffect(() => {
@@ -95,7 +99,7 @@ function DirectChatList() {
   const handleConfirmLeave = async () => {
     if (!currentChat?.chat_id) return;
     try {
-      const { error } = await supabase.rpc('leave_direct_chat', {
+      const { error } = await supabase.rpc("leave_direct_chat", {
         p_chat_id: currentChat.chat_id,
       });
       if (error) throw error;
@@ -103,12 +107,18 @@ function DirectChatList() {
       setIsLeaveModalOpen(false);
       setIsSuccessModalOpen(true);
 
-      setTimeout(() => {
-        setCurrentChat(null);
-        fetchChats();
-      }, 1200);
+      // setTimeout(() => {
+      //   setCurrentChat(null);
+      //   fetchChats();
+      //   navigate(`/groupcontent/${currentChat.group_id}?tab=notice`);
+      // }, 1200);
+
+      // 2025-11-04 :  창닫기시 모임 게시판으로 가기
+      setCurrentChat(null);
+      fetchChats();
+      navigate(`/groupcontent/${currentChat.group_id}?tab=notice`);
     } catch (err) {
-      console.error('채팅방 나가기 실패:', err);
+      console.error("채팅방 나가기 실패:", err);
       setIsLeaveModalOpen(false);
     }
   };
@@ -139,14 +149,14 @@ function DirectChatList() {
         <div className="pl-5 flex flex-col items-center">
           <img
             src={
-              hostProfile.avatar_url && hostProfile.avatar_url.trim() !== ''
+              hostProfile.avatar_url && hostProfile.avatar_url.trim() !== ""
                 ? hostProfile.avatar_url
                 : DEFAULT_AVATAR
             }
             alt="프로필"
             className="w-32 h-32 mt-3 rounded-full object-cover border border-[#dedede]"
             loading="lazy"
-            onError={e => {
+            onError={(e) => {
               const el = e.currentTarget as HTMLImageElement;
               if (!el.src.endsWith(DEFAULT_AVATAR)) el.src = DEFAULT_AVATAR;
             }}
@@ -158,7 +168,11 @@ function DirectChatList() {
             </h2>
             {isHost && (
               <div className="flex w-[23px] h-[13px] px-[5px] py-[2px] rounded-[11px] bg-[#0689E8] items-center justify-center">
-                <img src="/images/group_crown.svg" alt="모임장크라운" className="w-3 h-3" />
+                <img
+                  src="/images/group_crown.svg"
+                  alt="모임장크라운"
+                  className="w-3 h-3"
+                />
               </div>
             )}
           </div>
@@ -178,14 +192,14 @@ function DirectChatList() {
           </p>
           <br />
           {/* 내가 호스트가 아닐 때만 나가기 버튼 노출함 */}
-          {!isHost && (
+          {/* {!isHost && (
             <button
               onClick={openLeaveModal}
               className="text-sm text-white transition w-full h-8 bg-brand hover:bg-[#1362d0] rounded-sm"
             >
               나가기
             </button>
-          )}
+          )} */}
         </div>
       </aside>
 
@@ -196,8 +210,12 @@ function DirectChatList() {
         title="채팅방 나가기"
         message="채팅방을 나가시겠습니까?"
         actions={[
-          { label: '취소', onClick: () => setIsLeaveModalOpen(false), variant: 'secondary' },
-          { label: '나가기', onClick: handleConfirmLeave, variant: 'primary' },
+          {
+            label: "취소",
+            onClick: () => setIsLeaveModalOpen(false),
+            variant: "secondary",
+          },
+          { label: "나가기", onClick: handleConfirmLeave, variant: "primary" },
         ]}
       />
 

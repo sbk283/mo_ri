@@ -1,6 +1,7 @@
   // 좋아요, 공감, 문의, 그룹승인 등 알림 트리거 함수 모음
 
-  import { insertNotification } from './notify';
+  import { insertNotification } from "./notify";
+
 
   /**
    * 리뷰 공감 알림 (리뷰 작성자에게)
@@ -18,8 +19,8 @@
   }) {
     await insertNotification({
       userId: reviewAuthorId,
-      type: 'review_like',
-      title: '리뷰 공감 알림',
+      type: "review_like",
+      title: "리뷰 공감 알림",
       message: `${reviewerNickname}님이 당신의 리뷰에 공감했습니다.`,
       groupId,
       targetId: reviewId,
@@ -42,8 +43,8 @@
   }) {
     await insertNotification({
       userId: postAuthorId,
-      type: 'post_like',
-      title: '게시글 좋아요 알림',
+      type: "post_like",
+      title: "게시글 좋아요 알림",
       message: `${likerNickname}님이 당신의 게시글을 좋아합니다.`,
       groupId,
       targetId: postId,
@@ -64,8 +65,8 @@
   }) {
     await insertNotification({
       userId: adminUserId,
-      type: 'inquiry_new',
-      title: '새로운 문의 등록',
+      type: "inquiry_new",
+      title: "새로운 문의 등록",
       message: `${userNickname}님이 새로운 문의를 등록했습니다.`,
       targetId: inquiryId,
     });
@@ -82,11 +83,13 @@
     inquiryDetail: string;
   }) {
     await insertNotification({
-      userId: inquiryWriterId,
-      type: 'inquiry_reply',
-      title: '문의 답변 완료',
-      message: `문의 "${inquiryDetail}"의 답변이 등록되었습니다.`,
+      userId: inquiryWriterId, // ✅ 올바른 키
+      type: "inquiry_reply",
+      title: "문의 답변 완료",
+      message: `문의 "${inquiryDetail}"의 답변이 등록되었습니다.`, // ✅ 메시지에 내용 삽입
     });
+
+    console.log("[notifyInquiryReply] 알림 insert 완료", inquiryWriterId);
   }
 
   /**
@@ -103,8 +106,8 @@
   }) {
     await insertNotification({
       userId: creatorId,
-      type: 'group_approved',
-      title: '그룹 승인 완료',
+      type: "group_approved",
+      title: "그룹 승인 완료",
       message: `당신의 그룹 "${groupTitle}"이 승인되었습니다.`,
       groupId,
       targetId: groupId,

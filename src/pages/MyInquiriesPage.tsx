@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import ConfirmModal from "../components/common/modal/ConfirmModal";
 import InquirySelectorEdit from "../components/InquirySelectorEdit";
 import MyPageLayout from "../components/layout/MyPageLayout";
@@ -42,27 +42,97 @@ function MyInquiriesPage() {
   };
 
   // db 문의 내역 불러오기
-  useEffect(() => {
-    const fetchInquiries = async () => {
-      if (!user) return;
-      setLoading(true);
-      const { data, error } = await supabase
-        .from("user_inquiries")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("inquiry_created_at", { ascending: false });
+  const fetchInquiries = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("user_inquiries")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("inquiry_created_at", { ascending: false });
 
-      if (error) console.error("문의 불러오기 실패:", error.message);
-      else setInquiries(data || []);
-      setLoading(false);
-    };
-
-    fetchInquiries();
+    if (error) console.error("문의 불러오기 실패:", error.message);
+    else {
+      // console.log("[MyInquiries] 문의 목록 로드:", data?.length || 0);
+      setInquiries(data || []);
+    }
+    setLoading(false);
   }, [user]);
+
+  // 2025-11-03 초기 데이터 로드
+  useEffect(() => {
+    fetchInquiries();
+  }, [fetchInquiries]);
+
+  // 2025-11-03 실시간으로 문의 상태 업데이트 감지 (관리자 답변 시 자동 반영)
+  // user_inquiries 테이블의 Realtime이 작동하지 않을 경우를 대비해
+  // notifications 테이블의 inquiry_reply 타입 알림을 감지하여 문의 목록 갱신
+  // 2025-11-09 notifications 테이블 구독 추가 (Header와 동일한 방식으로 알림 감지)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // 방법 1: notifications 테이블 구독 (알림이 오면 문의 목록 갱신)
+    const notifyChannel = supabase
+      .channel(`my_inquiries_notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          const notification = payload.new as any;
+          // console.log("[MyInquiries] 알림 수신:", notification);
+
+          // inquiry_reply 타입 알림이 오면 문의 목록 갱신
+          if (notification.type === "inquiry_reply") {
+            // console.log(
+            //   "[MyInquiries] inquiry_reply 알림 감지! 문의 목록 갱신",
+            // );
+            await fetchInquiries();
+          }
+        },
+      )
+      .subscribe((status) => {
+        // console.log("[MyInquiries] notifications 채널 구독 상태:", status);
+        if (status === "SUBSCRIBED") {
+          // console.log("[MyInquiries] notifications 채널 구독 완료");
+        }
+      });
+
+    // 방법 2: user_inquiries 테이블 구독 (백업용)
+    const inquiryChannel = supabase
+      .channel(`user_inquiries:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_inquiries",
+          filter: `user_id=eq.${user.id}`,
+        },
+        async (payload) => {
+          // console.log("[MyInquiries] 문의 상태 업데이트 감지!");
+          // console.log("[MyInquiries] payload.new:", payload.new);
+          await fetchInquiries();
+        },
+      )
+      .subscribe((status) => {
+        console.log("[MyInquiries] user_inquiries 채널 구독 상태:", status);
+      });
+
+    return () => {
+      // console.log("[MyInquiries] 알림 채널 정리");
+      supabase.removeChannel(notifyChannel);
+      supabase.removeChannel(inquiryChannel);
+    };
+  }, [user?.id, fetchInquiries]);
 
   // 삭제하기
   const handleDelete = async (id: string) => {
-    // if (!window.confirm('정말로 이 문의를 삭제하시겠습니까?')) return;
+    if (!window.confirm("정말로 이 문의를 삭제하시겠습니까?")) return;
 
     try {
       // 삭제할 문의 정보 가져오기
@@ -75,39 +145,23 @@ function MyInquiriesPage() {
       if (fetchError) throw fetchError;
 
       let files: { path: string; originalName: string }[] = [];
-
-      // 파일이 실제로 있을때만 처리
+      // 파일 삭제
       if (inquiryData?.inquiry_file_urls) {
         try {
-          let parsed = inquiryData.inquiry_file_urls;
-
-          if (typeof parsed === "string") parsed = JSON.parse(parsed);
-
-          // 문자열 배열이면 JSON 파싱
-          if (Array.isArray(parsed) && typeof parsed[0] === "string") {
-            parsed = parsed
-              .map((item: string) => {
-                try {
-                  return JSON.parse(item);
-                } catch {
-                  return null;
-                }
-              })
-              .filter(Boolean);
-          }
-
+          const parsed = JSON.parse(inquiryData.inquiry_file_urls);
           files = Array.isArray(parsed) ? parsed : [parsed];
-        } catch (e) {
-          console.warn("파일 파싱 오류:", e);
-          files = [];
+        } catch {
+          files = [
+            { path: inquiryData.inquiry_file_urls, originalName: "파일" },
+          ];
         }
 
-        // 파일 삭제
         for (const file of files) {
-          if (!file?.path) continue;
+          if (!file?.path) continue; // 안전하게 체크
           const { error: storageError } = await supabase.storage
-            .from("inquiry-images")
+            .from("inquiry-images") // 실제 버킷 이름
             .remove([file.path]);
+
           if (storageError) console.error("파일 삭제 실패:", storageError);
         }
       }
@@ -466,13 +520,21 @@ function MyInquiriesPage() {
           </div>
 
           {/* 답변 완료 또는 수정/삭제 버튼 */}
-          {/* 문의 답변 완료 시 */}
           {selectedInquiry.inquiry_status === "answered" ? (
             <>
-              ...
+              <div className="border-b border-black opacity-30 my-[16px]" />
+              <div className="flex gap-[60px] items-start ">
+                <div className="text-gray-400 text-lg font-bold">문의 답변</div>
+                <div
+                  className="text-gray-200 text-md"
+                  style={{ wordBreak: "break-word", whiteSpace: "normal" }}
+                >
+                  {selectedInquiry.inquiry_answer || "답변 내용이 없습니다."}
+                </div>
+              </div>
               <div className="flex justify-end mt-[16px]">
                 <button
-                  onClick={() => handleDeleteClick(selectedInquiry.inquiry_id)}
+                  onClick={() => handleDelete(selectedInquiry.inquiry_id)}
                   className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                 >
                   문의 삭제
@@ -483,18 +545,20 @@ function MyInquiriesPage() {
             <div className="flex justify-end gap-[14px]">
               {editInquiry === selectedInquiry.inquiry_id ? (
                 <>
-                  <button
-                    className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
-                    onClick={handleCancelClick}
-                  >
-                    수정 취소
-                  </button>
-                  <button
-                    className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
-                    onClick={handleSaveClick}
-                  >
-                    수정 완료
-                  </button>
+                  <div className="flex justify-end gap-[14px]">
+                    <button
+                      className="flex px-[35px] py-[8px] border border-brand bg-white rounded-[5px] text-brand font-bold text-lg"
+                      onClick={handleCancelClick}
+                    >
+                      수정 취소
+                    </button>
+                    <button
+                      className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
+                      onClick={handleSaveClick}
+                    >
+                      수정 완료
+                    </button>
+                  </div>
                 </>
               ) : (
                 <>
@@ -514,6 +578,37 @@ function MyInquiriesPage() {
                   </button>
                 </>
               )}
+              <ConfirmModal
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onConfirm={
+                  modalType === "alert"
+                    ? () => setModalOpen(false)
+                    : handleConfirm
+                }
+                title={
+                  modalType === "delete"
+                    ? "문의 내역을 삭제하시겠습니까?"
+                    : modalType === "save"
+                      ? "수정 내용을 저장하시겠습니까?"
+                      : modalType === "cancel"
+                        ? "수정을 취소하시겠습니까?"
+                        : ""
+                }
+                message={
+                  modalType === "alert"
+                    ? modalMessage
+                    : modalType === "delete"
+                      ? "삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?"
+                      : modalType === "save"
+                        ? "수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?"
+                        : modalType === "cancel"
+                          ? "변경된 내용이 사라집니다.\n정말 취소하시겠습니까?"
+                          : ""
+                }
+                confirmText="확인"
+                cancelText="취소"
+              />
             </div>
           )}
         </div>
@@ -522,35 +617,6 @@ function MyInquiriesPage() {
           1:1 문의 내역 상세보기를 눌러 확인하세요.
         </div>
       )}
-      <ConfirmModal
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onConfirm={
-          modalType === "alert" ? () => setModalOpen(false) : handleConfirm
-        }
-        title={
-          modalType === "delete"
-            ? "문의 내역을 삭제하시겠습니까?"
-            : modalType === "save"
-              ? "수정 내용을 저장하시겠습니까?"
-              : modalType === "cancel"
-                ? "수정을 취소하시겠습니까?"
-                : ""
-        }
-        message={
-          modalType === "alert"
-            ? modalMessage
-            : modalType === "delete"
-              ? "삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?"
-              : modalType === "save"
-                ? "수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?"
-                : modalType === "cancel"
-                  ? "변경된 내용이 사라집니다.\n정말 취소하시겠습니까?"
-                  : ""
-        }
-        confirmText="확인"
-        cancelText="취소"
-      />
     </MyPageLayout>
   );
 }

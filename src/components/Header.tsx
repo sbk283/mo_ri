@@ -109,6 +109,17 @@ const Header: React.FC = () => {
     };
   }, [user?.id]);
 
+  useEffect(() => {
+    const handleManualNotify = () => {
+      console.log("[Header] 클라이언트 알림 수신 (수동)");
+      setUnreadCount((prev) => prev + 1);
+    };
+
+    window.addEventListener("notification:new", handleManualNotify);
+    return () =>
+      window.removeEventListener("notification:new", handleManualNotify);
+  }, []);
+
   // 최초 세션 로드
   useEffect(() => {
     initUserSession();

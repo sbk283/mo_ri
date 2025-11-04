@@ -1,9 +1,12 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../../../lib/supabase";
+import { notifyReviewLike } from "../../../lib/notificationHandlers";
 
 export type ReviewDetail = {
   id: number;
+  review_uuid: string;
   title: string;
   category: string;
   src: string;
@@ -28,14 +31,14 @@ type Props = {
 
 function formatYyDdMmHhMmSs(input: string | number | Date, tzOffsetMin = 0) {
   const d0 = new Date(input);
-  if (isNaN(d0.getTime())) return String(input ?? '');
+  if (isNaN(d0.getTime())) return String(input ?? "");
   const d = new Date(d0.getTime() + tzOffsetMin * 60 * 1000);
   const yy = String(d.getFullYear()).slice(-2);
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mi = String(d.getMinutes()).padStart(2, '0');
-  const ss = String(d.getSeconds()).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  const ss = String(d.getSeconds()).padStart(2, "0");
   return `${yy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
@@ -53,7 +56,7 @@ export default function ReviewDetailModal({
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
@@ -63,20 +66,68 @@ export default function ReviewDetailModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   if (!open || !review) return null;
 
-  const report = () => navigate('/inquiry');
+  const report = () => navigate("/inquiry");
   const created = formatYyDdMmHhMmSs(review.created_at);
 
-  const handleEmpathyClick = () => {
+  const handleEmpathyClick = async () => {
     if (!onEmpathy || empathyDisabled) return;
     onEmpathy(review.id);
+
+    // 2025-11-04 (유비) 추가: 리뷰 공감 알림 로직
+    try {
+      const { data: u } = await supabase.auth.getUser(); // 로그인 사용자 정보 가져오기
+      const myId = u?.user?.id;
+      if (!myId || !review.id) return;
+
+      // 리뷰 정보 가져오기 (작성자, 그룹 id)
+      const { data: reviewData, error: reviewErr } = await supabase
+        .from("group_reviews")
+        .select("author_id, group_id")
+        .eq("review_id", review.review_uuid)
+        .single();
+
+      if (reviewErr) {
+        console.error("[ReviewDetailModal] 리뷰 조회 실패:", reviewErr.message);
+        return;
+      }
+
+      // 본인 리뷰면 알림 생성하지 않음
+      if (reviewData && reviewData.author_id === myId) return;
+
+      // 내 닉네임 가져오기
+      const { data: myProfile, error: profileErr } = await supabase
+        .from("user_profiles")
+        .select("nickname")
+        .eq("user_id", myId)
+        .single();
+
+      if (profileErr) {
+        console.error(
+          "[ReviewDetailModal] 닉네임 조회 실패:",
+          profileErr.message,
+        );
+        return;
+      }
+
+      // 알림 생성
+      await notifyReviewLike({
+        reviewAuthorId: reviewData.author_id,
+        reviewerNickname: myProfile?.nickname ?? "익명",
+        groupId: reviewData.group_id,
+        reviewId: review.review_uuid,
+      });
+      console.log("[ReviewDetailModal] 리뷰 공감 알림 insert 완료");
+    } catch (err) {
+      console.error("[ReviewDetailModal] 공감 알림 생성 오류:", err);
+    }
   };
 
   return (
@@ -85,7 +136,7 @@ export default function ReviewDetailModal({
         <motion.div
           className="fixed inset-0 z-[1000] bg-black/50 flex items-center justify-center p-4 overflow-y-auto"
           //              ⬆⬆⬆ 여기! items-start → items-center
-          onClick={e => {
+          onClick={(e) => {
             if (e.target === e.currentTarget) onClose();
           }}
           initial={{ opacity: 0 }}
@@ -117,20 +168,29 @@ export default function ReviewDetailModal({
             <div className="relative z-10 h-[294px] flex flex-col justify-end px-6 pb-16 text-white">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 min-w-0">
-                  <h3 className="flex-1 min-w-0 text-lg font-bold truncate">{review.title}</h3>
+                  <h3 className="flex-1 min-w-0 text-lg font-bold truncate">
+                    {review.title}
+                  </h3>
                 </div>
                 <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm text-center">
                   {review.category}
                 </span>
               </div>
               <p className="mt-1 text-sm">모임 기간 : {review.period}</p>
-              <div className="mt-2 flex items-center gap-1" aria-label={`별점 ${review.rating}점`}>
+              <div
+                className="mt-2 flex items-center gap-1"
+                aria-label={`별점 ${review.rating}점`}
+              >
                 {Array.from({ length: 5 }).map((_, i) => (
                   <img
                     key={i}
                     className="w-5 h-5"
-                    src={i < review.rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
-                    alt={i < review.rating ? '노란별' : '빈별'}
+                    src={
+                      i < review.rating
+                        ? "/images/star_gold.svg"
+                        : "/images/star_dark.svg"
+                    }
+                    alt={i < review.rating ? "노란별" : "빈별"}
                   />
                 ))}
               </div>
@@ -142,20 +202,24 @@ export default function ReviewDetailModal({
                 {/* 작성자 칩 (아바타 + 닉네임 + 작성일) */}
                 <div className="mb-3 flex items-center gap-2">
                   <img
-                    src={review.creator_avatar || '/images/no_image.jpg'}
+                    src={review.creator_avatar || "/images/no_image.jpg"}
                     alt={`${review.creator_id} 프로필`}
                     className="w-6 h-6 rounded-full object-cover border border-gray-200"
                   />
                   <span className="text-sm font-semibold text-[#B8641B]">
                     {review.creator_id} 님의 후기
                   </span>
-                  <span className="ml-auto text-sm text-[#939393]">작성일자: {created}</span>
+                  <span className="ml-auto text-sm text-[#939393]">
+                    작성일자: {created}
+                  </span>
                 </div>
 
-                <p className="text-black leading-6 text-md whitespace-pre-line">{review.content}</p>
+                <p className="text-black leading-6 text-md whitespace-pre-line">
+                  {review.content}
+                </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {review.tags.map(tag => (
+                  {review.tags.map((tag) => (
                     <span
                       key={tag}
                       className="text-sm border font-semibold rounded-sm px-3 py-1 text-black bg-white"
@@ -166,7 +230,9 @@ export default function ReviewDetailModal({
                 </div>
 
                 <div className="mt-6 flex items-center justify-between">
-                  <span className="text-[#E9A107] text-md">공감 +{review.empathy}</span>
+                  <span className="text-[#E9A107] text-md">
+                    공감 +{review.empathy}
+                  </span>
                   <button
                     type="button"
                     className="text-gray-400 hover:text-gray-600"
@@ -187,12 +253,16 @@ export default function ReviewDetailModal({
                   disabled={empathyDisabled}
                   className={`w-[112px] h-[32px] inline-flex justify-center items-center rounded-sm font-semibold text-md ${
                     empathyDisabled
-                      ? 'bg-[#a3a3a3] text-white cursor-not-allowed'
-                      : 'bg-[#0689E8] text-white hover:brightness-95'
+                      ? "bg-[#a3a3a3] text-white cursor-not-allowed"
+                      : "bg-[#0689E8] text-white hover:brightness-95"
                   }`}
                 >
-                  <img src="/images/good.png" alt="공감하기" className="w-4 h-4 mr-1" />
-                  {empathyDisabled ? '공감완료' : '공감하기'}
+                  <img
+                    src="/images/good.png"
+                    alt="공감하기"
+                    className="w-4 h-4 mr-1"
+                  />
+                  {empathyDisabled ? "공감완료" : "공감하기"}
                 </button>
               )}
             </div>

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface CurriculumItem {
   title: string;
@@ -13,7 +13,8 @@ interface MeetingCurriculumProps {
 
 function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
-  const toggleIndex = (idx: number) => setOpenIndex(openIndex === idx ? null : idx);
+  const toggleIndex = (idx: number) =>
+    setOpenIndex(openIndex === idx ? null : idx);
 
   return (
     <div>
@@ -27,7 +28,7 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
             <motion.div
               key={i}
               initial={false}
-              animate={{ borderColor: isOpen ? '#4294CF' : '#e5e7eb' }}
+              animate={{ borderColor: isOpen ? "#4294CF" : "#e5e7eb" }}
               transition={{ duration: 0.25 }}
               className="border rounded-md overflow-hidden"
             >
@@ -35,7 +36,7 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
               <button
                 onClick={() => toggleIndex(i)}
                 className={`flex w-full h-auto justify-between items-center px-4 py-3 text-left ${
-                  isOpen ? 'bg-brand/10' : 'bg-gray-50'
+                  isOpen ? "bg-brand/10" : "bg-gray-50"
                 }`}
               >
                 <div className="flex items-start gap-4">
@@ -49,12 +50,14 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-[20px] text-brand font-bold">
-                        {String(i + 1).padStart(2, '0')}
+                        {String(i + 1).padStart(2, "0")}
                       </span>
-                      <span className="text-[12px] text-gray-600">모임 소개</span>
+                      <span className="text-[12px] text-gray-600">
+                        모임 소개
+                      </span>
                     </div>
                     <p className="text-lg font-semibold text-gray-800">
-                      {item.title || '제목 없음'}
+                      {item.title || "제목 없음"}
                     </p>
                   </div>
                 </div>
@@ -76,7 +79,7 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
                     className="px-4 pb-4 space-y-3 overflow-hidden pt-4"
                   >
                     {stepFiles.length > 0 && (
@@ -96,7 +99,7 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
                       </div>
                     )}
                     <p className="text-gray-900 text-md font-normal whitespace-pre-line">
-                      {item.detail || '내용 없음'}
+                      {item.detail || "내용 없음"}
                     </p>
                   </motion.div>
                 )}

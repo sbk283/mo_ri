@@ -16,7 +16,7 @@ export default function Footer() {
           className="
             flex flex-wrap justify-center md:justify-between gap-2 sm:gap-4 md:gap-7
             py-[15px] md:py-[19px]
-            font-bold text-[11px] sm:text-xs text-center md:text-left
+            font-bold text-[13px] sm:text-sm text-center md:text-left
           "
         >
           <a href="/terms" className="text-gray-400 hover:text-gray-900">
@@ -76,7 +76,7 @@ export default function Footer() {
             <img
               src="/images/footerLogo.svg"
               alt="Mori Logo"
-              className="pb-2 w-[110px] sm:w-[130px]"
+              className="pb-2 w-[75px] sm:w-[75px]"
             />
             <p className="text-[13px] sm:text-sm font-semibold text-gray-800 leading-relaxed">
               다양한 관심사를 바탕으로 한 자기계발 모임 플랫폼.
@@ -112,7 +112,7 @@ export default function Footer() {
         </div>
 
         {/* 세 번째 줄: 저작권 */}
-        <div className="mt-4 text-[11px] sm:text-xs text-gray-500 text-center md:text-left">
+        <div className="mt-4 text-[13px] sm:text-xs text-gray-500 text-center md:text-left">
           © mo:ri. All Rights Reserved.
         </div>
       </div>

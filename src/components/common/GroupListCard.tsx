@@ -130,7 +130,7 @@ function GroupListCard({
           >
             {/* 모집 상태 배지 */}
             <span
-              className={`flex w-[54px] h-[23px] text-[11px] font-bold text-white rounded-2xl items-center justify-center
+              className={`flex px-2 h-[23px] text-[13px] font-bold text-white rounded-2xl items-center justify-center
                 ${
                   computedStatus === "recruiting"
                     ? "bg-brand"
@@ -155,7 +155,7 @@ function GroupListCard({
             {dday !== null && (
               <span
                 className="
-                  bg-[#BEC0C4] text-[10px] sm:text-[11px] px-2 py-[2px] 
+                  bg-[#BEC0C4] text-[13px] sm:text-[13px] px-2 py-[1px] 
                   rounded-sm text-white font-bold
                 "
               >
@@ -166,8 +166,8 @@ function GroupListCard({
             {/* 모임 유형 배지 */}
             <span
               className="
-                text-[10px] sm:text-[11px] font-semibold text-white 
-                bg-brand-orange px-2 py-[2px] rounded-sm
+                text-[13px] sm:text-[13px] font-semibold text-white 
+                bg-brand-orange px-2 py-[1px] rounded-sm
               "
             >
               {groupType}
@@ -223,7 +223,7 @@ function GroupListCard({
           {/* 오른쪽 일정 - 반응형으로 카드 내부 유지 */}
           <span
             className="
-              text-gray-500 text-[11px] sm:text-[13px] 
+              text-gray-500 text-[13px] sm:text-[13px] 
               break-keep truncate
               sm:whitespace-nowrap sm:text-right mt-1 sm:mt-0
               max-w-full

@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { useGroupMember } from '../../../contexts/GroupMemberContext';
+import { useEffect } from "react";
+import { useGroupMember } from "../../../contexts/GroupMemberContext";
 
 interface MeetingCardProps {
   groupId: string;
@@ -27,14 +27,15 @@ function MeetingCard({
   subCategory,
   participants,
   duration,
-  width = '100%',
-  height = 'auto',
+  width = "100%",
+  height = "auto",
 }: MeetingCardProps) {
   // Context에서 memberCounts와 fetchMemberCount 가져오기
   const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
 
   // Context의 실시간 멤버 수 사용 (GroupListCard와 동일한 패턴)
-  const currentCount = memberCounts[groupId] !== undefined ? memberCounts[groupId] : 0;
+  const currentCount =
+    memberCounts[groupId] !== undefined ? memberCounts[groupId] : 0;
 
   // 컴포넌트 마운트 시 최신 멤버 수 가져오기
   useEffect(() => {
@@ -45,17 +46,17 @@ function MeetingCard({
   }, [groupId, fetchMemberCount, subscribeToGroup]);
 
   // 날짜 계산
-  const [startDateStr, endDateStr] = duration.split(' ~ ');
+  const [startDateStr, endDateStr] = duration.split(" ~ ");
   const now = new Date();
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
 
   let computedStatus = status;
-  if (now > end) computedStatus = '모임종료';
-  else if (now >= start && now <= end) computedStatus = '모집종료';
+  if (now > end) computedStatus = "모임종료";
+  else if (now >= start && now <= end) computedStatus = "모집종료";
 
   let displayDday = dday;
-  if (now > end) displayDday = '';
+  if (now > end) displayDday = "";
 
   return (
     <div
@@ -68,27 +69,29 @@ function MeetingCard({
           {/* 상태 */}
           <span
             className={`flex px-2 py-1 rounded-full text-white text-[13px] font-semibold ${
-              computedStatus === '모집중'
-                ? 'bg-[#3B82F6]'
-                : computedStatus === '모집종료'
-                  ? 'bg-[#E06251]'
-                  : 'bg-gray-400'
+              computedStatus === "모집중"
+                ? "bg-[#3B82F6]"
+                : computedStatus === "모집종료"
+                  ? "bg-[#E06251]"
+                  : "bg-gray-400"
             }`}
           >
             {computedStatus}
           </span>
 
-          <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">{title}</h2>
+          <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">
+            {title}
+          </h2>
 
           {displayDday && (
-            <span className="text-white text-sm font-semibold bg-gray-300 rounded px-2">
+            <span className="text-white text-sm font-semibold bg-gray-300 rounded py-[1px] px-2">
               {displayDday}
             </span>
           )}
         </div>
 
         <p className="px-2 text-[15px] text-gray-800 leading-snug line-clamp-2 break-keep">
-          {summary || '간략 소개가 없습니다.'}
+          {summary || "간략 소개가 없습니다."}
         </p>
       </div>
 
@@ -99,7 +102,11 @@ function MeetingCard({
             {category} &gt; {subCategory}
           </span>
           <span className="flex items-center gap-1 text-gray-600">
-            <img src="/images/group_member.svg" alt="참여 인원" className="w-[15px] h-[15px]" />
+            <img
+              src="/images/group_member.svg"
+              alt="참여 인원"
+              className="w-[15px] h-[15px]"
+            />
             {/* Context의 실시간 멤버 수 사용 */}
             {participants ?? `${currentCount}/${groupCapacity}`}
           </span>

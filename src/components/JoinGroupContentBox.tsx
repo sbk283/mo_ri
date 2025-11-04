@@ -1,19 +1,22 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import type { GroupWithCategory } from '../types/group';
-import JoinGroupContentNon from './JoinGroupContentNon';
-import type { ReviewItem } from './common/modal/CreateReview';
-import CreateReview from './common/modal/CreateReview';
-import { supabase } from '../lib/supabase';
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import type { GroupWithCategory } from "../types/group";
+import JoinGroupContentNon from "./JoinGroupContentNon";
+import type { ReviewItem } from "./common/modal/CreateReview";
+import CreateReview from "./common/modal/CreateReview";
+import { supabase } from "../lib/supabase";
 
 interface JoinGroupContentBoxProps {
   groups: GroupWithCategory[];
   loading: boolean;
 }
 
-export default function JoinGroupContentBox({ groups, loading }: JoinGroupContentBoxProps) {
+export default function JoinGroupContentBox({
+  groups,
+  loading,
+}: JoinGroupContentBoxProps) {
   const today = new Date();
-  const fmt = (d: string) => (d ? d.replace(/-/g, '.') : '');
+  const fmt = (d: string) => (d ? d.replace(/-/g, ".") : "");
   const navigate = useNavigate();
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null); // 직접 로그인 유저 관리
@@ -21,14 +24,16 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
   const [currentReview, setCurrentReview] = useState<ReviewItem | null>(null);
   const [currentGroupId, setCurrentGroupId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [reviewedGroupMap, setReviewedGroupMap] = useState<Record<string, string>>({});
+  const [reviewedGroupMap, setReviewedGroupMap] = useState<
+    Record<string, string>
+  >({});
 
   const createEmptyReview = (): ReviewItem => ({
-    id: '',
-    title: '',
-    category: '',
+    id: "",
+    title: "",
+    category: "",
     rating: 1,
-    content: '',
+    content: "",
     tags: [],
   });
 
@@ -53,17 +58,17 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
         return;
       }
       const { data, error } = await supabase
-        .from('group_reviews')
-        .select('group_id, review_id')
-        .eq('author_id', currentUserId);
+        .from("group_reviews")
+        .select("group_id, review_id")
+        .eq("author_id", currentUserId);
 
       if (error || !data) {
-        console.error('Failed to fetch reviewed groups:', error);
+        console.error("Failed to fetch reviewed groups:", error);
         setReviewedGroupMap({});
         return;
       }
       const map: Record<string, string> = {};
-      data.forEach(item => {
+      data.forEach((item) => {
         if (item.group_id && item.review_id) {
           map[item.group_id] = item.review_id;
         }
@@ -107,18 +112,23 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
   return (
     <>
       <div className="w-[1024px] mx-auto space-y-9">
-        {groups.map(group => {
-          const hasReview = reviewedGroupMap[String(group.group_id)] !== undefined;
+        {groups.map((group) => {
+          const hasReview =
+            reviewedGroupMap[String(group.group_id)] !== undefined;
 
           const startDate = new Date(group.group_start_day);
           const endDate = new Date(group.group_end_day);
           const daysUntilOpen = Math.max(
             0,
-            Math.ceil((startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+            Math.ceil(
+              (startDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+            ),
           );
           const daysUntilEnd = Math.max(
             0,
-            Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+            Math.ceil(
+              (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+            ),
           );
 
           const badge =
@@ -126,7 +136,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
               <div className="absolute rounded-[5px] bg-gray-300 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
                 모임 오픈까지 {daysUntilOpen}일
               </div>
-            ) : group.status === 'recruiting' ? (
+            ) : group.status === "recruiting" ? (
               <div className="absolute rounded-[5px] bg-brand px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
                 모임 종료까지 {daysUntilEnd}일
               </div>
@@ -146,7 +156,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                 {badge}
                 <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
                   <img
-                    src={group.image_urls?.[0] || '/nullbg.jpg'}
+                    src={group.image_urls?.[0] || "/nullbg.jpg"}
                     alt="모임사진"
                     className="w-full h-full object-cover"
                   />
@@ -159,7 +169,7 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                     </span>
                   </div>
                   <div>
-                    <p>{group.group_short_intro || '모임 소개가 없습니다.'}</p>
+                    <p>{group.group_short_intro || "모임 소개가 없습니다."}</p>
                   </div>
                   <div className="flex gap-12 text-sm text-[#6C6C6C]">
                     <div>
@@ -167,29 +177,38 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
                     </div>
                     <div className="flex gap-1">
                       <img src="/humen.svg" alt="모임 참여자 아이콘" />
-                      {group.member_count ?? 0}/{group.group_capacity ?? '∞'}
+                      {group.member_count ?? 0}/{group.group_capacity ?? "∞"}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {group.status === 'closed' && (
+              {group.status === "closed" ? (
                 <button
                   disabled={hasReview || isSubmitting}
                   className={
                     `absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] rounded-[5px] text-[15px] z-[5] border transition duration-300 ease-in-out ` +
                     (hasReview
-                      ? 'bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] cursor-not-allowed'
-                      : 'border-brand text-brand bg-white hover:bg-brand hover:text-white cursor-pointer')
+                      ? "bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] cursor-not-allowed"
+                      : "border-brand text-brand bg-white hover:bg-brand hover:text-white cursor-pointer")
                   }
-                  onClick={e => {
+                  onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    if (!hasReview && !isSubmitting) openCreateReviewModal(group);
+                    if (!hasReview && !isSubmitting)
+                      openCreateReviewModal(group);
                   }}
                 >
-                  {hasReview ? '작성 완료' : isSubmitting ? '등록 중...' : '후기작성'}
+                  {hasReview
+                    ? "작성 완료"
+                    : isSubmitting
+                      ? "등록 중..."
+                      : "후기작성"}
                 </button>
+              ) : (
+                <div className="absolute right-12 top-[50%] translate-y-[-50%] cursor-pointer">
+                  <img src="/images/swiper_next.svg" alt="상세보기" />
+                </div>
               )}
             </div>
           );
@@ -207,7 +226,10 @@ export default function JoinGroupContentBox({ groups, loading }: JoinGroupConten
           onSuccess={() => {
             setModalOpen(false);
             setIsSubmitting(false);
-            setReviewedGroupMap(prev => ({ ...prev, [currentGroupId!]: 'registered' }));
+            setReviewedGroupMap((prev) => ({
+              ...prev,
+              [currentGroupId!]: "registered",
+            }));
           }}
         />
       )}

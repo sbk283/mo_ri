@@ -1,14 +1,17 @@
-import { Link } from 'react-router-dom';
-import type { GroupWithCategory } from '../types/group';
-import GroupContentNon from './GroupContentNon';
+import { Link } from "react-router-dom";
+import type { GroupWithCategory } from "../types/group";
+import GroupContentNon from "./GroupContentNon";
 
 interface GroupContentBoxProps {
   groups: GroupWithCategory[];
   loading: boolean;
 }
 
-export default function GroupContentBox({ groups, loading }: GroupContentBoxProps) {
-  const fmt = (d: string) => (d ? d.replace(/-/g, '.') : '');
+export default function GroupContentBox({
+  groups,
+  loading,
+}: GroupContentBoxProps) {
+  const fmt = (d: string) => (d ? d.replace(/-/g, ".") : "");
 
   if (loading) {
     return (
@@ -36,7 +39,7 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
 
   return (
     <div className="w-[1024px] mx-auto space-y-9">
-      {groups.map(group => {
+      {groups.map((group) => {
         const startDate = new Date(group.group_start_day);
         const endDate = new Date(group.group_end_day);
         const today = new Date();
@@ -45,7 +48,9 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
         );
         const daysUntilEnd = Math.max(
           0,
-          Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)),
+          Math.ceil(
+            (endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+          ),
         );
 
         const badge =
@@ -53,7 +58,7 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
             <div className="absolute rounded-[5px] bg-gray-300 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
               모임 오픈까지 {daysUntilOpen}일
             </div>
-          ) : group.status === 'recruiting' ? (
+          ) : group.status === "recruiting" ? (
             <div className="absolute rounded-[5px] bg-brand px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
               모임 종료까지 {daysUntilEnd}일
             </div>
@@ -73,8 +78,8 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
 
             <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
               <img
-                src={group.image_urls?.[0] || '/nullbg.jpg'}
-                alt="모임사진"
+                src={group.image_urls?.[0] || "/nullbg.jpg"}
+                alt={group.group_title}
                 className="w-full h-full object-cover"
               />
             </div>
@@ -87,20 +92,20 @@ export default function GroupContentBox({ groups, loading }: GroupContentBoxProp
                 </span>
               </div>
               <div>
-                <p>{group.group_short_intro || '모임 소개가 없습니다.'}</p>
+                <p>{group.group_short_intro || "모임 소개가 없습니다."}</p>
               </div>
               <div className="flex gap-12 text-sm text-[#6C6C6C]">
                 <div>
                   {fmt(group.group_start_day)} ~ {fmt(group.group_end_day)}
                 </div>
                 <div className="flex gap-1">
-                  <img src="/humen.svg" alt="모임 참여자 아이콘" />
-                  {group.member_count}/{group.group_capacity ?? '∞'}
+                  <img src="/humen.svg" alt="인원" />
+                  {group.member_count}/{group.group_capacity ?? "∞"}
                 </div>
               </div>
             </div>
-            {group.status === 'closed' ? (
-              <div className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] border rounded-[5px] bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] text-[15px] bg-white">
+            {group.status === "closed" ? (
+              <div className="absolute right-12 top-[50%] translate-y-[-50%] px-[11px] py-[4px] border rounded-[5px] bg-gray-100 border-[#6c6c6c] text-[#6c6c6c] text-[15px]">
                 모임종료
               </div>
             ) : (

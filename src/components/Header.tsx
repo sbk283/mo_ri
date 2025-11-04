@@ -95,13 +95,14 @@ const Header: React.FC = () => {
           table: "notifications",
           filter: `user_id=eq.${user.id}`,
         },
-        async (payload) => {
-          console.log("[Header] 새 알림 감지:", payload.new);
-          // 새 알림이면 count +1
+        (payload) => {
+          console.log("[Header 🔴 새 알림 감지]", payload.new);
           setUnreadCount((prev) => prev + 1);
         },
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[Header 구독 상태]", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);

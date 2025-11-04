@@ -1,8 +1,9 @@
 // src/hooks/useDailyLikes.ts
-import { useRef, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { ensureSubscribed } from '../lib/contentUtils';
-import { likeToggle, loadLikeCounts, loadMyLikes } from '../lib/dailyPosts';
+import { useRef, useState } from "react";
+import { supabase } from "../lib/supabase";
+import { ensureSubscribed } from "../lib/contentUtils";
+import { likeToggle, loadLikeCounts, loadMyLikes } from "../lib/dailyPosts";
+import { notifyPostLike } from "../lib/notificationHandlers";
 
 type LikeState = {
   likeCountMap: Record<string, number>;
@@ -22,9 +23,14 @@ export function useDailyLikes(): LikeState {
   const [likeCountMap, setLikeCountMap] = useState<Record<string, number>>({});
   const [likedByMe, setLikedByMe] = useState<Record<string, boolean>>({});
 
-  const likesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const likesChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
+    null,
+  );
   const postSendersRef = useRef<
-    Record<string, { ch: ReturnType<typeof supabase.channel>; ready: Promise<any> }>
+    Record<
+      string,
+      { ch: ReturnType<typeof supabase.channel>; ready: Promise<unknown> }
+    >
   >({});
 
   // 로컬 낙관적 업데이트 직후 수신되는 RT 이벤트를 무시하기 위한 "신선도" 마커
@@ -34,11 +40,13 @@ export function useDailyLikes(): LikeState {
   const markLocal = (id: string) => {
     localActionRef.current[id] = Date.now();
   };
-  const isFresh = (id: string) => Date.now() - (localActionRef.current[id] ?? 0) < LOCAL_MS;
+  const isFresh = (id: string) =>
+    Date.now() - (localActionRef.current[id] ?? 0) < LOCAL_MS;
 
   const teardownRealtime = () => {
     try {
-      if (likesChannelRef.current) supabase.removeChannel(likesChannelRef.current);
+      if (likesChannelRef.current)
+        supabase.removeChannel(likesChannelRef.current);
       likesChannelRef.current = null;
     } catch {
       // noop
@@ -47,7 +55,9 @@ export function useDailyLikes(): LikeState {
 
   const getPostSender = (id: string) => {
     if (!postSendersRef.current[id]) {
-      const ch = supabase.channel(`daily_post_${id}`, { config: { broadcast: { self: false } } });
+      const ch = supabase.channel(`daily_post_${id}`, {
+        config: { broadcast: { self: false } },
+      });
       postSendersRef.current[id] = { ch, ready: ensureSubscribed(ch) };
     }
     return postSendersRef.current[id];
@@ -62,16 +72,19 @@ export function useDailyLikes(): LikeState {
     });
 
     const adjust = (delta: number, postId: string) => {
-      setLikeCountMap(p => ({ ...p, [postId]: Math.max(0, (p[postId] ?? 0) + delta) }));
+      setLikeCountMap((p) => ({
+        ...p,
+        [postId]: Math.max(0, (p[postId] ?? 0) + delta),
+      }));
     };
 
-    ch.on('broadcast', { event: 'like:add' }, m => {
+    ch.on("broadcast", { event: "like:add" }, (m) => {
       const { postId } = (m?.payload ?? {}) as { postId?: string };
       if (!postId || !postIds.includes(postId) || isFresh(postId)) return;
       adjust(1, postId);
     });
 
-    ch.on('broadcast', { event: 'like:remove' }, m => {
+    ch.on("broadcast", { event: "like:remove" }, (m) => {
       const { postId } = (m?.payload ?? {}) as { postId?: string };
       if (!postId || !postIds.includes(postId) || isFresh(postId)) return;
       adjust(-1, postId);
@@ -96,7 +109,7 @@ export function useDailyLikes(): LikeState {
     _avatarUrl?: string | null, // 인자는 무시한다. (깜빡임 원인 제거)
   ) => {
     if (!currentUserId) {
-      alert('로그인 후 이용해 주세요.');
+      alert("로그인 후 이용해 주세요.");
       return;
     }
 
@@ -105,8 +118,8 @@ export function useDailyLikes(): LikeState {
 
     // 낙관적 업데이트
     markLocal(postId);
-    setLikedByMe(p => ({ ...p, [postId]: nextLiked }));
-    setLikeCountMap(p => ({
+    setLikedByMe((p) => ({ ...p, [postId]: nextLiked }));
+    setLikeCountMap((p) => ({
       ...p,
       [postId]: Math.max(0, (p[postId] ?? 0) + (nextLiked ? 1 : -1)),
     }));
@@ -115,22 +128,59 @@ export function useDailyLikes(): LikeState {
     const { error } = await likeToggle(postId, currentUserId, nextLiked);
     if (error) {
       // 롤백
-      setLikedByMe(p => ({ ...p, [postId]: wasLiked }));
-      setLikeCountMap(p => ({
+      setLikedByMe((p) => ({ ...p, [postId]: wasLiked }));
+      setLikeCountMap((p) => ({
         ...p,
         [postId]: Math.max(0, (p[postId] ?? 0) + (wasLiked ? 1 : -1)),
       }));
-      console.error('[like] toggle error', error);
+      console.error("[like] toggle error", error);
       return;
     }
 
+    // 좋아요가 새로 눌렸을 때만 알림 생성
+    if (nextLiked) {
+      try {
+        const { data: postData, error: postError } = await supabase
+          .from("group_posts")
+          .select("user_id, group_id")
+          .eq("post_id", postId)
+          .single();
+
+        if (postError) {
+          console.error("[toggleLike] post 조회 실패:", postError.message);
+        } else if (postData && postData.user_id !== currentUserId) {
+          const { data: profileData, error: profileError } = await supabase
+            .from("user_profiles")
+            .select("nickname")
+            .eq("user_id", currentUserId)
+            .single();
+
+          if (profileError) {
+            console.error(
+              "[toggleLike] nickname 조회 실패:",
+              profileError.message,
+            );
+          } else {
+            await notifyPostLike({
+              postAuthorId: postData.user_id,
+              likerNickname: profileData?.nickname ?? "익명",
+              groupId: postData.group_id,
+              postId,
+            });
+          }
+        }
+      } catch (notifyErr) {
+        console.error("[toggleLike] 알림 생성 중 오류:", notifyErr);
+      }
+    }
+
     // 실시간 방송: avatarUrl 제거 → 아바타는 항상 DB 조인 결과만 사용
-    const evt = `like:${nextLiked ? 'add' : 'remove'}`;
+    const evt = `like:${nextLiked ? "add" : "remove"}`;
 
     if (likesChannelRef.current) {
       await ensureSubscribed(likesChannelRef.current);
       likesChannelRef.current.send({
-        type: 'broadcast',
+        type: "broadcast",
         event: evt,
         payload: { postId, userId: currentUserId },
       });
@@ -139,11 +189,18 @@ export function useDailyLikes(): LikeState {
     const { ch, ready } = getPostSender(postId);
     await ready;
     ch.send({
-      type: 'broadcast',
+      type: "broadcast",
       event: evt,
       payload: { postId, userId: currentUserId },
     });
   };
 
-  return { likeCountMap, likedByMe, prime, toggleLike, setupRealtime, teardownRealtime };
+  return {
+    likeCountMap,
+    likedByMe,
+    prime,
+    toggleLike,
+    setupRealtime,
+    teardownRealtime,
+  };
 }

@@ -169,7 +169,7 @@ const Header: React.FC = () => {
     <>
       <header className="fixed top-0 left-0 right-0 z-30 bg-white shadow-card">
         {/* 반응형 대응: 1024px 이상에서는 중앙 정렬 + 유동폭, 이하에서는 패딩 적용 */}
-        <div className="mx-auto flex max-w-[1100px] w-full h-[70px] justify-between items-center py-4 px-4 md:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-[1040px] w-full h-[70px] justify-between items-center py-4 px-4 pl-1">
           {/* 로고 */}
           <Link to="/">
             <img
@@ -180,7 +180,7 @@ const Header: React.FC = () => {
           </Link>
 
           {/* 메뉴 */}
-          <div className="hidden md:flex items-center gap-10">
+          <div className="hidden md:flex items-center gap-9">
             <nav className="flex gap-6 text-gray-700">
               <Link to="/groupmanager" className="font-bold hover:text-brand">
                 모임관리

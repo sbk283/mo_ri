@@ -1,23 +1,22 @@
 import {
   createContext,
-  useContext,
-  useState,
   useCallback,
+  useContext,
   useEffect,
   useRef,
+  useState,
   type PropsWithChildren,
 } from "react";
-import { supabase } from "../lib/supabase";
-import { useAuth } from "./AuthContext";
 import { insertNotification } from "../lib/notify";
+import { supabase } from "../lib/supabase";
 import type {
   DirectChatContextType,
   DirectChatWithGroup,
   directMessages,
   directMessagesInsert,
-  directChatsInsert,
-  UserProfileMinimal,
+  UserProfileMinimal
 } from "../types/chat";
+import { useAuth } from "./AuthContext";
 
 const DirectChatContext = createContext<DirectChatContextType | null>(null);
 

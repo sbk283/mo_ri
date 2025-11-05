@@ -36,7 +36,7 @@ function GroupListPage(): JSX.Element {
 
   return (
     // 반응형 적용: 모바일에서는 flex-col, 데스크탑에서는 row
-    <div className="mx-auto flex flex-col lg:flex-row w-full lg:w-[1024px] gap-6 px-4 py-[56px] min-h-screen">
+    <div className="mx-auto flex flex-col lg:flex-row w-full lg:w-[1024px] gap-6 py-[56px] min-h-screen">
       {/* 사이드바는 모바일에서는 숨김 */}
       <CategoryMenuSidebar />
 

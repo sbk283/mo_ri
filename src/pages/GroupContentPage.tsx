@@ -1,20 +1,21 @@
 // src/pages/GroupContentPage.tsx
-import { AnimatePresence, motion } from 'framer-motion';
-import { useLayoutEffect, useRef, useState, useMemo, useEffect } from 'react';
-import DashboardDetail from '../components/dashboard/DashboardDetail';
-import { DashboardNotice } from '../components/dashboard/DashboardNotice';
-import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
-import GroupDailyContent from '../components/common/GroupDailyContent';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../lib/supabase';
-import ConfirmModal from '../components/common/modal/ConfirmModal';
+import { AnimatePresence, motion } from "framer-motion";
+import { useLayoutEffect, useRef, useState, useMemo, useEffect } from "react";
+import DashboardDetail from "../components/dashboard/DashboardDetail";
+import { DashboardNotice } from "../components/dashboard/DashboardNotice";
+import GroupDashboardLayout from "../components/layout/GroupDashboardLayout";
+import GroupDailyContent from "../components/common/GroupDailyContent";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "../lib/supabase";
+import ConfirmModal from "../components/common/modal/ConfirmModal";
 
-type TabLabel = '공지사항' | '모임일상';
-type TabParam = 'notice' | 'daily';
+type TabLabel = "공지사항" | "모임일상";
+type TabParam = "notice" | "daily";
 
-const labelToParam = (label: TabLabel): TabParam => (label === '공지사항' ? 'notice' : 'daily');
+const labelToParam = (label: TabLabel): TabParam =>
+  label === "공지사항" ? "notice" : "daily";
 const paramToLabel = (param?: string | null): TabLabel =>
-  param === 'daily' ? '모임일상' : '공지사항';
+  param === "daily" ? "모임일상" : "공지사항";
 
 function GroupContentPage() {
   const { id: groupId } = useParams<{ id: string }>();
@@ -22,24 +23,28 @@ function GroupContentPage() {
   const location = useLocation();
 
   // 상세 뷰 관련 쿼리키들(탭 전환 시 제거할 목록)
-  const DETAIL_KEYS = ['post', 'view', 'mode', 'edit'] as const;
+  const DETAIL_KEYS = ["post", "view", "mode", "edit"] as const;
 
   // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
   // 탭 상태
-  const [selectedTabLabel, setSelectedTabLabel] = useState<TabLabel>('공지사항');
+  const [selectedTabLabel, setSelectedTabLabel] =
+    useState<TabLabel>("공지사항");
 
   // URL에 탭을 기록하면서 상세 파라미터를 제거
-  const setTabAndClearDetail = (tabParam: TabParam, opts?: { replace?: boolean }) => {
+  const setTabAndClearDetail = (
+    tabParam: TabParam,
+    opts?: { replace?: boolean },
+  ) => {
     const sp = new URLSearchParams(location.search);
-    sp.set('tab', tabParam);
-    DETAIL_KEYS.forEach(k => sp.delete(k)); // 탭 바꾸면 상세 파라미터 제거
+    sp.set("tab", tabParam);
+    DETAIL_KEYS.forEach((k) => sp.delete(k)); // 탭 바꾸면 상세 파라미터 제거
 
     const nextSearch = `?${sp.toString()}`;
-    const nextUrl = `${location.pathname}${nextSearch}${location.hash || ''}`;
-    const currUrl = `${location.pathname}${location.search}${location.hash || ''}`;
+    const nextUrl = `${location.pathname}${nextSearch}${location.hash || ""}`;
+    const currUrl = `${location.pathname}${location.search}${location.hash || ""}`;
     if (nextUrl !== currUrl) {
       navigate(
         { pathname: location.pathname, search: nextSearch },
@@ -51,7 +56,7 @@ function GroupContentPage() {
   // 마운트/그룹 변경 시 URL에서 탭 복원(없거나 이상하면 보정)
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
-    const tabParam = (sp.get('tab') as TabParam | null) ?? null;
+    const tabParam = (sp.get("tab") as TabParam | null) ?? null;
     const label = paramToLabel(tabParam);
     setSelectedTabLabel(label);
 
@@ -66,12 +71,12 @@ function GroupContentPage() {
   // 현재 URL에 상세 관련 쿼리(post, view, mode, edit) 있는지 여부
   const hasDetailParam = useMemo(() => {
     const sp = new URLSearchParams(location.search);
-    return DETAIL_KEYS.some(k => sp.has(k));
+    return DETAIL_KEYS.some((k) => sp.has(k));
   }, [location.search]);
 
   // 탭 + 상세존재 여부에 따라 key를 바꿔서 강제 리마운트
   const tabKey = useMemo(
-    () => `${selectedTabLabel}-${hasDetailParam ? 'detail' : 'list'}`,
+    () => `${selectedTabLabel}-${hasDetailParam ? "detail" : "list"}`,
     [selectedTabLabel, hasDetailParam],
   );
 
@@ -107,11 +112,11 @@ function GroupContentPage() {
       }
 
       const { data, error } = await supabase
-        .from('group_members')
-        .select('member_role, member_status')
-        .eq('group_id', groupId)
-        .eq('user_id', userId)
-        .eq('member_status', 'approved')
+        .from("group_members")
+        .select("member_role, member_status")
+        .eq("group_id", groupId)
+        .eq("user_id", userId)
+        .eq("member_status", "approved")
         .maybeSingle();
 
       if (error) {
@@ -122,8 +127,8 @@ function GroupContentPage() {
         return;
       }
 
-      const role = String(data?.member_role ?? '').toLowerCase();
-      const host = role === 'host' || role === 'owner' || role === 'admin';
+      const role = String(data?.member_role ?? "").toLowerCase();
+      const host = role === "host" || role === "owner" || role === "admin";
 
       if (!off) {
         setIsHost(host);
@@ -140,7 +145,7 @@ function GroupContentPage() {
   const tabs = useMemo(
     () => [
       {
-        label: '공지사항' as const,
+        label: "공지사항" as const,
         content: (
           <div>
             <DashboardNotice
@@ -152,7 +157,7 @@ function GroupContentPage() {
         ),
       },
       {
-        label: '모임일상' as const,
+        label: "모임일상" as const,
         content: (
           <div>
             <GroupDailyContent
@@ -167,10 +172,11 @@ function GroupContentPage() {
     [groupId, noticeCreateTick, dailyCreateTick],
   );
 
-  const currentTab = tabs.find(t => t.label === selectedTabLabel)!;
+  const currentTab = tabs.find((t) => t.label === selectedTabLabel)!;
 
   // 현재 탭의 작성 중 여부
-  const isCrafting = selectedTabLabel === '공지사항' ? isNoticeCrafting : isDailyCrafting;
+  const isCrafting =
+    selectedTabLabel === "공지사항" ? isNoticeCrafting : isDailyCrafting;
 
   // 언더라인 위치
   const listRef = useRef<HTMLUListElement | null>(null);
@@ -178,7 +184,7 @@ function GroupContentPage() {
   const [underline, setUnderline] = useState({ left: 0, width: 0 });
 
   const measure = () => {
-    const idx = tabs.findIndex(t => t.label === selectedTabLabel);
+    const idx = tabs.findIndex((t) => t.label === selectedTabLabel);
     const el = tabRefs.current[idx];
     const parent = listRef.current;
     if (!el || !parent) return;
@@ -190,8 +196,8 @@ function GroupContentPage() {
   useLayoutEffect(() => {
     measure();
     const onResize = () => measure();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, [selectedTabLabel, tabs]);
 
   // 상단 "작성하기" 버튼
@@ -199,14 +205,14 @@ function GroupContentPage() {
     // 작성하기 눌러도 상세 파라미터 남아있으면 혼란 줄 수 있으니 탭 유지 + 상세 제거
     setTabAndClearDetail(labelToParam(selectedTabLabel), { replace: true });
 
-    if (selectedTabLabel === '공지사항') setNoticeCreateTick(t => t + 1);
-    else setDailyCreateTick(t => t + 1);
+    if (selectedTabLabel === "공지사항") setNoticeCreateTick((t) => t + 1);
+    else setDailyCreateTick((t) => t + 1);
   };
 
   // 공지사항 탭에서만: 호스트일 때만 버튼 노출
   const showCreateButton =
     !isCrafting &&
-    (selectedTabLabel === '공지사항'
+    (selectedTabLabel === "공지사항"
       ? roleLoaded && isHost // 공지: 호스트만
       : true); // 일상: 기존 로직 유지
 
@@ -215,7 +221,7 @@ function GroupContentPage() {
 
   const openLeaveModal = () => {
     if (isHost) {
-      alert('호스트(관리자)는 모임을 탈퇴할 수 없습니다.');
+      alert("호스트(관리자)는 모임을 탈퇴할 수 없습니다.");
       return;
     }
     setLeaveModalOpen(true);
@@ -226,34 +232,34 @@ function GroupContentPage() {
     const userId = u?.user?.id;
 
     if (!userId || !groupId) {
-      alert('유효하지 않은 요청입니다.');
+      alert("유효하지 않은 요청입니다.");
       setLeaveModalOpen(false);
       return;
     }
 
     if (isHost) {
-      alert('호스트(관리자)는 모임을 탈퇴할 수 없습니다.');
+      alert("호스트(관리자)는 모임을 탈퇴할 수 없습니다.");
       setLeaveModalOpen(false);
       return;
     }
 
     const { error } = await supabase
-      .from('group_members')
-      .update({ member_status: 'left' })
-      .eq('group_id', groupId)
-      .eq('user_id', userId)
-      .neq('member_status', 'left');
+      .from("group_members")
+      .update({ member_status: "left" })
+      .eq("group_id", groupId)
+      .eq("user_id", userId)
+      .neq("member_status", "left");
 
     if (error) {
-      console.error('[GroupContentPage] leave error:', error);
-      alert('모임 탈퇴 중 오류가 발생했습니다.');
+      console.error("[GroupContentPage] leave error:", error);
+      alert("모임 탈퇴 중 오류가 발생했습니다.");
       setLeaveModalOpen(false);
       return;
     }
 
-    alert('모임에서 탈퇴되었습니다.');
+    alert("모임에서 탈퇴되었습니다.");
     setLeaveModalOpen(false);
-    navigate('/');
+    navigate("/");
   };
 
   return (
@@ -288,15 +294,15 @@ function GroupContentPage() {
                   {tabs.map((item, i) => (
                     <li
                       key={item.label}
-                      ref={el => (tabRefs.current[i] = el)}
+                      ref={(el) => (tabRefs.current[i] = el)}
                       className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
                       onClick={() => handleTabClick(item.label)}
                     >
                       <p
                         className={`text-xl font-bold transition-colors duration-200 ${
                           item.label === selectedTabLabel
-                            ? 'text-[#0689E8]'
-                            : 'text-[#3c3c3c] hover:text-[#0689E8]'
+                            ? "text-brand"
+                            : "text-[#3c3c3c] hover:text-brand"
                         }`}
                       >
                         {item.label}
@@ -306,10 +312,10 @@ function GroupContentPage() {
 
                   {/* 탭 underline */}
                   <motion.div
-                    className="absolute bottom-0 h-[4px] bg-[#0689E8] rounded"
+                    className="absolute bottom-0 h-[4px] bg-brand rounded"
                     initial={false}
                     animate={{ left: underline.left, width: underline.width }}
-                    transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 </ul>
               </nav>
@@ -347,7 +353,9 @@ function GroupContentPage() {
       <ConfirmModal
         open={leaveModalOpen}
         title="모임을 탈퇴하시겠어요?"
-        message={'탈퇴하면 더 이상 이 모임에 가입할 수 없습니다.\n정말 탈퇴하시겠습니까?'}
+        message={
+          "탈퇴하면 더 이상 이 모임에 가입할 수 없습니다.\n정말 탈퇴하시겠습니까?"
+        }
         confirmText="나가기"
         cancelText="취소"
         onConfirm={handleLeaveGroup}

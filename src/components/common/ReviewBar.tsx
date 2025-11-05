@@ -1,25 +1,26 @@
 // src/components/common/ReviewBar.tsx
-import clsx from 'clsx';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useState, type ReactNode } from 'react';
-import RemoveModal from './modal/RemoveModal';
-import SuccessModal from './modal/SuccessModal';
-import type { ReviewItem } from './ReviewCard';
-import EditReview from './modal/EditReview';
+import clsx from "clsx";
+import { AnimatePresence, motion } from "framer-motion";
+import { useState, type ReactNode } from "react";
+import RemoveModal from "./modal/RemoveModal";
+import SuccessModal from "./modal/SuccessModal";
+import type { ReviewItem } from "./ReviewCard";
+import EditReview from "./modal/EditReview";
 
 const Pill = ({
-  tone = 'gray',
+  tone = "gray",
   children,
 }: {
-  tone?: 'gray' | 'blue' | 'amber';
+  tone?: "gray" | "blue" | "amber";
   children: ReactNode;
 }) => {
-  const base = 'inline-flex items-center rounded-sm h-[29px] px-3 py-1 font-semibold gap-2 border';
+  const base =
+    "inline-flex items-center rounded-sm h-[29px] px-3 py-1 font-semibold gap-2 border whitespace-nowrap flex-shrink-0";
 
   const toneMap = {
-    gray: 'bg-[#8C8C8C] border-[#8c8c8c] text-white leading-none text-[17px]',
-    blue: 'bg-white text-brand border-brand leading-none text-[17px]',
-    amber: 'text-[#6C6C6C] border-[#6C6C6C] leading-none text-md',
+    gray: "bg-[#8C8C8C] border-[#8c8c8c] text-white leading-none text-[17px]",
+    blue: "bg-white text-brand border-brand leading-none text-[17px]",
+    amber: "text-[#6C6C6C] border-[#6C6C6C] leading-none text-md",
   } as const;
 
   return <span className={clsx(base, toneMap[tone])}>{children}</span>;
@@ -28,15 +29,18 @@ const Pill = ({
 const Star = ({ filled, index }: { filled: boolean; index: number }) => (
   <img
     className="w-5 h-5"
-    src={filled ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+    src={filled ? "/images/star_gold.svg" : "/images/star_dark.svg"}
     alt={filled ? `${index}번째 노란별` : `${index}번째 빈별`}
   />
 );
 
 const Rating = ({ value }: { value: number }) => (
-  <div className="flex items-center gap-2 pr-[100px]">
+  <div className="flex items-center gap-2 pr-[50px]">
     <span className="text-lg text-gray-600">별점</span>
-    <div className="flex items-center gap-1" aria-label={`별점 ${value}점 (총 5점 만점)`}>
+    <div
+      className="flex items-center gap-1"
+      aria-label={`별점 ${value}점 (총 5점 만점)`}
+    >
       {Array.from({ length: 5 }, (_, i) => (
         <Star key={i} index={i + 1} filled={i + 1 <= value} />
       ))}
@@ -51,7 +55,12 @@ type Props = {
   defaultOpen?: boolean;
 };
 
-export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Props) {
+export function ReviewBar({
+  review,
+  onEdit,
+  onDelete,
+  defaultOpen = false,
+}: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -71,7 +80,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
 
   const handleEditConfirm = (updated: Partial<ReviewItem>) => {
     setEditModalOpen(false);
-    setCurrentReview(prev => ({ ...prev, ...updated }));
+    setCurrentReview((prev) => ({ ...prev, ...updated }));
     onEdit?.(review.id, updated);
     setSuccessModalOpen(true);
     setTimeout(() => setSuccessModalOpen(false), 1500);
@@ -82,21 +91,26 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
       {!removed && (
         <motion.li
           key={review.id}
-          initial={{ opacity: 1, height: 'auto' }}
+          initial={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0, marginTop: 0, marginBottom: 0 }}
           transition={{ duration: 0.22, ease: [0.22, 0.61, 0.36, 1] }}
           className="rounded-sm overflow-hidden relative flex flex-col w-[1000px]"
         >
           <article className="rounded-sm flex flex-col border border-[#A3A3A3] bg-white">
             <div className="py-6 pl-9 pr-6">
-              <header className="flex items-center justify-start gap-3">
-                <div className="flex flex-col">
-                  <h3 className="text-xl font-bold leading-tight line-clamp-1">
+              <header className="flex items-center gap-3 w-full">
+                {/* 제목 + 기간 */}
+                <div className="flex flex-col flex-1 min-w-0">
+                  <h3 className="text-xl font-bold leading-tight line-clamp-1 break-keep truncate">
                     {currentReview.title}
                   </h3>
-                  <p className="mt-1 text-xs text-gray-500">모임 기간 : {currentReview.period}</p>
+                  <p className="mt-1 text-xs text-gray-500 truncate break-keep">
+                    모임 기간 : {currentReview.period}
+                  </p>
                 </div>
-                <div className="flex gap-5 ml-10">
+
+                {/* 카테고리 / 상태 */}
+                <div className="flex gap-3 ml-5 flex-shrink-0">
                   <div className="flex items-center justify-end">
                     <Pill tone="blue">{currentReview.category}</Pill>
                   </div>
@@ -104,12 +118,14 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                     <Pill tone="gray">{currentReview.status}</Pill>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 ml-auto">
+
+                {/* 별점 + 상세보기 버튼 */}
+                <div className="flex items-center gap-2 ml-10 flex-shrink-0">
                   <Rating value={currentReview.rating} />
                   <button
                     type="button"
-                    className="flex items-center justify-center gap-2 px-3 py-1 text-[15px] hover:bg-gray-50 rounded-sm"
-                    onClick={() => setOpen(o => !o)}
+                    className="flex items-center justify-center gap-2 px-3 py-1 text-[15px] hover:bg-gray-50 rounded-sm whitespace-nowrap"
+                    onClick={() => setOpen((o) => !o)}
                     aria-expanded={open}
                     aria-controls={`review-panel-${review.id}`}
                   >
@@ -125,22 +141,30 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                   key="panel"
                   id={`review-panel-${review.id}`}
                   initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
+                  animate={{ height: "auto", opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.26, ease: [0.22, 0.61, 0.36, 1] }}
                   className="overflow-hidden"
                 >
                   <hr className="border-[#eee]" />
-                  <div className="relative p-3 flex flex-col flex-1 pb-12 m-4">
-                    <div className="mb-2 mt-5 flex items-center gap-8 border-b border-[#6C6C6C] pb-2">
-                      <h3 className="text-xl font-bold leading-tight line-clamp-1">
-                        {currentReview.title}
-                      </h3>
-                      <Pill tone="blue">{currentReview.category}</Pill>
-                      <Rating value={currentReview.rating} />
-                      <p className="mt-1 text-sm text-gray-500 ml-auto">
-                        모임 기간 : {currentReview.period}
-                      </p>
+                  <div className="relative p-3 flex flex-col flex-1 pb-12 mx-4">
+                    <div className="mb-2 mt-5 flex items-center gap-6 border-b border-[#6C6C6C] pb-3">
+                      {/* 전체 영역 */}
+                      <div className="flex flex-col w-full">
+                        {/* 윗줄: 제목 + 카테고리 */}
+                        <div className="flex items-center justify-between min-w-0">
+                          <h3 className="text-xl font-bold leading-tight line-clamp-1 break-keep truncate">
+                            {currentReview.title}
+                          </h3>
+                        </div>
+
+                        {/* 아랫줄: 별점 + 모임 기간 */}
+                        <div className="mt-2 flex items-center gap-4">
+                          <p className="text-sm text-gray-500 whitespace-nowrap mr-auto">
+                            모임 기간 : {currentReview.period}
+                          </p>
+                        </div>
+                      </div>
                     </div>
 
                     <motion.p
@@ -158,7 +182,7 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
                       animate={{ opacity: 1 }}
                       transition={{ duration: 0.18, delay: 0.1 }}
                     >
-                      {currentReview.tags.map(t => (
+                      {currentReview.tags.map((t) => (
                         <Pill key={t} tone="amber">
                           #{t}
                         </Pill>
@@ -194,7 +218,9 @@ export function ReviewBar({ review, onEdit, onDelete, defaultOpen = false }: Pro
             onClose={() => setConfirmOpen(false)}
             onConfirm={handleConfirmDelete}
             title="리뷰를 삭제하시겠습니까??"
-            message={'리뷰를 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다.'}
+            message={
+              "리뷰를 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다."
+            }
             confirmText="삭제"
             cancelText="취소"
             preventBackdropClose={true}

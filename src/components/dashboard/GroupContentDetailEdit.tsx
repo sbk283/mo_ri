@@ -1,9 +1,9 @@
 // src/components/notice/GroupContentDetailEdit.tsx
-import { motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Notice } from '../../types/notice';
-import NoticeDetailRichTextEditor from '../NoticeDetailRichTextEditor';
-import ConfirmModal from '../common/modal/ConfirmModal';
+import { motion } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { Notice } from "../../types/notice";
+import NoticeDetailRichTextEditor from "../NoticeDetailRichTextEditor";
+import ConfirmModal from "../common/modal/ConfirmModal";
 
 type Props = {
   notice: Notice;
@@ -19,20 +19,29 @@ const nbsp = /\u00A0/g;
 const brParas = /<p><br><\/p>/gi;
 const trimBr = /^(<br\s*\/?>)+|(<br\s*\/?>)+$/gi;
 
-const normTitle = (s?: string | null) => (s ?? '').replace(/\s+/g, ' ').trim();
+const normTitle = (s?: string | null) => (s ?? "").replace(/\s+/g, " ").trim();
 const normContent = (raw?: string | null) =>
-  (raw ?? '').replace(zws, '').replace(nbsp, ' ').replace(brParas, '').replace(trimBr, '').trim();
+  (raw ?? "")
+    .replace(zws, "")
+    .replace(nbsp, " ")
+    .replace(brParas, "")
+    .replace(trimBr, "")
+    .trim();
 
 const hasMeaningfulContent = (raw?: string | null) => {
   const s = normContent(raw);
   if (!s) return false;
   if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(s)) return true;
   if (/!\[[^\]]*]\(([^)\s]+)(?:\s*"[^"]*")?\)/.test(s)) return true;
-  const text = s.replace(/<[^>]*>/g, '').trim();
+  const text = s.replace(/<[^>]*>/g, "").trim();
   return text.length > 0;
 };
 
-export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Props) {
+export default function GroupContentDetailEdit({
+  notice,
+  onCancel,
+  onSave,
+}: Props) {
   const [form, setForm] = useState<Notice>({ ...notice });
   const [isContentValid, setIsContentValid] = useState<boolean>(
     hasMeaningfulContent(notice.content),
@@ -44,7 +53,10 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
   const isTitleOver = titleLength > TITLE_LIMIT;
 
   // 초기 스냅샷(정규화 후 저장)
-  const initial = useRef<{ title: string; content: string }>({ title: '', content: '' });
+  const initial = useRef<{ title: string; content: string }>({
+    title: "",
+    content: "",
+  });
   useEffect(() => {
     initial.current = {
       title: normTitle(notice.title),
@@ -55,7 +67,10 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
   }, [notice.id]);
 
   // 변경 플래그: 제목/내용 각각 비교
-  const changedTitle = useMemo(() => normTitle(form.title) !== initial.current.title, [form.title]);
+  const changedTitle = useMemo(
+    () => normTitle(form.title) !== initial.current.title,
+    [form.title],
+  );
   const changedContent = useMemo(
     () => normContent(form.content) !== initial.current.content,
     [form.content],
@@ -68,11 +83,23 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
       return !isTitleEmpty && !isTitleOver && isContentValid;
     }
     // 수정: 제목 또는 내용 중 하나라도 변경 + 유효성
-    return (changedTitle || changedContent) && !isTitleEmpty && !isTitleOver && isContentValid;
-  }, [isCreate, isTitleEmpty, isTitleOver, isContentValid, changedTitle, changedContent]);
+    return (
+      (changedTitle || changedContent) &&
+      !isTitleEmpty &&
+      !isTitleOver &&
+      isContentValid
+    );
+  }, [
+    isCreate,
+    isTitleEmpty,
+    isTitleOver,
+    isContentValid,
+    changedTitle,
+    changedContent,
+  ]);
 
   const update = <K extends keyof Notice>(key: K, value: Notice[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   // 모달 제어
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
@@ -109,7 +136,7 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -24 }}
-      transition={{ duration: 0.22, ease: 'easeOut' }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="w-full"
     >
       <article className="mx-auto bg-white border border-[#A3A3A3]">
@@ -117,15 +144,17 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
           <div className="flex gap-3 items-center">
             <input
               aria-label="제목"
-              value={form.title ?? ''}
-              onChange={e => update('title', e.target.value)}
+              value={form.title ?? ""}
+              onChange={(e) => update("title", e.target.value)}
               className={`flex-1 border rounded px-3 py-2 text-lg font-semibold ${
-                isTitleOver ? 'border-red-400' : 'border-gray-300'
+                isTitleOver ? "border-red-400" : "border-gray-300"
               }`}
               placeholder="제목을 입력해주세요."
               maxLength={TITLE_LIMIT}
             />
-            <span className={`text-sm ${isTitleOver ? 'text-red-500' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm ${isTitleOver ? "text-red-500" : "text-gray-400"}`}
+            >
               {titleLength}/{TITLE_LIMIT}
             </span>
           </div>
@@ -134,8 +163,8 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
         <section className="px-8 py-4">
           <NoticeDetailRichTextEditor
             key={`notice-content-${form.id}`}
-            value={form.content ?? ''}
-            onChange={v => update('content', v)}
+            value={form.content ?? ""}
+            onChange={(v) => update("content", v)}
             placeholder="내용을 입력해주세요."
             disabled={false}
             requireNotEmpty
@@ -149,7 +178,7 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
           type="button"
           whileTap={{ scale: 0.96 }}
           onClick={handleRequestCancel}
-          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-[#0689E8] border border-[#0689E8] rounded-sm"
+          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-brand border border-brand rounded-sm"
         >
           취소
         </motion.button>
@@ -161,24 +190,24 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
           className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
             ${
               isFormValid
-                ? 'text-white bg-[#0689E8] border-[#0689E8] hover:opacity-90'
-                : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
+                ? "text-white bg-brand border-brand hover:opacity-90"
+                : "bg-gray-300 text-white border-gray-300 cursor-not-allowed"
             }`}
         >
-          {isCreate ? '등록' : '등록'}
+          {isCreate ? "등록" : "등록"}
         </motion.button>
       </footer>
 
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? '취소하시겠습니까?' : '취소하시겠습니까?'}
+        title={isCreate ? "취소하시겠습니까?" : "취소하시겠습니까?"}
         message={
           isCreate
-            ? '작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?'
-            : '변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?'
+            ? "작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?"
+            : "변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?"
         }
         confirmText="확인"
-        cancelText={isCreate ? '취소' : '취소'}
+        cancelText={isCreate ? "취소" : "취소"}
         onConfirm={() => {
           setOpenCancelConfirm(false);
           onCancel();
@@ -188,13 +217,13 @@ export default function GroupContentDetailEdit({ notice, onCancel, onSave }: Pro
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? '등록하시겠습니까?' : '등록하시겠습니까?'}
+        title={isCreate ? "등록하시겠습니까?" : "등록하시겠습니까?"}
         message={
           isCreate
-            ? '현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?'
-            : '현재 수정 내용을 저장합니다.\n등록하시겠습니까?'
+            ? "현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?"
+            : "현재 수정 내용을 저장합니다.\n등록하시겠습니까?"
         }
-        confirmText={isCreate ? '등록' : '등록'}
+        confirmText={isCreate ? "등록" : "등록"}
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

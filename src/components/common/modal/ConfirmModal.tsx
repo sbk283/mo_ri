@@ -1,5 +1,6 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef } from 'react';
+// src/components/common/modal/ConfirmModal.tsx
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef } from "react";
 
 export type ConfirmModalProps = {
   open: boolean;
@@ -14,10 +15,10 @@ export type ConfirmModalProps = {
 
 export default function ConfirmModal({
   open,
-  title = '찜을 해제하시겠습니까?',
-  message = '해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?',
-  confirmText = '확인',
-  cancelText = '취소',
+  title = "찜을 해제하시겠습니까?",
+  message = "해제 후에도 언제든 다시 찜할 수 있습니다.\n정말 해제 하시겠습니까?",
+  confirmText = "확인",
+  cancelText = "취소",
   onConfirm,
   onClose,
   preventBackdropClose = false,
@@ -28,12 +29,12 @@ export default function ConfirmModal({
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
       // 엔터 눌러서 찜 취소
-      if (e.key === 'Enter') onConfirm();
+      if (e.key === "Enter") onConfirm();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
   // 배경 클릭 닫기
@@ -43,7 +44,7 @@ export default function ConfirmModal({
 
   // 스크롤 락
   useEffect(() => {
-    if (typeof document === 'undefined') return;
+    if (typeof document === "undefined") return;
     if (!open) return;
 
     const { body, documentElement } = document;
@@ -57,13 +58,13 @@ export default function ConfirmModal({
 
     const scrollY = window.scrollY || window.pageYOffset || 0;
 
-    documentElement.style.scrollBehavior = 'auto';
-    body.style.overflow = 'hidden';
-    body.style.position = 'fixed';
+    documentElement.style.scrollBehavior = "auto";
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
-    body.style.left = '0';
-    body.style.right = '0';
-    body.style.width = '100%';
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
 
     return () => {
       body.style.overflow = prevOverflow;
@@ -102,7 +103,7 @@ export default function ConfirmModal({
           {/* 카드 */}
           <motion.div
             ref={dialogRef}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
             className="
               relative bg-white rounded-sm shadow-xl
               w-[430px] h-[280px]

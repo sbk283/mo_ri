@@ -1,8 +1,8 @@
 // src/components/review/CreateReview.tsx
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
-import { supabase } from '../../../lib/supabase';
-import SuccessModal from './SuccessModal';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { supabase } from "../../../lib/supabase";
+import SuccessModal from "./SuccessModal";
 
 export type ReviewItem = {
   id: string;
@@ -34,12 +34,17 @@ type RawGroupRow = {
   categories_major?: { category_major_name: string } | null;
 };
 
-export default function CreateReview({ open, onClose, groupId, onSuccess }: CreateModalProps) {
+export default function CreateReview({
+  open,
+  onClose,
+  groupId,
+  onSuccess,
+}: CreateModalProps) {
   const [rating, setRating] = useState<1 | 2 | 3 | 4 | 5>(5);
 
   // 글자수 제한 관련 상태
   const MAX_LENGTH = 500;
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [charCount, setCharCount] = useState(0);
 
   const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
@@ -56,7 +61,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
   useEffect(() => {
     if (!open) return;
     setRating(5);
-    setContent('');
+    setContent("");
     setCharCount(0);
     setSelectedCodes([]);
     setErrMsg(null);
@@ -71,7 +76,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
     let ignore = false;
     (async () => {
       const { data, error } = await supabase
-        .from('groups')
+        .from("groups")
         .select(
           `
           group_title,
@@ -81,11 +86,11 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
           )
         `,
         )
-        .eq('group_id', groupId)
+        .eq("group_id", groupId)
         .single();
 
       if (error) {
-        console.error('[CreateReview] load group info error', error);
+        console.error("[CreateReview] load group info error", error);
         return;
       }
       if (ignore) return;
@@ -95,7 +100,8 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
         group_title: row.group_title ?? null,
         major_id: row.major_id ?? null,
         categories_major: {
-          category_major_name: row.categories_major?.category_major_name ?? '기타',
+          category_major_name:
+            row.categories_major?.category_major_name ?? "기타",
         },
       };
       setGroupInfo(mapped);
@@ -112,12 +118,12 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
     let ignore = false;
     (async () => {
       const { data, error } = await supabase
-        .from('review_tag_dict')
-        .select('tag_code,label')
-        .order('label', { ascending: true });
+        .from("review_tag_dict")
+        .select("tag_code,label")
+        .order("label", { ascending: true });
 
       if (error) {
-        console.error('[CreateReview] load tag dict error', error);
+        console.error("[CreateReview] load tag dict error", error);
         return;
       }
       if (ignore) return;
@@ -143,7 +149,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
   const handleSubmit = async () => {
     if (!hasMeaningfulText(content)) {
-      setErrMsg('후기 내용을 입력해주세요.');
+      setErrMsg("후기 내용을 입력해주세요.");
       return;
     }
     if (submitting || successOpen) return;
@@ -152,26 +158,31 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
     try {
       const { data: userRes, error: userErr } = await supabase.auth.getUser();
-      if (userErr || !userRes?.user) throw new Error('로그인이 필요합니다.');
+      if (userErr || !userRes?.user) throw new Error("로그인이 필요합니다.");
       const uid = userRes.user.id;
 
       const { data: reviewRow, error: insErr } = await supabase
-        .from('group_reviews')
+        .from("group_reviews")
         .insert({
           group_id: groupId,
           author_id: uid,
           rating,
           pros_text: content,
         })
-        .select('review_id')
+        .select("review_id")
         .single();
       if (insErr) throw insErr;
 
       const review_id = reviewRow.review_id as string;
 
       if (selectedCodes.length > 0) {
-        const payload = selectedCodes.map(code => ({ review_id, tag_code: code }));
-        const { error: tagErr } = await supabase.from('group_review_tags').insert(payload);
+        const payload = selectedCodes.map((code) => ({
+          review_id,
+          tag_code: code,
+        }));
+        const { error: tagErr } = await supabase
+          .from("group_review_tags")
+          .insert(payload);
         if (tagErr) throw tagErr;
       }
 
@@ -181,20 +192,21 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
         onSuccess?.({ review_id });
         onClose();
         setRating(5);
-        setContent('');
+        setContent("");
         setCharCount(0);
         setSelectedCodes([]);
       }, 2000);
     } catch (e: any) {
-      console.error('[CreateReview] submit error', e);
-      setErrMsg(e?.message ?? '등록 중 오류가 발생했습니다.');
+      console.error("[CreateReview] submit error", e);
+      setErrMsg(e?.message ?? "등록 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const groupTitle = groupInfo?.group_title ?? '(제목 없음)';
-  const categoryName = groupInfo?.categories_major?.category_major_name ?? '기타';
+  const groupTitle = groupInfo?.group_title ?? "(제목 없음)";
+  const categoryName =
+    groupInfo?.categories_major?.category_major_name ?? "기타";
 
   return (
     <>
@@ -227,13 +239,17 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="py-8 px-[50px]">
                 {/* 헤더 */}
                 <div className="text-center mb-6">
-                  <h2 className="text-xxl font-[600] text-[#0689E8]">모임이 종료되었어요!</h2>
-                  <p className="mt-2 text-md">여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.</p>
+                  <h2 className="text-xxl font-[600] text-brand">
+                    모임이 종료되었어요!
+                  </h2>
+                  <p className="mt-2 text-md">
+                    여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.
+                  </p>
                 </div>
 
                 <div className="border border-[#6C6C6C] mb-8"></div>
@@ -241,8 +257,10 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                 {/* 제목/카테고리 + 별점 */}
                 <div className="my-6">
                   <div className="flex items-center">
-                    <label className="text-xl font-semibold mr-3">{groupTitle}</label>
-                    <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
+                    <label className="text-xl font-semibold mr-3">
+                      {groupTitle}
+                    </label>
+                    <span className="text-brand bg-white h-[28px] text-md font-semibold px-2 py-1 rounded-sm border border-brand">
                       {categoryName}
                     </span>
                   </div>
@@ -250,7 +268,7 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                   {/* 별점 */}
                   <div className="flex items-center gap-2 leading-normal mt-6">
                     <span className="mr-5 text-md font-semibold">별점</span>
-                    {[1, 2, 3, 4, 5].map(n => (
+                    {[1, 2, 3, 4, 5].map((n) => (
                       <button
                         key={n}
                         type="button"
@@ -259,7 +277,11 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                         disabled={submitting || successOpen}
                       >
                         <img
-                          src={n <= rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+                          src={
+                            n <= rating
+                              ? "/images/star_gold.svg"
+                              : "/images/star_dark.svg"
+                          }
                           alt={`${n}점`}
                           className="w-6 h-6"
                         />
@@ -270,26 +292,30 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
                 {/* 해시태그 선택 */}
                 <div className="my-6">
-                  <label className="block text.sm font-semibold mb-3">해시태그 선택</label>
+                  <label className="block text.sm font-semibold mb-3">
+                    해시태그 선택
+                  </label>
                   <div className="flex flex-wrap gap-3">
                     {tagDict.length === 0 ? (
-                      <p className="text-gray-400 text-sm">태그를 불러오는 중...</p>
+                      <p className="text-gray-400 text-sm">
+                        태그를 불러오는 중...
+                      </p>
                     ) : (
-                      tagDict.map(tag => (
+                      tagDict.map((tag) => (
                         <button
                           key={tag.tag_code}
                           type="button"
                           onClick={() =>
-                            setSelectedCodes(prev =>
+                            setSelectedCodes((prev) =>
                               prev.includes(tag.tag_code)
-                                ? prev.filter(c => c !== tag.tag_code)
+                                ? prev.filter((c) => c !== tag.tag_code)
                                 : [...prev, tag.tag_code],
                             )
                           }
                           className={`text-md px-2 py-2 rounded-sm border font-semibold leading-none ${
                             selectedCodes.includes(tag.tag_code)
-                              ? 'bg-white text-[#0689E8] border-[#0689E8]'
-                              : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
+                              ? "bg-white text-brand border-brand"
+                              : "bg-white text-[#6C6C6C] border-[#6C6C6C]"
                           }`}
                           disabled={submitting || successOpen}
                         >
@@ -302,7 +328,9 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
 
                 {/* 리뷰 내용 (500자 제한 + 카운터 표시) */}
                 <div className="my-6">
-                  <label className="block mb-2 text-sm font-semibold">어떤 점이 좋았나요?</label>
+                  <label className="block mb-2 text-sm font-semibold">
+                    어떤 점이 좋았나요?
+                  </label>
                   <textarea
                     className="w-full border border-[#A3A3A3] rounded-sm p-3 h-[145px] resize-none overflow-y-auto focus:outline-none focus:border-blue-500"
                     placeholder="모임의 어떤 점이 좋았는지 적어주세요. (최대 500자)"
@@ -313,34 +341,36 @@ export default function CreateReview({ open, onClose, groupId, onSuccess }: Crea
                   />
                   <div
                     className={`text-right text-xs mt-1 ${
-                      charCount >= MAX_LENGTH ? 'text-red-500' : 'text-gray-500'
+                      charCount >= MAX_LENGTH ? "text-red-500" : "text-gray-500"
                     }`}
                   >
                     {charCount}/{MAX_LENGTH}자
                   </div>
                 </div>
 
-                {errMsg && <p className="text-red-600 text-sm mb-3">{errMsg}</p>}
+                {errMsg && (
+                  <p className="text-red-600 text-sm mb-3">{errMsg}</p>
+                )}
 
                 {/* 버튼 */}
-                <div className="flex gap-[17px] justify-center">
+                <div className="flex gap-4 justify-center">
                   <button
                     type="button"
                     disabled={submitting || successOpen}
-                    className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors disabled:opacity-60"
+                    className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-brand text-brand rounded-sm hover:bg-blue-50 transition-colors disabled:opacity-60"
                     onClick={() => {
                       if (!successOpen) onClose();
                     }}
                   >
-                    취소하기
+                    취소
                   </button>
                   <button
                     type="button"
                     disabled={submitting || successOpen}
-                    className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0577c9] transition-colors disabled:opacity-60"
+                    className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-brand text-white rounded-sm hover:bg-[#0577c9] transition-colors disabled:opacity-60"
                     onClick={handleSubmit}
                   >
-                    {submitting ? '등록 중...' : '등록하기'}
+                    {submitting ? "등록 중..." : "등록"}
                   </button>
                 </div>
               </div>

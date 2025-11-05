@@ -12,6 +12,7 @@ import CreateGroupNavigation from "./CreateGroupNavigation";
 import type { StepTwoProps, groups } from "../../types/group"; // groups 타입 import
 import type { careers } from "../../types/careerType";
 import { notifyGroupRequest } from "../../lib/notificationHandlers";
+import { supabase } from "../../lib/supabase";
 
 type StepThreeProps = Omit<StepTwoProps, "onChange">;
 
@@ -27,11 +28,11 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
   const [leaderCareers, setLeaderCareers] = useState<careers[]>([]);
 
   // 관리자 ID 목록 (실제 DB의 관리자 user_id와 동일하게)
-  const adminIds = [
-    "67f710e0-6e6a-471e-af8a-1d3de89ab22d", // 유비 lynn9702@naver.com
-    "b8f3e47a-xxxx-xxxx-xxxx-xxxxxxxxxxxx", // 관리자2 user_id
-    "b8f3e47a-xxxx-xxxx-xxxx-xxxxxxxxxxxx", // 관리자3 user_id
-    "b8f3e47a-xxxx-xxxx-xxxx-xxxxxxxxxxxx", // 관리자4 user_id
+  const adminEmails = [
+    "wltjs6668@naver.com",
+    "dev.yachea@gmail.com",
+    "sbkcoding@gmail.com",
+    "lynn9702@naver.com",
   ];
 
   const handleSubmit = async () => {
@@ -46,30 +47,42 @@ function CreateGroupStepThree({ formData, onPrev, onNext }: StepThreeProps) {
 
       // 관리자에게 승인요청 알림 전송
       if (newGroup?.group_id && leaderNickName) {
-        for (const adminUserId of adminIds) {
-          await notifyGroupRequest({
-            adminUserId,
-            creatorNickname: leaderNickName,
-            groupId: newGroup.group_id,
-            groupTitle: formData.title,
-          });
+        try {
+          // 관리자 이메일로 user_id 조회
+          const { data: adminProfiles } = await supabase
+            .from("user_profiles")
+            .select("user_id, email")
+            .in("email", adminEmails);
 
-          // DB insert 실패 대비: 프론트 수동 알림 트리거
-          window.dispatchEvent(
-            new CustomEvent("notification:new", {
-              detail: {
-                type: "group_request",
-                title: "그룹 승인 요청",
-                message: `${leaderNickName}님이 "${formData.title}" 모임 승인을 요청했습니다.`,
-                targetUser: adminUserId, // 관리자에게 가는 알림
-              },
-            }),
-          );
+          if (adminProfiles && adminProfiles.length > 0) {
+            for (const admin of adminProfiles) {
+              await notifyGroupRequest({
+                adminUserId: admin.user_id,
+                creatorNickname: leaderNickName,
+                groupId: newGroup.group_id,
+                groupTitle: formData.title,
+              });
+
+              // 프론트 수동 트리거 (Header용)
+              window.dispatchEvent(
+                new CustomEvent("notification:new", {
+                  detail: {
+                    type: "group_request",
+                    title: "그룹 승인 요청",
+                    message: `${leaderNickName}님이 "${formData.title}" 모임 승인을 요청했습니다.`,
+                    targetUser: admin.user_id,
+                  },
+                }),
+              );
+            }
+          } else {
+            console.warn("관리자 user_id를 찾을 수 없습니다.");
+          }
+
+          console.log("[CreateGroupStepThree] 그룹 승인요청 알림 전송 완료");
+        } catch (err) {
+          console.error("[CreateGroupStepThree] 관리자 알림 전송 실패:", err);
         }
-
-        console.log(
-          "[CreateGroupStepThree] 그룹 승인요청 알림 전송 완료 (DB+프론트)",
-        );
       }
 
       // 완료 모달 오픈

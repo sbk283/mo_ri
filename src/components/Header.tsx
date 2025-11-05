@@ -85,7 +85,8 @@ const Header: React.FC = () => {
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
+    // notifications 구독
+    const notiChannel = supabase
       .channel(`header_notifications:${user.id}`)
       .on(
         "postgres_changes",
@@ -96,16 +97,37 @@ const Header: React.FC = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("[Header 🔴 새 알림 감지]", payload.new);
+          console.log("[Header 🔴 notifications 이벤트]", payload.new);
           setUnreadCount((prev) => prev + 1);
         },
       )
-      .subscribe((status) => {
-        console.log("[Header 구독 상태]", status);
-      });
+      .subscribe();
+
+    // direct_messages 구독
+    const dmChannel = supabase
+      .channel(`header_dm:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "direct_messages",
+        },
+        (payload) => {
+          const msg = payload.new;
+          if (!msg) return;
+          // 내가 보낸 메시지는 제외
+          if (msg.sender_id === user.id) return;
+          // 상대가 나에게 보낸 메시지면 바로 알림
+          console.log("[Header 새 메시지 감지]", msg);
+          setUnreadCount((prev) => prev + 1);
+        },
+      )
+      .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(notiChannel);
+      supabase.removeChannel(dmChannel);
     };
   }, [user?.id]);
 

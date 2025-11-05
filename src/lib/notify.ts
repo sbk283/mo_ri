@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+import { supabase } from "./supabase";
 
 /**
  * 알림 생성 공통 유틸
@@ -19,14 +19,20 @@ export async function insertNotification({
   targetId = null,
 }: {
   userId: string;
-  type: 'review_like' | 'post_like' | 'inquiry_new' | 'inquiry_reply' | 'group_approved';
+  type:
+    | "review_like"
+    | "post_like"
+    | "inquiry_new"
+    | "inquiry_reply"
+    | "group_approved"
+    | "chat";
   title: string;
   message: string;
   groupId?: string | null;
   targetId?: string | null;
 }) {
   if (!userId) return;
-  const { error } = await supabase.rpc('create_notification', {
+  const { error } = await supabase.rpc("create_notification", {
     p_user_id: userId,
     p_type: type,
     p_title: title,
@@ -34,5 +40,6 @@ export async function insertNotification({
     p_group_id: groupId,
     p_target_id: targetId,
   });
-  if (error) console.error('[insertNotification] 알림 전송 실패:', error.message);
+  if (error)
+    console.error("[insertNotification] 알림 전송 실패:", error.message);
 }

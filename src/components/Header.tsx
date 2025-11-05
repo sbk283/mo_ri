@@ -97,8 +97,23 @@ const Header: React.FC = () => {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          console.log("[Header 🔴 notifications 이벤트]", payload.new);
-          setUnreadCount((prev) => prev + 1);
+          const n = payload.new;
+          console.log("[Header 🔴 notifications 이벤트]", n);
+
+          // 1️⃣ chat 타입 포함 — 모든 알림 타입 허용
+          if (
+            [
+              "chat",
+              "review_like",
+              "post_like",
+              "group_approved",
+              "group_request",
+              "inquiry_new",
+              "inquiry_reply",
+            ].includes(n.type)
+          ) {
+            setUnreadCount((prev) => prev + 1);
+          }
         },
       )
       .subscribe();

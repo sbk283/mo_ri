@@ -9,6 +9,7 @@ import GroupListCard from "../common/GroupListCard";
 import GroupSearchResults from "../search/GroupSearchResults";
 import { useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
+import InfiniteScrollList from "../common/InfiniteScrollList";
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -139,36 +140,26 @@ function GroupListLayout({
                 />
               </div>
 
-              {/* 카드 리스트 */}
-              <div className="space-y-4">
-                {loading ? (
-                  <LoadingSpinner />
-                ) : displayedGroups.length === 0 ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4 }}
-                    className="flex flex-col justify-center items-center h-60 bg-gray-50"
-                  >
-                    <motion.p
-                      className="text-lg font-semibold text-gray-600"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.2 }}
-                    >
-                      현재 등록된 모임이 없습니다
-                    </motion.p>
-                    <motion.p
-                      className="text-sm text-gray-400 mt-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.4 }}
-                    >
-                      새로운 모임을 만들고 친구들과 활동을 시작해보세요!
-                    </motion.p>
-                  </motion.div>
-                ) : (
-                  displayedGroups.map((group) => (
+              {loading ? (
+                <LoadingSpinner />
+              ) : displayedGroups.length === 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4 }}
+                  className="flex flex-col justify-center items-center h-60 bg-gray-50"
+                >
+                  <p className="text-lg font-semibold text-gray-600">
+                    현재 등록된 모임이 없습니다
+                  </p>
+                  <p className="text-sm text-gray-400 mt-2">
+                    새로운 모임을 만들고 친구들과 활동을 시작해보세요!
+                  </p>
+                </motion.div>
+              ) : (
+                <InfiniteScrollList
+                  items={displayedGroups}
+                  renderItem={(group) => (
                     <GroupListCard
                       key={group.group_id}
                       group_id={group.group_id}
@@ -190,19 +181,9 @@ function GroupListLayout({
                       group_start_day={group.group_start_day}
                       group_end_day={group.group_end_day}
                     />
-                  ))
-                )}
-
-                {displayedGroups.length > 0 && (
-                  <div className="pt-[107px] flex items-center">
-                    <div className="flex-1 border-t border-[#8C8C8C]" />
-                    <span className="mx-4 text-sm text-[#8C8C8C] whitespace-nowrap">
-                      모든 항목을 불러왔습니다
-                    </span>
-                    <div className="flex-1 border-t border-[#8C8C8C]" />
-                  </div>
-                )}
-              </div>
+                  )}
+                />
+              )}
             </section>
           </>
         )}

@@ -252,6 +252,7 @@ export default function ReviewsSection({ items = [] as ReviewItem[] }: { items?:
 
     return {
       id: v.id,
+      review_uuid: rid,
       title: v.title,
       category: v.category,
       src: groupSrc, // 모달 배경

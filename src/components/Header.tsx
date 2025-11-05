@@ -84,20 +84,63 @@ const Header: React.FC = () => {
   // 초기 unreadCount 가져오기 (Header에서만 1회)
   useEffect(() => {
     if (!user?.id) return;
-    const userId = user.id;
 
-    const initUnreadCount = async () => {
-      const { count, error } = await supabase
-        .from("notifications")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("is_read", false);
+    // notifications 구독
+    const notiChannel = supabase
+      .channel(`header_notifications:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          console.log("[Header 🔴 notifications 이벤트]", payload.new);
+          setUnreadCount((prev) => prev + 1);
+        },
+      )
+      .subscribe();
 
-      if (!error && count !== null) setUnreadCount(count);
+    // direct_messages 구독
+    const dmChannel = supabase
+      .channel(`header_dm:${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "direct_messages",
+        },
+        (payload) => {
+          const msg = payload.new;
+          if (!msg) return;
+          // 내가 보낸 메시지는 제외
+          if (msg.sender_id === user.id) return;
+          // 상대가 나에게 보낸 메시지면 바로 알림
+          console.log("[Header 새 메시지 감지]", msg);
+          setUnreadCount((prev) => prev + 1);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(notiChannel);
+      supabase.removeChannel(dmChannel);
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    const handleManualNotify = () => {
+      console.log("[Header] 클라이언트 알림 수신 (수동)");
+      setUnreadCount((prev) => prev + 1);
     };
 
-    initUnreadCount();
-  }, [user]);
+    window.addEventListener("notification:new", handleManualNotify);
+    return () =>
+      window.removeEventListener("notification:new", handleManualNotify);
+  }, []);
 
   // 최초 세션 로드
   useEffect(() => {

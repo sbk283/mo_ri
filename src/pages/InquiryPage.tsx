@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react';
-import InquirySelector from '../components/InquirySelector';
-import MyPageLayout from '../components/layout/MyPageLayout';
-import { Modal } from 'antd';
-import { supabase } from '../lib/supabase';
-import { type inquirieInsert, type Json } from '../types/inquiriesType';
+import { useEffect, useState } from "react";
+import InquirySelector from "../components/InquirySelector";
+import MyPageLayout from "../components/layout/MyPageLayout";
+import { Modal } from "antd";
+import { supabase } from "../lib/supabase";
+import { type inquirieInsert, type Json } from "../types/inquiriesType";
+// 2025-11-03 관리자 : 관리자 알림 전송을 위한 import 추가
+import { notifyInquiryCreated } from "../lib/notificationHandlers";
 
 // 1:1 문의하기 페이지입니다.
 function InquiryPage() {
   // 문의 유형 선택
-  const [inquiryMajor, setInquiryMajor] = useState('');
-  const [inquirySub, setInquirySub] = useState('');
+  const [inquiryMajor, setInquiryMajor] = useState("");
+  const [inquirySub, setInquirySub] = useState("");
   // 첨부된 파일 이름 보기
   // const [fileName, setFileName] = useState<string[]>([]);
   // 첨부된 파일 (실제 File 객체 저장)
@@ -17,9 +19,12 @@ function InquiryPage() {
   // 문의하기 모달창
   const [inquiryBtn, setInquiryBtn] = useState(false);
   // 유저 정보
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
   // 문의 내용
-  const [inquiryContent, setInquiryContent] = useState('');
+  const [inquiryContent, setInquiryContent] = useState("");
   // 업로드 중 상태
   const [isUploading, setIsUploading] = useState(false);
 
@@ -31,14 +36,14 @@ function InquiryPage() {
       if (session) {
         const user = session.user;
         const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('name')
-          .eq('user_id', user.id)
+          .from("user_profiles")
+          .select("name")
+          .eq("user_id", user.id)
           .single();
 
         setUserInfo({
-          name: profile?.name || '이름 없음',
-          email: user.email ?? '',
+          name: profile?.name || "이름 없음",
+          email: user.email ?? "",
         });
       }
     };
@@ -47,9 +52,12 @@ function InquiryPage() {
   }, []);
 
   // 문의 유형 선택
-  const handleChange = (field: 'inquiryMajor' | 'inquirySub', value: string) => {
-    if (field === 'inquiryMajor') setInquiryMajor(value);
-    if (field === 'inquirySub') setInquirySub(value);
+  const handleChange = (
+    field: "inquiryMajor" | "inquirySub",
+    value: string,
+  ) => {
+    if (field === "inquiryMajor") setInquiryMajor(value);
+    if (field === "inquirySub") setInquirySub(value);
   };
 
   // 첨부 파일 이름 보기
@@ -58,11 +66,11 @@ function InquiryPage() {
       const newFiles = Array.from(e.target.files);
 
       // 10MB 크기 체크(5로 변경하기)
-      const invalidFiles = newFiles.filter(f => f.size > 10 * 1024 * 1024);
+      const invalidFiles = newFiles.filter((f) => f.size > 10 * 1024 * 1024);
       if (invalidFiles.length > 0) {
         Modal.warning({
-          title: '파일 크기 초과',
-          content: '10MB 이하의 파일만 업로드 가능합니다.',
+          title: "파일 크기 초과",
+          content: "10MB 이하의 파일만 업로드 가능합니다.",
         });
         return;
       }
@@ -72,38 +80,39 @@ function InquiryPage() {
       setAttachedFiles(updated);
 
       // input 초기화 (같은 파일 다시 선택 가능하도록)
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
   // 첨부파일 삭제 하기
   const handleFileRemove = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   //문의 유형 /  문의 내용 작성 안했을때 문의하기 버튼 비활성화
-  const isFormValid = inquiryMajor && inquirySub && inquiryContent.trim() !== '';
+  const isFormValid =
+    inquiryMajor && inquirySub && inquiryContent.trim() !== "";
 
   // 파일 업로드 함수
   const uploadFiles = async (userId: string): Promise<string[]> => {
     const uploadedUrls: string[] = [];
 
     for (const file of attachedFiles) {
-      const ext = file.name.split('.').pop();
+      const ext = file.name.split(".").pop();
       const randomStr = Math.random().toString(36).substring(2, 10);
       const timestamp = Date.now();
       const safeFileName = `${timestamp}_${randomStr}.${ext}`;
       const path = `${userId}/${safeFileName}`;
 
       const { error: storageError } = await supabase.storage
-        .from('inquiry-images')
+        .from("inquiry-images")
         .upload(path, file, {
-          cacheControl: '3600',
+          cacheControl: "3600",
           upsert: false,
         });
 
       if (storageError) {
-        console.error('파일 업로드 실패:', storageError);
+        console.error("파일 업로드 실패:", storageError);
         throw storageError;
       }
 
@@ -133,31 +142,72 @@ function InquiryPage() {
         fileUrls = await uploadFiles(user.id);
       }
 
+      // 2025-11-03 관리자 : inquiry_status를 명시적으로 "pending"으로 설정
       const newInquiry: inquirieInsert = {
         user_id: user.id,
         inquiry_main_type: inquiryMajor,
         inquiry_sub_type: inquirySub,
         inquiry_detail: inquiryContent,
         inquiry_file_urls: fileUrls as Json,
+        inquiry_status: "pending",
       };
 
-      const { error } = await supabase.from('user_inquiries').insert([newInquiry]);
+      // 2025-11-03 관리자 : insert 후 inquiry_id를 반환받기 위해 select 추가
+      const { data: insertedData, error } = await supabase
+        .from("user_inquiries")
+        .insert([newInquiry])
+        .select("inquiry_id")
+        .single();
 
       if (error) {
-        console.error('문의 등록 실패:', error.message);
+        console.error("문의 등록 실패:", error.message);
         Modal.error({
-          title: '오류 발생',
-          content: '문의 등록에 실패했습니다. 다시 시도해주세요.',
+          title: "오류 발생",
+          content: "문의 등록에 실패했습니다. 다시 시도해주세요.",
         });
         return;
       }
 
+      // 2025-11-03 관리자 : 문의 등록 성공 후 관리자들에게 알림 전송
+      if (insertedData?.inquiry_id) {
+        try {
+          // 관리자 이메일 목록
+          const adminEmails = [
+            "wltjs6668@naver.com",
+            "dev.yachea@gmail.com",
+            "sbkcoding@gmail.com",
+            "lynn9702@naver.com",
+          ];
+
+          // 관리자 이메일로 user_id 조회
+          const { data: adminProfiles } = await supabase
+            .from("user_profiles")
+            .select("user_id, name")
+            .in("email", adminEmails);
+
+          if (adminProfiles && adminProfiles.length > 0) {
+            // 각 관리자에게 알림 전송
+            const userNickname = userInfo?.name || "사용자";
+            for (const admin of adminProfiles) {
+              await notifyInquiryCreated({
+                adminUserId: admin.user_id,
+                userNickname: userNickname,
+                inquiryId: insertedData.inquiry_id,
+              });
+            }
+          }
+        } catch (notifyError) {
+          // 알림 전송 실패해도 문의 등록은 성공한 것으로 처리
+          console.error("관리자 알림 전송 실패:", notifyError);
+        }
+      }
+
       setInquiryBtn(true);
     } catch (error) {
-      console.error('문의 등록 중 오류:', error);
+      console.error("문의 등록 중 오류:", error);
       Modal.error({
-        title: '오류 발생',
-        content: '파일 업로드 또는 문의 등록에 실패했습니다.',
+        title: "오류 발생",
+        content: "파일 업로드 또는 문의 등록에 실패했습니다.",
       });
     } finally {
       setIsUploading(false);
@@ -169,14 +219,15 @@ function InquiryPage() {
       {/* 상단 텍스트 부분 */}
       <div>
         <div className="text-xl font-bold text-gray-400 mb-[21px]">
-          마이페이지 {'>'} 고객센터 {'>'} 1:1 문의 하기
+          마이페이지 {">"} 고객센터 {">"} 1:1 문의 하기
         </div>
       </div>
       <div className="flex gap-[12px]">
         <div className=" border-r border-brand border-[3px]"></div>
         <div className="text-gray-400">
           <div className="text-lg font-semibold">
-            서비스 이용 중 궁금한 점이나 불편사항을 직접 문의하실 수 있는 공간입니다.
+            서비스 이용 중 궁금한 점이나 불편사항을 직접 문의하실 수 있는
+            공간입니다.
           </div>
           <div className="text-md">
             남겨주신 문의는 담당자가 확인 후 신속하게 답변 드리겠습니다.
@@ -185,41 +236,55 @@ function InquiryPage() {
       </div>
       {/* 하단 내용 부분 */}
       <div className="mt-[56px] ">
-        <div className=" text-brand text-xxl font-semibold mb-[38px]">1:1 문의 하기</div>
+        <div className=" text-brand text-xxl font-semibold mb-[38px]">
+          1:1 문의 하기
+        </div>
         <form className="w-[1024px] rounded-[5px] border border-gray-300 py-[90px] px-[87px]">
           <div className="mb-[34px] flex items-center gap-[70px] ">
             <div className="flex items-center gap-[8px]">
               <div className=" text-gray-400 text-lg font-medium ">이름 :</div>
               <div className="text-lg ml-[10px] font-medium text-brand">
-                {userInfo?.name ?? '이름 불러오는중 ...'}
+                {userInfo?.name ?? "이름 불러오는중 ..."}
               </div>
             </div>
             <div className="flex items-center gap-[8px]">
-              <div className=" text-gray-400 text-lg font-medium">답변 알림 이메일 주소 :</div>
+              <div className=" text-gray-400 text-lg font-medium">
+                답변 알림 이메일 주소 :
+              </div>
               <div
                 className="text-lg ml-[10px] font-medium text-brand
               "
               >
-                {userInfo?.email ?? '이메일 불러오는중'}
+                {userInfo?.email ?? "이메일 불러오는중"}
               </div>
             </div>
           </div>
 
           <div className="mb-[34px]">
-            <div className=" text-gray-400 text-lg font-medium mb-[11px]">문의 유형</div>
-            <InquirySelector major={inquiryMajor} sub={inquirySub} onChange={handleChange} />
+            <div className=" text-gray-400 text-lg font-medium mb-[11px]">
+              문의 유형
+            </div>
+            <InquirySelector
+              major={inquiryMajor}
+              sub={inquirySub}
+              onChange={handleChange}
+            />
           </div>
           <div className="mb-[44px]">
-            <div className=" text-gray-400 text-lg font-medium mb-[11px]">문의 내용</div>
+            <div className=" text-gray-400 text-lg font-medium mb-[11px]">
+              문의 내용
+            </div>
             <textarea
               placeholder="선택하신 문의 유형에 맞는 문의사항을 자세히 적어주세요."
               className="resize-none border-[1px] w-[850px] h-[235px] rounded-[5px] border-gray-300 p-[12px] placeholder:font-normal placeholder:text-[#a6a6a6] focus:outline-none focus:ring-1 focus:ring-brand focus:border-brand"
               value={inquiryContent}
-              onChange={e => setInquiryContent(e.target.value)}
+              onChange={(e) => setInquiryContent(e.target.value)}
             />
           </div>
           <div>
-            <div className=" text-gray-400 text-lg font-medium mb-[11px]">첨부파일</div>
+            <div className=" text-gray-400 text-lg font-medium mb-[11px]">
+              첨부파일
+            </div>
             <div className="flex items-center mb-[11px] gap-[8px] justify-between">
               <div className="flex-1 rounded-[5px] min-h-[40px] flex items-center gap-2 flex-wrap">
                 {attachedFiles.length > 0 ? (
@@ -228,11 +293,17 @@ function InquiryPage() {
                       key={idx}
                       className="flex items-center bg-white border border-gray-300 p-1 rounded-[5px] text-sm"
                     >
-                      <span className="truncate max-w-[200px]">{file.name}</span>
+                      <span className="truncate max-w-[200px]">
+                        {file.name}
+                      </span>
                       <span className="text-gray-400 ml-1">
                         ({(file.size / 1024).toFixed(1)}KB)
                       </span>
-                      <button type="button" onClick={() => handleFileRemove(idx)} className="ml-2">
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove(idx)}
+                        className="ml-2"
+                      >
                         ❌
                       </button>
                     </div>
@@ -262,17 +333,28 @@ function InquiryPage() {
               <p>· 사진 및 파일은 최대 2개 까지 등록가능합니다.</p>
               <p>· 10MB 이내의 모든 이미지 파일 업로드가 가능합니다.</p>
               <p>
-                · 첨부파일 형식 및 내용이 1:1 문의내용과 맞지 않는 경우 (비방,음란 등) 관리자에 의해
-                삭제 될 수 있습니다.
+                · 첨부파일 형식 및 내용이 1:1 문의내용과 맞지 않는 경우
+                (비방,음란 등) 관리자에 의해 삭제 될 수 있습니다.
               </p>
             </div>
           </div>
           <div className="border borer-b-[1px] mb-[35px]" />
-          <div className=" text-gray-400 text-lg font-medium mb-[17px]">안내사항</div>
+          <div className=" text-gray-400 text-lg font-medium mb-[17px]">
+            안내사항
+          </div>
           <div className="text-md font-normal text-gray-400 mb-[63px]">
-            <p>· 한 번 등록한 첨부파일은 수정이 어려우니, 등록 전 파일을 꼭 확인해 주세요.</p>
-            <p>· 로그인 후 등록한 문의는 고객센터 페이지 1:1 문의 내역에서 확인 할 수 있습니다.</p>
-            <p>· 남겨주신 문의는 담당자가 확인 후 업무시간 내 순차적 답변 드리니 기다려주세요.</p>
+            <p>
+              · 한 번 등록한 첨부파일은 수정이 어려우니, 등록 전 파일을 꼭
+              확인해 주세요.
+            </p>
+            <p>
+              · 로그인 후 등록한 문의는 고객센터 페이지 1:1 문의 내역에서 확인
+              할 수 있습니다.
+            </p>
+            <p>
+              · 남겨주신 문의는 담당자가 확인 후 업무시간 내 순차적 답변 드리니
+              기다려주세요.
+            </p>
           </div>
 
           <button
@@ -280,7 +362,9 @@ function InquiryPage() {
             onClick={handleInquirySubmit}
             disabled={!isFormValid}
             className={`block mx-auto w-[190px] py-[12px] px-[52px] rounded-[5px] font-semibold text-xl items-center ${
-              isFormValid ? 'bg-brand text-white' : 'bg-gray-300 text-white cursor-not-allowed'
+              isFormValid
+                ? "bg-brand text-white"
+                : "bg-gray-300 text-white cursor-not-allowed"
             }`}
           >
             문의하기
@@ -291,11 +375,11 @@ function InquiryPage() {
             open={inquiryBtn}
             onOk={() => {
               setInquiryBtn(false);
-              window.location.href = '/inquiry/history';
+              window.location.href = "/inquiry/history";
             }}
             onCancel={() => setInquiryBtn(false)}
             okText="확인"
-            cancelButtonProps={{ style: { display: 'none' } }}
+            cancelButtonProps={{ style: { display: "none" } }}
           >
             <p>문의가 정상적으로 접수되었습니다.</p>
             <p>빠른 시일 내에 답변 드리겠습니다.</p>

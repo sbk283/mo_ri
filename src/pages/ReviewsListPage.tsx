@@ -1,12 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ReviewCard, type ReviewItem } from '../components/common/ReviewCard';
-import ReviewDetailModal, { type ReviewDetail } from '../components/common/modal/ReviewDetailModal';
-import ArrayDropdown from '../components/common/ArrayDropdown';
-import LoadingSpinner from '../components/common/LoadingSpinner';
-import { supabase } from '../lib/supabase';
+import { useEffect, useMemo, useState } from "react";
+import { ReviewCard, type ReviewItem } from "../components/common/ReviewCard";
+import ReviewDetailModal, {
+  type ReviewDetail,
+} from "../components/common/modal/ReviewDetailModal";
+import ArrayDropdown from "../components/common/ArrayDropdown";
+import LoadingSpinner from "../components/common/LoadingSpinner";
+import { supabase } from "../lib/supabase";
 
-const fmt = (d?: string | null) => (d ? d.replace(/-/g, '.') : '');
-const NO_IMAGE = '/images/no_image.jpg';
+const fmt = (d?: string | null) => (d ? d.replace(/-/g, ".") : "");
+const NO_IMAGE = "/images/no_image.jpg";
 
 // DB 타입
 type ReviewRow = {
@@ -29,7 +31,11 @@ type ReviewRow = {
   } | null;
 };
 
-type ProfileRow = { user_id: string; nickname: string | null; avatar_url: string | null };
+type ProfileRow = {
+  user_id: string;
+  nickname: string | null;
+  avatar_url: string | null;
+};
 type TagDict = { tag_code: string; label: string };
 type TagRow = { review_id: string; tag_code: string };
 type LikeRow = { review_id: string };
@@ -39,11 +45,15 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   const [items, setItems] = useState<ReviewItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [numToReviewId, setNumToReviewId] = useState<Record<number, string>>({});
+  const [numToReviewId, setNumToReviewId] = useState<Record<number, string>>(
+    {},
+  );
   const [openId, setOpenId] = useState<number | null>(null);
-  const [sortMode, setSortMode] = useState<'latest' | 'popular'>('latest');
+  const [sortMode, setSortMode] = useState<"latest" | "popular">("latest");
 
-  const [empathyByNumId, setEmpathyByNumId] = useState<Record<number, number>>({});
+  const [empathyByNumId, setEmpathyByNumId] = useState<Record<number, number>>(
+    {},
+  );
   const [likedByNumId, setLikedByNumId] = useState<Set<number>>(new Set());
 
   // 태그 라벨 사전 / 모달에서 재조회한 태그
@@ -51,13 +61,20 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   const [modalTags, setModalTags] = useState<string[] | null>(null);
 
   // 모달용 "모임 이미지" 저장 (numId → group first image)
-  const [groupSrcByNumId, setGroupSrcByNumId] = useState<Record<number, string>>({});
+  const [groupSrcByNumId, setGroupSrcByNumId] = useState<
+    Record<number, string>
+  >({});
   // 모달/상세용 "작성자 아바타" 저장 (numId → avatar url)
-  const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<Record<number, string>>({});
+  const [authorAvatarByNumId, setAuthorAvatarByNumId] = useState<
+    Record<number, string>
+  >({});
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const withEmpathy = (it: ReviewItem) => ({ ...it, empathy: empathyByNumId[it.id] ?? 0 });
+  const withEmpathy = (it: ReviewItem) => ({
+    ...it,
+    empathy: empathyByNumId[it.id] ?? 0,
+  });
 
   useEffect(() => {
     let ignore = false;
@@ -70,10 +87,12 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
         // 1) 태그 사전
         const { data: dict } = await supabase
-          .from('review_tag_dict')
-          .select('tag_code,label')
+          .from("review_tag_dict")
+          .select("tag_code,label")
           .returns<TagDict[]>();
-        const _labelByCode = Object.fromEntries((dict ?? []).map(d => [d.tag_code, d.label]));
+        const _labelByCode = Object.fromEntries(
+          (dict ?? []).map((d) => [d.tag_code, d.label]),
+        );
         if (!ignore) setLabelByCode(_labelByCode);
 
         // 2) 리뷰 + 그룹 + 대카테고리 조인
@@ -88,14 +107,15 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 ` as const;
 
         let query = supabase
-          .from('group_reviews')
+          .from("group_reviews")
           .select(selectSQL)
-          .order('created_at', { ascending: false })
+          .order("created_at", { ascending: false })
           .limit(100);
 
-        if (groupId) query = query.eq('group_id', String(groupId));
+        if (groupId) query = query.eq("group_id", String(groupId));
 
-        const { data: rows, error: revErr } = await query.returns<ReviewRow[]>();
+        const { data: rows, error: revErr } =
+          await query.returns<ReviewRow[]>();
         if (revErr) throw revErr;
 
         if (!rows?.length) {
@@ -112,56 +132,57 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
         }
 
         // 3) 작성자 닉네임 + 프로필 이미지
-        const authorIds = [...new Set(rows.map(r => r.author_id))];
+        const authorIds = [...new Set(rows.map((r) => r.author_id))];
         const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('user_id, nickname, avatar_url')
-          .in('user_id', authorIds)
+          .from("user_profiles")
+          .select("user_id, nickname, avatar_url")
+          .in("user_id", authorIds)
           .returns<ProfileRow[]>();
 
         const nicknameByUserId = Object.fromEntries(
-          (profiles ?? []).map(p => [p.user_id, p.nickname ?? '익명']),
+          (profiles ?? []).map((p) => [p.user_id, p.nickname ?? "익명"]),
         );
         const avatarByUserId = Object.fromEntries(
-          (profiles ?? []).map(p => [p.user_id, p.avatar_url ?? '']),
+          (profiles ?? []).map((p) => [p.user_id, p.avatar_url ?? ""]),
         );
 
         // 4) 리뷰별 태그
-        const reviewIds = rows.map(r => r.review_id);
+        const reviewIds = rows.map((r) => r.review_id);
         const { data: tagRows } = await supabase
-          .from('group_review_tags')
-          .select('review_id, tag_code')
-          .in('review_id', reviewIds)
-          .order('tag_code', { ascending: true })
+          .from("group_review_tags")
+          .select("review_id, tag_code")
+          .in("review_id", reviewIds)
+          .order("tag_code", { ascending: true })
           .returns<TagRow[]>();
 
         const tagsByReview: Record<string, string[]> = {};
-        (tagRows ?? []).forEach(tr => {
+        (tagRows ?? []).forEach((tr) => {
           const label = _labelByCode[tr.tag_code] ?? tr.tag_code;
           (tagsByReview[tr.review_id] ??= []).push(label);
         });
 
         // 5) 공감 카운트
         const { data: likeRows } = await supabase
-          .from('review_likes')
-          .select('review_id')
-          .in('review_id', reviewIds)
+          .from("review_likes")
+          .select("review_id")
+          .in("review_id", reviewIds)
           .returns<LikeRow[]>();
         const countByReviewId: Record<string, number> = {};
-        (likeRows ?? []).forEach(r => {
-          countByReviewId[r.review_id] = (countByReviewId[r.review_id] ?? 0) + 1;
+        (likeRows ?? []).forEach((r) => {
+          countByReviewId[r.review_id] =
+            (countByReviewId[r.review_id] ?? 0) + 1;
         });
 
         // 6) 내가 공감한 리뷰
         let myLiked = new Set<string>();
         if (myId) {
           const { data: mine } = await supabase
-            .from('review_likes')
-            .select('review_id')
-            .eq('user_id', myId)
-            .in('review_id', reviewIds)
+            .from("review_likes")
+            .select("review_id")
+            .eq("user_id", myId)
+            .in("review_id", reviewIds)
             .returns<LikeRow[]>();
-          if (mine?.length) myLiked = new Set(mine.map(x => x.review_id));
+          if (mine?.length) myLiked = new Set(mine.map((x) => x.review_id));
         }
 
         // 7) 화면 매핑
@@ -171,16 +192,23 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
         const mapped: ReviewItem[] = rows.map((r, idx) => {
           const g = r.groups;
-          const statusKor: ReviewItem['status'] =
-            (g?.status ?? '').toLowerCase() === 'closed' ? '종료' : '진행중';
+          const statusKor: ReviewItem["status"] =
+            (g?.status ?? "").toLowerCase() === "closed" ? "종료" : "진행중";
           const start = fmt(g?.group_start_day);
           const end = fmt(g?.group_end_day);
-          const rating = Math.min(5, Math.max(1, Number(r.rating || 5))) as 1 | 2 | 3 | 4 | 5;
+          const rating = Math.min(5, Math.max(1, Number(r.rating || 5))) as
+            | 1
+            | 2
+            | 3
+            | 4
+            | 5;
 
           const numId = idx + 1;
           numMap[numId] = r.review_id;
 
-          const major = g?.categories_sub?.categories_major?.category_major_name?.trim() || '기타';
+          const major =
+            g?.categories_sub?.categories_major?.category_major_name?.trim() ||
+            "기타";
           const avatar = avatarByUserId[r.author_id] || NO_IMAGE;
 
           authorAvatarMap[numId] = avatar; // 작성자 아바타 저장
@@ -191,21 +219,23 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
           return {
             id: numId,
-            title: g?.group_title ?? '(제목 없음)',
+            title: g?.group_title ?? "(제목 없음)",
             category: major,
             src: avatar, // 카드 썸네일 = 작성자 프로필
             status: statusKor,
             rating,
-            period: start && end ? `${start} - ${end}` : '',
-            content: r.pros_text ?? '',
+            period: start && end ? `${start} - ${end}` : "",
+            content: r.pros_text ?? "",
             tags: [...new Set(tagsByReview[r.review_id] ?? [])],
             created_at: r.created_at,
             empathy: countByReviewId[r.review_id] ?? 0,
-            created_id: nicknameByUserId[r.author_id] || '익명',
+            created_id: nicknameByUserId[r.author_id] || "익명",
           };
         });
 
-        const best = [...mapped].sort((a, b) => (b.empathy ?? 0) - (a.empathy ?? 0)).slice(0, 4);
+        const best = [...mapped]
+          .sort((a, b) => (b.empathy ?? 0) - (a.empathy ?? 0))
+          .slice(0, 4);
         const rest = mapped;
 
         const empathyByNum: Record<number, number> = {};
@@ -220,13 +250,13 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           setBestItems(best);
           setItems(rest);
           setNumToReviewId(numMap);
-          setEmpathyByNumId(eMap => ({ ...eMap, ...empathyByNum }));
+          setEmpathyByNumId((eMap) => ({ ...eMap, ...empathyByNum }));
           setLikedByNumId(likedByNum);
           setGroupSrcByNumId(groupSrcMap);
           setAuthorAvatarByNumId(authorAvatarMap);
         }
       } catch (e) {
-        console.error('[ReviewsListPage] load error', e);
+        console.error("[ReviewsListPage] load error", e);
         if (!ignore) {
           setBestItems([]);
           setItems([]);
@@ -256,19 +286,21 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
       if (!reviewId) return;
 
       const { data: tagRows, error } = await supabase
-        .from('group_review_tags')
-        .select('tag_code')
-        .eq('review_id', reviewId)
-        .order('tag_code', { ascending: true })
+        .from("group_review_tags")
+        .select("tag_code")
+        .eq("review_id", reviewId)
+        .order("tag_code", { ascending: true })
         .returns<TagRow[]>();
 
       if (error) {
-        console.error('[ReviewsListPage] modal tag reload error', error);
+        console.error("[ReviewsListPage] modal tag reload error", error);
         setModalTags(null);
         return;
       }
 
-      const labels = (tagRows ?? []).map(tr => labelByCode[tr.tag_code] ?? tr.tag_code);
+      const labels = (tagRows ?? []).map(
+        (tr) => labelByCode[tr.tag_code] ?? tr.tag_code,
+      );
       setModalTags([...new Set(labels)]);
     })();
   }, [openId, numToReviewId, labelByCode]);
@@ -276,7 +308,7 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   // 정렬
   const sortedItems = useMemo(() => {
     const base = [...items];
-    if (sortMode === 'latest') {
+    if (sortMode === "latest") {
       return base.sort(
         (a, b) =>
           (b.created_at ? +new Date(b.created_at) : 0) -
@@ -287,9 +319,11 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
       const ea = empathyByNumId[a.id] ?? 0;
       const eb = empathyByNumId[b.id] ?? 0;
       if (eb !== ea) return eb - ea;
-      if ((b.rating ?? 0) !== (a.rating ?? 0)) return (b.rating ?? 0) - (a.rating ?? 0);
+      if ((b.rating ?? 0) !== (a.rating ?? 0))
+        return (b.rating ?? 0) - (a.rating ?? 0);
       return (
-        (b.created_at ? +new Date(b.created_at) : 0) - (a.created_at ? +new Date(a.created_at) : 0)
+        (b.created_at ? +new Date(b.created_at) : 0) -
+        (a.created_at ? +new Date(a.created_at) : 0)
       );
     });
   }, [items, empathyByNumId, sortMode]);
@@ -305,17 +339,17 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
     if (likedByNumId.has(numId)) return;
 
     const { error } = await supabase
-      .from('review_likes')
+      .from("review_likes")
       .insert({ review_id: reviewId, user_id: myId });
     // @ts-ignore 중복코드(23505) 허용
-    if (error && error.code !== '23505') {
-      console.error('empathy insert error', error);
+    if (error && error.code !== "23505") {
+      console.error("empathy insert error", error);
       return;
     }
 
     // 성공 처리: 카운트/상태 반영
-    setEmpathyByNumId(prev => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
-    setLikedByNumId(prev => {
+    setEmpathyByNumId((prev) => ({ ...prev, [numId]: (prev[numId] ?? 0) + 1 }));
+    setLikedByNumId((prev) => {
       const next = new Set(prev);
       next.add(numId);
       return next;
@@ -323,14 +357,15 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
   };
 
   // 상세 변환 (모달은 항상 modalTags 우선)
-  const DEFAULT_CREATED_AT = '2025-09-30';
+  const DEFAULT_CREATED_AT = "2025-09-30";
   const toDetail = (v: ReviewItem): ReviewDetail => ({
     id: v.id,
+    review_uuid: numToReviewId[v.id], // 유비 추가
     title: v.title,
     category: v.category,
     src: groupSrcByNumId[v.id] || NO_IMAGE, // 모달 배경: 그룹 이미지
     rating: v.rating,
-    period: v.period ?? '',
+    period: v.period ?? "",
     content: v.content,
     tags: modalTags ?? v.tags ?? [],
     creator_id: v.created_id,
@@ -341,14 +376,23 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
   const selected: ReviewDetail | null = useMemo(() => {
     if (openId == null) return null;
-    const found = [...bestItems, ...items].find(v => v.id === openId);
+    const found = [...bestItems, ...items].find((v) => v.id === openId);
     return found ? toDetail(found) : null;
-  }, [openId, bestItems, items, empathyByNumId, modalTags, groupSrcByNumId, authorAvatarByNumId]);
+  }, [
+    openId,
+    bestItems,
+    items,
+    empathyByNumId,
+    modalTags,
+    groupSrcByNumId,
+    authorAvatarByNumId,
+  ]);
 
-  const sortOptions = ['최신순', '인기순'];
-  const mapLabelToValue = (label: string): 'latest' | 'popular' =>
-    label === '최신순' ? 'latest' : 'popular';
-  const mapValueToLabel = (val: 'latest' | 'popular') => (val === 'latest' ? '최신순' : '인기순');
+  const sortOptions = ["최신순", "인기순"];
+  const mapLabelToValue = (label: string): "latest" | "popular" =>
+    label === "최신순" ? "latest" : "popular";
+  const mapValueToLabel = (val: "latest" | "popular") =>
+    val === "latest" ? "최신순" : "인기순";
 
   return (
     <div className="mx-auto w-[1024px] pt-[120px] pb-[80px]">
@@ -374,12 +418,18 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
           <LoadingSpinner />
         </div>
       ) : bestItems.length === 0 ? (
-        <div className="text-gray-500 mb-[60px]">표시할 베스트 후기가 없습니다.</div>
+        <div className="text-gray-500 mb-[60px]">
+          표시할 베스트 후기가 없습니다.
+        </div>
       ) : (
         <ul className="grid gap-[15px] mb-[60px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {bestItems.map(item => (
+          {bestItems.map((item) => (
             <li key={item.id}>
-              <ReviewCard item={withEmpathy(item)} className="h-full" onClick={setOpenId} />
+              <ReviewCard
+                item={withEmpathy(item)}
+                className="h-full"
+                onClick={setOpenId}
+              />
             </li>
           ))}
         </ul>
@@ -399,11 +449,13 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
 
       {/* 관심사 섹션 */}
       <div className="flex items-center justify-between pb-[13px]">
-        <div className="text-black text-xl font-semibold">관심사에 맞춘 리뷰후기</div>
+        <div className="text-black text-xl font-semibold">
+          관심사에 맞춘 리뷰후기
+        </div>
         <ArrayDropdown
           options={sortOptions}
           value={mapValueToLabel(sortMode)}
-          onChange={label => setSortMode(mapLabelToValue(label))}
+          onChange={(label) => setSortMode(mapLabelToValue(label))}
         />
       </div>
       {loading ? (
@@ -412,9 +464,13 @@ export default function ReviewsListPage({ groupId }: { groupId?: string }) {
         <div className="text-gray-500">등록된 후기가 아직 없어요.</div>
       ) : (
         <ul className="grid gap-[15px] mb-[60px] grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
-          {sortedItems.map(item => (
+          {sortedItems.map((item) => (
             <li key={item.id}>
-              <ReviewCard item={withEmpathy(item)} className="h-full" onClick={setOpenId} />
+              <ReviewCard
+                item={withEmpathy(item)}
+                className="h-full"
+                onClick={setOpenId}
+              />
             </li>
           ))}
         </ul>

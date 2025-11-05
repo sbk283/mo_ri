@@ -18,7 +18,7 @@ function MeetingCurriculum({ curriculum }: MeetingCurriculumProps) {
 
   return (
     <div>
-      <h4 className="font-semibold mb-3">커리큘럼</h4>
+      <h4 className="font-semibold mb-3 text-xl">커리큘럼</h4>
       <div className="space-y-3">
         {curriculum.map((item, i) => {
           const isOpen = openIndex === i;

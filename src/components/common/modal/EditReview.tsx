@@ -1,7 +1,7 @@
 // src/components/common/modal/EditReview.tsx
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import type { ReviewItem } from '../ReviewCard';
+import { AnimatePresence, motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import type { ReviewItem } from "../ReviewCard";
 
 interface EditModalProps {
   open: boolean;
@@ -26,18 +26,20 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
   }, [open, review]);
 
   const availableTags = [
-    '초보자 추천',
-    '좋은 분위기',
-    '알찬 커리큘럼',
-    '친절한 모임장',
-    '전문적인 운영',
-    '재참여 하고싶어요',
-    '다양한 활동',
-    '강력 추천',
+    "초보자 추천",
+    "좋은 분위기",
+    "알찬 커리큘럼",
+    "친절한 모임장",
+    "전문적인 운영",
+    "재참여 하고싶어요",
+    "다양한 활동",
+    "강력 추천",
   ];
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
   };
 
   const handleSubmit = () => {
@@ -70,7 +72,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={e => {
+          onClick={(e) => {
             if (e.target === e.currentTarget) handleCancel(); // 오버레이 클릭도 취소로 동작
           }}
         >
@@ -79,13 +81,17 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="py-8 px-[50px]">
               {/* 헤더 */}
               <div className="text-center mb-6">
-                <h2 className="text-xxl font-[600] text-[#0689E8]">모임이 종료되었어요!</h2>
-                <p className="mt-2 text-md">여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.</p>
+                <h2 className="text-xxl font-[600] text-[#0689E8]">
+                  모임이 종료되었어요!
+                </h2>
+                <p className="mt-2 text-md">
+                  여러분의 후기가 다른 사용자에게 큰 도움이 됩니다.
+                </p>
               </div>
 
               <div className="border border-[#6C6C6C] mb-8" />
@@ -93,7 +99,9 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
                 <div className="flex items-center">
-                  <label className="text-xl font-semibold mr-3 ">{review.title}</label>
+                  <label className="text-xl font-semibold mr-3 ">
+                    {review.title}
+                  </label>
                   <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
                     {review.category}
                   </span>
@@ -102,7 +110,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                 {/* 별점 */}
                 <div className="flex items-center gap-2 leading-normal mt-6">
                   <span className="mr-5 text-md font-semibold">별점</span>
-                  {[1, 2, 3, 4, 5].map(n => (
+                  {[1, 2, 3, 4, 5].map((n) => (
                     <button
                       key={n}
                       type="button"
@@ -111,7 +119,11 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                       aria-label={`${n}점 주기`}
                     >
                       <img
-                        src={n <= rating ? '/images/star_gold.svg' : '/images/star_dark.svg'}
+                        src={
+                          n <= rating
+                            ? "/images/star_gold.svg"
+                            : "/images/star_dark.svg"
+                        }
                         alt={n <= rating ? `${n}점` : `${n}점 미만`}
                         className="w-6 h-6"
                       />
@@ -122,17 +134,19 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 해시태그 선택 */}
               <div className="my-6">
-                <label className="block text-sm font-semibold mb-3">해시태그 선택</label>
+                <label className="block text-sm font-semibold mb-3">
+                  해시태그 선택
+                </label>
                 <div className="flex flex-wrap gap-2">
-                  {availableTags.map(tag => (
+                  {availableTags.map((tag) => (
                     <button
                       key={tag}
                       type="button"
                       onClick={() => toggleTag(tag)}
                       className={`text-md px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
                         selectedTags.includes(tag)
-                          ? 'bg-white text-[#0689E8] border-[#0689E8]'
-                          : 'bg-white text-[#6C6C6C] border-[#6C6C6C]'
+                          ? "bg-white text-[#0689E8] border-[#0689E8]"
+                          : "bg-white text-[#6C6C6C] border-[#6C6C6C]"
                       }`}
                     >
                       # {tag}
@@ -143,12 +157,14 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 리뷰 내용 */}
               <div className="my-6">
-                <label className="block mb-2 text-sm font-semibold">어떤 점이 좋았나요?</label>
+                <label className="block mb-2 text-sm font-semibold">
+                  어떤 점이 좋았나요?
+                </label>
                 <textarea
                   className="w-full border border-[#A3A3A3] rounded-sm p-3 h-[145px] min-h-[145px] max-h-[145px] resize-none overflow-y-auto focus:outline-none focus:border-blue-500"
                   placeholder="모임의 어떤 점이 좋았는지 적어주세요."
                   value={content}
-                  onChange={e => handleContentChange(e.target.value)}
+                  onChange={(e) => handleContentChange(e.target.value)}
                 />
                 <div className="mt-1 text-right text-xs text-[#8C8C8C]">
                   {content.length}/{MAX_CONTENT_LENGTH}
@@ -159,14 +175,14 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="flex gap-10 justify-center">
                 <button
                   type="button"
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
                   onClick={handleCancel}
                 >
                   취소하기
                 </button>
                 <button
                   type="button"
-                  className="max-w-[154px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0689E8] transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0689E8] transition-colors"
                   onClick={handleSubmit}
                 >
                   등록하기

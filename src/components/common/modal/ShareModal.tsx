@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -13,10 +13,10 @@ function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === "Escape") onClose();
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -27,7 +27,7 @@ function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch (err) {
-      console.error('링크 복사 실패:', err);
+      console.error("링크 복사 실패:", err);
     }
   };
 
@@ -42,7 +42,7 @@ function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
       {/* 모달 */}
       <div
         className="relative z-10 w-[420px] rounded-xl bg-white p-6 shadow-lg"
-        onClick={e => e.stopPropagation()} // 모달 내부 클릭은 닫기 방지
+        onClick={(e) => e.stopPropagation()} // 모달 내부 클릭은 닫기 방지
       >
         <h2 className="mb-4 text-xl font-bold">공유하기</h2>
 
@@ -64,13 +64,17 @@ function ShareModal({ isOpen, onClose, shareUrl }: ShareModalProps) {
           </div>
 
           {/* 복사 완료 문구 */}
-          {copied && (
-            <p className="text-sm font-medium text-blue-600 ml-1">링크가 복사되었습니다.</p>
-          )}
+          <div className="min-h-[20px]">
+            {copied && (
+              <p className="text-sm font-medium text-blue-600 ml-1">
+                링크가 복사되었습니다.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* 하단 구분선 */}
-        <div className="mt-2 border-b border-gray-300" />
+        {/* <div className="mt-2 border-b border-gray-300" /> */}
 
         {/* 닫기 버튼 */}
         <div className="mt-4 flex justify-end">

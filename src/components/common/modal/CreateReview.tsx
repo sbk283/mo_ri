@@ -244,7 +244,8 @@ export default function CreateReview({
               <div className="py-8 px-[50px]">
                 {/* 헤더 */}
                 <div className="text-center mb-6">
-                  <h2 className="text-xxl font-[600] text-[#0689E8]">
+
+                  <h2 className="text-xxl font-[600] text-brand">
                     모임이 종료되었어요!
                   </h2>
                   <p className="mt-2 text-md">
@@ -260,6 +261,7 @@ export default function CreateReview({
                     <label className="text-xl font-semibold mr-3">
                       {groupTitle}
                     </label>
+
                     <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
                       {categoryName}
                     </span>
@@ -314,7 +316,7 @@ export default function CreateReview({
                           }
                           className={`text-md px-2 py-2 rounded-sm border font-semibold leading-none ${
                             selectedCodes.includes(tag.tag_code)
-                              ? "bg-white text-[#0689E8] border-[#0689E8]"
+                              ? "bg-white text-brand border-brand"
                               : "bg-white text-[#6C6C6C] border-[#6C6C6C]"
                           }`}
                           disabled={submitting || successOpen}
@@ -353,7 +355,7 @@ export default function CreateReview({
                 )}
 
                 {/* 버튼 */}
-                <div className="flex gap-[17px] justify-center">
+                <div className="flex gap-4 justify-center">
                   <button
                     type="button"
                     disabled={submitting || successOpen}
@@ -362,7 +364,7 @@ export default function CreateReview({
                       if (!successOpen) onClose();
                     }}
                   >
-                    취소하기
+                    취소
                   </button>
                   <button
                     type="button"

@@ -1,9 +1,9 @@
 // src/components/common/GroupDailyDetailEdit.tsx
-import { motion } from 'framer-motion';
-import { useMemo, useRef, useState, useEffect } from 'react';
-import DetailRichTextEditor from './DailyDetailRichTextEditor';
-import ConfirmModal from './common/modal/ConfirmModal';
-import type { Daily } from '../types/daily';
+import { motion } from "framer-motion";
+import { useMemo, useRef, useState, useEffect } from "react";
+import DetailRichTextEditor from "./DailyDetailRichTextEditor";
+import ConfirmModal from "./common/modal/ConfirmModal";
+import type { Daily } from "../types/daily";
 
 type Props = {
   daily: Daily;
@@ -19,20 +19,29 @@ const nbsp = /\u00A0/g;
 const brParas = /<p><br><\/p>/gi;
 const trimBr = /^(<br\s*\/?>)+|(<br\s*\/?>)+$/gi;
 
-const normTitle = (s?: string | null) => (s ?? '').replace(/\s+/g, ' ').trim();
+const normTitle = (s?: string | null) => (s ?? "").replace(/\s+/g, " ").trim();
 const normContent = (raw?: string | null) =>
-  (raw ?? '').replace(zws, '').replace(nbsp, ' ').replace(brParas, '').replace(trimBr, '').trim();
+  (raw ?? "")
+    .replace(zws, "")
+    .replace(nbsp, " ")
+    .replace(brParas, "")
+    .replace(trimBr, "")
+    .trim();
 
 const hasMeaningfulContent = (raw?: string | null) => {
   const s = normContent(raw);
   if (!s) return false;
   if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(s)) return true;
   if (/!\[[^\]]*]\(([^)\s]+)(?:\s*"[^"]*")?\)/.test(s)) return true;
-  const text = s.replace(/<[^>]*>/g, '').trim();
+  const text = s.replace(/<[^>]*>/g, "").trim();
   return text.length > 0;
 };
 
-export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props) {
+export default function GroupDailyDetailEdit({
+  daily,
+  onCancel,
+  onSave,
+}: Props) {
   const [form, setForm] = useState<Daily>({ ...daily });
   const [isContentValid, setIsContentValid] = useState<boolean>(
     hasMeaningfulContent(daily.content),
@@ -44,7 +53,10 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
   const isTitleOver = titleLength > TITLE_LIMIT;
 
   // 초기 스냅샷 (원본)
-  const initial = useRef<{ title: string; content: string }>({ title: '', content: '' });
+  const initial = useRef<{ title: string; content: string }>({
+    title: "",
+    content: "",
+  });
 
   // 실제로 수정이 있었는지 여부
   const [dirty, setDirty] = useState(false);
@@ -61,30 +73,34 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
   }, [daily.id, daily.title, daily.content]);
 
   // 현재 폼 값 기준으로 dirty 다시 계산
-  const recomputeDirty = (nextTitle?: string | null, nextContent?: string | null) => {
+  const recomputeDirty = (
+    nextTitle?: string | null,
+    nextContent?: string | null,
+  ) => {
     const base = initial.current;
     const currentTitle = normTitle(nextTitle ?? form.title);
     const currentContent = normContent(nextContent ?? form.content);
     const baseTitle = base.title;
     const baseContent = base.content;
 
-    const nextDirty = currentTitle !== baseTitle || currentContent !== baseContent;
+    const nextDirty =
+      currentTitle !== baseTitle || currentContent !== baseContent;
     setDirty(nextDirty);
   };
 
   const update = <K extends keyof Daily>(key: K, value: Daily[K]) =>
-    setForm(prev => ({ ...prev, [key]: value }));
+    setForm((prev) => ({ ...prev, [key]: value }));
 
   // 제목 변경
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    update('title', value as any);
+    update("title", value as any);
     recomputeDirty(value, undefined);
   };
 
   // 내용 변경
   const handleContentChange = (value: string) => {
-    update('content', value as any);
+    update("content", value as any);
     recomputeDirty(undefined, value);
   };
 
@@ -104,7 +120,9 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
   const handleRequestCancel = () => {
     if (isCreate) {
       // 새 작성: 아무것도 안 썼으면 바로 닫고, 뭔가 있으면 물어봄
-      const hasAny = normTitle(form.title).length > 0 || hasMeaningfulContent(form.content ?? '');
+      const hasAny =
+        normTitle(form.title).length > 0 ||
+        hasMeaningfulContent(form.content ?? "");
       if (hasAny) setOpenCancelConfirm(true);
       else onCancel();
       return;
@@ -141,7 +159,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
       initial={{ opacity: 0, x: 24 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -24 }}
-      transition={{ duration: 0.22, ease: 'easeOut' }}
+      transition={{ duration: 0.22, ease: "easeOut" }}
       className="w-full"
     >
       <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
@@ -149,15 +167,17 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
           <div className="flex gap-3">
             <input
               aria-label="제목"
-              value={form.title ?? ''}
+              value={form.title ?? ""}
               onChange={handleTitleChange}
               className={`flex-1 border rounded px-3 py-2 text-lg font-semibold ${
-                isTitleOver ? 'border-red-400' : 'border-gray-300'
+                isTitleOver ? "border-red-400" : "border-gray-300"
               }`}
               placeholder="제목을 입력해주세요."
               maxLength={TITLE_LIMIT}
             />
-            <span className={`text-sm ${isTitleOver ? 'text-red-500' : 'text-gray-400'}`}>
+            <span
+              className={`text-sm ${isTitleOver ? "text-red-500" : "text-gray-400"}`}
+            >
               {titleLength}/{TITLE_LIMIT}
             </span>
           </div>
@@ -166,7 +186,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
         <section className="px-8 py-6">
           <DetailRichTextEditor
             key={`daily-content-${daily.id}`}
-            value={form.content ?? ''}
+            value={form.content ?? ""}
             onChange={handleContentChange}
             placeholder="내용을 입력해주세요."
             disabled={false}
@@ -181,7 +201,7 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
           type="button"
           whileTap={{ scale: 0.96 }}
           onClick={handleRequestCancel}
-          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-[#0689E8] border border-[#0689E8] rounded-sm"
+          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-brand border border-brand rounded-sm"
         >
           취소
         </motion.button>
@@ -193,24 +213,24 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
           className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
             ${
               isFormValid
-                ? 'text-white bg-[#0689E8] border-[#0689E8] hover:opacity-90'
-                : 'bg-gray-300 text-white border-gray-300 cursor-not-allowed'
+                ? "text-white bg-brand border-brand hover:opacity-90"
+                : "bg-gray-300 text-white border-gray-300 cursor-not-allowed"
             }`}
         >
-          {isCreate ? '등록' : '등록'}
+          {isCreate ? "등록" : "등록"}
         </motion.button>
       </footer>
 
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? '취소하시겠습니까?' : '취소하시겠습니까?'}
+        title={isCreate ? "취소하시겠습니까?" : "취소하시겠습니까?"}
         message={
           isCreate
-            ? '작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?'
-            : '변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?'
+            ? "작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?"
+            : "변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?"
         }
-        confirmText="취소"
-        cancelText={isCreate ? '확인' : '확인'}
+        confirmText="확인"
+        cancelText={isCreate ? "취소" : "취소"}
         onConfirm={() => {
           setOpenCancelConfirm(false);
           onCancel();
@@ -220,13 +240,13 @@ export default function GroupDailyDetailEdit({ daily, onCancel, onSave }: Props)
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? '등록하시겠습니까?' : '등록하시겠습니까?'}
+        title={isCreate ? "등록하시겠습니까?" : "등록하시겠습니까?"}
         message={
           isCreate
-            ? '현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?'
-            : '현재 수정 내용을 저장합니다.\n등록하시겠습니까?'
+            ? "현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?"
+            : "현재 수정 내용을 저장합니다.\n등록하시겠습니까?"
         }
-        confirmText={isCreate ? '등록' : '등록'}
+        confirmText={isCreate ? "등록" : "등록"}
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

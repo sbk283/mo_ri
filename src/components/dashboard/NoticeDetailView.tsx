@@ -1,6 +1,6 @@
 // src/components/dashboard/NoticeDetailView.tsx
-import React, { useState } from 'react';
-import ConfirmModal from '../common/modal/ConfirmModal';
+import React, { useState } from "react";
+import ConfirmModal from "../common/modal/ConfirmModal";
 
 type NoticeDetailData = {
   title: string;
@@ -22,7 +22,7 @@ export type NoticeDetailViewProps = {
 export default function NoticeDetailView({
   notice,
   isHost,
-  boardType = 'notice',
+  boardType = "notice",
   onBack,
   onEdit,
   onDelete,
@@ -34,14 +34,16 @@ export default function NoticeDetailView({
       <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[450px]">
         <header className="px-8 pt-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold text-gray-800 leading-none mb-3">{notice.title}</h1>
+            <h1 className="text-xl font-bold text-gray-800 leading-none mb-3">
+              {notice.title}
+            </h1>
             {!isHost && (
               <span
                 className={`w-[50px] py-1 rounded-full font-semibold text-white text-sm flex items-center justify-center leading-4 ${
-                  notice.isRead ? 'bg-[#C4C4C4]' : 'bg-[#FF5252]'
+                  notice.isRead ? "bg-[#C4C4C4]" : "bg-[#FF5252]"
                 }`}
               >
-                {notice.isRead ? '읽음' : '안읽음'}
+                {notice.isRead ? "읽음" : "안읽음"}
               </span>
             )}
           </div>
@@ -58,7 +60,7 @@ export default function NoticeDetailView({
 
         <section className="px-8 py-8 text-gray-800 leading-relaxed">
           <div
-            dangerouslySetInnerHTML={{ __html: notice.content || '' }}
+            dangerouslySetInnerHTML={{ __html: notice.content || "" }}
             className="prose max-w-none ql-editor"
             style={{ padding: 0 }}
           />
@@ -70,16 +72,16 @@ export default function NoticeDetailView({
           &lt; 목록으로
         </button>
 
-        {(boardType !== 'notice' || isHost) && (
+        {(boardType !== "notice" || isHost) && (
           <div className="ml-auto flex py-2">
             <button
-              className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-[#0689E8] border border-[#0689E8] rounded-sm"
+              className="text-md w-[50px] h-[32px] flex justify-center items-center text-center mr-4 text-brand border border-brand rounded-sm"
               onClick={() => setOpenConfirm(true)}
             >
               삭제
             </button>
             <button
-              className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-[#0689E8] border border-[#0689E8] rounded-sm"
+              className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-brand border border-brand rounded-sm"
               onClick={onEdit}
             >
               수정
@@ -92,7 +94,7 @@ export default function NoticeDetailView({
       <ConfirmModal
         open={openConfirm}
         title="정말 삭제하시겠습니까?"
-        message={'삭제 후 되돌릴 수 없습니다.\n이 게시글을 삭제하시겠습니까?'}
+        message={"삭제 후 되돌릴 수 없습니다.\n이 게시글을 삭제하시겠습니까?"}
         confirmText="삭제"
         cancelText="취소"
         onConfirm={() => {

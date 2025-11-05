@@ -86,7 +86,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
             <div className="py-8 px-[50px]">
               {/* 헤더 */}
               <div className="text-center mb-6">
-                <h2 className="text-xxl font-[600] text-[#0689E8]">
+                <h2 className="text-xxl font-[600] text-brand">
                   모임이 종료되었어요!
                 </h2>
                 <p className="mt-2 text-md">
@@ -98,11 +98,12 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
-                <div className="flex items-center">
-                  <label className="text-xl font-semibold mr-3 ">
+
+                <div className="flex items-start">
+                  <label className="text-xl font-semibold mr-3 break-words whitespace-normal leading-tight max-w-[680px]">
                     {review.title}
                   </label>
-                  <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
+                  <span className="text-brand bg-white h-[28px] text-md px-2 py-1 rounded-sm border border-brand font-semibold flex-shrink-0">
                     {review.category}
                   </span>
                 </div>
@@ -145,7 +146,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
                       onClick={() => toggleTag(tag)}
                       className={`text-md px-[11px] py-[7px] rounded-sm border transition-colors font-semibold leading-none ${
                         selectedTags.includes(tag)
-                          ? "bg-white text-[#0689E8] border-[#0689E8]"
+                          ? "bg-white text-brand border-brand"
                           : "bg-white text-[#6C6C6C] border-[#6C6C6C]"
                       }`}
                     >
@@ -172,20 +173,20 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               </div>
 
               {/* 버튼 */}
-              <div className="flex gap-10 justify-center">
+              <div className="flex gap-4 justify-center">
                 <button
                   type="button"
                   className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
                   onClick={handleCancel}
                 >
-                  취소하기
+                  취소
                 </button>
                 <button
                   type="button"
                   className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0689E8] transition-colors"
                   onClick={handleSubmit}
                 >
-                  등록하기
+                  등록
                 </button>
               </div>
             </div>

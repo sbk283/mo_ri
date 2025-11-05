@@ -172,7 +172,7 @@ export default function ReviewDetailModal({
                     {review.title}
                   </h3>
                 </div>
-                <span className="text-sm font-semibold border border-[#FF5252] bg-white text-[#FF5252] px-2 py-0.5 rounded-sm text-center">
+                <span className="text-sm font-semibold border border-brand bg-white text-brand px-2 py-0.5 rounded-sm text-center">
                   {review.category}
                 </span>
               </div>
@@ -254,7 +254,7 @@ export default function ReviewDetailModal({
                   className={`w-[112px] h-[32px] inline-flex justify-center items-center rounded-sm font-semibold text-md ${
                     empathyDisabled
                       ? "bg-[#a3a3a3] text-white cursor-not-allowed"
-                      : "bg-[#0689E8] text-white hover:brightness-95"
+                      : "bg-brand text-white hover:brightness-95"
                   }`}
                 >
                   <img

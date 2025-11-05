@@ -41,12 +41,15 @@ export async function ensureMyParticipant(chatId: string, userId: string) {
 
     // 없으면 새로 참여 (joined_at = now)
     if (!existing) {
-      await supabase.from("direct_participants").insert({
-        chat_id: chatId,
-        user_id: userId,
-        left_at: null,
-        joined_at: new Date().toISOString(),
-      });
+      await supabase.from("direct_participants").upsert(
+        {
+          chat_id: chatId,
+          user_id: userId,
+          left_at: null,
+          joined_at: new Date().toISOString(),
+        },
+        { onConflict: "chat_id,user_id" },
+      );
       return;
     }
 
@@ -58,7 +61,6 @@ export async function ensureMyParticipant(chatId: string, userId: string) {
         .eq("chat_id", chatId)
         .eq("user_id", userId);
     }
-    // 이미 참여 중이면 아무 것도 하지 않음
   } catch (err) {
     console.error("ensureMyParticipant failed:", err);
   }
@@ -114,18 +116,18 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         .from("direct_chats")
         .select(
           `
-          chat_id,
-          group_id,
-          host_id,
-          member_id,
-          created_at,
-          updated_at,
-          created_by,
-          groups!inner(group_title),
-          host:user_profiles!direct_chats_host_id_fkey(nickname, avatar_url),
-          member:user_profiles!direct_chats_member_id_fkey(nickname, avatar_url),
-          direct_participants!inner(user_id, left_at)
-        `,
+            chat_id,
+            group_id,
+            host_id,
+            member_id,
+            created_at,
+            updated_at,
+            created_by,
+            groups!inner(group_title),
+            host:user_profiles!direct_chats_host_id_fkey(nickname, avatar_url),
+            member:user_profiles!direct_chats_member_id_fkey(nickname, avatar_url),
+            direct_participants!inner(user_id, left_at)
+          `,
         )
         .eq("direct_participants.user_id", user.id)
         .is("direct_participants.left_at", null)
@@ -258,22 +260,29 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
         myJoinedAtRef.current = joinedAt;
 
         // 컷오프 이후 메시지만 불러오기
-        const { data, error } = await supabase
+        const isFirstJoin = !participantData; // 존재X면 첫참여
+
+        let query = supabase
           .from("direct_messages")
           .select(
             `
-          message_id,
-          chat_id,
-          sender_id,
-          content,
-          created_at,
-          updated_at,
-          user_profiles:sender_id(nickname, avatar_url)
-        `,
+      message_id,
+      chat_id,
+      sender_id,
+      content,
+      created_at,
+      updated_at,
+      user_profiles:sender_id(nickname, avatar_url)
+    `,
           )
           .eq("chat_id", chatId)
-          .gte("created_at", joinedAt)
           .order("created_at", { ascending: true });
+
+        if (!isFirstJoin && joinedAt) {
+          query = query.gte("created_at", joinedAt);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -324,22 +333,72 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // 3. 메시지 전송 (자기 화면 즉시 반영)
   // ------------------------------------------------------
   const sendMessage = useCallback(
-    async (chatId: string, content: string): Promise<void> => {
+    async (chatId: string | null, content: string): Promise<void> => {
       if (!user?.id) return;
       try {
-        // 상대가 나가 있었다면 먼저 재참여 처리하여 joined_at이 메시지 생성 시각보다 앞서도록 보장
-        // 주의: rejoin_counterpart는 "left_at IS NOT NULL"일 때만 joined_at을 now()로 갱신하도록 서버에서 보강 권장
-        await supabase.rpc("rejoin_counterpart", {
-          p_chat_id: chatId,
-          p_sender: user.id,
-        });
+        let finalChatId = chatId;
 
-        // 내 참가 상태도 보장 (본인 레코드 없거나 나가있던 경우 복구)
-        await ensureMyParticipant(chatId, user.id);
+        // 채팅방이 존재하지 않으면 자동 생성
+        if (!finalChatId) {
+          // A와 B의 조합으로 기존 방 있는지 확인
+          const { data: existing } = await supabase
+            .from("direct_chats")
+            .select("chat_id, host_id, member_id, group_id")
+            .or(
+              `and(host_id.eq.${user.id},member_id.neq.${user.id}),
+             and(member_id.eq.${user.id},host_id.neq.${user.id})`,
+            )
+            .maybeSingle();
 
-        // 메시지 INSERT (이제 created_at >= 상대의 joined_at이 성립하므로 컷오프에 걸리지 않음)
+          if (existing?.chat_id) {
+            finalChatId = existing.chat_id;
+          } else {
+            // 방이 없으면 새로 생성
+            const { data: created, error: createErr } = await supabase
+              .from("direct_chats")
+              .insert({
+                host_id: user.id, // 보낸 사람을 host로 지정
+                member_id: null, // 나중에 상대방 연결
+                created_by: user.id,
+                group_id: null,
+              })
+              .select("chat_id")
+              .single();
+
+            if (createErr) throw createErr;
+            finalChatId = created.chat_id;
+            console.log("[sendMessage] 새로운 채팅방 생성됨:", finalChatId);
+          }
+        }
+
+        // 내 참가 상태 보장
+        await ensureMyParticipant(finalChatId!, user.id);
+
+        // 상대방 참가자 보장 (없으면 rejoin_counterpart로 추가)
+        const { data: chatInfo } = await supabase
+          .from("direct_chats")
+          .select("host_id, member_id, group_id")
+          .eq("chat_id", finalChatId)
+          .maybeSingle();
+
+        if (chatInfo) {
+          const recipientId =
+            chatInfo.host_id === user.id
+              ? chatInfo.member_id
+              : chatInfo.host_id;
+
+          // 참가자 보장 강제 처리
+          if (recipientId && recipientId !== user.id) {
+            await supabase.rpc("rejoin_counterpart", {
+              p_chat_id: finalChatId!,
+              p_sender: user.id,
+            });
+          }
+        }
+
+        // 메시지 INSERT
         const insertData: directMessagesInsert = {
-          chat_id: chatId,
+          chat_id: finalChatId!,
           sender_id: user.id,
           content,
         };
@@ -354,6 +413,7 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
 
         if (error) throw error;
 
+        // 내 화면 즉시 반영
         const profile = Array.isArray(data.user_profiles)
           ? (data.user_profiles[0] as UserProfileMinimal)
           : (data.user_profiles as UserProfileMinimal | null);
@@ -369,42 +429,32 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
           avatar_url: profile?.avatar_url ?? null,
         };
 
-        // 본인 화면에 즉시 추가
         setMessages((prev) => [...prev, enriched]);
 
-        // 2025-11-04: 상대방 화면에 알림을 보내자
-        // 채팅방 정보 조회하여 상대방 ID 확인
-        const { data: chatInfo } = await supabase
-          .from("direct_chats")
-          .select("host_id, member_id, group_id")
-          .eq("chat_id", chatId)
-          .maybeSingle();
-
+        // 상대방에게 알림 전송
         if (chatInfo) {
-          // 상대방 ID 결정 (본인이 아닌 사람)
           const recipientId =
             chatInfo.host_id === user.id
               ? chatInfo.member_id
               : chatInfo.host_id;
 
-          // 상대방이 존재하고 본인이 아닌 경우에만 알림 전송
           if (recipientId && recipientId !== user.id) {
-            // 발신자 닉네임 가져오기
             const senderNickname = profile?.nickname ?? "알 수 없음";
-
-            // 2025-11-04: insertNotification 함수 사용 (기존 알림 시스템과 일관성 유지)
-            // 참고: 상대방이 참가하지 않아도 알림이 전달되도록 함
-            const sendAleram = {
-              userId: recipientId, // 알림 받을 유저 ID
-              type: "chat", // 알림 타입 (ChatNotificationPanel에서 처리)
-              title: "새로운 채팅", // 알림 제목
-              message: `${senderNickname}님으로부터 메시지가 도착했습니다: ${content.substring(0, 50)}${content.length > 50 ? "..." : ""}`, // 알림 메시지
-              groupId: chatInfo.group_id, // 그룹 ID (ChatNotificationPanel에서 `/chat/${group_id}/${target_id}`로 이동)
-              targetId: chatId, // 채팅방 ID (target_id로 사용)
-            };
-            await insertNotification({ ...sendAleram, type: "chat" });
+            await insertNotification({
+              userId: recipientId,
+              type: "chat",
+              title: "새로운 채팅",
+              message: `${senderNickname}님으로부터 메시지가 도착했습니다: ${content.substring(0, 50)}${
+                content.length > 50 ? "..." : ""
+              }`,
+              groupId: chatInfo.group_id,
+              targetId: finalChatId,
+            });
           }
         }
+
+        // 목록 즉시 갱신 (채팅방 새로 생겼을 때 반영)
+        fetchChatsRef.current?.();
       } catch (err) {
         console.error("sendMessage error:", err);
       }
@@ -415,122 +465,6 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
   // ------------------------------------------------------
   // 4. 채팅방 생성 또는 재활용 (쌍당 1개 방 보장)
   // ------------------------------------------------------
-  // const findOrCreateChat = useCallback(
-  //   async (
-  //     groupId: string,
-  //     hostId: string,
-  //     memberId: string,
-  //   ): Promise<string> => {
-  //     try {
-  //       // 1️⃣ 기존 방 존재 여부 확인 (host/member 순서 무관)
-  //       //    주의: .or()는 개행/스페이스 없이 한 줄로!
-  //       const orFilter = `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`;
-
-  //       const { data: existing, error: selErr } = await supabase
-  //         .from("direct_chats")
-  //         .select("chat_id")
-  //         .eq("group_id", groupId)
-  //         .or(orFilter)
-  //         .limit(1)
-  //         .maybeSingle();
-
-  //       if (selErr) {
-  //         // select 문법 오류 등은 여기서 드러남 (400 방지)
-  //         throw selErr;
-  //       }
-
-  //       if (existing?.chat_id) {
-  //         await ensureMyParticipant(existing.chat_id, user?.id ?? "");
-  //         return existing.chat_id;
-  //       }
-
-  //       // 2️⃣ 없으면 insert (upsert ❌) — 동시성 충돌(23505) 시 재조회로 회복
-  //       const { data: inserted, error: insErr } = await supabase
-  //         .from("direct_chats")
-  //         .insert({
-  //           group_id: groupId,
-  //           host_id: hostId,
-  //           member_id: memberId,
-  //           created_by: user?.id ?? null,
-  //         })
-  //         .select("chat_id")
-  //         .single();
-
-  //       if (insErr) {
-  //         // 동시성으로 누군가 먼저 만든 경우: 23505 → 곧바로 재조회
-  //         // (DB 유니크 인덱스: idx_direct_chats_unique_pair_norm)
-  //         // 다른 에러면 그대로 throw
-  //         // @ts-ignore - supabase error code 문자열 접근
-  //         if (insErr.code === "23505") {
-  //           const { data: fallback } = await supabase
-  //             .from("direct_chats")
-  //             .select("chat_id")
-  //             .eq("group_id", groupId)
-  //             .or(orFilter)
-  //             .limit(1)
-  //             .maybeSingle();
-
-  //           if (fallback?.chat_id) {
-  //             await ensureMyParticipant(fallback.chat_id, user?.id ?? "");
-  //             return fallback.chat_id;
-  //           }
-  //         }
-  //         throw insErr;
-  //       }
-
-  //       await ensureMyParticipant(inserted.chat_id, user?.id ?? "");
-  //       return inserted.chat_id;
-  //     } catch (err) {
-  //       console.error("findOrCreateChat error:", err);
-  //       throw err;
-  //     }
-  //   },
-  //   [user?.id],
-  // );
-
-  // const findOrCreateChat = useCallback(
-  //   async (groupId: string, hostId: string, memberId: string): Promise<string> => {
-  //     try {
-  //       // 1️⃣ 기존 방 존재 여부 확인
-  //       const { data: existing } = await supabase
-  //         .from('direct_chats')
-  //         .select('chat_id')
-  //         .eq('group_id', groupId)
-  //         .or(
-  //           `and(host_id.eq.${hostId},member_id.eq.${memberId}),
-  //          and(host_id.eq.${memberId},member_id.eq.${hostId})`,
-  //         )
-  //         .maybeSingle();
-
-  //       if (existing?.chat_id) {
-  //         await ensureMyParticipant(existing.chat_id, user?.id ?? '');
-  //         return existing.chat_id;
-  //       }
-
-  //       // 2️⃣ 없으면 insert (upsert ❌)
-  //       const { data: inserted, error } = await supabase
-  //         .from('direct_chats')
-  //         .insert({
-  //           group_id: groupId,
-  //           host_id: hostId,
-  //           member_id: memberId,
-  //           created_by: user?.id ?? null,
-  //         })
-  //         .select('chat_id')
-  //         .single();
-
-  //       if (error) throw error;
-
-  //       await ensureMyParticipant(inserted.chat_id, user?.id ?? '');
-  //       return inserted.chat_id;
-  //     } catch (err: any) {
-  //       console.error('findOrCreateChat error:', err);
-  //       throw err;
-  //     }
-  //   },
-  //   [user?.id],
-  // );
-
   const findOrCreateChat = useCallback(
     async (
       groupId: string,
@@ -538,56 +472,89 @@ export function DirectChatProvider({ children }: PropsWithChildren) {
       memberId: string,
     ): Promise<string> => {
       try {
-        const { data: existing, error: selErr } = await supabase
-          .from("direct_chats")
-          .select("chat_id")
-          .eq("group_id", groupId)
-          .or(
-            `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
-          )
+        // FK 오류 방지: user_profiles 존재 확인
+        const { data: profile } = await supabase
+          .from("user_profiles")
+          .select("user_id")
+          .eq("user_id", user?.id ?? "")
           .maybeSingle();
+
+        if (!profile) {
+          console.warn(
+            "[findOrCreateChat] user_profiles에 없는 사용자입니다. Chat 생성 중단",
+          );
+          return "";
+        }
+
+        // 기존 채팅방 존재 여부 우선 확인
+        const { data: chatsInGroup, error: selErr } = await supabase
+          .from("direct_chats")
+          .select("chat_id, host_id, member_id")
+          .eq("group_id", groupId);
 
         if (selErr) throw selErr;
 
+        const existing = chatsInGroup?.find(
+          (c) =>
+            (c.host_id === hostId && c.member_id === memberId) ||
+            (c.host_id === memberId && c.member_id === hostId),
+        );
+
+        if (selErr) throw selErr;
+
+        // 이미 있으면 참가자 보장 후 반환
         if (existing?.chat_id) {
           await ensureMyParticipant(existing.chat_id, user?.id ?? "");
           return existing.chat_id;
         }
 
-        const newChat: directChatsInsert = {
-          group_id: groupId,
-          host_id: hostId,
-          member_id: memberId,
-          created_by: user?.id ?? null,
-        };
-
-        const { data: upserted, error: upsertErr } = await supabase
+        // 없으면 방 새로 생성 + 양쪽 참가자 보장
+        const { data: created, error: createErr } = await supabase
           .from("direct_chats")
-          .upsert(newChat, { onConflict: "group_id,user_low,user_high" })
+          .insert({
+            group_id: groupId,
+            host_id: hostId,
+            member_id: memberId,
+            created_by: user?.id ?? null,
+          })
           .select("chat_id")
           .single();
 
-        if (upsertErr) throw upsertErr;
+        if (createErr) throw createErr;
 
-        await ensureMyParticipant(upserted.chat_id, user?.id ?? "");
+        // 나 (보낸 사람) 참가자 보장
+        await ensureMyParticipant(created.chat_id, user?.id ?? "");
 
-        return upserted.chat_id;
-      } catch (err: unknown) {
-        const { data: fallback } = await supabase
-          .from("direct_chats")
-          .select("chat_id")
-          .eq("group_id", groupId)
-          .or(
-            `and(host_id.eq.${hostId},member_id.eq.${memberId}),and(host_id.eq.${memberId},member_id.eq.${hostId})`,
-          )
-          .maybeSingle();
+        // 상대방 참가자 보장 (없으면 자동 생성)
+        await supabase.rpc("rejoin_counterpart", {
+          p_chat_id: created.chat_id,
+          p_sender: user?.id,
+        });
 
-        if (fallback?.chat_id) {
-          await ensureMyParticipant(fallback.chat_id, user?.id ?? "");
-          return fallback.chat_id;
+        fetchChatsRef.current?.();
+        return created.chat_id;
+      } catch (err: any) {
+        if (err?.status === 409) {
+          console.warn(
+            "[findOrCreateChat] 409 Conflict 발생, 기존 채팅 재조회 시도",
+          );
+          const { data: fallback } = await supabase
+            .from("direct_chats")
+            .select("chat_id")
+            .eq("group_id", groupId)
+            .or(
+              `and(host_id.eq.${hostId},member_id.eq.${memberId}),
+             and(host_id.eq.${memberId},member_id.eq.${hostId})`,
+            )
+            .maybeSingle();
+
+          if (fallback?.chat_id) {
+            await ensureMyParticipant(fallback.chat_id, user?.id ?? "");
+            return fallback.chat_id;
+          }
         }
         console.error("findOrCreateChat error:", err);
-        throw err;
+        return "";
       }
     },
     [user?.id],

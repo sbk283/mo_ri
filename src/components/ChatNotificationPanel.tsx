@@ -47,7 +47,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
 
-  /** 🔹 RPC 기반 알림 불러오기 (모든 알림 타입 포함) */
+  /** RPC 기반 알림 불러오기 (모든 알림 타입 포함) */
   const fetchNotifications = useCallback(async (): Promise<void> => {
     if (!userId) return;
     setLoading(true);
@@ -64,7 +64,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     const result: Notification[] = data ?? [];
     setNotifications(result);
 
-    // 🔸 DB에 insert되지 않는 알림도 포함해 unreadCount 계산
+    // DB에 insert되지 않는 알림도 포함해 unreadCount 계산
     const totalUnread = result.filter(
       (n: Notification) => n.unread && n.unread > 0,
     ).length;
@@ -155,10 +155,41 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
     transition: { duration: 0.4, ease: "easeInOut" as Transition["ease"] },
   };
 
-  /** 🔹 전체 삭제 (로컬 상태만 초기화) */
-  const handleClearAll = () => {
-    setNotifications([]);
-    onUnreadChange?.(0);
+  /** 전체 삭제 (hard delete로 처리함) */
+  const handleClearAll = async () => {
+    if (!userId) return;
+
+    try { 
+      // 알림 테이블 전부 삭제
+      const { error: deleteError } = await supabase
+        .from("notifications")
+        .delete()
+        .eq("user_id", userId);
+
+      if (deleteError) {
+        console.error("알림 삭제 실패:", deleteError.message);
+        return;
+      }
+
+      // 마지막 전체삭제 시각 갱신 (유저당 1행 유지)
+      const { error: upsertError } = await supabase
+        .from("user_notifications_cleared")
+        .upsert({
+          user_id: userId,
+          cleared_at: new Date().toISOString(),
+        });
+
+      if (upsertError) {
+        console.error("전체삭제 시각 기록 실패:", upsertError.message);
+        return;
+      }
+
+      // 프론트 상태 비우기
+      setNotifications([]);
+      onUnreadChange?.(0);
+    } catch (err) {
+      console.error("알림 전체삭제 중 오류:", err);
+    }
   };
 
   const handlePanelClick = (e: React.MouseEvent) => e.stopPropagation();

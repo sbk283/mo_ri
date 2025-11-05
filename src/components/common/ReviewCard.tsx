@@ -4,7 +4,7 @@ export type ReviewItem = {
   id: number;
   title: string;
   category: string;
-  status: '진행중' | '종료';
+  status: "진행중" | "종료";
   src: string; // ← 작성자 프로필 이미지 URL
   rating: 1 | 2 | 3 | 4 | 5;
   period: string;
@@ -17,7 +17,7 @@ export type ReviewItem = {
 
 export function ReviewCard({
   item,
-  className = '',
+  className = "",
   onClick,
 }: {
   item: ReviewItem;
@@ -27,8 +27,8 @@ export function ReviewCard({
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (img.dataset.fallbackApplied) return;
-    img.dataset.fallbackApplied = 'true';
-    img.src = '/images/no_image.jpg';
+    img.dataset.fallbackApplied = "true";
+    img.src = "/images/no_image.jpg";
   };
 
   return (
@@ -36,16 +36,19 @@ export function ReviewCard({
       type="button"
       onClick={() => onClick?.(item.id)}
       className={[
-        'w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-sm border border-[#A3A3A3] bg-white text-left',
-        'focus:outline-none',
+        "w-[240px] h-[280px] overflow-hidden relative cursor-pointer rounded-sm border border-[#A3A3A3] bg-white text-left",
+        "focus:outline-none",
         className,
-      ].join(' ')}
+      ].join(" ")}
       aria-label={`후기 카드: ${item.title}`}
       title={item.title}
     >
       {/* 상단 헤더 영역 */}
       <div className="bg-[#2A91E5] h-[72px] pt-[14px] px-[27px] relative">
-        <p className="text-white font-semibold text-md mb-1 line-clamp-1" title={item.title}>
+        <p
+          className="text-white font-semibold text-md mb-1 line-clamp-1"
+          title={item.title}
+        >
           {item.title}
         </p>
         <span className="border border-brand-red bg-white text-brand-red font-semibold text-sm px-[4px] py-[1px] rounded-sm">
@@ -54,8 +57,8 @@ export function ReviewCard({
 
         {/* 작성자 프로필 */}
         <img
-          className="absolute top-8 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
-          src={item.src || '/images/no_image.jpg'}
+          className="absolute top-9 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
+          src={item.src || "/images/no_image.jpg"}
           alt={`${item.created_id} 프로필`}
           onError={handleImgError}
           loading="lazy"
@@ -65,7 +68,9 @@ export function ReviewCard({
       {/* 본문 영역 */}
       <div className="px-[27px] py-[17px] relative h-[calc(280px-72px)]">
         <img className="mb-1" src="../colon.svg" alt="따옴표" />
-        <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">{item.content}</p>
+        <p className="line-clamp-6 text-sm text-[#8c8c8c] pr-1">
+          {item.content}
+        </p>
 
         {/* 작성자 하단 고정 */}
         <p className="absolute bottom-[27px] left-[27px] text-[#B8641B] text-sm">

@@ -244,6 +244,7 @@ export default function CreateReview({
               <div className="py-8 px-[50px]">
                 {/* 헤더 */}
                 <div className="text-center mb-6">
+
                   <h2 className="text-xxl font-[600] text-brand">
                     모임이 종료되었어요!
                   </h2>
@@ -260,7 +261,8 @@ export default function CreateReview({
                     <label className="text-xl font-semibold mr-3">
                       {groupTitle}
                     </label>
-                    <span className="text-brand bg-white h-[28px] text-md font-semibold px-2 py-1 rounded-sm border border-brand">
+
+                    <span className="text-white bg-brand-red h-[28px] text-md px-2 py-1 rounded-sm">
                       {categoryName}
                     </span>
                   </div>
@@ -357,7 +359,7 @@ export default function CreateReview({
                   <button
                     type="button"
                     disabled={submitting || successOpen}
-                    className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-brand text-brand rounded-sm hover:bg-blue-50 transition-colors disabled:opacity-60"
+                    className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors disabled:opacity-60"
                     onClick={() => {
                       if (!successOpen) onClose();
                     }}
@@ -367,10 +369,10 @@ export default function CreateReview({
                   <button
                     type="button"
                     disabled={submitting || successOpen}
-                    className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-brand text-white rounded-sm hover:bg-[#0577c9] transition-colors disabled:opacity-60"
+                    className="max-w-[154px] h-[46px] px-4  flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0577c9] transition-colors disabled:opacity-60"
                     onClick={handleSubmit}
                   >
-                    {submitting ? "등록 중..." : "등록"}
+                    {submitting ? "등록 중..." : "등록하기"}
                   </button>
                 </div>
               </div>

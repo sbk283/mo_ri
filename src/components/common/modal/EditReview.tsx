@@ -98,6 +98,7 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
 
               {/* 제목/카테고리 + 별점 */}
               <div className="my-6">
+
                 <div className="flex items-start">
                   <label className="text-xl font-semibold mr-3 break-words whitespace-normal leading-tight max-w-[680px]">
                     {review.title}
@@ -175,14 +176,14 @@ function EditReview({ open, onClose, onConfirm, review }: EditModalProps) {
               <div className="flex gap-4 justify-center">
                 <button
                   type="button"
-                  className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] border border-brand text-brand rounded-sm hover:bg-blue-50 transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] border border-[#0689E8] text-[#0689E8] rounded-sm hover:bg-blue-50 transition-colors"
                   onClick={handleCancel}
                 >
                   취소
                 </button>
                 <button
                   type="button"
-                  className="max-w-[150px] h-[46px] px-4 py-3 flex-1 text-[17px] bg-brand text-white rounded-sm hover:bg-brand transition-colors"
+                  className="max-w-[154px] h-[46px] px-4 flex-1 text-[17px] bg-[#0689E8] text-white rounded-sm hover:bg-[#0689E8] transition-colors"
                   onClick={handleSubmit}
                 >
                   등록

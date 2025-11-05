@@ -221,7 +221,7 @@ const Header: React.FC = () => {
                 {/* 로그아웃 */}
                 <button
                   onClick={handleLogout}
-                  className="font-bold text-sm border px-3 py-2 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
+                  className="font-bold text-sm border px-3 py-1.5 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
                 >
                   로그아웃
                 </button>
@@ -229,7 +229,7 @@ const Header: React.FC = () => {
             ) : (
               <Link
                 to="/login"
-                className="font-bold text-sm px-3 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
+                className="font-bold text-sm px-3 py-1.5 rounded-lg bg-brand text-white hover:bg-blue-600"
               >
                 로그인
               </Link>

@@ -47,8 +47,8 @@ function CategoryMenuSidebar() {
     const pathParts = location.pathname.split("/").filter(Boolean);
     const slug = pathParts[pathParts.length - 1];
 
-    // 전체보기 처리
-    if (slug === "all") {
+    // 전체보기
+    if (location.pathname === "/grouplist" || slug === "all") {
       setActiveMain("전체보기");
       setActiveSub("");
       setOpenCategory("");

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { Session, User } from "@supabase/supabase-js";
 import { getProfile } from "../lib/profile";
 import { supabase } from "../lib/supabase";
@@ -19,6 +19,9 @@ const Header: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   // 사용자 세션 초기화
   const initUserSession = async (): Promise<void> => {
@@ -98,9 +101,9 @@ const Header: React.FC = () => {
         },
         (payload) => {
           const n = payload.new;
-          console.log("[Header 🔴 notifications 이벤트]", n);
+          console.log("[Header notifications 이벤트]", n);
 
-          // 1️⃣ chat 타입 포함 — 모든 알림 타입 허용
+          // chat 타입 포함 — 모든 알림 타입 허용
           if (
             [
               "chat",
@@ -182,16 +185,36 @@ const Header: React.FC = () => {
           {/* 메뉴 */}
           <div className="hidden md:flex items-center gap-9">
             <nav className="flex gap-6 text-gray-700">
-              <Link to="/groupmanager" className="font-bold hover:text-brand">
+              <Link
+                to="/groupmanager"
+                className={`font-bold hover:text-brand ${
+                  isActive("/groupmanager") ? "text-brand" : ""
+                }`}
+              >
                 모임관리
               </Link>
-              <Link to="/reviews" className="font-bold hover:text-brand">
+              <Link
+                to="/reviews"
+                className={`font-bold hover:text-brand ${
+                  isActive("/reviews") ? "text-brand" : ""
+                }`}
+              >
                 후기리뷰
               </Link>
-              <Link to="/grouplist" className="font-bold hover:text-brand">
+              <Link
+                to="/grouplist"
+                className={`font-bold hover:text-brand ${
+                  isActive("/grouplist") ? "text-brand" : ""
+                }`}
+              >
                 모임리스트
               </Link>
-              <Link to="/mypage" className="font-bold hover:text-brand">
+              <Link
+                to="/mypage"
+                className={`font-bold hover:text-brand ${
+                  isActive("/mypage") ? "text-brand" : ""
+                }`}
+              >
                 마이페이지
               </Link>
             </nav>
@@ -221,7 +244,7 @@ const Header: React.FC = () => {
                 {/* 로그아웃 */}
                 <button
                   onClick={handleLogout}
-                  className="font-bold text-sm border px-3 py-1.5 rounded-lg border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
+                  className="font-bold text-sm border px-3 py-1.5 rounded-sm border-brand text-brand hover:bg-blue-600 hover:text-white hover:border-blue-600 transition"
                 >
                   로그아웃
                 </button>
@@ -323,7 +346,7 @@ const Header: React.FC = () => {
               <Link
                 to="/login"
                 onClick={() => setIsMenuOpen(false)}
-                className="font-bold text-sm px-3 py-2 rounded-lg bg-brand text-white hover:bg-blue-600"
+                className="font-bold text-sm px-3 py-2 rounded-sm bg-brand text-white hover:bg-blue-600"
               >
                 로그인
               </Link>

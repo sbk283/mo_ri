@@ -132,7 +132,7 @@ function MyInquiriesPage() {
 
   // 삭제하기
   const handleDelete = async (id: string) => {
-    if (!window.confirm("정말로 이 문의를 삭제하시겠습니까?")) return;
+    // if (!window.confirm("정말로 이 문의를 삭제하시겠습니까?")) return;
 
     try {
       // 삭제할 문의 정보 가져오기
@@ -212,7 +212,7 @@ function MyInquiriesPage() {
 
       if (error) {
         console.error("문의 수정 실패:", error.message);
-        alert("수정 중 오류가 발생했습니다.");
+        // alert("수정 중 오류가 발생했습니다.");
         return;
       }
 
@@ -534,7 +534,7 @@ function MyInquiriesPage() {
               </div>
               <div className="flex justify-end mt-[16px]">
                 <button
-                  onClick={() => handleDelete(selectedInquiry.inquiry_id)}
+                  onClick={() => handleDeleteClick(selectedInquiry.inquiry_id)}
                   className="flex px-[35px] py-[8px] bg-brand rounded-[5px] text-white font-bold text-lg"
                 >
                   문의 삭제
@@ -578,37 +578,6 @@ function MyInquiriesPage() {
                   </button>
                 </>
               )}
-              <ConfirmModal
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-                onConfirm={
-                  modalType === "alert"
-                    ? () => setModalOpen(false)
-                    : handleConfirm
-                }
-                title={
-                  modalType === "delete"
-                    ? "문의 내역을 삭제하시겠습니까?"
-                    : modalType === "save"
-                      ? "수정 내용을 저장하시겠습니까?"
-                      : modalType === "cancel"
-                        ? "수정을 취소하시겠습니까?"
-                        : ""
-                }
-                message={
-                  modalType === "alert"
-                    ? modalMessage
-                    : modalType === "delete"
-                      ? "삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?"
-                      : modalType === "save"
-                        ? "수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?"
-                        : modalType === "cancel"
-                          ? "변경된 내용이 사라집니다.\n정말 취소하시겠습니까?"
-                          : ""
-                }
-                confirmText="확인"
-                cancelText="취소"
-              />
             </div>
           )}
         </div>
@@ -617,6 +586,35 @@ function MyInquiriesPage() {
           1:1 문의 내역 상세보기를 눌러 확인하세요.
         </div>
       )}
+      <ConfirmModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={
+          modalType === "alert" ? () => setModalOpen(false) : handleConfirm
+        }
+        title={
+          modalType === "delete"
+            ? "문의 내역을 삭제하시겠습니까?"
+            : modalType === "save"
+              ? "수정 내용을 저장하시겠습니까?"
+              : modalType === "cancel"
+                ? "수정을 취소하시겠습니까?"
+                : ""
+        }
+        message={
+          modalType === "alert"
+            ? modalMessage
+            : modalType === "delete"
+              ? "삭제 후에는 복구할 수 없습니다.\n정말 삭제하시겠습니까?"
+              : modalType === "save"
+                ? "수정된 내용으로 저장됩니다.\n계속 진행하시겠습니까?"
+                : modalType === "cancel"
+                  ? "변경된 내용이 사라집니다.\n정말 취소하시겠습니까?"
+                  : ""
+        }
+        confirmText="확인"
+        cancelText="취소"
+      />
     </MyPageLayout>
   );
 }

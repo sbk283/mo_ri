@@ -132,10 +132,7 @@ function MyInquiriesPage() {
 
   // 삭제하기
   const handleDelete = async (id: string) => {
-    // if (!window.confirm("정말로 이 문의를 삭제하시겠습니까?")) return;
-
     try {
-      // 삭제할 문의 정보 가져오기
       const { data: inquiryData, error: fetchError } = await supabase
         .from("user_inquiries")
         .select("inquiry_file_urls")
@@ -144,37 +141,68 @@ function MyInquiriesPage() {
 
       if (fetchError) throw fetchError;
 
-      let files: { path: string; originalName: string }[] = [];
-      // 파일 삭제
       if (inquiryData?.inquiry_file_urls) {
+        let parsedFiles: { path: string; originalName?: string }[] = [];
+
         try {
-          const parsed = JSON.parse(inquiryData.inquiry_file_urls);
-          files = Array.isArray(parsed) ? parsed : [parsed];
-        } catch {
-          files = [
-            { path: inquiryData.inquiry_file_urls, originalName: "파일" },
-          ];
+          // 1️⃣ 문자열 파싱
+          let temp = inquiryData.inquiry_file_urls;
+          if (typeof temp === "string") temp = JSON.parse(temp);
+
+          // 2️⃣ 내부 요소도 다시 파싱 (문자열 배열 형태 대비)
+          if (Array.isArray(temp)) {
+            parsedFiles = temp
+              .map((f) => {
+                if (typeof f === "string") {
+                  try {
+                    return JSON.parse(f);
+                  } catch {
+                    return null;
+                  }
+                }
+                return f;
+              })
+              .filter((f) => f && f.path);
+          } else if (temp && temp.path) {
+            parsedFiles = [temp];
+          }
+        } catch (e) {
+          console.warn("파일 파싱 오류:", e);
         }
 
-        for (const file of files) {
-          if (!file?.path) continue; // 안전하게 체크
+        console.log("🧩 최종 삭제 대상 파일:", parsedFiles);
+
+        // 3️⃣ 실제 삭제 로직
+        for (const file of parsedFiles) {
+          if (!file?.path || typeof file.path !== "string") {
+            console.warn("⚠️ 잘못된 파일 경로:", file);
+            continue;
+          }
+
+          console.log("🔥 remove 요청:", [file.path]);
+
           const { error: storageError } = await supabase.storage
-            .from("inquiry-images") // 실제 버킷 이름
+            .from("inquiry-images")
             .remove([file.path]);
 
-          if (storageError) console.error("파일 삭제 실패:", storageError);
+          if (storageError) {
+            console.error("❌ 파일 삭제 실패:", storageError);
+          } else {
+            console.log("✅ 파일 삭제 성공:", file.path);
+          }
         }
       }
 
-      // DB에서 삭제
+      // DB에서 문의 삭제
       const { error } = await supabase
         .from("user_inquiries")
         .delete()
         .eq("inquiry_id", id);
+
       if (error) throw error;
 
-      // 로컬 상태 동기화
-      setInquiries((prev) => prev.filter((item) => item.inquiry_id !== id));
+      // 로컬 상태 갱신
+      setInquiries((prev) => prev.filter((i) => i.inquiry_id !== id));
       setDetailInquiries(null);
     } catch (err: any) {
       console.error("삭제 처리 중 오류:", err.message || err);

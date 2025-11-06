@@ -3,15 +3,11 @@
 <br/>
 <img width="420" height="50" alt="Image" src="https://github.com/user-attachments/assets/e830db38-e3d9-4290-96f6-79d4bed1ae27" />
 
-**배포 링크:** [https://mo-ri.vercel.app/](https://mo-ri.vercel.app/)  
-**Mo:ri 노션 주소:**  
-**Figma (와이어프레임):** [https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=84-56]  
-**Figma (최종본):** [https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1]  
-**개발 기간:** 2025.08.25 ~ 2025.11.13 (최종 발표일)  
-**1차 발표 PPT (Canva):** [https://www.canva.com/design/DAG0VdbJK3g/p0bPQbP0hy-BumNWan5wlw/edit]  
-**2차·최종 발표 PPT (Canva):** [https://www.canva.com/design/DAG3nu7OiWE/YM6avpjq1eqbP-VbGa7lpQ/edit]  
-**참여 인원:** FE 4명  
-**역할:** 모임 관리 / 알림 시스템 / 실시간 채팅 / 문의 기능 구현 담당
+**개발 기간:** 2025.08.25 ~ 2025.11.13 (최종 발표일) **참여 인원:** 4명
+
+[배포링크 Mo:ri](https://mo-ri.vercel.app/) | [Notion 주소](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [Figma 최종본](https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1)
+[Canva 1차 발표 PPT](https://www.canva.com/design/DAG0VdbJK3g/p0bPQbP0hy-BumNWan5wlw/edit) | [Canva 2차·최종 발표 PPT](https://www.canva.com/design/DAG3nu7OiWE/YM6avpjq1eqbP-VbGa7lpQ/edit)
+
 
 ---
 

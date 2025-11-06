@@ -69,7 +69,7 @@ export default function SwiperGroupCard({
       {/* 이전 버튼: 첫 슬라이드에서는 숨김 */}
       {activeIndex > 0 && (
         <button
-          className="custom-prev flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] left-[-20px] z-20 bg-white shadow-card"
+          className="custom-prev flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] left-[-20px] z-[5] bg-white shadow-card"
           aria-label="이전 슬라이드"
           onClick={() => swiperRef.current?.slidePrev()}
         >
@@ -80,7 +80,7 @@ export default function SwiperGroupCard({
       {/* 다음 버튼: 마지막 슬라이드에서는 숨김 */}
       {activeIndex < visibleGroups.length - slidesPerView && (
         <button
-          className="custom-next flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] right-[-20px] z-20 bg-white shadow-card"
+          className="custom-next flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] right-[-20px] z-[5] bg-white shadow-card"
           aria-label="다음 슬라이드"
           onClick={() => swiperRef.current?.slideNext()}
         >

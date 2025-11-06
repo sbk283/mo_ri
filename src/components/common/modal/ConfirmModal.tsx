@@ -87,7 +87,7 @@ export default function ConfirmModal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[1001] flex items-center justify-center"
+          className="fixed inset-0 z-[61] flex items-center justify-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-title"
@@ -98,7 +98,7 @@ export default function ConfirmModal({
           exit={{ opacity: 0 }}
         >
           {/* 오버레이 */}
-          <div className="absolute inset-0 bg-black/50 z-[1000]" />
+          <div className="absolute inset-0 bg-black/50 z-[60]" />
 
           {/* 카드 */}
           <motion.div
@@ -109,7 +109,7 @@ export default function ConfirmModal({
               w-[430px] h-[280px]
               pt-[44px] pb-[70px] px-[20px]
               flex flex-col items-center gap-[33px]
-              z-[1001]
+              z-[61]
             "
             initial={{ scale: 0.96, y: 8, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}

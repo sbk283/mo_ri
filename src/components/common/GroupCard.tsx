@@ -106,7 +106,7 @@ export function GroupCard({
         <article className="h-[290px] w-[245px] rounded-sm border border-gray-300 bg-white overflow-hidden">
           {/* 말풍선 */}
           <div
-            className={`absolute left-2 top-[1px] z-10 px-2
+            className={`absolute left-2 top-[1px] z-[5] px-2
               rounded-tl-[15px] rounded-tr-[15px] rounded-br-[15px]
               text-white text-md font-semibold
                 ${status === 'recruiting' ? 'bg-brand-red' : status === '예정' ? 'bg-brand' : 'bg-gray-500'}`}

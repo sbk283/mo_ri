@@ -132,7 +132,7 @@ function GroupDetailLayout() {
   };
 
   return (
-    <div className="mx-auto w-[1024px] py-10 space-y-8">
+    <div className="mx-auto w-[1024px] py-16 space-y-8">
       {/* 상단 안내 */}
       <header className="mb-10">
         <h1 className="text-xl font-bold">모임리스트 &gt; 상세보기</h1>

@@ -12,7 +12,7 @@ function ErrorModal({ isOpen, message = '이미 처리되었습니다.', onClose
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 flex items-center justify-center bg-black/40 z-[99999]"
+          className="fixed inset-0 flex items-center justify-center bg-black/40 z-[69]"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}

@@ -235,6 +235,7 @@ body,
   justify-content: flex-start;
   border-radius: 5px 5px 0px 0px;
   border: 1px solid #a6a6a6 !important;
+  z-index: 0 !important;
 }
 
 /* 리엑트 툴바 고정 */

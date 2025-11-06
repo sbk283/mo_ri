@@ -1,4 +1,4 @@
-import type { CurriculumItem } from '../../types/group';
+import type { CurriculumItem } from "../../types/group";
 
 interface CurriculumCardProps {
   index: number;
@@ -11,6 +11,7 @@ interface CurriculumCardProps {
   onRemove: (index: number) => void;
   onFileChange: (index: number, files: File[]) => void;
   onAdd: (index: number) => void;
+  dragHandleProps?: any;
 }
 
 function CurriculumCard({
@@ -20,8 +21,9 @@ function CurriculumCard({
   onRemove,
   onFileChange,
   onAdd,
+  dragHandleProps,
 }: CurriculumCardProps) {
-  const MAX_PICK = 3; 
+  const MAX_PICK = 3;
 
   const handleFileChange = (files: FileList | null) => {
     if (!files) return;
@@ -40,20 +42,25 @@ function CurriculumCard({
     <div className="rounded space-y-3 relative">
       <div className="flex gap-2 items-start">
         {index === 0 ? (
-          <label className="flex font-semibold text-lg w-[150px]">커리큘럼</label>
+          <label className="flex font-semibold text-lg w-[150px]">
+            커리큘럼
+          </label>
         ) : (
           <div className="w-[150px]" />
         )}
 
-        <span className="font-semibold text-[28px] pr-[10px] text-gray-200">
-          {String(index + 1).padStart(2, '0')}
+        <span
+          {...dragHandleProps}
+          className="font-semibold text-[28px] pr-[10px] text-gray-200 cursor-grab"
+        >
+          {String(index + 1).padStart(2, "0")}
         </span>
 
         <div className="flex w-[582px] h-10 gap-2">
           <input
             type="text"
             value={item.title}
-            onChange={e => onChange(index, 'title', e.target.value)}
+            onChange={(e) => onChange(index, "title", e.target.value)}
             placeholder="단계 제목을 정해주세요."
             className="flex-1 border border-gray-300 rounded-md px-3 py-2 placeholder:text-[#A6A6A6]"
           />
@@ -67,7 +74,7 @@ function CurriculumCard({
             multiple
             accept="image/*"
             className="hidden"
-            onChange={e => handleFileChange(e.target.files)}
+            onChange={(e) => handleFileChange(e.target.files)}
           />
         </label>
       </div>
@@ -76,7 +83,7 @@ function CurriculumCard({
       <div className="flex justify-end">
         <textarea
           value={item.detail}
-          onChange={e => onChange(index, 'detail', e.target.value)}
+          onChange={(e) => onChange(index, "detail", e.target.value)}
           placeholder="각 단계별 상세 진행 내용을 설명해 주세요."
           className="w-[730px] h-[159px] resize-none mr-4 border border-gray-300 rounded-sm px-3 py-2 placeholder:text-[#A6A6A6]"
         />
@@ -88,7 +95,10 @@ function CurriculumCard({
           {item.files && item.files.length > 0 && (
             <div className="flex gap-2 pl-[150px] mt-2">
               {item.files.map((file, i) => (
-                <div key={i} className="relative w-20 h-20 border rounded overflow-hidden">
+                <div
+                  key={i}
+                  className="relative w-20 h-20 border rounded overflow-hidden"
+                >
                   <img
                     src={URL.createObjectURL(file)}
                     alt={`preview-${i}`}
@@ -99,7 +109,11 @@ function CurriculumCard({
                     onClick={() => handleRemoveFile(i)}
                     className="absolute top-1 right-1"
                   >
-                    <img src="/images/close_dark.svg" alt="삭제" className="w-4 h-4" />
+                    <img
+                      src="/images/close_dark.svg"
+                      alt="삭제"
+                      className="w-4 h-4"
+                    />
                   </button>
                 </div>
               ))}

@@ -1,8 +1,7 @@
 <img width="130" height="42" alt="Image" src="https://github.com/user-attachments/assets/cc191f5b-0e0b-423e-87a4-66cdd3ed986a" />
 <br/>
 <br/>
-> <span style="border-left:4px solid #2A91E5; padding-left:10px; color:#2A91E5; font-weight:600; font-size:17px;">자기계발 중심 모임 플랫폼</span>
-> <span style="font-size:15px; color:#000;">스터디 · 취미 · 운동 · 봉사 등 다양한 모임을 생성·참여·기록할 수 있는 소셜 서비스</span>
+<img width="420" height="50" alt="Image" src="https://github.com/user-attachments/assets/e830db38-e3d9-4290-96f6-79d4bed1ae27" />
 
 **배포 링크:** [https://mo-ri.vercel.app/](https://mo-ri.vercel.app/)  
 **Mo:ri 노션 주소:**  

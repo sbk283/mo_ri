@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -22,7 +22,7 @@ html {
 }
 body {
   font-size: 15px;
-  font-family: 'Noto Sans', sans-serif;
+  font-family: "Noto Sans", sans-serif;
 }
 
 /* 프로젝트 공통 유틸(선택) */
@@ -33,7 +33,7 @@ body {
 html,
 body,
 #root {
-  height: 100%;
+  /* height: 100%; */
   overflow-y: auto;
 }
 
@@ -172,7 +172,7 @@ body,
   border: 1px solid #ddd !important;
   border-radius: 3px !important;
   padding: 2px 4px !important;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: "Courier New", Courier, monospace !important;
   font-size: 0.9em !important;
 }
 
@@ -183,7 +183,7 @@ body,
   padding: 1em !important;
   margin: 1em 0 !important;
   overflow-x: auto !important;
-  font-family: 'Courier New', Courier, monospace !important;
+  font-family: "Courier New", Courier, monospace !important;
   font-size: 0.9em !important;
 }
 
@@ -280,6 +280,29 @@ body,
   display: none !important;
 }
 
+/* html 스크롤바 */
+html::-webkit-scrollbar {
+  width: 6px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  background: rgba(66, 148, 207, 0.5);
+  min-height: 110px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: rgba(66, 148, 207, 0.7);
+}
+
+html::-webkit-scrollbar-button {
+  display: none !important;
+}
+
 /* 스와이퍼 next,prev 버튼 */
 .swiper-button-next,
 .swiper-button-prev {
@@ -300,7 +323,7 @@ body,
 /images/arrow_down 써서 각도 조절하심 될 듯 함다 */
 .swiper-button-next::after,
 .swiper-button-prev::after {
-  content: '' !important;
+  content: "" !important;
 }
 
 .swiper-button-prev-modal,
@@ -320,7 +343,7 @@ body,
 
 .swiper-button-next-modal::after,
 .swiper-button-prev-modal::after {
-  content: '' !important;
+  content: "" !important;
 }
 
 /* 서비스소개페이지 스와이퍼 */

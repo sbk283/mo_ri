@@ -31,7 +31,7 @@ function ArrayDropdown({ options, value, onChange }: ArrayDropdownProps) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow-md z-10"
+            className="absolute right-0 mt-2 w-28 bg-white border border-gray-200 rounded shadow-md z-[9]"
           >
             {options.map(option => (
               <li key={option}>

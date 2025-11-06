@@ -44,7 +44,7 @@ function RegionSelection({ sido, sigungu, regionFree, onChange }: RegionSelectio
   };
 
   return (
-    <section className="flex gap-[58px] items-start relative z-40">
+    <section className="flex gap-[58px] items-start relative">
       <label className="font-semibold text-lg mt-2">지역 선택</label>
 
       <div className="flex gap-4 items-center">

@@ -226,7 +226,7 @@ function MeetingHeader({
             <button
               ref={nextRef}
               onClick={() => swiperRef.current?.slideNext()}
-              className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-[60%] !-right-5 z-50"
+              className="swiper-button-next rounded-full !w-[37px] !h-[37px] absolute top-[60%] !-right-5 z-10"
             >
               <img
                 src="/images/swiper_next.svg"

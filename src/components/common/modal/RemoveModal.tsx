@@ -142,7 +142,7 @@ export default function RemoveModal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[1000] flex items-center justify-center"
+          className="fixed inset-0 z-[2] flex items-center justify-center"
           role="dialog"
           aria-modal="true"
           aria-labelledby="confirm-title"
@@ -153,7 +153,7 @@ export default function RemoveModal({
           exit={{ opacity: 0 }}
         >
           {/* 배경 */}
-          <div className="absolute inset-0 bg-black/50 z-[1000]" />
+          <div className="absolute inset-0 bg-black/50" />
 
           {/* 카드 */}
           <motion.div
@@ -163,7 +163,7 @@ export default function RemoveModal({
               relative bg-white rounded-sm shadow-xl
               w-[430px] h-[280px]
               pt-[44px] pb-[70px] px-[20px]
-              flex flex-col items-center gap-[33px] z-[1001]
+              flex flex-col items-center gap-[33px]
             "
             initial={{ scale: 0.96, y: 8, opacity: 0 }}
             animate={{ scale: 1, y: 0, opacity: 1 }}

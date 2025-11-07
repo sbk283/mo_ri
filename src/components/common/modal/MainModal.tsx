@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import Modal from 'react-modal';
-import { useNavigate } from 'react-router-dom';
-import { Autoplay, Navigation, Pagination } from 'swiper/modules';
-import { Swiper, SwiperSlide } from 'swiper/react';
+import React, { useEffect, useState } from "react";
+import Modal from "react-modal";
+import { useNavigate } from "react-router-dom";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
+import { Swiper, SwiperSlide } from "swiper/react";
 
 // Swiper v11+ 스타일 import
 
-if (typeof window !== 'undefined') {
-  Modal.setAppElement('#root');
+if (typeof window !== "undefined") {
+  Modal.setAppElement("#root");
 }
 
 interface Banner {
@@ -28,33 +28,33 @@ interface BannerSliderModalProps {
   storageKey?: string;
 }
 
-const STORAGE_KEY_PREFIX = 'bannerModal_doNotShow_';
+const STORAGE_KEY_PREFIX = "bannerModal_doNotShow_";
 
 // Modal 스타일을 인라인으로 정의
 const modalStyles = {
   overlay: {
-    position: 'fixed' as const,
+    position: "fixed" as const,
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
     zIndex: 9999,
   },
   content: {
-    position: 'relative' as const,
-    inset: 'auto',
-    border: 'none',
-    background: 'white',
-    overflow: 'hidden',
-    borderRadius: '12px',
+    position: "relative" as const,
+    inset: "auto",
+    border: "none",
+    background: "white",
+    overflow: "hidden",
+    borderRadius: "12px",
     padding: 0,
-    width: '440px',
-    height: '690px',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3)',
+    width: "440px",
+    height: "640px",
+    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
   },
 };
 
@@ -65,7 +65,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
   autoplayDelay = 3000,
   showCounter = true,
   enableDoNotShowToday = true,
-  storageKey = 'default',
+  storageKey = "default",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(1);
@@ -112,9 +112,9 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
 
   const handleBannerClick = (banner: Banner) => {
     if (banner.link) {
-      if (banner.link.startsWith('http')) {
+      if (banner.link.startsWith("http")) {
         // 외부 링크는 새탭 (원하는 경우)
-        window.open(banner.link, '_blank', 'noopener,noreferrer');
+        window.open(banner.link, "_blank", "noopener,noreferrer");
       } else {
         // 내부 경로는 현재 탭 이동
         navigate(banner.link);
@@ -148,27 +148,27 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
             spaceBetween={0}
             slidesPerView={1}
             navigation={{
-              nextEl: '.swiper-button-next',
-              prevEl: '.swiper-button-prev',
+              nextEl: ".swiper-button-next",
+              prevEl: ".swiper-button-prev",
             }}
             pagination={{
               clickable: true,
               dynamicBullets: true,
-              el: '.swiper-pagination',
+              el: ".swiper-pagination",
             }}
             autoplay={{
               delay: autoplayDelay,
               disableOnInteraction: false,
             }}
             loop={true}
-            onSlideChange={swiper => setCurrentSlide(swiper.realIndex + 1)}
+            onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex + 1)}
             className="w-full h-full"
           >
-            {banners.map(banner => (
+            {banners.map((banner) => (
               <SwiperSlide key={banner.id}>
                 <div
                   onClick={() => handleBannerClick(banner)}
-                  className={`w-full h-full relative ${banner.link ? 'cursor-pointer' : ''}`}
+                  className={`w-full h-full relative ${banner.link ? "cursor-pointer" : ""}`}
                 >
                   <img
                     src={banner.imageUrl}

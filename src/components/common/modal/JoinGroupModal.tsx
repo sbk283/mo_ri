@@ -84,12 +84,12 @@ function JoinGroupModal({
         {/* 자기소개 */}
         <div className="px-5">
           <label className="block text-md font-semibold mb-2">
-            간략한 자기소개를 적어주세요.
+            (선택) 간략한 자기소개를 적어주세요.
           </label>
           <textarea
             value={intro}
             onChange={(e) => setIntro(e.target.value)}
-            placeholder="참가신청 시 작성한 내용은 모임 담당자에게 전달되며 가입 심사에 사용됩니다."
+            placeholder="(선택) 소개 문구를 입력해 주세요."
             className="w-full h-32 border border-gray-300 rounded-sm p-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-light focus:border-none resize-none mb-6 custom-scrollbar"
           />
         </div>

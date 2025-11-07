@@ -5,9 +5,8 @@
 
 **개발 기간:** 2025.08.25 ~ 2025.11.13 (최종 발표일) **참여 인원:** 4명
 
-[배포링크 Mo:ri](https://mo-ri.vercel.app/) | [Notion 주소](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [Figma 최종본](https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1)
-[Canva 1차 발표 PPT](https://www.canva.com/design/DAG0VdbJK3g/p0bPQbP0hy-BumNWan5wlw/edit) | [Canva 2차·최종 발표 PPT](https://www.canva.com/design/DAG3nu7OiWE/YM6avpjq1eqbP-VbGa7lpQ/edit)
-
+[배포링크 Mo:ri](https://mo-ri.vercel.app/) | [Notion 주소](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [Figma 최종본] |(https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1)
+| [Canva 최종 발표 PPT](https://www.canva.com/design/DAG3nu7OiWE/YM6avpjq1eqbP-VbGa7lpQ/edit)
 
 ---
 
@@ -284,3 +283,10 @@ flowchart LR
 - **GA4 이벤트 세분화** 및 세그먼트 분석으로 사용자 리텐션 강화
 - pg_cron 기반 **정기 리포트 메일 발송 기능** 추가
 - Supabase Function 캐싱 최적화 및 트리거 로깅 기능 확장
+
+---
+
+**유지선** [GitHub](https://github.com/maintainline) | [Notion](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [E-mail](z.seon.dev@gmail.com)
+**여채현** [GitHub](https://github.com/yachea) | [Notion](https://fair-mimosa-69b.notion.site/PORTFOLIO-2159f76bdabf80749634c22385d20760?pvs=74) | [E-mail](dev.yachea@gmail.com)
+**문유비** [GitHub](https://github.com/devyubi) | [Notion](https://www.notion.so/MO-ri-2a0d08a49cc3802583e2ff9b75da2d0b) | [E-mail](dev.munyubi@gmail.com)
+**송병근** [GitHub](https://github.com/sbk283) [Notion](https://sbk283.notion.site/c0d2cf4480194051ba9845a0903115a8) | [E-mail](sbkcoding@gmail.com)

@@ -53,7 +53,7 @@ const modalStyles = {
     borderRadius: "12px",
     padding: 0,
     width: "440px",
-    height: "640px",
+    height: "690px",
     boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
   },
 };

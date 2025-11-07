@@ -13,7 +13,7 @@ function Index() {
       <MainModal
         banners={homeBanners}
         autoOpen={true}
-        enableDoNotShowToday={false}
+        enableDoNotShowToday={true}
       />
       <IntroSection />
       <CategorySection />

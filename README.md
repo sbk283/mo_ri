@@ -50,20 +50,19 @@
 ### Frontend
 
 - React 18 (Vite + TypeScript)
-- Zustand (상태 관리)
+- Context API
 - React Router v6
 - TailwindCSS
 - Framer Motion (애니메이션)
-- Axios
 - React Hook Form
 - Swiper, Ant Design
-- React Markdown, React Calendar, html2pdf.js
+- React Quill, React Calendar, html2pdf.js
 - **React GA4 (Google Analytics 4) — 사용자 행동 및 전환 추적**
 
 ### Backend / Infra
 
 - Supabase (PostgreSQL + Auth + Storage + RLS)
-- Supabase Realtime (채팅, 알림 구독)
+- Supabase Realtime (채팅, 알림 구독, 그룹)
 - Functions & Triggers (알림, 문의 자동화)
 - pg_cron (자동 스케줄 관리)
 - Supabase CLI + 자동 타입 생성 (`npm run generate-types`)
@@ -77,7 +76,7 @@
 
 ---
 
-## 시스템 아키텍처
+## System Architecture (시스템 아키텍처)
 
 ```mermaid
 flowchart LR
@@ -148,7 +147,7 @@ flowchart LR
 
 ---
 
-## 트러블슈팅 사례
+## Troubleshooting Cases (트러블슈팅 사례)
 
 ### 1. 문의 등록 실패 (HTTP 400 Bad Request)
 

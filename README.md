@@ -288,4 +288,4 @@ flowchart LR
 **유지선** [GitHub](https://github.com/maintainline) | [Notion](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [E-mail](z.seon.dev@gmail.com)
 **여채현** [GitHub](https://github.com/yachea) | [Notion](https://fair-mimosa-69b.notion.site/PORTFOLIO-2159f76bdabf80749634c22385d20760?pvs=74) | [E-mail](dev.yachea@gmail.com)
 **문유비** [GitHub](https://github.com/devyubi) | [Notion](https://www.notion.so/MO-ri-2a0d08a49cc3802583e2ff9b75da2d0b) | [E-mail](dev.munyubi@gmail.com)
-**송병근** [GitHub](https://github.com/sbk283) [Notion](https://sbk283.notion.site/c0d2cf4480194051ba9845a0903115a8) | [E-mail](sbkcoding@gmail.com)
+**송병근** [GitHub](https://github.com/sbk283) [Notion](https://sbk283.notion.site/21e3d0ff490f8040a16aff595156eb95?source=copy_link) | [E-mail](sbk283@naver.com)

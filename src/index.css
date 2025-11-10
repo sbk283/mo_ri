@@ -251,11 +251,12 @@ body,
   border: 1px solid #a6a6a6 !important;
   border-top: 0px !important;
   min-height: 231px;
-  .ql-editor {
-    height: 100%;
-    overflow-y: auto;
-    padding-right: 8px;
-  }
+}
+
+.ql-container .ql-editor {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 /* 스크롤바 스타일 */
@@ -453,4 +454,9 @@ body::-webkit-scrollbar-thumb {
 
 body::-webkit-scrollbar-thumb:hover {
   background: rgba(66, 148, 207, 0.7);
+}
+
+/* 이미지 lazy loading (최적화) */
+img.loaded {
+  opacity: 1;
 }

@@ -239,12 +239,16 @@ body,
 }
 
 /* 리엑트 툴바 고정 */
+/* 11-10 수정 */
 .ql-toolbar.ql-snow {
+  z-index: 9 !important;
+}
+/* .ql-toolbar.ql-snow {
   position: sticky;
   top: 0;
   z-index: 10;
   background: #fff;
-}
+} */
 
 .ql-container {
   border-radius: 0px 0px 5px 5px;

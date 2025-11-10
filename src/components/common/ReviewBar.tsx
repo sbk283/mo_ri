@@ -219,7 +219,7 @@ export function ReviewBar({
             onConfirm={handleConfirmDelete}
             title="리뷰를 삭제하시겠습니까??"
             message={
-              "리뷰를 삭제하시겠습니까?\n삭제 후에는 복구할 수 없습니다."
+              "리뷰를 삭제하시겠습니까?\n삭제 후에도 재작성이 가능합니다"
             }
             confirmText="삭제"
             cancelText="취소"

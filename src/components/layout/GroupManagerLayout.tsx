@@ -1,4 +1,4 @@
-import GroupManagerSidebar from '../GroupManagerSidebar';
+import GroupManagerSidebar from "../GroupManagerSidebar";
 
 interface LayoutProps {
   children?: React.ReactNode;

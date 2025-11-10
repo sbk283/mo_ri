@@ -1,7 +1,6 @@
-// src/components/GroupDailyDetailView.tsx
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AvatarImg from "../common/AvatarImg";
 import ConfirmModal from "../common/modal/ConfirmModal";
 import { resolveStorageUrl } from "../../lib/contentUtils";
@@ -43,7 +42,8 @@ export default function GroupDailyDetailView({
   currentAvatar,
   onEdit,
 }: GroupDailyDetailViewProps) {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const [editMode, setEditMode] = useState(false);
   const [openConfirm, setOpenConfirm] = useState(false);
@@ -55,20 +55,33 @@ export default function GroupDailyDetailView({
 
   const canEditDelete = !!currentUserId && currentUserId === daily.userId;
 
-  // QS 헬퍼
+  // 쿼리스트링 헬퍼 (GroupContentPage와 같은 방식)
   const setQS = (next: Record<string, string | undefined>, replace = false) => {
-    const cur = new URLSearchParams(searchParams);
+    const cur = new URLSearchParams(location.search);
     Object.entries(next).forEach(([k, v]) => {
       if (v == null) cur.delete(k);
       else cur.set(k, v);
     });
-    setSearchParams(cur, { replace });
+
+    const search = cur.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: search ? `?${search}` : "",
+      },
+      { replace },
+    );
   };
 
-  // 편집 탭에서 새로고침하면 상세로 복귀
+  // (선택) 이 컴포넌트가 처음 뜰 때, view가 이상하면 detail로 보정
   useEffect(() => {
-    const post = searchParams.get("post");
-    if (post) setQS({ post, view: "detail" }, true);
+    const sp = new URLSearchParams(location.search);
+    const post = sp.get("post");
+    const view = sp.get("view");
+
+    if (post && view !== "detail" && view !== "edit") {
+      setQS({ post, view: "detail" }, true);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -80,7 +93,7 @@ export default function GroupDailyDetailView({
       .eq("post_id", daily.postId);
 
     if (likeErr) {
-      console.error("[DetailView] load likes error", likeErr);
+      console.error("[GroupDailyDetailView] load likes error", likeErr);
       setLikers({ entries: [], total: 0 });
       return;
     }
@@ -95,7 +108,7 @@ export default function GroupDailyDetailView({
       .in("user_id", userIds);
 
     if (profErr) {
-      console.error("[DetailView] load profiles error", profErr);
+      console.error("[GroupDailyDetailView] load profiles error", profErr);
       setLikers({
         entries: userIds.map((uid) => ({ userId: uid, avatarUrl: null })),
         total,
@@ -108,6 +121,7 @@ export default function GroupDailyDetailView({
       const resolved = resolveStorageUrl(p.avatar_url) ?? p.avatar_url ?? null;
       map.set(p.user_id, resolved);
     }
+
     const entries = userIds.map((uid) => ({
       userId: uid,
       avatarUrl: map.get(uid) ?? null,
@@ -151,11 +165,13 @@ export default function GroupDailyDetailView({
             daily={daily as any}
             onCancel={() => {
               setEditMode(false);
+              // 수정 취소 → 상세로
               setQS({ post: daily.postId, view: "detail" }, true);
             }}
             onSave={async (next) => {
               await onSave(next);
               setEditMode(false);
+              // 수정 저장 → 상세로
               setQS({ post: daily.postId, view: "detail" }, true);
             }}
           />
@@ -217,13 +233,10 @@ export default function GroupDailyDetailView({
                 <div
                   className={[
                     "rich-text text-gray-800 leading-relaxed",
-                    // heading 스타일 강제 적용
                     "[&_h1]:text-2xl [&_h1]:font-bold [&_h1]:mt-4 [&_h1]:mb-2",
                     "[&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mt-3 [&_h2]:mb-2",
                     "[&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mt-2 [&_h3]:mb-1",
-                    // 문단 간 간격
                     "[&_p]:mb-2",
-                    // 리스트 간격
                     "[&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-2",
                     "[&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-2",
                   ].join(" ")}
@@ -302,7 +315,8 @@ export default function GroupDailyDetailView({
             <button
               onClick={() => {
                 closeDetail();
-                setQS({ post: undefined, view: undefined });
+                // 목록으로 → post/view 제거
+                setQS({ post: undefined, view: undefined }, true);
               }}
               className="text-[#8C8C8C] py-2 transition text-md"
             >
@@ -321,7 +335,6 @@ export default function GroupDailyDetailView({
                   whileTap={{ scale: 0.96 }}
                   className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-brand border border-brand rounded-sm transition"
                   onClick={() => {
-                    // 기존 동작 그대로 유지
                     setEditMode(true);
                     setQS({ post: daily.postId, view: "edit" });
                     onEdit?.();
@@ -350,7 +363,7 @@ export default function GroupDailyDetailView({
         onConfirm={async () => {
           setOpenConfirm(false);
           await onDelete(daily.postId);
-          setQS({ post: undefined, view: undefined });
+          setQS({ post: undefined, view: undefined }, true);
         }}
         onClose={() => setOpenConfirm(false)}
         preventBackdropClose={false}

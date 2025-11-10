@@ -1,9 +1,9 @@
-// src/components/common/GroupDailyDetailEdit.tsx
 import { motion } from "framer-motion";
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import DetailRichTextEditor from "./DailyDetailRichTextEditor";
+import { Daily } from "../types/daily";
 import ConfirmModal from "./common/modal/ConfirmModal";
-import type { Daily } from "../types/daily";
 
 type Props = {
   daily: Daily;
@@ -12,6 +12,9 @@ type Props = {
 };
 
 const TITLE_LIMIT = 50;
+
+// GroupContentPage와 동일하게 관리할 쿼리 키들
+const DETAIL_KEYS = ["post", "view", "mode", "edit", "create"] as const;
 
 // 정규화 유틸 (공지와 동일)
 const zws = /\u200B/g;
@@ -47,7 +50,11 @@ export default function GroupDailyDetailEdit({
     hasMeaningfulContent(daily.content),
   );
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const isCreate = (daily?.id ?? 0) === 0;
+
   const titleLength = form.title?.length ?? 0;
   const isTitleEmpty = normTitle(form.title).length === 0;
   const isTitleOver = titleLength > TITLE_LIMIT;
@@ -107,33 +114,80 @@ export default function GroupDailyDetailEdit({
   // 버튼 활성화
   const isFormValid = useMemo(() => {
     if (isCreate) {
-      // 새 작성: 그냥 유효성만
+      // 새 작성: 유효성만
       return !isTitleEmpty && !isTitleOver && isContentValid;
     }
-    // 수정: 실제 변경(dirty)이 있어야 함
+    // 수정: 실제 변경(dirty) + 유효성
     return dirty && !isTitleEmpty && !isTitleOver && isContentValid;
   }, [isCreate, dirty, isTitleEmpty, isTitleOver, isContentValid]);
 
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
 
+  // 리스트로 이동
+  const navigateToList = () => {
+    const sp = new URLSearchParams(location.search);
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
+    const qs = sp.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: qs ? `?${qs}` : "",
+      },
+      { replace: true },
+    );
+  };
+
+  // 상세로 이동 (postId 기준으로)
+  const navigateToDetail = () => {
+    const postId = (daily as any).postId;
+    if (!postId) {
+      navigateToList();
+      return;
+    }
+
+    const sp = new URLSearchParams(location.search);
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
+    sp.set("post", String(postId));
+    sp.set("view", "detail");
+
+    const qs = sp.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: qs ? `?${qs}` : "",
+      },
+      { replace: true },
+    );
+  };
+
+  // 취소 버튼 눌렀을 때
   const handleRequestCancel = () => {
     if (isCreate) {
       const hasAny =
         normTitle(form.title).length > 0 ||
         hasMeaningfulContent(form.content ?? "");
-      if (hasAny) setOpenCancelConfirm(true);
-      else onCancel();
+      if (!hasAny) {
+        navigateToList();
+        onCancel();
+        return;
+      }
+      setOpenCancelConfirm(true);
       return;
     }
 
-    if (dirty) setOpenCancelConfirm(true);
-    else onCancel();
+    if (!dirty) {
+      navigateToDetail();
+      onCancel();
+      return;
+    }
+
+    setOpenCancelConfirm(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) return; // 비활성 상태면 아무것도 안 함
+    if (!isFormValid) return;
     setOpenSaveConfirm(true);
   };
 
@@ -153,9 +207,22 @@ export default function GroupDailyDetailEdit({
     setDirty(false);
   };
 
+  const handleConfirmCancel = () => {
+    setOpenCancelConfirm(false);
+
+    if (isCreate) {
+      // 작성 탭: 무조건 리스트로
+      navigateToList();
+    } else {
+      // 수정 탭: 무조건 해당 게시글 상세로
+      navigateToDetail();
+    }
+
+    onCancel();
+  };
+
   return (
     <>
-      {/* 폼 자체 */}
       <motion.form
         onSubmit={handleSubmit}
         initial={{ opacity: 0, x: 24 }}
@@ -229,33 +296,29 @@ export default function GroupDailyDetailEdit({
         </footer>
       </motion.form>
 
-      {/* 모달은 폼 밖에 두기: 폼 레이아웃에 영향 안 줌 */}
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? "취소하시겠습니까?" : "취소하시겠습니까?"}
+        title="취소하시겠습니까?"
         message={
           isCreate
             ? "작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?"
             : "변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?"
         }
         confirmText="확인"
-        cancelText={isCreate ? "취소" : "취소"}
-        onConfirm={() => {
-          setOpenCancelConfirm(false);
-          onCancel();
-        }}
+        cancelText="취소"
+        onConfirm={handleConfirmCancel}
         onClose={() => setOpenCancelConfirm(false)}
       />
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? "등록하시겠습니까?" : "등록하시겠습니까?"}
+        title="등록하시겠습니까?"
         message={
           isCreate
             ? "현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?"
             : "현재 수정 내용을 저장합니다.\n등록하시겠습니까?"
         }
-        confirmText={isCreate ? "등록" : "등록"}
+        confirmText="등록"
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

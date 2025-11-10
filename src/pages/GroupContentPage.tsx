@@ -31,7 +31,6 @@ function GroupContentPage() {
   const location = useLocation();
 
   // 상세 뷰 관련 쿼리키들(탭 전환 시 제거할 목록)
-  // create도 같이 관리용으로 넣어둠 (필요시 사용)
   const DETAIL_KEYS = ["post", "view", "mode", "edit", "create"] as const;
 
   // 작성 트리거
@@ -43,7 +42,7 @@ function GroupContentPage() {
 
   // 탭 상태: URL의 tab 쿼리로 초기화
   const [selectedTabLabel, setSelectedTabLabel] = useState<TabLabel>(() => {
-    const sp = new URLSearchParams(location.search);
+    const sp = new URLSearchParams(window.location.search);
     const tabParam = (sp.get("tab") as TabParam | null) ?? null;
     return paramToLabel(tabParam);
   });
@@ -226,6 +225,25 @@ function GroupContentPage() {
   const isCrafting =
     selectedTabLabel === "공지사항" ? isNoticeCrafting : isDailyCrafting;
 
+  // === URL 쿼리로 현재 폼 상태 판단 (edit / create 공통) ===
+  const searchParams = new URLSearchParams(location.search);
+  const view = searchParams.get("view");
+  const mode = searchParams.get("mode");
+  const editFlag = searchParams.get("edit");
+  const createFlag = searchParams.get("create");
+
+  const isEditView =
+    view === "edit" ||
+    mode === "edit" ||
+    editFlag === "1" ||
+    editFlag === "true";
+
+  const isCreateView =
+    view === "create" || createFlag === "1" || createFlag === "true";
+
+  // 현재 화면이 “폼(작성/수정)”인지 여부
+  const inFormView = isEditView || isCreateView;
+
   // 언더라인 위치
   const listRef = useRef<HTMLUListElement | null>(null);
   const tabRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -282,11 +300,13 @@ function GroupContentPage() {
   };
 
   // 공지사항 탭에서만: 호스트일 때만 버튼 노출
+  // + edit/create 뷰일 때는 작성하기 버튼 숨김
   const showCreateButton =
+    !inFormView &&
     !isCrafting &&
     (selectedTabLabel === "공지사항"
       ? roleLoaded && isHost // 공지: 호스트만
-      : true); // 일상: 기존 로직 유지
+      : true); // 모임일상: 멤버면 항상 허용(기존 권한 로직 유지)
 
   // === 모임 나가기 모달 상태 ===
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
@@ -367,6 +387,7 @@ function GroupContentPage() {
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
+
           <div>
             {/* 게시판 */}
             <div className="bg-white shadow-card min-h-[590px] rounded-sm p-6">

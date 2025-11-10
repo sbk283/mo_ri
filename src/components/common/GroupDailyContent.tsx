@@ -1,4 +1,3 @@
-// src/components/common/GroupDailyContent.tsx
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -175,19 +174,27 @@ export default function GroupDailyContent({
     [detailId, items],
   );
 
-  // [핵심] URL → 상태 복원 (새로고침 시 상세 유지, 편집은 상세로 교정)
+  // [핵심] URL → 상태 복원 (새로고침 시 상세 유지, 편집은 상세로 교정하되, 수동 edit는 유지)
   useEffect(() => {
     const postId = searchParams.get("post");
+    const view = searchParams.get("view");
+
     if (!postId || items.length === 0) return;
 
     const idx = items.findIndex((n) => n.postId === postId);
     if (idx >= 0) {
       setDetailId(items[idx].id);
-      // 요구사항 2: 편집으로 새로고침 시에도 상세로 복원
-      setQS({ post: postId, view: "detail" }, true);
+
+      // 새로고침 등으로 진입했을 때만 view 정규화:
+      // - view가 없거나
+      // - view가 "edit" 인 경우에만 "detail"로 보정
+      // (수정 버튼 눌러서 들어간 edit 상태는 그대로 유지)
+      if (!view || view === "edit") {
+        setQS({ post: postId, view: "detail" }, true);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, searchParams]);
+  }, [items]);
 
   const openDetail = (id: number) => {
     setDetailId(id);

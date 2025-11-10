@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import type { GroupWithCategory } from "../types/group";
 import JoinGroupContentNon from "./JoinGroupContentNon";
 import type { ReviewItem } from "./common/modal/CreateReview";
 import CreateReview from "./common/modal/CreateReview";
 import { supabase } from "../lib/supabase";
+import LazyImage from "./common/LazyImage";
+import { optimizeImageUrl } from "../utils/image";
+
+
 
 interface JoinGroupContentBoxProps {
   groups: GroupWithCategory[];
@@ -67,17 +71,20 @@ export default function JoinGroupContentBox({
         setReviewedGroupMap({});
         return;
       }
+
       const map: Record<string, string> = {};
       data.forEach((item) => {
         if (item.group_id && item.review_id) {
           map[item.group_id] = item.review_id;
         }
       });
+
       setReviewedGroupMap(map);
     }
     fetchReviewed();
   }, [currentUserId]);
 
+  // 후기 작성 모달 열기
   const openCreateReviewModal = (group: GroupWithCategory) => {
     if (reviewedGroupMap[String(group.group_id)] || isSubmitting) return;
     setCurrentGroupId(group.group_id);
@@ -85,6 +92,7 @@ export default function JoinGroupContentBox({
     setModalOpen(true);
   };
 
+  // 로딩 skeleton
   if (loading) {
     return (
       <div className="w-[1024px] mx-auto space-y-4">
@@ -113,11 +121,14 @@ export default function JoinGroupContentBox({
     <>
       <div className="w-[1024px] mx-auto space-y-9">
         {groups.map((group) => {
+          // 리뷰 작성 여부
           const hasReview =
             reviewedGroupMap[String(group.group_id)] !== undefined;
 
+          // 날짜 계산
           const startDate = new Date(group.group_start_day);
           const endDate = new Date(group.group_end_day);
+
           const daysUntilOpen = Math.max(
             0,
             Math.ceil(
@@ -131,6 +142,7 @@ export default function JoinGroupContentBox({
             ),
           );
 
+          // 뱃지 계산
           const badge =
             daysUntilOpen > 0 ? (
               <div className="absolute rounded-[5px] bg-gray-300 px-[10px] py-[4px] text-sm text-white font-bold top-[-22px]">
@@ -154,13 +166,17 @@ export default function JoinGroupContentBox({
                 className="flex-1 flex cursor-pointer select-none"
               >
                 {badge}
+
+                {/* 이미지 Lazy 로딩 */}
                 <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
-                  <img
-                    src={group.image_urls?.[0] || "/nullbg.jpg"}
+                  <LazyImage
+                    src={optimizeImageUrl(group.image_urls?.[0], 300)}
                     alt="모임사진"
                     className="w-full h-full object-cover"
                   />
                 </div>
+
+                {/* 텍스트 영역 */}
                 <div className="px-4 flex flex-col justify-between">
                   <div className="flex items-center gap-3">
                     <p className="text-lg font-bold">{group.group_title}</p>
@@ -168,9 +184,12 @@ export default function JoinGroupContentBox({
                       {category}
                     </span>
                   </div>
+
                   <div>
                     <p>{group.group_short_intro || "모임 소개가 없습니다."}</p>
                   </div>
+
+                  {/* 기간 & 인원 */}
                   <div className="flex gap-12 text-sm text-[#6C6C6C]">
                     <div>
                       {fmt(group.group_start_day)} ~ {fmt(group.group_end_day)}
@@ -183,6 +202,7 @@ export default function JoinGroupContentBox({
                 </div>
               </div>
 
+              {/* 오른쪽 버튼 (후기작성 or 상세보기) */}
               {group.status === "closed" ? (
                 <button
                   disabled={hasReview || isSubmitting}
@@ -215,6 +235,7 @@ export default function JoinGroupContentBox({
         })}
       </div>
 
+      {/* 리뷰 작성 모달 */}
       {modalOpen && currentReview && currentGroupId && (
         <CreateReview
           open={modalOpen}

@@ -1,4 +1,4 @@
-import MainModal from "../components/common/modal/MainModal";
+import BannerSliderModal from "../components/common/modal/BannerSliderModal";
 import AiGroupsSection from "../components/main/AiGroupsSection";
 import CategorySection from "../components/main/CategorySection";
 import IntroSection from "../components/main/IntroSection";
@@ -10,7 +10,7 @@ import { homeBanners } from "../data/bannerData";
 function Index() {
   return (
     <div>
-      <MainModal
+      <BannerSliderModal
         banners={homeBanners}
         autoOpen={true}
         enableDoNotShowToday={true}

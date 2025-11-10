@@ -1,5 +1,8 @@
 // src/components/common/ReviewCard.tsx
 
+import { optimizeImageUrl } from "../../utils/image";
+import LazyImage from "../common/LazyImage";
+
 export type ReviewItem = {
   id: number;
   title: string;
@@ -24,12 +27,16 @@ export function ReviewCard({
   className?: string;
   onClick?: (id: number) => void;
 }) {
+  // 이미지 fallback 처리
   const handleImgError = (e: React.SyntheticEvent<HTMLImageElement>) => {
     const img = e.currentTarget;
     if (img.dataset.fallbackApplied) return;
     img.dataset.fallbackApplied = "true";
     img.src = "/images/no_image.jpg";
   };
+
+  // 안전한 프로필 이미지 src 지정
+  const profileImage = item.src || "/images/no_image.jpg";
 
   return (
     <button
@@ -55,13 +62,12 @@ export function ReviewCard({
           {item.category}
         </span>
 
-        {/* 작성자 프로필 */}
-        <img
-          className="absolute top-9 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
-          src={item.src || "/images/no_image.jpg"}
+        {/* 작성자 프로필 (LazyImage 적용) */}
+        <LazyImage
+          src={optimizeImageUrl(profileImage, 100)}
           alt={`${item.created_id} 프로필`}
+          className="absolute top-9 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
           onError={handleImgError}
-          loading="lazy"
         />
       </div>
 

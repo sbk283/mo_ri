@@ -27,6 +27,8 @@ type GroupDailyDetailViewProps = {
   onDelete: (postId: string) => Promise<void>;
   onSave: (next: any) => Promise<void>;
   closeDetail: () => void;
+  currentAvatar?: string | null;
+  onEdit?: () => void;
 };
 
 export default function GroupDailyDetailView({
@@ -38,6 +40,8 @@ export default function GroupDailyDetailView({
   onDelete,
   onSave,
   closeDetail,
+  currentAvatar,
+  onEdit,
 }: GroupDailyDetailViewProps) {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -317,8 +321,10 @@ export default function GroupDailyDetailView({
                   whileTap={{ scale: 0.96 }}
                   className="text-md w-[50px] h-[32px] flex justify-center items-center text-center text-white bg-brand border border-brand rounded-sm transition"
                   onClick={() => {
+                    // 기존 동작 그대로 유지
                     setEditMode(true);
                     setQS({ post: daily.postId, view: "edit" });
+                    onEdit?.();
                   }}
                 >
                   수정

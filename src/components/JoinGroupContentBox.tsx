@@ -8,6 +8,8 @@ import { supabase } from "../lib/supabase";
 import LazyImage from "./common/LazyImage";
 import { optimizeImageUrl } from "../utils/image";
 
+
+
 interface JoinGroupContentBoxProps {
   groups: GroupWithCategory[];
   loading: boolean;

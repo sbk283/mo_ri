@@ -29,6 +29,9 @@ export default function NoticeDetailView({
 }: NoticeDetailViewProps) {
   const [openConfirm, setOpenConfirm] = useState(false);
 
+  const isHtml =
+    typeof notice.content === "string" && notice.content.trim().startsWith("<");
+
   return (
     <>
       <article className="mx-auto bg-white shadow-md border border-[#A3A3A3] min-h-[450px]">
@@ -59,11 +62,17 @@ export default function NoticeDetailView({
         </div>
 
         <section className="px-8 py-8 text-gray-800 leading-relaxed">
-          <div
-            dangerouslySetInnerHTML={{ __html: notice.content || "" }}
-            className="prose max-w-none ql-editor"
-            style={{ padding: 0 }}
-          />
+          {isHtml ? (
+            <div
+              dangerouslySetInnerHTML={{ __html: notice.content || "" }}
+              className="prose max-w-none ql-editor"
+              style={{ padding: 0 }}
+            />
+          ) : (
+            <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+              {notice.content}
+            </div>
+          )}
         </section>
       </article>
 

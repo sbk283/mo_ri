@@ -1,6 +1,6 @@
-// src/components/notice/GroupContentDetailEdit.tsx
 import { motion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { Notice } from "../../types/notice";
 import NoticeDetailRichTextEditor from "../NoticeDetailRichTextEditor";
 import ConfirmModal from "../common/modal/ConfirmModal";
@@ -13,30 +13,45 @@ type Props = {
 
 const TITLE_LIMIT = 50;
 
-// 정규화 유틸
+// GroupContentPage랑 맞춰서 관리할 쿼리 키들
+const DETAIL_KEYS = ["post", "view", "mode", "edit", "create"] as const;
+
+// 공통 정규화 유틸
 const zws = /\u200B/g;
 const nbsp = /\u00A0/g;
 const brParas = /<p><br><\/p>/gi;
 const trimBr = /^(<br\s*\/?>)+|(<br\s*\/?>)+$/gi;
 
+// 제목 정규화
 const normTitle = (s?: string | null) => (s ?? "").replace(/\s+/g, " ").trim();
-const normContent = (raw?: string | null) =>
+
+// 내용 비교/텍스트 추출용 정규화
+const normalizeTextForCompare = (raw?: string | null) =>
   (raw ?? "")
     .replace(zws, "")
     .replace(nbsp, " ")
     .replace(brParas, "")
     .replace(trimBr, "")
+    // 모든 태그 제거
+    .replace(/<[^>]*>/g, " ")
+    // 공백 압축
+    .replace(/\s+/g, " ")
     .trim();
 
+// dirty 비교에 쓸 content 정규화
+const normContent = (raw?: string | null) => normalizeTextForCompare(raw);
+
+// “내용이 존재하는가?” 판별
 const hasMeaningfulContent = (raw?: string | null) => {
-  const s = normContent(raw);
-  if (!s) return false;
-  // img 태그
-  if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(s)) return true;
+  const base = raw ?? "";
+
+  // 이미지(HTML)
+  if (/<img\b[^>]*src=['"][^'"]+['"][^>]*>/i.test(base)) return true;
   // 마크다운 이미지
-  if (/!\[[^\]]*]\(([^)\s]+)(?:\s*"[^"]*")?\)/.test(s)) return true;
-  // 태그 제거 후 텍스트
-  const text = s.replace(/<[^>]*>/g, "").trim();
+  if (/!\[[^\]]*]\(([^)\s]+)(?:\s*"[^"]*")?\)/.test(base)) return true;
+
+  // 텍스트 기준으로 판단
+  const text = normalizeTextForCompare(base);
   return text.length > 0;
 };
 
@@ -50,12 +65,15 @@ export default function GroupContentDetailEdit({
     hasMeaningfulContent(notice.content),
   );
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const isCreate = (notice?.id ?? 0) === 0;
   const titleLength = form.title?.length ?? 0;
   const isTitleEmpty = normTitle(form.title).length === 0;
   const isTitleOver = titleLength > TITLE_LIMIT;
 
-  // 초기 스냅샷 (원본, 정규화해서 저장)
+  // 초기 스냅샷 (정규화해서 저장)
   const initial = useRef<{ title: string; content: string }>({
     title: "",
     content: "",
@@ -75,7 +93,7 @@ export default function GroupContentDetailEdit({
     setDirty(false);
   }, [notice.id, notice.title, notice.content]);
 
-  // 현재 폼 값 기준으로 dirty 다시 계산 (비교는 정규화된 문자열로)
+  // 현재 폼 값 기준으로 dirty 다시 계산
   const recomputeDirty = (
     nextTitle?: string | null,
     nextContent?: string | null,
@@ -110,10 +128,10 @@ export default function GroupContentDetailEdit({
   // 버튼 활성화 조건
   const isFormValid = useMemo(() => {
     if (isCreate) {
-      // 새 글: 유효성만 만족하면 활성
+      // 새 글: 유효성만 만족
       return !isTitleEmpty && !isTitleOver && isContentValid;
     }
-    // 수정: 실제 변경(dirty)이 있어야 함 + 유효성
+    // 수정: 실제 변경(dirty) + 유효성
     return dirty && !isTitleEmpty && !isTitleOver && isContentValid;
   }, [isCreate, dirty, isTitleEmpty, isTitleOver, isContentValid]);
 
@@ -121,20 +139,69 @@ export default function GroupContentDetailEdit({
   const [openCancelConfirm, setOpenCancelConfirm] = useState(false);
   const [openSaveConfirm, setOpenSaveConfirm] = useState(false);
 
-  const handleRequestCancel = () => {
-    if (isCreate) {
-      // 새 작성: 아무것도 안 썼으면 바로 닫고, 뭔가 있으면 물어봄
-      const hasAny =
-        normTitle(form.title).length > 0 ||
-        hasMeaningfulContent(form.content ?? "");
-      if (hasAny) setOpenCancelConfirm(true);
-      else onCancel();
+  // 리스트로 이동
+  const navigateToList = () => {
+    const sp = new URLSearchParams(location.search);
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
+    const qs = sp.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: qs ? `?${qs}` : "",
+      },
+      { replace: true },
+    );
+  };
+
+  // 상세로 이동 (postId 있으면 그걸 우선 사용)
+  const navigateToDetail = () => {
+    const postId = (notice as any).postId ?? notice.id;
+    if (!postId) {
+      navigateToList();
       return;
     }
 
-    // 수정: dirty일 때만 모달, 아니면 바로 닫기
-    if (dirty) setOpenCancelConfirm(true);
-    else onCancel();
+    const sp = new URLSearchParams(location.search);
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
+    sp.set("post", String(postId));
+    sp.set("view", "detail");
+
+    const qs = sp.toString();
+    navigate(
+      {
+        pathname: location.pathname,
+        search: qs ? `?${qs}` : "",
+      },
+      { replace: true },
+    );
+  };
+
+  // 취소 버튼 클릭 시
+  const handleRequestCancel = () => {
+    if (isCreate) {
+      // 새 작성: 아무것도 안 썼으면 바로 리스트로
+      const hasAny =
+        normTitle(form.title).length > 0 ||
+        hasMeaningfulContent(form.content ?? "");
+      if (!hasAny) {
+        navigateToList();
+        onCancel();
+        return;
+      }
+      // 뭔가 써있으면 모달
+      setOpenCancelConfirm(true);
+      return;
+    }
+
+    // 수정: 변경 안 했으면 바로 상세로
+    if (!dirty) {
+      navigateToDetail();
+      onCancel();
+      return;
+    }
+
+    // 변경 했으면 모달
+    setOpenCancelConfirm(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -148,11 +215,9 @@ export default function GroupContentDetailEdit({
     const next: Notice = {
       ...form,
       title: normTitle(form.title),
-      // HTML 줄바꿈, 태그 보존
       content: form.content ?? "",
     };
     onSave(next);
-    // 비교용 스냅샷은 계속 정규화된 값으로 유지
     initial.current = {
       title: normTitle(next.title),
       content: normContent(next.content),
@@ -160,9 +225,21 @@ export default function GroupContentDetailEdit({
     setDirty(false);
   };
 
+  // 취소 모달에서 "확인" 눌렀을 때
+  const handleConfirmCancel = () => {
+    setOpenCancelConfirm(false);
+
+    if (isCreate) {
+      navigateToList();
+    } else {
+      navigateToDetail();
+    }
+
+    onCancel();
+  };
+
   return (
     <>
-      {/* 폼/에디터 영역 */}
       <motion.form
         onSubmit={handleSubmit}
         initial={{ opacity: 0, x: 24 }}
@@ -236,33 +313,29 @@ export default function GroupContentDetailEdit({
         </footer>
       </motion.form>
 
-      {/* 모달은 폼 밖으로 분리해서 레이아웃 변화 차단 */}
       <ConfirmModal
         open={openCancelConfirm}
-        title={isCreate ? "취소하시겠습니까?" : "취소하시겠습니까?"}
+        title="취소하시겠습니까?"
         message={
           isCreate
             ? "작성 중인 내용이 저장되지 않습니다.\n정말 취소하시겠습니까?"
             : "변경 사항이 저장되지 않습니다.\n정말 취소하시겠습니까?"
         }
         confirmText="확인"
-        cancelText={isCreate ? "취소" : "취소"}
-        onConfirm={() => {
-          setOpenCancelConfirm(false);
-          onCancel();
-        }}
+        cancelText="취소"
+        onConfirm={handleConfirmCancel}
         onClose={() => setOpenCancelConfirm(false)}
       />
 
       <ConfirmModal
         open={openSaveConfirm}
-        title={isCreate ? "등록하시겠습니까?" : "등록하시겠습니까?"}
+        title="등록하시겠습니까?"
         message={
           isCreate
             ? "현재 내용을 게시물로 작성합니다.\n등록하시겠습니까?"
             : "현재 수정 내용을 저장합니다.\n등록하시겠습니까?"
         }
-        confirmText={isCreate ? "등록" : "등록"}
+        confirmText="등록"
         cancelText="취소"
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}

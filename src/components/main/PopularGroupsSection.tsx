@@ -4,7 +4,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
 import type { groups } from "../../types/group";
 import SwiperGroupCard from "../common/SwiperGroupCard";
-import LoadingSpinner from "../common/LoadingSpinner";
+import SkeletonSwiper from "../skeleton/SkeletonSwiper";
+// import LoadingSpinner from "../common/LoadingSpinner";
 
 export default function PopularGroupsSection() {
   const [groups, setGroups] = useState<groups[]>([]);
@@ -41,7 +42,7 @@ export default function PopularGroupsSection() {
         if (groupsError) throw groupsError;
 
         // 모집중인 그룹만 필터링 (오늘 이후 시작인 그룹)
-        const recruitingGroups = groupsData.filter((g) => {
+        const recruitingGroups = (groupsData ?? []).filter((g) => {
           if (!g.group_start_day || !g.group_end_day) return false;
 
           const start = new Date(g.group_start_day);
@@ -61,7 +62,7 @@ export default function PopularGroupsSection() {
         if (favError) throw favError;
 
         //  group_id별 찜 수 계산
-        const favCountMap = favData.reduce(
+        const favCountMap = (favData ?? []).reduce(
           (acc, cur) => {
             acc[cur.group_id] = (acc[cur.group_id] || 0) + 1;
             return acc;
@@ -77,10 +78,10 @@ export default function PopularGroupsSection() {
 
         // 찜 개수 기준으로 정렬 후 상위 10개만
         const sorted = merged
-          .sort((a, b) => b.favorite_count - a.favorite_count)
+          .sort((a, b) => (b as any).favorite_count - (a as any).favorite_count)
           .slice(0, 10);
 
-        setGroups(sorted);
+        setGroups(sorted as groups[]);
       } catch (err) {
         console.error("인기 모임 불러오기 실패:", err);
       } finally {
@@ -116,8 +117,9 @@ export default function PopularGroupsSection() {
         </header>
 
         <div className="">
+          {/* 로딩 중에는 실제 데이터 대신 스켈레톤 전용 스와이퍼를 렌더 */}
           {loading ? (
-            <LoadingSpinner />
+            <SkeletonSwiper />
           ) : groups.length === 0 ? (
             <div className="flex items-center justify-center pb-14 pt-14 gap-10 shadow-card rounded-sm bg-white">
               <img

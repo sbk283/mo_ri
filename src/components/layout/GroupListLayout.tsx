@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useGroup } from "../../contexts/GroupContext";
 import { useGroupMember } from "../../contexts/GroupMemberContext";
 import { diffDaysInclusive, toGroupTypeByRange } from "../../utils/date";
@@ -10,6 +10,7 @@ import GroupSearchResults from "../search/GroupSearchResults";
 import { useSearchParams } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import InfiniteScrollList from "../common/InfiniteScrollList";
+import SkeletonGroupList from "../skeleton/SkeletonGroupList";
 
 type GroupListLayoutProps = {
   mainCategory: string;
@@ -24,7 +25,8 @@ function GroupListLayout({
 }: GroupListLayoutProps) {
   const [selectedSort, setSelectedSort] = useState("최신순");
   const { groups, loading, fetchGroups } = useGroup();
-  const { fetchMemberCount } = useGroupMember();
+  const { memberCounts, fetchAllCounts } = useGroupMember();
+  const initializedRef = useRef(false);
 
   // 검색
   const [searchParams] = useSearchParams();
@@ -34,6 +36,27 @@ function GroupListLayout({
   useEffect(() => {
     fetchGroups(slug);
   }, [fetchGroups, slug]);
+
+  useEffect(() => {
+    if (!groups.length) return;
+    if (initializedRef.current) return;
+
+    const idsToFetch = groups.map((g) => g.group_id);
+    fetchAllCounts(idsToFetch);
+
+    initializedRef.current = true;
+  }, [groups]);
+  // useEffect(() => {
+  //   if (!groups.length) return;
+
+  //   const idsToFetch = groups
+  //     .filter((g) => memberCounts[g.group_id] === undefined)
+  //     .map((g) => g.group_id);
+
+  //   if (idsToFetch.length > 0) {
+  //     fetchAllCounts(idsToFetch);
+  //   }
+  // }, [groups, memberCounts]);
 
   // 정렬 + 필터링 처리
   const displayedGroups = useMemo(() => {
@@ -90,11 +113,11 @@ function GroupListLayout({
   }, [groups, selectedSort]);
 
   // 초기 카운트만 조회 (Realtime이 자동으로 업데이트 처리)
-  useEffect(() => {
-    displayedGroups.forEach((group) => {
-      fetchMemberCount(group.group_id);
-    });
-  }, [displayedGroups, fetchMemberCount]);
+  // useEffect(() => {
+  //   displayedGroups.forEach((group) => {
+  //     fetchMemberCount(group.group_id);
+  //   });
+  // }, [displayedGroups, fetchMemberCount]);
 
   return (
     // 반응형: 모바일에서는 padding 줄이고, 너비 100%
@@ -141,7 +164,7 @@ function GroupListLayout({
               </div>
 
               {loading ? (
-                <LoadingSpinner />
+                <SkeletonGroupList />
               ) : displayedGroups.length === 0 ? (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}

@@ -1,4 +1,3 @@
-// src/pages/GroupContentPage.tsx
 import { AnimatePresence, motion } from "framer-motion";
 import { useLayoutEffect, useRef, useState, useMemo, useEffect } from "react";
 import DashboardDetail from "../components/dashboard/DashboardDetail";
@@ -8,6 +7,8 @@ import GroupDailyContent from "../components/common/GroupDailyContent";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import ConfirmModal from "../components/common/modal/ConfirmModal";
+import { useAuth } from "../contexts/AuthContext";
+import { useGroupMember } from "../contexts/GroupMemberContext";
 
 type TabLabel = "공지사항" | "모임일상";
 type TabParam = "notice" | "daily";
@@ -18,20 +19,34 @@ const paramToLabel = (param?: string | null): TabLabel =>
   param === "daily" ? "모임일상" : "공지사항";
 
 function GroupContentPage() {
+  const { user, loading: authLoading } = useAuth();
+  const { members, fetchMembers } = useGroupMember();
+
+  // 멤버 / 리더 여부
+  const [isLeader, setIsLeader] = useState(false);
+  const [isMember, setIsMember] = useState(false);
+
   const { id: groupId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
 
   // 상세 뷰 관련 쿼리키들(탭 전환 시 제거할 목록)
-  const DETAIL_KEYS = ["post", "view", "mode", "edit"] as const;
+  // create도 같이 관리용으로 넣어둠 (필요시 사용)
+  const DETAIL_KEYS = ["post", "view", "mode", "edit", "create"] as const;
 
   // 작성 트리거
   const [noticeCreateTick, setNoticeCreateTick] = useState(0);
   const [dailyCreateTick, setDailyCreateTick] = useState(0);
 
-  // 탭 상태
-  const [selectedTabLabel, setSelectedTabLabel] =
-    useState<TabLabel>("공지사항");
+  // 탭 리셋용 키: 탭을 클릭해서 슬러그를 초기화할 때마다 증가
+  const [tabResetKey, setTabResetKey] = useState(0);
+
+  // 탭 상태: URL의 tab 쿼리로 초기화
+  const [selectedTabLabel, setSelectedTabLabel] = useState<TabLabel>(() => {
+    const sp = new URLSearchParams(location.search);
+    const tabParam = (sp.get("tab") as TabParam | null) ?? null;
+    return paramToLabel(tabParam);
+  });
 
   // URL에 탭을 기록하면서 상세 파라미터를 제거
   const setTabAndClearDetail = (
@@ -40,11 +55,13 @@ function GroupContentPage() {
   ) => {
     const sp = new URLSearchParams(location.search);
     sp.set("tab", tabParam);
-    DETAIL_KEYS.forEach((k) => sp.delete(k)); // 탭 바꾸면 상세 파라미터 제거
+    // 탭 바꾸면 상세 관련 파라미터 제거
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
 
     const nextSearch = `?${sp.toString()}`;
     const nextUrl = `${location.pathname}${nextSearch}${location.hash || ""}`;
     const currUrl = `${location.pathname}${location.search}${location.hash || ""}`;
+
     if (nextUrl !== currUrl) {
       navigate(
         { pathname: location.pathname, search: nextSearch },
@@ -53,7 +70,7 @@ function GroupContentPage() {
     }
   };
 
-  // 마운트/그룹 변경 시 URL에서 탭 복원(없거나 이상하면 보정)
+  // URL에서 탭 복원 + 정규화 (탭 쿼리가 없거나 이상하면 보정)
   useEffect(() => {
     const sp = new URLSearchParams(location.search);
     const tabParam = (sp.get("tab") as TabParam | null) ?? null;
@@ -66,42 +83,53 @@ function GroupContentPage() {
       setTabAndClearDetail(normalized, { replace: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [groupId]);
+  }, [location.search, groupId]);
 
-  // 현재 URL에 상세 관련 쿼리(post, view, mode, edit) 있는지 여부
-  const hasDetailParam = useMemo(() => {
-    const sp = new URLSearchParams(location.search);
-    return DETAIL_KEYS.some((k) => sp.has(k));
-  }, [location.search]);
+  // 로그인 여부 확인 (비로그인 접근 차단)
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) navigate("/login");
+  }, [user, authLoading, navigate]);
 
-  // 탭 + 상세존재 여부에 따라 key를 바꿔서 강제 리마운트
-  const tabKey = useMemo(
-    () => `${selectedTabLabel}-${hasDetailParam ? "detail" : "list"}`,
-    [selectedTabLabel, hasDetailParam],
-  );
+  // 그룹 멤버 목록 조회
+  useEffect(() => {
+    if (!groupId) return;
+    fetchMembers(groupId);
+  }, [groupId, fetchMembers]);
 
-  // 탭 클릭 시: 상태 + URL 동기화(상세 파라미터 제거)
-  const handleTabClick = (label: TabLabel) => {
-    setSelectedTabLabel(label);
-    setTabAndClearDetail(labelToParam(label));
-  };
+  // 로그인한 사용자가 멤버인지 / 호스트인지 (멤버 컨텍스트 기반)
+  useEffect(() => {
+    if (!groupId || !user?.id) {
+      setIsLeader(false);
+      setIsMember(false);
+      return;
+    }
 
-  // 각 탭 작성 중 여부 (버튼 숨김)
-  const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);
-  const [isDailyCrafting, setIsDailyCrafting] = useState(false);
+    const myMembership = members.find(
+      (m) => m.group_id === groupId && m.user_id === user.id,
+    );
 
-  // 호스트 여부
+    if (!myMembership) {
+      setIsMember(false);
+      setIsLeader(false);
+      return;
+    }
+
+    setIsMember(true);
+    setIsLeader(myMembership.member_role === "host");
+  }, [members, groupId, user?.id]);
+
+  // 호스트 여부 (DB 직접 조회, approved 상태만)
   const [roleLoaded, setRoleLoaded] = useState(false);
   const [isHost, setIsHost] = useState(false);
 
-  // 그룹 탭 진입 시 역할 확인
   useEffect(() => {
     let off = false;
+
     (async () => {
       setRoleLoaded(false);
 
-      const { data: u } = await supabase.auth.getUser();
-      const userId = u?.user?.id;
+      const userId = user?.id;
 
       if (!groupId || !userId) {
         if (!off) {
@@ -120,6 +148,7 @@ function GroupContentPage() {
         .maybeSingle();
 
       if (error) {
+        console.error("[GroupContentPage] role check error:", error);
         if (!off) {
           setIsHost(false);
           setRoleLoaded(true);
@@ -139,7 +168,26 @@ function GroupContentPage() {
     return () => {
       off = true;
     };
-  }, [groupId]);
+  }, [groupId, user?.id]);
+
+  // 탭 + 탭리셋키에 따라 key를 바꿔서 강제 리마운트 제어
+  // 상세/리스트 전환은 전부 자식 컴포넌트가 URL 보고 처리
+  const tabKey = useMemo(
+    () => `${selectedTabLabel}-${tabResetKey}`,
+    [selectedTabLabel, tabResetKey],
+  );
+
+  // 탭 클릭 시: 상태 + URL 동기화(상세 파라미터 제거) + 탭 내용 리셋
+  const handleTabClick = (label: TabLabel) => {
+    setSelectedTabLabel(label);
+    setTabAndClearDetail(labelToParam(label));
+    // 이때는 "다른 탭으로 이동"이니까 탭 컨텐츠 리마운트해서 로컬 상태도 초기화
+    setTabResetKey((v) => v + 1);
+  };
+
+  // 각 탭 작성 중 여부 (버튼 숨김)
+  const [isNoticeCrafting, setIsNoticeCrafting] = useState(false);
+  const [isDailyCrafting, setIsDailyCrafting] = useState(false);
 
   // 탭 데이터
   const tabs = useMemo(
@@ -202,11 +250,35 @@ function GroupContentPage() {
 
   // 상단 "작성하기" 버튼
   const handleCreateClick = () => {
-    // 작성하기 눌러도 상세 파라미터 남아있으면 혼란 줄 수 있으니 탭 유지 + 상세 제거
-    setTabAndClearDetail(labelToParam(selectedTabLabel), { replace: true });
+    const tabParam = labelToParam(selectedTabLabel);
+    const sp = new URLSearchParams(location.search);
 
-    if (selectedTabLabel === "공지사항") setNoticeCreateTick((t) => t + 1);
-    else setDailyCreateTick((t) => t + 1);
+    // 탭 유지 / 세팅
+    sp.set("tab", tabParam);
+
+    // 기존 상세 관련 파라미터 전부 제거
+    DETAIL_KEYS.forEach((k) => sp.delete(k));
+
+    // 작성 모드 명시
+    sp.set("view", "create");
+
+    const nextSearch = `?${sp.toString()}`;
+    const nextUrl = `${location.pathname}${nextSearch}${location.hash || ""}`;
+    const currUrl = `${location.pathname}${location.search}${location.hash || ""}`;
+
+    if (nextUrl !== currUrl) {
+      navigate(
+        { pathname: location.pathname, search: nextSearch },
+        { replace: true },
+      );
+    }
+
+    // 하위에서 effect로 보는 트리거
+    if (selectedTabLabel === "공지사항") {
+      setNoticeCreateTick((t) => t + 1);
+    } else {
+      setDailyCreateTick((t) => t + 1);
+    }
   };
 
   // 공지사항 탭에서만: 호스트일 때만 버튼 노출
@@ -220,16 +292,24 @@ function GroupContentPage() {
   const [leaveModalOpen, setLeaveModalOpen] = useState(false);
 
   const openLeaveModal = () => {
+    // 역할 정보 아직 로딩 중이면 그냥 무시
+    if (!roleLoaded) return;
+
     if (isHost) {
       alert("호스트(관리자)는 모임을 탈퇴할 수 없습니다.");
       return;
     }
+
+    if (!isMember) {
+      alert("현재 이 모임에 가입된 상태가 아닙니다.");
+      return;
+    }
+
     setLeaveModalOpen(true);
   };
 
   const handleLeaveGroup = async () => {
-    const { data: u } = await supabase.auth.getUser();
-    const userId = u?.user?.id;
+    const userId = user?.id;
 
     if (!userId || !groupId) {
       alert("유효하지 않은 요청입니다.");
@@ -239,6 +319,12 @@ function GroupContentPage() {
 
     if (isHost) {
       alert("호스트(관리자)는 모임을 탈퇴할 수 없습니다.");
+      setLeaveModalOpen(false);
+      return;
+    }
+
+    if (!isMember) {
+      alert("현재 이 모임에 가입된 상태가 아닙니다.");
       setLeaveModalOpen(false);
       return;
     }
@@ -262,6 +348,17 @@ function GroupContentPage() {
     navigate("/");
   };
 
+  // 모임원이 아닌 경우: 접근 제한 화면만 노출
+  if (roleLoaded && !isMember) {
+    return (
+      <GroupDashboardLayout>
+        <div className="flex justify-center items-center h-[600px] text-lg font-medium">
+          이 모임의 멤버만 접근할 수 있습니다.
+        </div>
+      </GroupDashboardLayout>
+    );
+  }
+
   return (
     <div>
       <GroupDashboardLayout>
@@ -270,82 +367,87 @@ function GroupContentPage() {
           <div className="bg-white shadow-card h-[145px] w-[1024px] rounded-sm p-[12px]">
             <DashboardDetail />
           </div>
+          <div>
+            {/* 게시판 */}
+            <div className="bg-white shadow-card min-h-[590px] rounded-sm p-6">
+              <div className="flex justify-between items-center">
+                <p className="text-xxl font-bold mb-4">게시판</p>
 
-          {/* 게시판 */}
-          <div className="bg-white shadow-card min-h-[590px] rounded-sm p-6">
-            <div className="flex justify-between items-center">
-              <p className="text-xxl font-bold mb-4">게시판</p>
-
-              {showCreateButton && (
-                <button
-                  type="button"
-                  onClick={handleCreateClick}
-                  className="px-4 py-2 bg-brand text-white rounded hover:opacity-90 mb-4"
-                >
-                  작성하기
-                </button>
-              )}
-            </div>
-
-            {/* 탭 네비게이션 */}
-            <div className="w-full">
-              <nav className="h-[40px] border-b border-gray-300">
-                <ul ref={listRef} className="relative flex pb-[5px]">
-                  {tabs.map((item, i) => (
-                    <li
-                      key={item.label}
-                      ref={(el) => (tabRefs.current[i] = el)}
-                      className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
-                      onClick={() => handleTabClick(item.label)}
-                    >
-                      <p
-                        className={`text-xl font-bold transition-colors duration-200 ${
-                          item.label === selectedTabLabel
-                            ? "text-brand"
-                            : "text-[#3c3c3c] hover:text-brand"
-                        }`}
-                      >
-                        {item.label}
-                      </p>
-                    </li>
-                  ))}
-
-                  {/* 탭 underline */}
-                  <motion.div
-                    className="absolute bottom-0 h-[4px] bg-brand rounded"
-                    initial={false}
-                    animate={{ left: underline.left, width: underline.width }}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                  />
-                </ul>
-              </nav>
-
-              {/* 탭 컨텐츠 */}
-              <main className="flex justify-center min-h-[300px]">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={tabKey}
-                    initial={{ y: 10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -10, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
+                {showCreateButton && (
+                  <button
+                    type="button"
+                    onClick={handleCreateClick}
+                    className="px-4 py-2 bg-brand text-white rounded hover:opacity-90 mb-4"
                   >
-                    {currentTab.content}
-                  </motion.div>
-                </AnimatePresence>
-              </main>
-            </div>
-          </div>
+                    작성하기
+                  </button>
+                )}
+              </div>
 
-          {/* 모임 나가기 */}
-          {!isHost && (
-            <button
-              className="text-sm ml-auto mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition"
-              onClick={openLeaveModal}
-            >
-              모임나가기
-            </button>
-          )}
+              {/* 탭 네비게이션 */}
+              <div className="w-full">
+                <nav className="h-[40px] border-b border-gray-300">
+                  <ul ref={listRef} className="relative flex pb-[5px]">
+                    {tabs.map((item, i) => (
+                      <li
+                        key={item.label}
+                        ref={(el) => (tabRefs.current[i] = el)}
+                        className="relative w-[130px] text-center pt-1 top-[-10px] cursor-pointer"
+                        onClick={() => handleTabClick(item.label)}
+                      >
+                        <p
+                          className={`text-xl font-bold transition-colors duration-200 ${
+                            item.label === selectedTabLabel
+                              ? "text-brand"
+                              : "text-[#3c3c3c] hover:text-brand"
+                          }`}
+                        >
+                          {item.label}
+                        </p>
+                      </li>
+                    ))}
+
+                    {/* 탭 underline */}
+                    <motion.div
+                      className="absolute bottom-0 h-[4px] bg-brand rounded"
+                      initial={false}
+                      animate={{ left: underline.left, width: underline.width }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 30,
+                      }}
+                    />
+                  </ul>
+                </nav>
+
+                {/* 탭 컨텐츠 */}
+                <main className="flex justify-center min-h-[300px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={tabKey}
+                      initial={{ y: 10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -10, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {currentTab.content}
+                    </motion.div>
+                  </AnimatePresence>
+                </main>
+              </div>
+            </div>
+
+            {/* 모임 나가기 */}
+            {roleLoaded && !isHost && isMember && (
+              <button
+                className="text-sm ml-auto mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition"
+                onClick={openLeaveModal}
+              >
+                모임나가기
+              </button>
+            )}
+          </div>
         </div>
       </GroupDashboardLayout>
 

@@ -52,7 +52,7 @@ export default function GroupDailyDetailEdit({
   const isTitleEmpty = normTitle(form.title).length === 0;
   const isTitleOver = titleLength > TITLE_LIMIT;
 
-  // 초기 스냅샷 (원본)
+  // 초기 스냅샷 (원본 기준을 정규화해서 저장)
   const initial = useRef<{ title: string; content: string }>({
     title: "",
     content: "",
@@ -72,7 +72,7 @@ export default function GroupDailyDetailEdit({
     setDirty(false);
   }, [daily.id, daily.title, daily.content]);
 
-  // 현재 폼 값 기준으로 dirty 다시 계산
+  // 현재 폼 값 기준으로 dirty 다시 계산 (비교는 정규화된 문자열끼리)
   const recomputeDirty = (
     nextTitle?: string | null,
     nextContent?: string | null,
@@ -119,7 +119,6 @@ export default function GroupDailyDetailEdit({
 
   const handleRequestCancel = () => {
     if (isCreate) {
-      // 새 작성: 아무것도 안 썼으면 바로 닫고, 뭔가 있으면 물어봄
       const hasAny =
         normTitle(form.title).length > 0 ||
         hasMeaningfulContent(form.content ?? "");
@@ -128,7 +127,6 @@ export default function GroupDailyDetailEdit({
       return;
     }
 
-    // 수정 모드: dirty일 때만 모달, 아니면 바로 닫기
     if (dirty) setOpenCancelConfirm(true);
     else onCancel();
   };
@@ -141,86 +139,97 @@ export default function GroupDailyDetailEdit({
 
   const handleConfirmSave = () => {
     setOpenSaveConfirm(false);
-    const next = {
+    const next: Daily = {
       ...form,
       title: normTitle(form.title),
-      content: normContent(form.content),
+      content: form.content ?? "",
     };
     onSave(next);
-    // (이 컴포넌트 보통 바로 닫힐 테지만 방어적으로 초기값 갱신)
-    initial.current = { title: next.title, content: next.content };
+
+    initial.current = {
+      title: normTitle(next.title),
+      content: normContent(next.content),
+    };
     setDirty(false);
   };
 
   return (
-    <motion.form
-      onSubmit={handleSubmit}
-      layout
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -24 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
-      className="w-full"
-    >
-      <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
-        <header className="px-8 pt-6">
-          <div className="flex gap-3">
-            <input
-              aria-label="제목"
-              value={form.title ?? ""}
-              onChange={handleTitleChange}
-              className={`flex-1 border rounded px-3 py-2 text-lg font-semibold ${
-                isTitleOver ? "border-red-400" : "border-gray-300"
-              }`}
-              placeholder="제목을 입력해주세요."
-              maxLength={TITLE_LIMIT}
+    <>
+      {/* 폼 자체 */}
+      <motion.form
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, x: 24 }}
+        animate={{ opacity: 1, x: 0 }}
+        exit={{ opacity: 0, x: -24 }}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        className="w-full"
+      >
+        <article className="mx-auto bg-white shadow-md border border-[#A3A3A3]">
+          <header className="px-8 pt-6">
+            <div className="relative flex items-center">
+              <input
+                aria-label="제목"
+                value={form.title ?? ""}
+                onChange={handleTitleChange}
+                placeholder="제목을 입력해주세요."
+                maxLength={TITLE_LIMIT}
+                className={`w-full border rounded px-3 py-2 text-lg font-semibold pr-16
+        ${
+          isTitleOver
+            ? "border-red-400 focus:border-red-400"
+            : "border-gray-300 focus:border-brand"
+        }`}
+              />
+              <span
+                className={`absolute right-4 text-sm select-none pointer-events-none ${
+                  isTitleOver ? "text-red-500" : "text-gray-400"
+                }`}
+              >
+                {titleLength}/{TITLE_LIMIT}
+              </span>
+            </div>
+          </header>
+
+          <section className="px-8 py-6">
+            <DetailRichTextEditor
+              key={`daily-content-${daily.id}`}
+              value={form.content ?? ""}
+              onChange={handleContentChange}
+              placeholder="내용을 입력해주세요."
+              disabled={false}
+              requireNotEmpty
+              onValidityChange={setIsContentValid}
             />
-            <span
-              className={`text-sm ${isTitleOver ? "text-red-500" : "text-gray-400"}`}
-            >
-              {titleLength}/{TITLE_LIMIT}
-            </span>
-          </div>
-        </header>
+          </section>
+        </article>
 
-        <section className="px-8 py-6">
-          <DetailRichTextEditor
-            key={`daily-content-${daily.id}`}
-            value={form.content ?? ""}
-            onChange={handleContentChange}
-            placeholder="내용을 입력해주세요."
-            disabled={false}
-            requireNotEmpty
-            onValidityChange={setIsContentValid}
-          />
-        </section>
-      </article>
+        <footer className="py-6 flex justify-end gap-3">
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.96 }}
+            onClick={handleRequestCancel}
+            className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-brand border border-brand rounded-sm"
+          >
+            취소
+          </motion.button>
 
-      <footer className="py-6 flex justify-end gap-3">
-        <motion.button
-          type="button"
-          whileTap={{ scale: 0.96 }}
-          onClick={handleRequestCancel}
-          className="text-md w-[64px] h-[36px] flex justify-center items-center text-center text-brand border border-brand rounded-sm"
-        >
-          취소
-        </motion.button>
+          <motion.button
+            type="submit"
+            whileTap={{ scale: isFormValid ? 0.96 : 1 }}
+            disabled={!isFormValid}
+            className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
+              ${
+                isFormValid
+                  ? "text-white bg-brand border-brand hover:opacity-90"
+                  : "bg-gray-300 text-white border-gray-300 cursor-not-allowed"
+              }`}
+          >
+            {isCreate ? "등록" : "등록"}
+          </motion.button>
+        </footer>
+      </motion.form>
 
-        <motion.button
-          type="submit"
-          whileTap={{ scale: isFormValid ? 0.96 : 1 }}
-          disabled={!isFormValid}
-          className={`text-md w-[64px] h-[36px] flex justify-center items-center text-center rounded-sm border transition
-            ${
-              isFormValid
-                ? "text-white bg-brand border-brand hover:opacity-90"
-                : "bg-gray-300 text-white border-gray-300 cursor-not-allowed"
-            }`}
-        >
-          {isCreate ? "등록" : "등록"}
-        </motion.button>
-      </footer>
-
+      {/* 모달은 폼 밖에 두기: 폼 레이아웃에 영향 안 줌 */}
       <ConfirmModal
         open={openCancelConfirm}
         title={isCreate ? "취소하시겠습니까?" : "취소하시겠습니까?"}
@@ -251,6 +260,6 @@ export default function GroupDailyDetailEdit({
         onConfirm={handleConfirmSave}
         onClose={() => setOpenSaveConfirm(false)}
       />
-    </motion.form>
+    </>
   );
 }

@@ -4,7 +4,7 @@ export default function SkeletonSwiper() {
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="h-[290px] w-[245px] rounded-sm border border-brand bg-gray-100 overflow-hidden"
+          className="h-[290px] w-[245px] rounded-sm border border-brand-light bg-gray-100 overflow-hidden"
         >
           {/* 이미지 자리 */}
           <div className="w-full h-[133px] bg-brand-light" />

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useCallback, memo } from "react";
 import { useGroupMember } from "../../contexts/GroupMemberContext";
 import LazyImage from "../common/LazyImage";
+import { optimizeImageUrl } from "../../utils/image";
 
 export type GroupListCardProps = {
   group_id: string;
@@ -111,7 +112,7 @@ function GroupListCard(props: GroupListCardProps) {
       {/* 이미지 영역 */}
       <div className="relative w-full h-[200px] sm:w-[300px] sm:h-[175px] overflow-hidden flex-shrink-0">
         <LazyImage
-          src={safeImageSrc}
+          src={optimizeImageUrl(safeImageSrc, 350)}
           alt="모임 이미지"
           className="absolute inset-0 w-full h-full object-cover rounded-t-md sm:rounded-t-none sm:rounded-l-md"
         />

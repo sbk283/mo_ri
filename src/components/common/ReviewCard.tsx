@@ -1,5 +1,6 @@
 // src/components/common/ReviewCard.tsx
 
+import { optimizeImageUrl } from "../../utils/image";
 import LazyImage from "../common/LazyImage";
 
 export type ReviewItem = {
@@ -63,7 +64,7 @@ export function ReviewCard({
 
         {/* 작성자 프로필 (LazyImage 적용) */}
         <LazyImage
-          src={profileImage}
+          src={optimizeImageUrl(profileImage, 100)}
           alt={`${item.created_id} 프로필`}
           className="absolute top-9 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
           onError={handleImgError}

@@ -6,6 +6,7 @@ import type { ReviewItem } from "./common/modal/CreateReview";
 import CreateReview from "./common/modal/CreateReview";
 import { supabase } from "../lib/supabase";
 import LazyImage from "./common/LazyImage";
+import { optimizeImageUrl } from "../utils/image";
 
 interface JoinGroupContentBoxProps {
   groups: GroupWithCategory[];
@@ -167,7 +168,7 @@ export default function JoinGroupContentBox({
                 {/* 이미지 Lazy 로딩 */}
                 <div className="w-[150px] h-[96px] rounded-[5px] overflow-hidden border border-[#9c9c9c]">
                   <LazyImage
-                    src={group.image_urls?.[0] ?? "/nullbg.jpg"}
+                    src={optimizeImageUrl(group.image_urls?.[0], 300)}
                     alt="모임사진"
                     className="w-full h-full object-cover"
                   />

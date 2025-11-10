@@ -3,6 +3,7 @@ import type { GroupWithCategory } from "../../types/group";
 import { useEffect, useState, useCallback, useMemo, memo } from "react";
 import ConfirmModal from "./modal/ConfirmModal";
 import LazyImage from "../common/LazyImage";
+import { optimizeImageUrl } from "../../utils/image";
 
 interface GroupCardProps {
   item: GroupWithCategory;
@@ -146,7 +147,7 @@ function GroupCard({
           {/* 이미지 영역 */}
           <div className="relative">
             <LazyImage
-              src={imageSrc}
+              src={optimizeImageUrl(imageSrc, 300)}
               alt={item.group_title}
               className="w-full h-[133px] object-cover"
             />

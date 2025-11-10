@@ -143,8 +143,6 @@ function BannerCardSwiper({
           loop={loop}
           grabCursor
           breakpoints={bps}
-          observer={true}
-          observeParents={true}
         >
           {visibleGroups.map((item) => (
             <SwiperSlide key={item.group_id} tag="li">

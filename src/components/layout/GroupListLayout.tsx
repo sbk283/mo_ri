@@ -91,10 +91,13 @@ function GroupListLayout({
 
   // 초기 카운트만 조회 (Realtime이 자동으로 업데이트 처리)
   useEffect(() => {
+    // 최초 마운트시에만 초기 멤버 카운트 fetch
     displayedGroups.forEach((group) => {
       fetchMemberCount(group.group_id);
     });
-  }, [displayedGroups, fetchMemberCount]);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     // 반응형: 모바일에서는 padding 줄이고, 너비 100%

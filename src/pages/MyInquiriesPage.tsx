@@ -365,10 +365,10 @@ function MyInquiriesPage() {
                   <div className="truncate font-medium text-gray-400">
                     {item.inquiry_detail}
                   </div>
-                  <div className="font-medium text-gray-400 text-sm">
+                  <div className="font-medium text-gray-400 text-sm truncate ">
                     <b>{item.inquiry_main_type}</b>
                     <br />
-                    <span className=" text-gray-200  whitespace-nowrap">
+                    <span className=" text-gray-200 truncate  whitespace-nowrap ">
                       {item.inquiry_sub_type}
                     </span>
                   </div>

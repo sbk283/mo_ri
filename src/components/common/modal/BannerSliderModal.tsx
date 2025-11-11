@@ -198,9 +198,8 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
             loop={true}
             onSlideChange={handleSlideChange}
             className="w-full h-full"
-            // Swiper v11 기준 최적화 가능한 옵션
-            observer={true}
-            observeParents={true}
+            // observer={true}
+            // observeParents={true}
           >
             {slides}
           </Swiper>

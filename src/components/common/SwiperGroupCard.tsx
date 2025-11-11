@@ -70,9 +70,6 @@ function SwiperGroupCard({
           loop={loop}
           grabCursor
           breakpoints={bps}
-          // Swiper 최적화 설정 (v11 기준 가능한 옵션만 유지)
-          observer={true}
-          observeParents={true}
         >
           {visibleGroups.map((item) => (
             <SwiperSlide key={item.group_id} tag="li">

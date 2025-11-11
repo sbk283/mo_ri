@@ -239,7 +239,8 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [subscribedGroups, fetchMemberCount, fetchMembers, onMemberCountChange]);
+  }, []);
+  // }, [subscribedGroups, fetchMemberCount, fetchMembers, onMemberCountChange]);
 
   // 상세 페이지용 subscribe
   const subscribeToGroup = useCallback((groupId: string) => {
@@ -260,13 +261,6 @@ export const GroupMemberProvider: React.FC<GroupMemberProviderProps> = ({
       )
       .subscribe();
   }, []);
-  // const subscribeToGroup = useCallback((groupId: string) => {
-  //   setSubscribedGroups((prev) => {
-  //     const next = new Set(prev);
-  //     next.add(groupId);
-  //     return next;
-  //   });
-  // }, []);
 
   // 모임 참가
   const joinGroup = useCallback(

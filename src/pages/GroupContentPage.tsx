@@ -14,9 +14,9 @@ type TabLabel = "공지사항" | "모임일상";
 type TabParam = "notice" | "daily";
 
 const labelToParam = (label: TabLabel): TabParam =>
-  label === "공지사항" ? "notice" : "daily";
+  label === "모임일상" ? "daily" : "notice";
 const paramToLabel = (param?: string | null): TabLabel =>
-  param === "daily" ? "모임일상" : "공지사항";
+  param === "notice" ? "공지사항" : "모임일상";
 
 function GroupContentPage() {
   const { user, loading: authLoading } = useAuth();
@@ -192,18 +192,6 @@ function GroupContentPage() {
   const tabs = useMemo(
     () => [
       {
-        label: "공지사항" as const,
-        content: (
-          <div>
-            <DashboardNotice
-              groupId={groupId}
-              createRequestKey={noticeCreateTick}
-              onCraftingChange={setIsNoticeCrafting}
-            />
-          </div>
-        ),
-      },
-      {
         label: "모임일상" as const,
         content: (
           <div>
@@ -211,6 +199,18 @@ function GroupContentPage() {
               groupId={groupId}
               createRequestKey={dailyCreateTick}
               onCraftingChange={setIsDailyCrafting}
+            />
+          </div>
+        ),
+      },
+      {
+        label: "공지사항" as const,
+        content: (
+          <div>
+            <DashboardNotice
+              groupId={groupId}
+              createRequestKey={noticeCreateTick}
+              onCraftingChange={setIsNoticeCrafting}
             />
           </div>
         ),

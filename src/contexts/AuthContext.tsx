@@ -1,6 +1,12 @@
-import type { Session, User } from '@supabase/supabase-js';
-import { createContext, useContext, useEffect, useState, type PropsWithChildren } from 'react';
-import { supabase } from '../lib/supabase';
+import type { Session, User } from "@supabase/supabase-js";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type PropsWithChildren,
+} from "react";
+import { supabase } from "../lib/supabase";
 
 // 1. 인증 컨텍스트 타입
 type AuthContextType = {
@@ -14,10 +20,8 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   // 카카오 로그인 함수
   signInWithKakao: () => Promise<{ error?: string }>;
-
   // 구글 로그인 함수
   signInWithGoogle: () => Promise<{ error?: string }>;
-
   // 회원 로그아웃
   signOut: () => Promise<void>;
   // 회원정보 로딩 상태
@@ -74,7 +78,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   }, []);
 
   // 회원 가입 함수
-  const signUp: AuthContextType['signUp'] = async (email, password) => {
+  const signUp: AuthContextType["signUp"] = async (email, password) => {
     const { error } = await supabase.auth.signUp({
       email: email,
       password: password,
@@ -91,8 +95,12 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return {};
   };
   // 회원 로그인
-  const signIn: AuthContextType['signIn'] = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password, options: {} });
+  const signIn: AuthContextType["signIn"] = async (email, password) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: {},
+    });
     if (error) {
       return { error: error.message };
     }
@@ -100,9 +108,9 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   // 카카오 로그인 함수
-  const signInWithKakao: AuthContextType['signInWithKakao'] = async () => {
+  const signInWithKakao: AuthContextType["signInWithKakao"] = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'kakao',
+      provider: "kakao",
       // 로그인 실행 후 이동옵션
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -117,9 +125,9 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
   };
 
   // 구글 로그인 함수
-  const signInWithGoogle: AuthContextType['signInWithGoogle'] = async () => {
+  const signInWithGoogle: AuthContextType["signInWithGoogle"] = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+      provider: "google",
       options: {
         // 로그인 실행후 이동옵션
         redirectTo: `${window.location.origin}/auth/callback`,
@@ -129,12 +137,12 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     if (error) {
       return { error: error.message };
     }
-    console.log('구글 로그인 성공 :', data);
+    console.log("구글 로그인 성공 :", data);
     return {};
   };
 
   // 회원 로그아웃
-  const signOut: AuthContextType['signOut'] = async () => {
+  const signOut: AuthContextType["signOut"] = async () => {
     await supabase.auth.signOut();
   };
 
@@ -213,7 +221,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
   if (!ctx) {
-    throw new Error('AuthContext 가 없습니다.');
+    throw new Error("AuthContext 가 없습니다.");
   }
   return ctx;
 };

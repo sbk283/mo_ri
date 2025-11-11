@@ -45,7 +45,6 @@ function IntroSection() {
         if (!data.is_active) {
           // 탈퇴 회원이면 즉시 로그아웃 및 리다이렉트
           await supabase.auth.signOut();
-          alert("탈퇴한 계정입니다.");
           navigate("/");
           return;
         }

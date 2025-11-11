@@ -130,7 +130,7 @@ function GroupListLayout({
           </h1>
           <div className="mt-2 border-l-4 border-brand pl-3">
             <p className="text-lg font-semibold text-gray-800">
-              카테고리와 설정 지역에 맞는 모임을 한눈에 볼 수 있습니다.
+              카테고리와 설정한 관심사에 맞는 모임을 한눈에 볼 수 있습니다.
             </p>
             <p className="text-md text-gray-600">
               관심 있는 모임을 쉽고 빠르게 찾아 다양한 활동을 즐겨보세요.

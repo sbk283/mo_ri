@@ -1,235 +1,241 @@
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
-import Footer from './components/Footer';
-import Header from './components/Header';
-import Protected from './components/Protected';
-import ScrollToTop from './components/ScrollToTop';
-import AuthCallback from './pages/AuthCallback';
-import CreateGroupPage from './pages/CreateGroupPage';
-import DeleteAccountPage from './pages/DeleteAccountPage';
-import DirectChatPage from './pages/DirectChatPage';
-import GroupContentPage from './pages/GroupContentPage';
-import GroupDashBoardPage from './pages/GroupDashBoardPage';
-import GroupDetailPage from './pages/GroupDetailPage';
-import GroupListPage from './pages/GroupListPage';
-import GroupManagerPage from './pages/GroupManagerPage';
-import GroupMemberPage from './pages/GroupMemberPage';
-import GroupReviewsPage from './pages/GroupReviewsPage';
-import GroupSchedulePage from './pages/GroupSchedulePage';
-import GroupWishListPage from './pages/GroupWishListPage';
-import Index from './pages/Index';
-import InquiryPage from './pages/InquiryPage';
-import JoinedGroupsPage from './pages/JoinedGroupsPage';
-import LoginPage from './pages/LoginPage';
-import MyInquiriesPage from './pages/MyInquiriesPage';
-import MyPage from './pages/MyPage';
-import MyPageFAQPage from './pages/MyPageFAQPage';
-import MyPageSettingPage from './pages/MyPageSettingPage';
-import NotFoundPage from './pages/NotFoundPage';
-import LocationServicePage from './pages/policies/LocationServicePage';
-import PrivacyPage from './pages/policies/PrivacyPage';
-import RefundPolicypage from './pages/policies/RefundPolicypage';
-import ReviewPolicyPage from './pages/policies/ReviewPolicyPage';
-import TermsPage from './pages/policies/TermsPage';
-import YouthPolicyPage from './pages/policies/YouthPolicyPage';
-import ServiceIntroducePage from './pages/ServiceIntroducePage';
-import SignUpPage from './pages/SignUpPage';
-import Admin from './pages/Admin';
-import AdminProtected from './components/AdminProtected';
-import { useGoogleAnalytics } from './hooks/useGoogleAnalytics';
-import ReviewsListPage from './pages/ReviewsListPage';
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/pagination";
 
-// 컴포넌트 따라 각각 작업하시고, 혹시 서로의 코드를 수정해야할 일이 있으면
-// 꼭 얘기후에 진행합시다~!(서로가 맘상하는 일 없도록~!!)
-// NavLink or Link 는 작업하는 곳에서 상황에 맞게 알맞게 사용해 주세요..
-// page 추가하는경우
-// page 는 아래에 route 적용해주시고 {path='/???'} 이름 알려주세요~
+import { lazy, Suspense } from "react";
+import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import Footer from "./components/Footer";
+import Header from "./components/Header";
+import Protected from "./components/Protected";
+import ScrollToTop from "./components/ScrollToTop";
+import { useGoogleAnalytics } from "./hooks/useGoogleAnalytics";
+import AdminProtected from "./components/AdminProtected";
+import LoadingSpinner from "./components/common/LoadingSpinner";
 
-// GA 추적을 위한 래퍼 컴포넌트
+// 페이지 lazy 로드
+const Index = lazy(() => import("./pages/Index"));
+const GroupManagerPage = lazy(() => import("./pages/GroupManagerPage"));
+const JoinedGroupsPage = lazy(() => import("./pages/JoinedGroupsPage"));
+const GroupWishListPage = lazy(() => import("./pages/GroupWishListPage"));
+const ReviewsListPage = lazy(() => import("./pages/ReviewsListPage"));
+const GroupReviewsPage = lazy(() => import("./pages/GroupReviewsPage"));
+const GroupListPage = lazy(() => import("./pages/GroupListPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+const MyPage = lazy(() => import("./pages/MyPage"));
+const CreateGroupPage = lazy(() => import("./pages/CreateGroupPage"));
+const GroupDetailPage = lazy(() => import("./pages/GroupDetailPage"));
+const DirectChatPage = lazy(() => import("./pages/DirectChatPage"));
+const GroupDashBoardPage = lazy(() => import("./pages/GroupDashBoardPage"));
+const GroupContentPage = lazy(() => import("./pages/GroupContentPage"));
+const GroupMemberPage = lazy(() => import("./pages/GroupMemberPage"));
+const GroupSchedulePage = lazy(() => import("./pages/GroupSchedulePage"));
+const MyPageSettingPage = lazy(() => import("./pages/MyPageSettingPage"));
+const TermsPage = lazy(() => import("./pages/policies/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/policies/PrivacyPage"));
+const LocationServicePage = lazy(
+  () => import("./pages/policies/LocationServicePage"),
+);
+const YouthPolicyPage = lazy(() => import("./pages/policies/YouthPolicyPage"));
+const ReviewPolicyPage = lazy(
+  () => import("./pages/policies/ReviewPolicyPage"),
+);
+const RefundPolicypage = lazy(
+  () => import("./pages/policies/RefundPolicypage"),
+);
+const ServiceIntroducePage = lazy(() => import("./pages/ServiceIntroducePage"));
+const MyPageFAQPage = lazy(() => import("./pages/MyPageFAQPage"));
+const InquiryPage = lazy(() => import("./pages/InquiryPage"));
+const MyInquiriesPage = lazy(() => import("./pages/MyInquiriesPage"));
+const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage"));
+const Admin = lazy(() => import("./pages/Admin"));
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
+
+// GA 래퍼
 const LayoutWithAnalytics = ({ children }: { children: React.ReactNode }) => {
-  useGoogleAnalytics(); // Router 컨텍스트 내부에서 사용
+  useGoogleAnalytics();
   return <>{children}</>;
 };
 
-function App() {
+export default function App() {
   return (
     <div>
       <Router>
         <LayoutWithAnalytics>
           <ScrollToTop />
           <Header />
-          <Routes>
-            {/* 관리자 */}
-            <Route
-              path="/admin"
-              element={
-                <AdminProtected>
-                  <Admin />
-                </AdminProtected>
-              }
-            />
-            {/*메인 홈 */}
-            <Route path="/" element={<Index />} />
-            {/* 모임관리 - 생성한 모임 페이지 */}
-            <Route
-              path="/groupmanager"
-              element={
-                <Protected>
-                  <GroupManagerPage />
-                </Protected>
-              }
-            />
-            {/* 모임관리 - 참여한 모임 페이지 */}
-            <Route
-              path="/joingroups"
-              element={
-                <Protected>
-                  <JoinedGroupsPage />
-                </Protected>
-              }
-            />
-            {/* 모임관리 - 찜리스트 */}
-            <Route
-              path="/groupwish"
-              element={
-                <Protected>
-                  <GroupWishListPage />
-                </Protected>
-              }
-            />
-            {/* 리뷰 더보기 리스트 페이지 */}
-            <Route path="/reviews" element={<ReviewsListPage />} />
-            {/* 모임관리 > 후기리뷰 */}
-            <Route
-              path="/groupreviews"
-              element={
-                <Protected>
-                  <GroupReviewsPage />
-                </Protected>
-              }
-            />
-            {/* 모임리스트 */}
-            <Route path="/grouplist" element={<GroupListPage />} />
-            <Route path="/grouplist/:slug" element={<GroupListPage />} />
-            {/* 로그인 */}
-            <Route path="/login" element={<LoginPage />} />
-            {/* 회원가입 */}
-            <Route path="/signup" element={<SignUpPage />} />
-            {/* 이메일인증 */}
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            {/* 마이페이지 */}
-            <Route
-              path="/mypage"
-              element={
-                <Protected>
-                  <MyPage />
-                </Protected>
-              }
-            />
-            {/* 모임생성 */}
-            <Route path="/creategroup" element={<CreateGroupPage />} />
-            {/* 모임 상세보기 */}
-            <Route path="/groupdetail/:id" element={<GroupDetailPage />} />
 
-            {/* 채팅 메인 (전체 채팅 목록) */}
-            <Route
-              path="/chat/:groupId/:targetUserId?"
-              element={
-                <Protected>
-                  <DirectChatPage />
-                </Protected>
-              }
-            />
+          {/* 모든 lazy 컴포넌트 Suspense 처리 */}
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* 관리자 */}
+              <Route
+                path="/admin"
+                element={
+                  <AdminProtected>
+                    <Admin />
+                  </AdminProtected>
+                }
+              />
 
-            {/* 그룹별 채팅 (targetUserId는 optional) */}
-            <Route
-              path="/chat/:groupId/:targetUserId?"
-              element={
-                <Protected>
-                  <DirectChatPage />
-                </Protected>
-              }
-            />
-            {/* 모임 상세대시보드 */}
-            <Route path="/groupdashboard/:id" element={<GroupDashBoardPage />} />
-            {/* 모임 게시판 */}
-            <Route path="/groupcontent/:id" element={<GroupContentPage />} />
-            {/* 모임 멤버 */}
-            <Route path="/groupmember/:id" element={<GroupMemberPage />} />
-            {/* 모임 일정 */}
-            <Route path="/groupschedule/:id" element={<GroupSchedulePage />} />
-            {/* 마이페이지 회원설정 */}
-            <Route
-              path="/mypagesetting"
-              element={
-                <Protected>
-                  <MyPageSettingPage />
-                </Protected>
-              }
-            />
-            {/* 마이페이지 결제수단 */}
-            {/* <Route path="/payments" element={<MyPagePaymentsPage />} /> */}
-            {/* 아이디 찾기 */}
-            {/* <Route path="/findid" element={<FindIdPage />} /> */}
-            {/* 비밀번호 찾기 */}
-            {/* <Route path="/findpw" element={<FindPwPage />} /> */}
-            {/* 이용약관 */}
-            <Route path="/terms" element={<TermsPage />} />
-            {/* 개인정보 처리방침 */}
-            <Route path="/privacy" element={<PrivacyPage />} />
-            {/* 위치기반 서비스 관련 약관 */}
-            <Route path="/location-service" element={<LocationServicePage />} />
-            {/* 청소년 보호정책 */}
-            <Route path="/youth-policy" element={<YouthPolicyPage />} />
-            {/* 후기정책 */}
-            <Route path="/review-policy" element={<ReviewPolicyPage />} />
-            {/* 제휴/환불 */}
-            <Route path="/refund-policy" element={<RefundPolicypage />} />
-            {/* 서비스소개*/}
-            <Route path="/serviceint" element={<ServiceIntroducePage />} />
-            {/* 마이페이지 고객센터*/}
-            <Route
-              path="/faq"
-              element={
-                <Protected>
-                  <MyPageFAQPage />
-                </Protected>
-              }
-            />
-            {/* 마이페이지 1:1 문의 하기*/}
-            <Route
-              path="/inquiry"
-              element={
-                <Protected>
-                  <InquiryPage />
-                </Protected>
-              }
-            />
-            {/* 마이페이지 1:1 문의 내역*/}
-            <Route
-              path="/inquiry/history"
-              element={
-                <Protected>
-                  <MyInquiriesPage />
-                </Protected>
-              }
-            />
-            {/* 회원 탈퇴 */}
-            <Route
-              path="/deleteaccount"
-              element={
-                <Protected>
-                  <DeleteAccountPage />
-                </Protected>
-              }
-            />
-            {/* 404 */}
-            <Route path="*" element={<NotFoundPage />} />
-          </Routes>
+              {/* 홈 */}
+              <Route path="/" element={<Index />} />
+
+              {/* 모임관리 */}
+              <Route
+                path="/groupmanager"
+                element={
+                  <Protected>
+                    <GroupManagerPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path="/joingroups"
+                element={
+                  <Protected>
+                    <JoinedGroupsPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path="/groupwish"
+                element={
+                  <Protected>
+                    <GroupWishListPage />
+                  </Protected>
+                }
+              />
+
+              {/* 리뷰 */}
+              <Route path="/reviews" element={<ReviewsListPage />} />
+
+              {/* 참여 모임 후기 */}
+              <Route
+                path="/groupreviews"
+                element={
+                  <Protected>
+                    <GroupReviewsPage />
+                  </Protected>
+                }
+              />
+
+              {/* 리스트 */}
+              <Route path="/grouplist" element={<GroupListPage />} />
+              <Route path="/grouplist/:slug" element={<GroupListPage />} />
+
+              {/* 인증 */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+
+              {/* 마이페이지 */}
+              <Route
+                path="/mypage"
+                element={
+                  <Protected>
+                    <MyPage />
+                  </Protected>
+                }
+              />
+
+              {/* 생성 */}
+              <Route path="/creategroup" element={<CreateGroupPage />} />
+
+              {/* 상세 */}
+              <Route path="/groupdetail/:id" element={<GroupDetailPage />} />
+
+              {/* 채팅 */}
+              <Route
+                path="/chat/:groupId/:targetUserId?"
+                element={
+                  <Protected>
+                    <DirectChatPage />
+                  </Protected>
+                }
+              />
+
+              {/* 그룹 내 상세 페이지 */}
+              <Route
+                path="/groupdashboard/:id"
+                element={<GroupDashBoardPage />}
+              />
+              <Route path="/groupcontent/:id" element={<GroupContentPage />} />
+              <Route path="/groupmember/:id" element={<GroupMemberPage />} />
+              <Route
+                path="/groupschedule/:id"
+                element={<GroupSchedulePage />}
+              />
+
+              {/* 마이페이지 설정 */}
+              <Route
+                path="/mypagesetting"
+                element={
+                  <Protected>
+                    <MyPageSettingPage />
+                  </Protected>
+                }
+              />
+
+              {/* 정책/약관 */}
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route
+                path="/location-service"
+                element={<LocationServicePage />}
+              />
+              <Route path="/youth-policy" element={<YouthPolicyPage />} />
+              <Route path="/review-policy" element={<ReviewPolicyPage />} />
+              <Route path="/refund-policy" element={<RefundPolicypage />} />
+
+              {/* 소개 */}
+              <Route path="/serviceint" element={<ServiceIntroducePage />} />
+
+              {/* 고객센터 */}
+              <Route
+                path="/faq"
+                element={
+                  <Protected>
+                    <MyPageFAQPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path="/inquiry"
+                element={
+                  <Protected>
+                    <InquiryPage />
+                  </Protected>
+                }
+              />
+              <Route
+                path="/inquiry/history"
+                element={
+                  <Protected>
+                    <MyInquiriesPage />
+                  </Protected>
+                }
+              />
+
+              {/* 탈퇴 */}
+              <Route
+                path="/deleteaccount"
+                element={
+                  <Protected>
+                    <DeleteAccountPage />
+                  </Protected>
+                }
+              />
+
+              {/* 404 */}
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+
           <Footer />
         </LayoutWithAnalytics>
       </Router>
     </div>
   );
 }
-
-export default App;

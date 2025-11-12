@@ -4,7 +4,7 @@ import GroupCard from "./GroupCard";
 import type { GroupWithCategory } from "../../types/group";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { supabase } from "../../lib/supabase";
-import LoadingSpinner from "./LoadingSpinner";
+import SkeletonSwiper from "../skeleton/SkeletonSwiper"; // 추가
 
 type BannerCardSwiperProps = {
   groups: GroupWithCategory[];
@@ -73,10 +73,11 @@ function BannerCardSwiper({
   // 마감된 모임 제외 필터링 (memo)
   const filteredGroups = useMemo(() => {
     const today = new Date();
+    const todayZero = new Date(today.setHours(0, 0, 0, 0));
     return (hotGroups ?? []).filter((group) => {
       if (!group.group_end_day) return true;
       const end = new Date(group.group_end_day);
-      return end >= new Date(today.setHours(0, 0, 0, 0));
+      return end >= todayZero;
     });
   }, [hotGroups]);
 
@@ -112,8 +113,16 @@ function BannerCardSwiper({
   const slidesPerView =
     swiperRef.current?.params?.slidesPerView || bps[1024]?.slidesPerView || 4;
 
-  if (loading || fetching) return <LoadingSpinner />;
+  // Skeleton 처리
+  if (loading || fetching) {
+    return (
+      <div className={["relative w-[1024px] mx-auto", className].join(" ")}>
+        <SkeletonSwiper />
+      </div>
+    );
+  }
 
+  // 그룹이 없을 때
   if (!visibleGroups || visibleGroups.length === 0) {
     return (
       <div className="flex items-center justify-center pb-10 pt-10 gap-10 border border-gray-300 rounded-sm mb-[64px]">
@@ -143,8 +152,6 @@ function BannerCardSwiper({
           loop={loop}
           grabCursor
           breakpoints={bps}
-          observer={true}
-          observeParents={true}
         >
           {visibleGroups.map((item) => (
             <SwiperSlide key={item.group_id} tag="li">
@@ -154,7 +161,6 @@ function BannerCardSwiper({
         </Swiper>
       </ul>
 
-      {/* 이전 버튼 */}
       {activeIndex > 0 && (
         <button
           className="custom-prev flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] left-[-20px] z-[5] bg-white shadow-card"
@@ -170,7 +176,6 @@ function BannerCardSwiper({
         </button>
       )}
 
-      {/* 다음 버튼 */}
       {activeIndex < visibleGroups.length - slidesPerView && (
         <button
           className="custom-next flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] right-[-20px] z-[9] bg-white shadow-card"

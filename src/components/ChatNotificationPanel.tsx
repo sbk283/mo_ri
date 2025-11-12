@@ -15,6 +15,7 @@ import {
   FiInfo,
   FiHeart,
   FiStar,
+  FiThumbsUp,
   FiTrash2,
 } from "react-icons/fi";
 
@@ -130,7 +131,9 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
         break;
       case "post_like":
       case "favorite":
-        navigate("/grouplist");
+        navigate(
+          `/groupcontent/${n.group_id}?tab=daily&post=${n.target_id}&view=detail`,
+        );
         break;
       case "group_approved":
         navigate("/groupmanager");
@@ -159,7 +162,7 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
   const handleClearAll = async () => {
     if (!userId) return;
 
-    try { 
+    try {
       // 알림 테이블 전부 삭제
       const { error: deleteError } = await supabase
         .from("notifications")
@@ -266,10 +269,10 @@ const ChatNotificationPanel: React.FC<ChatNotificationPanelProps> = ({
                           <FiInfo className="text-blue-500" />
                         )}
                         {n.type === "review_like" && (
-                          <FiHeart className="text-red-500" />
+                          <FiThumbsUp className="text-blue-500" />
                         )}
                         {n.type === "post_like" && (
-                          <FiStar className="text-yellow-500" />
+                          <FiHeart className="text-red-500" />
                         )}
                       </div>
 

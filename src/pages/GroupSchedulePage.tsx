@@ -214,6 +214,7 @@ function GroupSchedulePage() {
               asideRef={asideRef}
               onUpdateEvent={handleUpdateEvent}
               onDeleteEvent={handleDeleteEvent}
+              isHost={isLeader}
             />
 
             <section className="flex-1 flex justify-end items-stretch">

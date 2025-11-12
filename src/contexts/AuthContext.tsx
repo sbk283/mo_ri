@@ -15,7 +15,11 @@ type AuthContextType = {
   signUp: (email: string, password: string) => Promise<{ error?: string }>;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signInWithKakao: () => Promise<{ error?: string }>;
+
+  // 구글 로그인 함수
   signInWithGoogle: () => Promise<{ error?: string }>;
+  // 회원 로그아웃
+
   signOut: () => Promise<void>;
   loading: boolean;
 
@@ -71,6 +75,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     };
   }, []);
 
+  // 회원 가입 함수
   const signUp: AuthContextType["signUp"] = async (email, password) => {
     const { error } = await supabase.auth.signUp({
       email: email,
@@ -85,6 +90,7 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return {};
   };
 
+  // 회원 로그인
   const signIn: AuthContextType["signIn"] = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -97,22 +103,31 @@ export const AuthProvider: React.FC<PropsWithChildren> = ({ children }) => {
     return {};
   };
 
+
+  // 카카오 로그인 함수
   const signInWithKakao: AuthContextType["signInWithKakao"] = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "kakao",
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
+      // 로그인 실행 후 이동옵션
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
     });
     if (error) return { error: error.message };
     return {};
   };
 
+
+  // 구글 로그인 함수
   const signInWithGoogle: AuthContextType["signInWithGoogle"] = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
+    const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
       },
     });
+
+  // 회원 로그아웃
     if (error) return { error: error.message };
     return {};
   };

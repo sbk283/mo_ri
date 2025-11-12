@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useGroupMember } from "../../../contexts/GroupMemberContext";
 
 interface MeetingCardProps {
@@ -30,17 +30,12 @@ function MeetingCard({
   width = "100%",
   height = "auto",
 }: MeetingCardProps) {
-  // Context에서 memberCounts와 fetchMemberCount 가져오기
   const { memberCounts, fetchMemberCount, subscribeToGroup } = useGroupMember();
-
-  // Context의 실시간 멤버 수 사용 (GroupListCard와 동일한 패턴)
   const currentCount =
     memberCounts[groupId] !== undefined ? memberCounts[groupId] : 0;
 
-  // 컴포넌트 마운트 시 최신 멤버 수 가져오기
   useEffect(() => {
     if (!groupId) return;
-
     fetchMemberCount(groupId);
     subscribeToGroup(groupId);
   }, [groupId, fetchMemberCount, subscribeToGroup]);
@@ -50,33 +45,45 @@ function MeetingCard({
   const now = new Date();
   const start = new Date(startDateStr);
   const end = new Date(endDateStr);
+  const isFull = groupCapacity > 0 && currentCount >= groupCapacity;
 
-  let computedStatus = status;
-  if (now > end) computedStatus = "모임종료";
-  else if (now >= start && now <= end) computedStatus = "모집종료";
+  // 상태 계산 (GroupListCard와 동일)
+  const computedStatus = useMemo(() => {
+    if (now > end) return "finished";
+    if (now >= start || isFull) return "closed";
+    return "recruiting"; // 모집중
+  }, [now, start, end, isFull]);
 
-  let displayDday = dday;
-  if (now > end) displayDday = "";
+  const statusLabel = useMemo(
+    () => ({
+      recruiting: "모집중",
+      closed: "모집마감",
+      finished: "모임종료",
+    }),
+    [],
+  );
+
+  // D-Day 표시: 종료 후 숨김
+  const displayDday = now > end ? "" : dday;
 
   return (
     <div
       className="border border-[#c6c6c6] rounded-sm shadow p-4 bg-white flex flex-col justify-between"
       style={{ width, height }}
     >
-      {/* 상단 */}
       <div>
         <div className="flex items-center justify-between px-1 gap-2 pb-3">
           {/* 상태 */}
           <span
             className={`flex px-2 py-1 rounded-full text-white text-[13px] font-semibold ${
-              computedStatus === "모집중"
+              computedStatus === "recruiting"
                 ? "bg-[#3B82F6]"
-                : computedStatus === "모집종료"
+                : computedStatus === "closed"
                   ? "bg-[#E06251]"
-                  : "bg-gray-400"
+                  : "bg-gray-300"
             }`}
           >
-            {computedStatus}
+            {statusLabel[computedStatus]}
           </span>
 
           <h2 className="flex-1 mx-1 text-[17px] font-semibold text-black truncate">
@@ -95,7 +102,6 @@ function MeetingCard({
         </p>
       </div>
 
-      {/* 하단 */}
       <div className="flex items-center justify-between px-2 mt-3">
         <div className="flex items-center gap-2 text-[15px]">
           <span className="text-[#D83737] font-semibold">
@@ -107,7 +113,6 @@ function MeetingCard({
               alt="참여 인원"
               className="w-[15px] h-[15px]"
             />
-            {/* Context의 실시간 멤버 수 사용 */}
             {participants ?? `${currentCount}/${groupCapacity}`}
           </span>
         </div>

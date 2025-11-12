@@ -1,13 +1,17 @@
 // 2025-10-30 중복 초기화 방지용 useRef 추가
-import { useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import GroupDashboardLayout from '../components/layout/GroupDashboardLayout';
-import DirectChatSidebar from '../components/chat/DirectChatSidebar';
-import DirectChatList from '../components/chat/DirectChatList';
-import DirectChatRoom from '../components/chat/DirectChatRoom';
-import { useAuth } from '../contexts/AuthContext';
-import { ensureMyParticipant, useDirectChat } from '../contexts/DirectChatContext';
-import { supabase } from '../lib/supabase';
+import { useEffect, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
+import GroupDashboardLayout from "../components/layout/GroupDashboardLayout";
+import DirectChatSidebar from "../components/chat/DirectChatSidebar";
+import DirectChatList from "../components/chat/DirectChatList";
+import DirectChatRoom from "../components/chat/DirectChatRoom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  ensureMyParticipant,
+  useDirectChat,
+} from "../contexts/DirectChatContext";
+import { supabase } from "../lib/supabase";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 
 function DirectChatPage() {
   const { user } = useAuth();
@@ -15,10 +19,14 @@ function DirectChatPage() {
   // /chat            -> groupId, targetUserId 둘 다 없음
   // /chat/:groupId   -> groupId만 있음
   // /chat/:groupId/:targetUserId -> 둘 다 있음
-  const { groupId, targetUserId } = useParams<{ groupId?: string; targetUserId?: string }>();
+  const { groupId, targetUserId } = useParams<{
+    groupId?: string;
+    targetUserId?: string;
+  }>();
 
   // const { chats, fetchChats, setCurrentChat, findOrCreateChat } = useDirectChat();
-  const { chats, fetchChats, fetchMessages, setCurrentChat, findOrCreateChat } = useDirectChat();
+  const { chats, fetchChats, fetchMessages, setCurrentChat, findOrCreateChat } =
+    useDirectChat();
 
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [isHost, setIsHost] = useState<boolean | null>(null);
@@ -34,19 +42,19 @@ function DirectChatPage() {
 
     const checkRole = async (): Promise<void> => {
       const { data, error } = await supabase
-        .from('group_members')
-        .select('member_role')
-        .eq('group_id', groupId)
-        .eq('user_id', user.id)
+        .from("group_members")
+        .select("member_role")
+        .eq("group_id", groupId)
+        .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
-        console.error('멤버 역할 확인 실패:', error);
+        console.error("멤버 역할 확인 실패:", error);
         setIsHost(false);
         return;
       }
 
-      setIsHost(data?.member_role === 'host');
+      setIsHost(data?.member_role === "host");
     };
 
     checkRole();
@@ -70,7 +78,7 @@ function DirectChatPage() {
       const chatIdFromUrl = targetUserId;
 
       // 1) 로컬 캐시에 이미 있으면 그대로 사용
-      const existingLocal = chats.find(c => c.chat_id === chatIdFromUrl);
+      const existingLocal = chats.find((c) => c.chat_id === chatIdFromUrl);
       if (existingLocal) {
         await ensureMyParticipant(existingLocal.chat_id, user.id);
         setCurrentChat(existingLocal);
@@ -82,9 +90,9 @@ function DirectChatPage() {
 
       // 2) Supabase에서도 한번 더 직접 조회 (새로고침 직후 대비)
       const { data: existingRemote } = await supabase
-        .from('direct_chats')
-        .select('chat_id, group_id, host_id, member_id')
-        .eq('chat_id', chatIdFromUrl)
+        .from("direct_chats")
+        .select("chat_id, group_id, host_id, member_id")
+        .eq("chat_id", chatIdFromUrl)
         .maybeSingle();
 
       if (existingRemote) {
@@ -98,7 +106,7 @@ function DirectChatPage() {
 
       // 3) 그래도 없을 때만 새로 생성
       if (user.id === targetUserId) {
-        console.warn('자기 자신과의 채팅은 생성할 수 없습니다.');
+        console.warn("자기 자신과의 채팅은 생성할 수 없습니다.");
         initializedKeyRef.current = key;
         return;
       }
@@ -107,7 +115,12 @@ function DirectChatPage() {
       const memberId = isHost ? targetUserId : user.id;
 
       const chatId = await findOrCreateChat(groupId, hostId, memberId);
-      setCurrentChat({ chat_id: chatId, group_id: groupId, host_id: hostId, member_id: memberId });
+      setCurrentChat({
+        chat_id: chatId,
+        group_id: groupId,
+        host_id: hostId,
+        member_id: memberId,
+      });
       setSelectedChatId(chatId);
       initializedKeyRef.current = key;
     };
@@ -188,7 +201,7 @@ function DirectChatPage() {
   // }, [user?.id, groupId, targetUserId, isHost, findOrCreateChat, setCurrentChat]);
 
   const handleSelectChat = (chatId: string): void => {
-    const chat = chats.find(c => c.chat_id === chatId) ?? null;
+    const chat = chats.find((c) => c.chat_id === chatId) ?? null;
     setSelectedChatId(chatId);
     setCurrentChat(chat);
   };
@@ -198,7 +211,9 @@ function DirectChatPage() {
     return (
       <GroupDashboardLayout>
         <div className="flex items-center justify-center h-[770px] bg-white rounded-sm shadow-card">
-          <p className="text-gray-400">로딩 중...</p>
+          <p className="text-gray-400">
+            <LoadingSpinner />
+          </p>
         </div>
       </GroupDashboardLayout>
     );

@@ -67,13 +67,24 @@ function MeetingHeader({
   const navigate = useNavigate();
 
   const [currentCount, capacity] = participants.split("/").map(Number);
-  const isFull = currentCount >= capacity;
 
   // 모임 종료 여부 계산
   const [startDateStr, endDateStr] = duration.split(" ~ ");
   const now = new Date();
+  const startDate = new Date(startDateStr);
   const endDate = new Date(endDateStr);
+
+  // 모집 마감 (당일 포함)
+  const isClosed = now >= startDate;
+
+  // 모임 종료
   const isEnded = now > endDate;
+
+  // 정원 마감 여부
+  const isFull = currentCount >= capacity;
+
+  // 버튼 비활성화 조건
+  const isJoinDisabled = !isAlreadyJoined && (isFull || isClosed || isEnded);
 
   // 초기 렌더 시, DB에서 찜 상태 불러오기
   useEffect(() => {
@@ -287,10 +298,34 @@ function MeetingHeader({
             )}
             <span className="text-md font-medium text-[#777]">찜하기</span>
           </button>
-
           <button
             onClick={handleJoinClick}
-            disabled={isFull || isEnded}
+            disabled={mode !== "preview" && isJoinDisabled}
+            className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
+              isAlreadyJoined
+                ? "bg-[#777] text-white"
+                : isFull
+                  ? "bg-gray-300 text-white cursor-not-allowed"
+                  : isClosed
+                    ? "bg-gray-300 text-white cursor-not-allowed"
+                    : isEnded
+                      ? "bg-gray-300 text-white cursor-not-allowed"
+                      : "bg-brand text-white hover:bg-blue-600"
+            }`}
+          >
+            {isAlreadyJoined
+              ? "모임페이지로 바로가기"
+              : isFull
+                ? "정원 마감"
+                : isClosed
+                  ? "모집 마감"
+                  : isEnded
+                    ? "모임 종료"
+                    : "참가하기"}
+          </button>
+          {/* <button
+            onClick={handleJoinClick}
+            disabled={isJoinDisabled}
             className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
               isAlreadyJoined
                 ? "bg-[#777] text-white"
@@ -308,7 +343,7 @@ function MeetingHeader({
                 : isEnded
                   ? "모임 종료"
                   : "참가하기"}
-          </button>
+          </button> */}
         </div>
       </div>
 

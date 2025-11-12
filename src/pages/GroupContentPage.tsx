@@ -446,12 +446,14 @@ function GroupContentPage() {
             </div>
 
             {roleLoaded && !isHost && isMember && (
-              <button
-                className="text-sm ml-auto mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition"
-                onClick={openLeaveModal}
-              >
-                모임나가기
-              </button>
+              <div className="flex">
+                <button
+                  className="text-sm mt-4 text-[#8C8C8C] hover:text-[#FF5252] transition ml-auto"
+                  onClick={openLeaveModal}
+                >
+                  모임나가기
+                </button>
+              </div>
             )}
           </div>
         </div>

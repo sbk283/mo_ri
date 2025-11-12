@@ -62,7 +62,7 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
 
     if (!user || error) {
       setSaving(false);
-      alert("로그인 정보를 확인할 수 없습니다.");
+      // alert("로그인 정보를 확인할 수 없습니다.");
       return;
     }
 
@@ -77,7 +77,7 @@ function SignUpStep2({ onSubmit }: SignUpStep2Props) {
     setSaving(false);
 
     if (saveError) {
-      alert("관심사 저장 실패");
+      // alert("관심사 저장 실패");
       return;
     }
 

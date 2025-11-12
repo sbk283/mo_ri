@@ -10,6 +10,7 @@ import MeetingCard from "./MeetingCard";
 import { useGroupMember } from "../../../contexts/GroupMemberContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import { useGroupFavorite } from "../../../hooks/useGroupFavorite";
+import { useNavigate } from "react-router-dom";
 
 export interface MeetingHeaderProps {
   groupId: string;
@@ -62,6 +63,8 @@ function MeetingHeader({
 
   const { addFavorite, removeFavorite, checkFavorite } = useGroupFavorite();
   const [favorite, setFavorite] = useState(isFavorite);
+
+  const navigate = useNavigate();
 
   const [currentCount, capacity] = participants.split("/").map(Number);
   const isFull = currentCount >= capacity;
@@ -173,13 +176,14 @@ function MeetingHeader({
 
   const handleJoinClick = () => {
     if (mode === "preview") return;
-    if (isAlreadyJoined || isFull || isEnded) return;
 
     // 이미 참가한 경우
     if (isAlreadyJoined) {
-      // alert('이미 참가한 모임입니다.');
+      navigate(`/groupcontent/${groupId}?tab=daily`);
       return;
     }
+
+    if (isFull || isEnded) return;
 
     setOpen(true);
   };
@@ -286,10 +290,10 @@ function MeetingHeader({
 
           <button
             onClick={handleJoinClick}
-            disabled={isAlreadyJoined || isFull || isEnded}
+            disabled={isFull || isEnded}
             className={`w-[210px] h-[50px] px-4 py-2 rounded-md font-semibold transition-colors ${
               isAlreadyJoined
-                ? "bg-[#777] text-white cursor-not-allowed"
+                ? "bg-[#777] text-white"
                 : isFull
                   ? "bg-gray-400 text-white cursor-not-allowed"
                   : isEnded
@@ -298,7 +302,7 @@ function MeetingHeader({
             }`}
           >
             {isAlreadyJoined
-              ? "참가완료"
+              ? "모임페이지로 바로가기"
               : isFull
                 ? "정원 마감"
                 : isEnded

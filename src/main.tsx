@@ -1,10 +1,10 @@
-import { createRoot } from 'react-dom/client';
-import AppWrapper from './AppWrapper.tsx';
-import { AuthProvider } from './contexts/AuthContext.tsx';
-import { GroupProvider } from './contexts/GroupContext.tsx';
-import './index.css';
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import AppWrapper from "./AppWrapper.js";
+import { AuthProvider } from "./contexts/AuthContext.js";
+import { GroupProvider } from "./contexts/GroupContext";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <AuthProvider>
     <GroupProvider>
       <AppWrapper />

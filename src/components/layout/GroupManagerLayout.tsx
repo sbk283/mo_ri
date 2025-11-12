@@ -16,7 +16,7 @@ function GroupManagerLayout({ children }: LayoutProps) {
       </div>
 
       {/* 높이 보정 */}
-      <div className="w-full h-0 pb-[500px]" />
+      <div className="w-full h-0 pb-[100px]" />
     </div>
   );
 }

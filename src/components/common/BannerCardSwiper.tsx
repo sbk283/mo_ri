@@ -1,11 +1,10 @@
 import { Navigation } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-// import 'swiper/swiper-bundle.css';
 import GroupCard from "./GroupCard";
 import type { GroupWithCategory } from "../../types/group";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { supabase } from "../../lib/supabase";
-import LoadingSpinner from "./LoadingSpinner";
+import SkeletonSwiper from "../skeleton/SkeletonSwiper"; // 추가
 
 type BannerCardSwiperProps = {
   groups: GroupWithCategory[];
@@ -29,13 +28,12 @@ function BannerCardSwiper({
   const [hotGroups, setHotGroups] = useState<GroupWithCategory[]>([]);
   const [fetching, setFetching] = useState(true);
 
-  // 찜 수 fetch + 병합 + 상위 8개 정렬
+  // 인기 모임 데이터 fetch + 정렬
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
         setFetching(true);
 
-        // favorite = true 데이터만
         const { data: favData, error: favError } = await supabase
           .from("group_favorites")
           .select("group_id")
@@ -43,7 +41,6 @@ function BannerCardSwiper({
 
         if (favError) throw favError;
 
-        // group_id별 찜 수 계산
         const favCountMap = favData.reduce(
           (acc, cur) => {
             acc[cur.group_id] = (acc[cur.group_id] || 0) + 1;
@@ -52,21 +49,19 @@ function BannerCardSwiper({
           {} as Record<string, number>,
         );
 
-        // 그룹에 favorite_count 추가
         const merged = groups.map((g) => ({
           ...g,
           favorite_count: favCountMap[g.group_id] || 0,
         }));
 
-        // 찜 수 기준 내림차순 정렬 + 상위 8개
         const sorted = merged
           .sort((a, b) => (b.favorite_count || 0) - (a.favorite_count || 0))
           .slice(0, 8);
 
         setHotGroups(sorted);
       } catch (err) {
-        console.error("🔥 인기 모임 불러오기 실패:", err);
-        setHotGroups(groups.slice(0, 8)); // 실패 시 그냥 props에서 상위 8개
+        console.error("인기 모임 불러오기 실패:", err);
+        setHotGroups(groups.slice(0, 8));
       } finally {
         setFetching(false);
       }
@@ -75,18 +70,18 @@ function BannerCardSwiper({
     if (groups.length > 0) fetchFavorites();
   }, [groups]);
 
-  //  오늘 날짜 기준으로 마감일이 지난 그룹 제외
+  // 마감된 모임 제외 필터링 (memo)
   const filteredGroups = useMemo(() => {
     const today = new Date();
+    const todayZero = new Date(today.setHours(0, 0, 0, 0));
     return (hotGroups ?? []).filter((group) => {
-      // end_date 없으면 표시
       if (!group.group_end_day) return true;
       const end = new Date(group.group_end_day);
-      // end가 오늘 이후거나 오늘이면 표시
-      return end >= new Date(today.setHours(0, 0, 0, 0));
+      return end >= todayZero;
     });
   }, [hotGroups]);
 
+  // breakpoints 메모이징
   const defaultBps = useMemo<
     NonNullable<React.ComponentProps<typeof Swiper>["breakpoints"]>
   >(
@@ -101,11 +96,33 @@ function BannerCardSwiper({
   );
 
   const bps = breakpoints ?? defaultBps;
-  const visibleGroups = filteredGroups.slice(0, 8);
-  const slidesPerView = swiperRef.current?.params?.slidesPerView || 4;
 
-  if (loading || fetching) return <LoadingSpinner />;
+  // 최종 표시할 그룹 (memo)
+  const visibleGroups = useMemo(
+    () => filteredGroups.slice(0, 8),
+    [filteredGroups],
+  );
 
+  // 슬라이드 변경 핸들러 (memo)
+  const handleSlideChange = useCallback(
+    (swiper: any) => setActiveIndex(swiper.activeIndex),
+    [],
+  );
+
+  // 현재 slidesPerView 계산
+  const slidesPerView =
+    swiperRef.current?.params?.slidesPerView || bps[1024]?.slidesPerView || 4;
+
+  // Skeleton 처리
+  if (loading || fetching) {
+    return (
+      <div className={["relative w-[1024px] mx-auto", className].join(" ")}>
+        <SkeletonSwiper />
+      </div>
+    );
+  }
+
+  // 그룹이 없을 때
   if (!visibleGroups || visibleGroups.length === 0) {
     return (
       <div className="flex items-center justify-center pb-10 pt-10 gap-10 border border-gray-300 rounded-sm mb-[64px]">
@@ -126,25 +143,24 @@ function BannerCardSwiper({
         <Swiper
           modules={[Navigation]}
           onSwiper={(swiper) => (swiperRef.current = swiper)}
-          onSlideChange={(swiper) => setActiveIndex(swiper.activeIndex)}
+          onSlideChange={handleSlideChange}
           navigation={{
             nextEl: ".swiper-button-next",
             prevEl: ".swiper-button-prev",
           }}
-          spaceBetween={12}
+          spaceBetween={spaceBetween}
           loop={loop}
           grabCursor
           breakpoints={bps}
         >
           {visibleGroups.map((item) => (
             <SwiperSlide key={item.group_id} tag="li">
-              <GroupCard as="div" item={item} />
+              <MemoizedGroupCard as="div" item={item} />
             </SwiperSlide>
           ))}
         </Swiper>
       </ul>
 
-      {/* 이전 버튼: 첫 슬라이드에서는 숨김 */}
       {activeIndex > 0 && (
         <button
           className="custom-prev flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] left-[-20px] z-[5] bg-white shadow-card"
@@ -160,7 +176,6 @@ function BannerCardSwiper({
         </button>
       )}
 
-      {/* 다음 버튼: 마지막 슬라이드에서는 숨김 */}
       {activeIndex < visibleGroups.length - slidesPerView && (
         <button
           className="custom-next flex items-center justify-center rounded-full w-[37px] h-[37px] absolute top-[44%] right-[-20px] z-[9] bg-white shadow-card"
@@ -174,4 +189,7 @@ function BannerCardSwiper({
   );
 }
 
-export default BannerCardSwiper;
+// GroupCard 메모 적용
+const MemoizedGroupCard = memo(GroupCard);
+
+export default memo(BannerCardSwiper);

@@ -1,10 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback, memo } from "react";
 import Modal from "react-modal";
 import { useNavigate } from "react-router-dom";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import { Swiper, SwiperSlide } from "swiper/react";
-
-// Swiper v11+ 스타일 import
 
 if (typeof window !== "undefined") {
   Modal.setAppElement("#root");
@@ -71,6 +69,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
   const [currentSlide, setCurrentSlide] = useState(1);
   const navigate = useNavigate();
 
+  // 모달 자동 오픈 여부 계산
   useEffect(() => {
     if (autoOpen) {
       const shouldShow = checkShouldShowModal();
@@ -78,6 +77,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
     }
   }, [autoOpen, storageKey]);
 
+  // 오늘 하루 보지 않기 체크
   const checkShouldShowModal = (): boolean => {
     if (!enableDoNotShowToday) return true;
 
@@ -92,6 +92,7 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
     return now > hiddenUntil;
   };
 
+  // 오늘 하루 보지 않기 설정
   const setDoNotShowToday = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -101,26 +102,59 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
     localStorage.setItem(key, tomorrow.toISOString());
   };
 
-  const handleClose = (doNotShowToday = false) => {
-    if (doNotShowToday && enableDoNotShowToday) {
-      setDoNotShowToday();
-    }
+  // 모달 닫기 핸들러 (메모이징)
+  const handleClose = useCallback(
+    (doNotShowToday = false) => {
+      if (doNotShowToday && enableDoNotShowToday) {
+        setDoNotShowToday();
+      }
+      setIsOpen(false);
+      onClose?.();
+    },
+    [enableDoNotShowToday, onClose],
+  );
 
-    setIsOpen(false);
-    onClose?.();
-  };
-
-  const handleBannerClick = (banner: Banner) => {
-    if (banner.link) {
+  // 배너 클릭 핸들러 (메모이징)
+  const handleBannerClick = useCallback(
+    (banner: Banner) => {
+      if (!banner.link) return;
       if (banner.link.startsWith("http")) {
-        // 외부 링크는 새탭 (원하는 경우)
         window.open(banner.link, "_blank", "noopener,noreferrer");
       } else {
-        // 내부 경로는 현재 탭 이동
         navigate(banner.link);
       }
-    }
-  };
+    },
+    [navigate],
+  );
+
+  // 슬라이드 변경 핸들러 (메모이징)
+  const handleSlideChange = useCallback((swiper: any) => {
+    // loop=true일 때 realIndex 사용
+    setCurrentSlide((swiper?.realIndex ?? swiper?.activeIndex ?? 0) + 1);
+  }, []);
+
+  // 배너 슬라이드 엘리먼트 메모이징 (불변 banners일 때 재생성 방지)
+  const slides = useMemo(
+    () =>
+      banners.map((banner) => (
+        <SwiperSlide key={banner.id}>
+          <div
+            onClick={() => handleBannerClick(banner)}
+            className={`w-full h-full relative ${banner.link ? "cursor-pointer" : ""}`}
+          >
+            <img
+              src={banner.imageUrl}
+              alt={banner.title || `배너 ${banner.id}`}
+              className="w-full h-full object-cover"
+              // 이미지 디코딩/로딩 힌트로 첫 표시까지의 시간 단축
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+        </SwiperSlide>
+      )),
+    [banners, handleBannerClick],
+  );
 
   return (
     <Modal
@@ -160,24 +194,14 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
               delay: autoplayDelay,
               disableOnInteraction: false,
             }}
+            // loop는 배너 UX상 유지하되, 슬라이드 수가 많을 경우 성능 고려해 false로 전환 검토
             loop={true}
-            onSlideChange={(swiper) => setCurrentSlide(swiper.realIndex + 1)}
+            onSlideChange={handleSlideChange}
             className="w-full h-full"
+            // observer={true}
+            // observeParents={true}
           >
-            {banners.map((banner) => (
-              <SwiperSlide key={banner.id}>
-                <div
-                  onClick={() => handleBannerClick(banner)}
-                  className={`w-full h-full relative ${banner.link ? "cursor-pointer" : ""}`}
-                >
-                  <img
-                    src={banner.imageUrl}
-                    alt={banner.title || `배너 ${banner.id}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              </SwiperSlide>
-            ))}
+            {slides}
           </Swiper>
 
           {/* 네비게이션 버튼 */}
@@ -218,4 +242,5 @@ export const BannerSliderModal: React.FC<BannerSliderModalProps> = ({
   );
 };
 
-export default BannerSliderModal;
+// memo 적용 (부모 리렌더 시 불필요한 재렌더 방지)
+export default memo(BannerSliderModal);

@@ -239,23 +239,28 @@ body,
 }
 
 /* 리엑트 툴바 고정 */
+/* 11-10 수정 */
 .ql-toolbar.ql-snow {
+  z-index: 9 !important;
+}
+/* .ql-toolbar.ql-snow {
   position: sticky;
   top: 0;
   z-index: 10;
   background: #fff;
-}
+} */
 
 .ql-container {
   border-radius: 0px 0px 5px 5px;
   border: 1px solid #a6a6a6 !important;
   border-top: 0px !important;
   min-height: 231px;
-  .ql-editor {
-    height: 100%;
-    overflow-y: auto;
-    padding-right: 8px;
-  }
+}
+
+.ql-container .ql-editor {
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 8px;
 }
 
 /* 스크롤바 스타일 */
@@ -453,4 +458,9 @@ body::-webkit-scrollbar-thumb {
 
 body::-webkit-scrollbar-thumb:hover {
   background: rgba(66, 148, 207, 0.7);
+}
+
+/* 이미지 lazy loading (최적화) */
+img.loaded {
+  opacity: 1;
 }

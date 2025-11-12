@@ -23,7 +23,7 @@ function ProfileInfoEdit({
   const handleNicknameSave = async (newName: string) => {
     try {
       if (!user) {
-        alert("로그인이 필요합니다.");
+        // alert("로그인이 필요합니다.");
         return;
       }
 
@@ -47,7 +47,7 @@ function ProfileInfoEdit({
       setIsNicknameEditModalOpen(false);
     } catch (err) {
       console.error("닉네임 업데이트 실패:", err);
-      alert("닉네임 변경 중 오류가 발생했습니다.");
+      // alert("닉네임 변경 중 오류가 발생했습니다.");
     }
   };
 

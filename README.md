@@ -5,7 +5,7 @@
 
 **개발 기간:** 2025.08.25 ~ 2025.11.13 (최종 발표일) **참여 인원:** 4명
 
-[배포링크 Mo:ri](https://mo-ri.vercel.app/) | [Notion 주소](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [Figma 최종본] |(https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1)
+[배포링크 Mo:ri](https://mo-ri.vercel.app/) | [Notion 주소](https://www.notion.so/Project-Mo-ri-25a0edcd88c380db8484d6caa1570c9e) | [Figma 최종본](https://www.figma.com/design/CgxgjkbirRbyFVGUSDPoG0/?node-id=0-1)
 | [Canva 최종 발표 PPT](https://www.canva.com/design/DAG3nu7OiWE/YM6avpjq1eqbP-VbGa7lpQ/edit)
 
 ---

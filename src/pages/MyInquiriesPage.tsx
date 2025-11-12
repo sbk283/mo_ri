@@ -206,7 +206,7 @@ function MyInquiriesPage() {
       setDetailInquiries(null);
     } catch (err: any) {
       console.error("삭제 처리 중 오류:", err.message || err);
-      alert("삭제 중 오류가 발생했습니다.");
+      // alert("삭제 중 오류가 발생했습니다.");
     }
   };
   // 해당 내용 찾기

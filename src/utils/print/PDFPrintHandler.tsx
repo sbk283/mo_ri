@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabase';
-import type { CurriculumItem } from '../../types/group';
+import { useCallback, useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
+import type { CurriculumItem } from "../../types/group";
 
 interface GroupWithCategory {
   group_id: string;
@@ -14,7 +14,10 @@ interface GroupWithCategory {
 
 export function usePDFPrintHandler() {
   const [isPrinting, setIsPrinting] = useState(false);
-  const [profile, setProfile] = useState<{ name: string; email: string } | null>(null);
+  const [profile, setProfile] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -23,9 +26,9 @@ export function usePDFPrintHandler() {
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('user_profiles')
-        .select('name, email')
-        .eq('user_id', user.id)
+        .from("user_profiles")
+        .select("name, email")
+        .eq("user_id", user.id)
         .single();
 
       if (!error && data) setProfile({ name: data.name, email: data.email });
@@ -36,7 +39,7 @@ export function usePDFPrintHandler() {
   const printSelectedItems = useCallback(
     async (allMeetings: GroupWithCategory[], selectedIds: string[]) => {
       if (!selectedIds || selectedIds.length === 0) {
-        alert('출력할 항목을 선택해주세요.');
+        // alert("출력할 항목을 선택해주세요.");
         return;
       }
 
@@ -46,11 +49,11 @@ export function usePDFPrintHandler() {
         setIsPrinting(true);
 
         const selectedMeetings = allMeetings
-          .filter(m => selectedIds.includes(m.group_id))
-          .map(m => ({
+          .filter((m) => selectedIds.includes(m.group_id))
+          .map((m) => ({
             ...m,
             curriculum:
-              typeof m.curriculum === 'string'
+              typeof m.curriculum === "string"
                 ? JSON.parse(m.curriculum)
                 : Array.isArray(m.curriculum)
                   ? m.curriculum
@@ -58,20 +61,20 @@ export function usePDFPrintHandler() {
           }));
 
         if (selectedMeetings.length === 0) {
-          alert('선택된 모임이 없습니다.');
+          // alert('선택된 모임이 없습니다.');
           setIsPrinting(false);
           return;
         }
 
         // PDF용 임시 컨테이너 생성
-        container = document.createElement('div');
-        container.style.position = 'absolute';
-        container.style.left = '-9999px';
-        container.style.top = '0';
-        container.style.width = '210mm';
-        container.style.maxWidth = '210mm';
-        container.style.overflow = 'visible';
-        container.style.fontFamily = 'Arial, sans-serif';
+        container = document.createElement("div");
+        container.style.position = "absolute";
+        container.style.left = "-9999px";
+        container.style.top = "0";
+        container.style.width = "210mm";
+        container.style.maxWidth = "210mm";
+        container.style.overflow = "visible";
+        container.style.fontFamily = "Arial, sans-serif";
         document.body.appendChild(container);
 
         // 완전한 HTML 구조로 변경
@@ -94,11 +97,11 @@ export function usePDFPrintHandler() {
                     <div style="display: flex; gap: 3rem; margin-left: 15px;">
                       <div style="display: flex; gap: 0.5rem;">
                         <span style="font-weight: 600;">성명:</span>
-                        <span>${profile?.name ?? '-'}</span>
+                        <span>${profile?.name ?? "-"}</span>
                       </div>
                       <div style="display: flex; gap: 0.5rem;">
                         <span style="font-weight: 600;">이메일:</span>
-                        <span>${profile?.email ?? '-'}</span>
+                        <span>${profile?.email ?? "-"}</span>
                       </div>
                     </div>
                   </div>
@@ -118,7 +121,7 @@ export function usePDFPrintHandler() {
                   <div style="display: flex; flex-direction: column;">
                     ${selectedMeetings
                       .map(
-                        item => `
+                        (item) => `
                       <div style="display: flex; width: 100%; align-items: center; border-bottom: 1px solid #e5e7eb; padding-top: 0.5rem; padding-bottom: 0.5rem;">
                         <div style="width: 25%; font-size: 0.875rem; font-weight: 400; text-align: center; color: #000;">
                           ${item.group_start_day}
@@ -127,14 +130,14 @@ export function usePDFPrintHandler() {
                         </div>
                         <div style="width: 50%; font-size: 1rem; font-weight: 600; text-align: center; color: #000;">${item.group_title}</div>
                         <div  style="width: 25%; font-size: 0.875rem; font-weight: 400; text-align: center; color: #000;">
-                          ${item.categories_major?.category_major_name ?? '-'} > 
+                          ${item.categories_major?.category_major_name ?? "-"} > 
                           <br/>
-                          ${item.categories_sub?.category_sub_name ?? '-'}
+                          ${item.categories_sub?.category_sub_name ?? "-"}
                         </div>
                       </div>
                     `,
                       )
-                      .join('')}
+                      .join("")}
                   </div>
                 </div>
               </div>
@@ -148,8 +151,10 @@ export function usePDFPrintHandler() {
                  <div>
         <div style="font-size: 1.125rem; font-weight: 600; margin-bottom: 15px; color: #000; margin-left: 15px;">모임 세부 정보</div>
         ${selectedMeetings
-          .map(item => {
-            const curriculumArray: CurriculumItem[] = Array.isArray(item.curriculum)
+          .map((item) => {
+            const curriculumArray: CurriculumItem[] = Array.isArray(
+              item.curriculum,
+            )
               ? item.curriculum
               : [];
             return `
@@ -165,7 +170,7 @@ export function usePDFPrintHandler() {
                   <div style="display: flex;">
                     <div style="font-size: 1rem; font-weight: 600; color: #000; width: 100px;">모임 분류</div>
                     <div style="font-size: 15px; font-weight: 600; color: #000;">
-                      ${item.categories_major?.category_major_name ?? '-'} > ${item.categories_sub?.category_sub_name ?? '-'}
+                      ${item.categories_major?.category_major_name ?? "-"} > ${item.categories_sub?.category_sub_name ?? "-"}
                     </div>
                   </div>
                 </div>
@@ -197,15 +202,15 @@ export function usePDFPrintHandler() {
                               </div>
                             `,
                             )
-                            .join('')
-                        : '<div>커리큘럼 없음</div>'
+                            .join("")
+                        : "<div>커리큘럼 없음</div>"
                     }
                   </div>
                 </div>
               </div>
             `;
           })
-          .join('')}
+          .join("")}
       </div>
     </div>
   `;
@@ -215,25 +220,25 @@ export function usePDFPrintHandler() {
         container.innerHTML = generateHTML();
 
         // 렌더 안정화
-        await new Promise(res => setTimeout(res, 500));
+        await new Promise((res) => setTimeout(res, 500));
 
         // 인쇄 미리보기용 스타일 설정
-        container.style.position = 'fixed';
-        container.style.left = '0';
-        container.style.top = '0';
-        container.style.zIndex = '9999';
-        container.style.backgroundColor = 'white';
-        container.style.border = 'none';
-        container.style.width = '100%';
-        container.style.maxWidth = 'none';
-        container.style.overflow = 'visible';
-        container.style.padding = '20px';
-        container.style.fontSize = '14px';
-        container.style.lineHeight = '1.6';
+        container.style.position = "fixed";
+        container.style.left = "0";
+        container.style.top = "0";
+        container.style.zIndex = "9999";
+        container.style.backgroundColor = "white";
+        container.style.border = "none";
+        container.style.width = "100%";
+        container.style.maxWidth = "none";
+        container.style.overflow = "visible";
+        container.style.padding = "20px";
+        container.style.fontSize = "14px";
+        container.style.lineHeight = "1.6";
 
         // 인쇄용 CSS 추가
-        const printStyles = document.createElement('style');
-        printStyles.id = 'print-styles';
+        const printStyles = document.createElement("style");
+        printStyles.id = "print-styles";
         printStyles.textContent = `
           @media print {
             @page { 
@@ -264,26 +269,28 @@ export function usePDFPrintHandler() {
         document.head.appendChild(printStyles);
 
         // 컨테이너에 클래스 추가
-        container.classList.add('print-content');
+        container.classList.add("print-content");
 
         // 인쇄 실행
         window.print();
 
         // 스타일 정리
         document.head.removeChild(printStyles);
-        container.classList.remove('print-content');
+        container.classList.remove("print-content");
 
         // 정리 작업
-        if (container && container.parentNode) document.body.removeChild(container);
+        if (container && container.parentNode)
+          document.body.removeChild(container);
       } catch (err) {
-        console.error('PDF 생성 오류:', err);
-        alert('PDF 출력 중 문제가 발생했습니다.');
+        console.error("PDF 생성 오류:", err);
+        // alert("PDF 출력 중 문제가 발생했습니다.");
 
         // 에러 발생 시 정리 작업
         try {
-          if (container && container.parentNode) document.body.removeChild(container);
+          if (container && container.parentNode)
+            document.body.removeChild(container);
         } catch (cleanupErr) {
-          console.error('정리 작업 중 오류:', cleanupErr);
+          console.error("정리 작업 중 오류:", cleanupErr);
         }
       } finally {
         setIsPrinting(false);

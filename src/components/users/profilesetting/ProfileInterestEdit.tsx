@@ -101,7 +101,7 @@ function ProfileInterestEdit() {
       setIsModalOpen(false);
     } catch (err) {
       console.error("관심사 저장 실패:", err);
-      alert("관심사 저장 중 오류가 발생했습니다.");
+      // alert("관심사 저장 중 오류가 발생했습니다.");
     }
   };
 

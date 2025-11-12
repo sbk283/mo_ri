@@ -66,7 +66,7 @@ export function ReviewCard({
         <LazyImage
           src={optimizeImageUrl(profileImage, 100)}
           alt={`${item.created_id} 프로필`}
-          className="absolute top-9 right-2 w-[59px] h-[59px] rounded-[50%] object-cover"
+          className="absolute top-10 right-4 w-[50px] h-[50px] rounded-[50%] object-cover"
           onError={handleImgError}
         />
       </div>
